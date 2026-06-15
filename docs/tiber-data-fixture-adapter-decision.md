@@ -2,7 +2,7 @@
 
 Status: **Decided** (decision-only; no implementation in this change)
 Date: 2026-06-15
-Tracking: TIBER-Data issue #152 (mismatches #2, #3, #4, #5 — the TIBER-Data → PPM fixture seam)
+Tracking: Prometheus-Frameworks/TIBER-Data#152 (mismatches 2, 3, 4, 5 — the TIBER-Data → PPM fixture seam)
 Scope guardrail: decision/doc only. This change does **not** alter scoring math, ingestion wiring, or any contract type.
 
 ## Question
@@ -47,7 +47,7 @@ PPM ingestion bundle                       (owned by PPM)
 WeeklyScoringRequest → scoring (unchanged)
 ```
 
-The first leg is the bridge that issue #152 (#3 + #4) correctly identifies as missing in code.
+The first leg is the bridge that Prometheus-Frameworks/TIBER-Data#152 (mismatches 3 + 4) correctly identifies as missing in code.
 The second leg already exists. Today `runTiberDataFixtureRehearsal.ts` casts the fixture
 straight to `TiberDataProjectionInputBundle` and only strips/warns on unsupported *player*
 fields — it does **not** translate the divergent top-level `source_dataset_refs`, `identity_ref`,
@@ -76,7 +76,7 @@ fields — it does **not** translate the divergent top-level `source_dataset_ref
 
 4. **Independent versioning.** Each repo can rev its contract independently; the adapter pins a
    `from`/`to` version pair and routes on `input_contract_version`. A single shared contract would
-   couple release cadence across the cross-repo seam (issue #152 mismatch #5).
+   couple release cadence across the cross-repo seam (Prometheus-Frameworks/TIBER-Data#152 mismatch 5).
 
 ## Explicit field mapping (fixture v1.0.0 → `TiberDataProjectionInputBundle` v1)
 
@@ -86,16 +86,16 @@ must be derived with a documented rule and a warning · **fail-closed** must err
 
 | Fixture field | PPM target | Mapping | Lossiness |
 |---|---|---|---|
-| `input_contract_version` = `tiber-data.projection-input-fixture.v1.0.0` | `input_contract_version` = `tiber-data-projection-input-v1` | Adapter routes on the source version and sets the PPM constant; the **source version string must be retained** in provenance/warnings, not dropped. | rename (#152-5) |
+| `input_contract_version` = `tiber-data.projection-input-fixture.v1.0.0` | `input_contract_version` = `tiber-data-projection-input-v1` | Adapter routes on the source version and sets the PPM constant; the **source version string must be retained** in provenance/warnings, not dropped. | rename (mismatch 5) |
 | `tiber_data_schema_version` | `tiber_data_schema_version` | pass through | 1:1 |
 | `fixture_scope` (`kind`, `production_coverage_claim`, `projection_label`, `evidence_window`, `notes[]`) | *(no target field)* | No PPM field. Adapter **must emit an `adapter_warning`** preserving `production_coverage_claim: false` / fixture-only intent so rehearsal data is never treated as production. | **lossy** — document; preserve as warning |
 | `projection_context` (`season`, `week`, `league`, `scoring_format`, `fixture_only`, `production_ingestion`, `source_evidence_*`) | `projection_context?: Record<string, unknown>` | Pass through opaquely. PPM scoring ignores it today (existing rehearsal already warns `TIBER_DATA_FIXTURE_PROJECTION_CONTEXT_IGNORED`). Do **not** lift `season`/`week` onto player rows — scoring does not consume them. | non-lossy passthrough (unconsumed) |
-| `source_dataset_refs[]` `{name, path, version?, provenance?, source_path?, usage}` | `TiberDataSourceDatasetRef[]` `{dataset_id, version, uri?}` | `dataset_id ← name`; `uri ← source_path ?? path`; `version ← version` — but PPM requires `version` while the fixture makes it optional, so **fail-closed when absent** (do not default). `provenance`, `usage`, and the unused of `path`/`source_path` have no PPM home → **preserve in warnings**, do not silently drop. | **lossy** + **fail-closed** (#152-3) |
-| `identity_ref` `{source_paths[], identity_fields[], projection_label_policy}` | `TiberDataIdentityRef` `{identity_artifact_id, version, uri?}` | Zero natural overlap. `identity_artifact_id` must be **synthesized** by a single documented, deterministic rule (e.g. stable hash/join of `source_paths`) emitted with a warning. `version` has no upstream source → supply from governed caller config or **fail-closed**; do not invent. `identity_fields` / `projection_label_policy` → **preserve in warnings**. | **synthesize** + **lossy** + **fail-closed** (#152-4) |
+| `source_dataset_refs[]` `{name, path, version?, provenance?, source_path?, usage}` | `TiberDataSourceDatasetRef[]` `{dataset_id, version, uri?}` | `dataset_id ← name`; `uri ← source_path ?? path`; `version ← version` — but PPM requires `version` while the fixture makes it optional, so **fail-closed when absent** (do not default). `provenance`, `usage`, and the unused of `path`/`source_path` have no PPM home → **preserve in warnings**, do not silently drop. | **lossy** + **fail-closed** (mismatch 3) |
+| `identity_ref` `{source_paths[], identity_fields[], projection_label_policy}` | `TiberDataIdentityRef` `{identity_artifact_id, version, uri?}` | Zero natural overlap. `identity_artifact_id` must be **synthesized** by a single documented, deterministic rule (e.g. stable hash/join of `source_paths`) emitted with a warning. `version` has no upstream source → supply from governed caller config or **fail-closed**; do not invent. `identity_fields` / `projection_label_policy` → **preserve in warnings**. | **synthesize** + **lossy** + **fail-closed** (mismatch 4) |
 | `league_context.teams`, `.starters`, `.flex_allocation` | same | 1:1 | 1:1 |
-| `league_context.replacement_buffer` `{QB,RB,WR,TE}` (per-position object) | `LeagueContextInput.replacement_buffer?: number` (scalar) | **Do not collapse.** A per-position object cannot become one scalar without inventing a rule. Adapter **omits** `replacement_buffer` (PPM then derives replacement from `comparison_pool`/defaults/`replacement_points_override`) and **emits a warning** recording the dropped per-position values. Routing per-position buffers into `replacement_points_override` is a scoring-input change and is **out of scope** here. | **lossy** — omit + warn (#152-2) |
+| `league_context.replacement_buffer` `{QB,RB,WR,TE}` (per-position object) | `LeagueContextInput.replacement_buffer?: number` (scalar) | **Do not collapse.** A per-position object cannot become one scalar without inventing a rule. Adapter **omits** `replacement_buffer` (PPM then derives replacement from `comparison_pool`/defaults/`replacement_points_override`) and **emits a warning** recording the dropped per-position values. Routing per-position buffers into `replacement_points_override` is a scoring-input change and is **out of scope** here. | **lossy** — omit + warn (mismatch 2) |
 | `player_opportunities[]` PPM-known fields (`player_id`, `player_name`, `team`, `position`, `games_sampled`, and modeled opportunity/efficiency fields) | `PlayerOpportunityInput` | Pass known fields straight through; required fields absent → **fail-closed** (existing `toWeeklyScoringRequest` already enforces this). | 1:1 for known fields |
-| `player_opportunities[]` fixture-only fields (`team_pass_rate_environment`, `team_pace`, `offensive_environment`, and any other non-modeled key) | *(dropped)* | Not in `PlayerOpportunityInput`. Strip + warn (existing rehearsal does this via `TIBER_DATA_FIXTURE_PLAYER_FIELDS_IGNORED`). Note: env fields relate to issue #152 item B (Teamstate → PPM) and are **out of scope**. | **lossy** — drop + warn |
+| `player_opportunities[]` fixture-only fields (`team_pass_rate_environment`, `team_pace`, `offensive_environment`, and any other non-modeled key) | *(dropped)* | Not in `PlayerOpportunityInput`. Strip + warn (existing rehearsal does this via `TIBER_DATA_FIXTURE_PLAYER_FIELDS_IGNORED`). Note: env fields relate to Prometheus-Frameworks/TIBER-Data#152 item B (Teamstate → PPM) and are **out of scope**. | **lossy** — drop + warn |
 | `missing_fields[]` `severity: "warning"` (single literal) | `severity: "required" \| "optional"` | Map each fixture `warning` to PPM severity by a **named policy** (e.g. field ∈ PPM required set → `required`, else `optional`). Do **not** blanket-reinterpret. The fixture's "keep this gap visible" intent must survive as `optional` + warning, never be silently upgraded to `required` or dropped. | **lossy** (vocabulary) — documented mapping |
 | `adapter_warnings[]` `string[]` | `ServiceWarning[]` `{code, message, details}` | Wrap each string in a `ServiceWarning` with a stable code (e.g. `TIBER_DATA_FIXTURE_WARNING`). Non-lossy if wrapped; lossy only if discarded. | rename/wrap |
 
@@ -115,13 +115,13 @@ Every conversion below MUST be surfaced (warning or provenance), never performed
 - No field is silently coerced — every lossy step emits a warning or fails closed.
 - No scoring/model behavior changes; the adapter stops at producing `TiberDataProjectionInputBundle`.
 - No invented mappings without documented lossiness (see table + section above).
-- No expansion into Teamstate env mapping (#152-B), FORGE tier taxonomy (#152-7), or Phase 4 Strategy.
+- No expansion into Teamstate env mapping (mismatch B), FORGE tier taxonomy (mismatch 7), or Phase 4 Strategy.
 
 ## Out of scope / open questions (defer to implementation PR)
 
 - Whether per-position `replacement_buffer` should eventually drive `replacement_points_override` (a scoring-input change — separate decision).
 - Governed source of `identity_ref.version` and the exact deterministic `identity_artifact_id` derivation rule.
-- Teamstate → PPM environment-field adapter (#152-B), tracked separately.
+- Teamstate → PPM environment-field adapter (mismatch B), tracked separately.
 
 ## Acceptance
 
