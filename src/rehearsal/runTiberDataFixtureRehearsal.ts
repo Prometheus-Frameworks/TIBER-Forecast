@@ -1,12 +1,10 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import type { PlayerOpportunityInput } from '../contracts/scoring.js';
 import type { ProjectionInputCoverageArtifact } from '../contracts/projectionArtifacts.js';
 import {
-  tiberDataOptionalPlayerOpportunityFields,
-  tiberDataRequiredPlayerOpportunityFields,
-  type TiberDataProjectionInputBundle,
-} from '../contracts/tiberDataProjectionInput.js';
+  fromProjectionInputFixture,
+  type FromProjectionInputFixtureIdentityConfig,
+} from '../adapters/tiberData/fromProjectionInputFixture.js';
 import { serviceFailure, serviceSuccess, type ServiceResult, type ServiceWarning } from '../services/result.js';
 import { runProjectionRehearsal } from './runProjectionRehearsal.js';
 
@@ -15,6 +13,11 @@ export interface RunTiberDataFixtureRehearsalInput {
   output_dir?: string;
   run_id?: string;
   generated_at?: string;
+  /**
+   * Governed identity reference config forwarded to the fixture adapter. The
+   * adapter fails closed when `identity_ref.version` is absent.
+   */
+  identity_ref?: FromProjectionInputFixtureIdentityConfig;
 }
 
 export interface TiberDataFixtureRehearsalSummary {
@@ -30,14 +33,6 @@ export interface TiberDataFixtureRehearsalSummary {
   written_artifacts: Array<{ artifact_type: string; path: string; row_count: number }>;
   warnings: ServiceWarning[];
 }
-
-const supportedPlayerFields = new Set<string>([
-  ...tiberDataRequiredPlayerOpportunityFields,
-  ...tiberDataOptionalPlayerOpportunityFields,
-]);
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 const deriveFixtureRunId = (fixturePath: string): string => {
   const stem = path.basename(fixturePath, path.extname(fixturePath));
@@ -72,84 +67,6 @@ const readFixtureJson = async (fixturePath: string): Promise<ServiceResult<unkno
   }
 };
 
-const unsupportedPlayerFields = (player: unknown): string[] => {
-  if (!isRecord(player)) return [];
-  return Object.keys(player).filter((field) => !supportedPlayerFields.has(field));
-};
-
-const stripUnsupportedPlayerFields = (player: unknown): unknown => {
-  if (!isRecord(player)) return player;
-
-  const stripped: Record<string, unknown> = {};
-  for (const [field, value] of Object.entries(player)) {
-    if (supportedPlayerFields.has(field)) stripped[field] = value;
-  }
-
-  return stripped as unknown as PlayerOpportunityInput;
-};
-
-const collectUnsupportedPlayerFieldWarnings = (bundle: Record<string, unknown>): ServiceWarning[] => {
-  const warnings: ServiceWarning[] = [];
-
-  for (const collectionName of ['player_opportunities', 'comparison_pool'] as const) {
-    const collection = bundle[collectionName];
-    if (!Array.isArray(collection)) continue;
-
-    const unsupportedFields = new Map<string, string[]>();
-    collection.forEach((player, index) => {
-      const fields = unsupportedPlayerFields(player);
-      if (fields.length === 0) return;
-
-      const playerId = isRecord(player) && typeof player.player_id === 'string' && player.player_id.trim().length > 0 ? player.player_id : `index:${index}`;
-      unsupportedFields.set(playerId, fields);
-    });
-
-    if (unsupportedFields.size > 0) {
-      warnings.push({
-        code: 'TIBER_DATA_FIXTURE_PLAYER_FIELDS_IGNORED',
-        message: `Unsupported ${collectionName} fields were omitted before scoring; no scoring math consumes them in this rehearsal.`,
-        details: {
-          collection: collectionName,
-          fields_by_player: Object.fromEntries(unsupportedFields),
-        },
-      });
-    }
-  }
-
-  return warnings;
-};
-
-const collectTopLevelContextWarnings = (bundle: Record<string, unknown>): ServiceWarning[] => {
-  if (bundle.projection_context === undefined) return [];
-
-  return [
-    {
-      code: 'TIBER_DATA_FIXTURE_PROJECTION_CONTEXT_IGNORED',
-      message: 'projection_context is preserved in the fixture input but is not part of the current scoring contract, so it is not consumed for scoring.',
-      details: { field: 'projection_context' },
-    },
-  ];
-};
-
-const sanitizeFixtureBundleForScoring = (fixture: unknown): { bundle: TiberDataProjectionInputBundle; warnings: ServiceWarning[] } => {
-  if (!isRecord(fixture)) return { bundle: fixture as TiberDataProjectionInputBundle, warnings: [] };
-
-  const warnings = [...collectTopLevelContextWarnings(fixture), ...collectUnsupportedPlayerFieldWarnings(fixture)];
-  const sanitized: Record<string, unknown> = { ...fixture };
-
-  if (Array.isArray(fixture.player_opportunities)) {
-    sanitized.player_opportunities = fixture.player_opportunities.map(stripUnsupportedPlayerFields);
-  }
-
-  if (Array.isArray(fixture.comparison_pool)) {
-    sanitized.comparison_pool = fixture.comparison_pool.map(stripUnsupportedPlayerFields);
-  }
-
-  sanitized.adapter_warnings = [...(Array.isArray(fixture.adapter_warnings) ? fixture.adapter_warnings : []), ...warnings];
-
-  return { bundle: sanitized as unknown as TiberDataProjectionInputBundle, warnings };
-};
-
 const readCoverageArtifact = async (outputDir: string): Promise<ServiceResult<ProjectionInputCoverageArtifact>> => {
   try {
     const contents = await readFile(path.join(outputDir, 'projection-input-coverage.json'), 'utf8');
@@ -174,7 +91,17 @@ export const runTiberDataFixtureRehearsal = async (
   const fixtureResult = await readFixtureJson(resolvedFixturePath);
   if (!fixtureResult.ok) return fixtureResult;
 
-  const { bundle } = sanitizeFixtureBundleForScoring(fixtureResult.data);
+  // Translate the TIBER-Data fixture envelope into the PPM ingestion bundle
+  // through the named adapter. No direct cast: mismatched provenance, identity,
+  // replacement_buffer, version, and missing-field severity are mapped or fail
+  // closed here rather than being silently coerced.
+  const adapterResult = fromProjectionInputFixture({
+    fixture: fixtureResult.data,
+    ...(input.identity_ref === undefined ? {} : { identity_ref: input.identity_ref }),
+  });
+  if (!adapterResult.ok) return adapterResult;
+
+  const { bundle } = adapterResult.data;
   const runId = input.run_id ?? deriveFixtureRunId(resolvedFixturePath);
   const generatedAt = input.generated_at ?? new Date().toISOString();
   const outputDir = input.output_dir ?? path.join('artifacts', 'rehearsal', runId);
@@ -185,7 +112,7 @@ export const runTiberDataFixtureRehearsal = async (
     run_id: runId,
     generated_at: generatedAt,
   });
-  if (!rehearsalResult.ok) return rehearsalResult;
+  if (!rehearsalResult.ok) return serviceFailure(rehearsalResult.errors, adapterResult.warnings.concat(rehearsalResult.warnings));
 
   const coverageResult = await readCoverageArtifact(rehearsalResult.data.output_dir);
   if (!coverageResult.ok) return serviceFailure(coverageResult.errors, rehearsalResult.warnings.concat(coverageResult.warnings));
