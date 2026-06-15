@@ -52,6 +52,21 @@ export {
   tiberDataScoringPositions,
 } from '../contracts/tiberDataProjectionInput.js';
 export { toWeeklyScoringRequest } from '../adapters/tiberData/toWeeklyScoringRequest.js';
+export type {
+  FromProjectionInputFixtureIdentityConfig,
+  FromProjectionInputFixtureInput,
+  FromProjectionInputFixtureOutput,
+} from '../adapters/tiberData/fromProjectionInputFixture.js';
+export { fromProjectionInputFixture } from '../adapters/tiberData/fromProjectionInputFixture.js';
+export type {
+  ProjectionInputFixtureBundle,
+  ProjectionInputFixtureIdentityRef,
+  ProjectionInputFixtureLeagueContext,
+  ProjectionInputFixtureMissingField,
+  ProjectionInputFixtureScope,
+  ProjectionInputFixtureSourceDatasetRef,
+} from '../contracts/tiberDataProjectionInputFixture.js';
+export { TIBER_DATA_PROJECTION_INPUT_FIXTURE_CONTRACT_VERSION } from '../contracts/tiberDataProjectionInputFixture.js';
 
 export type {
   ProjectionArtifactRef,
