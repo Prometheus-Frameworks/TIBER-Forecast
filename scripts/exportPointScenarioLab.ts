@@ -15,19 +15,29 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { buildPointScenarioLab } from '../src/services/pointScenarioLab/buildPointScenarioLab.js';
+import { parsePointScenarioLabSeasonToken } from '../src/services/pointScenarioLab/season.js';
 
 const DEFAULT_OUTPUT_PATH = path.join('data', 'point-scenarios', 'point_scenario_lab.json');
 
-const parseArgs = (argv: string[]): { outputPath: string; season?: number } => {
+const SEASON_FLAG = '--season=';
+
+type ParseArgsResult =
+  | { ok: true; outputPath: string; season?: number }
+  | { ok: false; error: string };
+
+const parseArgs = (argv: string[]): ParseArgsResult => {
   let outputPath = DEFAULT_OUTPUT_PATH;
   let season: number | undefined;
 
   for (const arg of argv) {
-    if (arg.startsWith('--season=')) {
-      const parsed = Number(arg.slice('--season='.length));
-      if (Number.isInteger(parsed)) {
-        season = parsed;
+    if (arg.startsWith(SEASON_FLAG)) {
+      // An explicit --season= flag must carry a valid season; fail closed otherwise
+      // so the export cannot silently fall back to a season-agnostic artifact.
+      const tokenResult = parsePointScenarioLabSeasonToken(arg.slice(SEASON_FLAG.length));
+      if (!tokenResult.ok) {
+        return { ok: false, error: tokenResult.error };
       }
+      season = tokenResult.season;
       continue;
     }
     if (!arg.startsWith('--')) {
@@ -35,11 +45,18 @@ const parseArgs = (argv: string[]): { outputPath: string; season?: number } => {
     }
   }
 
-  return { outputPath, season };
+  return { ok: true, outputPath, season };
 };
 
 const main = async () => {
-  const { outputPath, season } = parseArgs(process.argv.slice(2));
+  const args = parseArgs(process.argv.slice(2));
+  if (!args.ok) {
+    console.error(`Invalid --season: ${args.error}`);
+    process.exitCode = 1;
+    return;
+  }
+
+  const { outputPath, season } = args;
   const resolvedPath = path.resolve(outputPath);
 
   const result = buildPointScenarioLab({
