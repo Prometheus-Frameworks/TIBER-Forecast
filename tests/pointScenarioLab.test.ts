@@ -51,6 +51,18 @@ describe('point-scenario lab compatibility surface', () => {
     expect(['LOW', 'MEDIUM', 'HIGH']).toContain(row.confidence_band);
   });
 
+  it('uses the post-event team so team matches the adjusted projection', async () => {
+    const response = await app.request('/api/point-scenarios/lab');
+    const payload = await response.json();
+
+    const tradeRow = payload.rows.find((row: { scenario_id: string }) => row.scenario_id === 'waddle-to-broncos');
+    expect(tradeRow).toBeDefined();
+    // Player is traded MIA -> DEN; the adjusted projection is computed against DEN.
+    expect(tradeRow.team).toBe('DEN');
+    expect(tradeRow.raw_fields.previous_team).toBe('MIA');
+    expect(tradeRow.raw_fields.current_team).toBe('DEN');
+  });
+
   it('labels the compatibility surface in provenance', async () => {
     const response = await app.request('/api/point-scenarios/lab');
     const payload = await response.json();

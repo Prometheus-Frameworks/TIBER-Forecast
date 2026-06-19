@@ -51,7 +51,9 @@ const toLabRow = (
     scenario_name: result.scenarioTitle,
     player_id: result.player.id,
     player_name: result.player.name,
-    team: result.player.team ?? null,
+    // Use the post-event team so `team` is consistent with `adjusted_projection`,
+    // which is computed against `currentTeam` (e.g. a traded player's new roster).
+    team: result.currentTeam?.team ?? result.player.team ?? null,
     position: result.player.position ?? null,
     season: options.season,
     week: result.event?.effectiveWeek ?? null,
@@ -80,6 +82,8 @@ const toLabRow = (
     raw_fields: {
       scenario_description: result.scenarioDescription,
       scenario_tags: result.scenarioTags,
+      previous_team: result.priorTeam?.team ?? null,
+      current_team: result.currentTeam?.team ?? null,
       baseline_breakdown: result.baseline,
       adjusted_breakdown: result.adjusted,
     },

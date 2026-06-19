@@ -48,7 +48,7 @@ GET /api/point-scenarios/lab?season=2025
       "scenario_name": "Jaylen Waddle traded to Denver",   // required, non-empty
       "player_id": "jaylen-waddle",
       "player_name": "Jaylen Waddle",                       // required, non-empty
-      "team": "MIA",
+      "team": "DEN",          // post-event team (consistent with adjusted_projection)
       "position": "WR",
       "season": 2025 | null,
       "week": 1 | null,
@@ -88,7 +88,8 @@ field mapping from the legacy projection output is:
 | --------------------- | ----------------------------------------- |
 | `scenario_id`         | `scenarioId`                              |
 | `scenario_name`       | `scenarioTitle`                           |
-| `player_*`            | `player.{id,name,team,position}`          |
+| `player_id` / `player_name` / `position` | `player.{id,name,position}`    |
+| `team`                | `currentTeam.team` (post-event roster)    |
 | `week`                | `event.effectiveWeek`                     |
 | `baseline_projection` | `baseline.pprPointsPerGame`               |
 | `adjusted_projection` | `adjusted.pprPointsPerGame`               |
