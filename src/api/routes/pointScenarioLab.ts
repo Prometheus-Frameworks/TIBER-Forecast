@@ -1,20 +1,8 @@
 import { Hono } from 'hono';
 import { buildPointScenarioLab } from '../../services/pointScenarioLab/buildPointScenarioLab.js';
+import { parsePointScenarioLabSeasonQuery } from '../../services/pointScenarioLab/season.js';
 
 const LAB_ROUTE_PATH = '/api/point-scenarios/lab';
-
-const parseSeasonParam = (raw: string | undefined): { season?: number; invalid?: true } => {
-  if (raw === undefined || raw.trim() === '') {
-    return {};
-  }
-
-  const parsed = Number(raw);
-  if (!Number.isInteger(parsed) || parsed < 2000 || parsed > 2100) {
-    return { invalid: true };
-  }
-
-  return { season: parsed };
-};
 
 /**
  * Registers the point-scenario lab compatibility / Data Lab surface.
@@ -26,16 +14,13 @@ const parseSeasonParam = (raw: string | undefined): { season?: number; invalid?:
  */
 export const registerPointScenarioLabRoutes = (app: Hono) => {
   app.get(LAB_ROUTE_PATH, (c) => {
-    const seasonParam = parseSeasonParam(c.req.query('season'));
-    if (seasonParam.invalid) {
-      return c.json(
-        { ok: false, error: 'season must be an integer between 2000 and 2100.' },
-        400,
-      );
+    const seasonResult = parsePointScenarioLabSeasonQuery(c.req.query('season'));
+    if (!seasonResult.ok) {
+      return c.json({ ok: false, error: seasonResult.error }, 400);
     }
 
     const result = buildPointScenarioLab({
-      season: seasonParam.season,
+      season: seasonResult.season,
       mode: 'api',
       location: LAB_ROUTE_PATH,
     });

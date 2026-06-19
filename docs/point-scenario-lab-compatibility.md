@@ -112,6 +112,11 @@ The export uses the same builder with `source.mode: "artifact"` (and provenance
 `source_type: "data_lab_surface"`), so the file is a drop-in for TIBER-Fantasy's
 artifact fallback path.
 
+`--season` is validated with the same rules as the route (integer, 2000–2100). An
+invalid value fails closed: the CLI prints an error, exits non-zero, and writes no
+file — it never falls back to a silently season-agnostic artifact. Omitting `--season`
+still produces a season-agnostic export.
+
 ## Boundaries
 
 - No Management activation. No advice/recommendation/start-sit/trade/waiver behavior.
