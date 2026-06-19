@@ -44,6 +44,12 @@ See `docs/migration-scoring-kernel.md` and `src/legacy/README.md`.
 
 Legacy scenario endpoints are still available for compatibility.
 
+### Compatibility / Data Lab surfaces
+- `/api/scoring/*` and `/api/tiber/*` remain the **primary** scoring-first surfaces.
+- `GET /api/point-scenarios/lab` is a **compatibility / Data Lab route** for TIBER-Fantasy's Point Scenario Lab adapter. It composes the existing legacy scenario projection path and adds no scoring logic; it is not part of the scoring kernel.
+- `point_scenario_lab.json` is supported **only as an on-demand export** (`npm run export:point-scenario-lab`), not an auto-promoted artifact.
+- See [Point-scenario lab compatibility surface](docs/point-scenario-lab-compatibility.md).
+
 ### Replacement baseline behavior
 - `FLEX` now contributes to replacement-rank demand for RB/WR/TE via `league_context.flex_allocation` (defaults: RB 35%, WR 50%, TE 15%).
 - Single-player scoring supports meaningful VORP via:

@@ -13,7 +13,8 @@
     "start:api": "tsx src/server.ts",
     "dev:api": "tsx watch src/server.ts",
     "build": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "export:point-scenario-lab": "tsx scripts/exportPointScenarioLab.ts"
   },
   "engines": {
     "node": ">=20"

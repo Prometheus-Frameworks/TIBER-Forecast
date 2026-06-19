@@ -58,6 +58,7 @@ describe('API server', () => {
         tiberWeeklyCompare: '/api/tiber/weekly/compare',
         legacyScenarios: '/api/scenarios',
         legacyScenarioProjection: '/api/project/scenarios',
+        pointScenarioLabCompat: '/api/point-scenarios/lab',
       },
     });
   });
