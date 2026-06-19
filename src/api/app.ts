@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { registerDecisionBoardRoutes } from './routes/decisionBoard.js';
 import { registerHealthRoutes } from './routes/health.js';
+import { registerPointScenarioLabRoutes } from './routes/pointScenarioLab.js';
 import { registerProjectScenarioRoutes } from './routes/projectScenarios.js';
 import { registerScenarioRoutes } from './routes/scenarios.js';
 import { registerScoringRoutes } from './routes/scoring.js';
@@ -53,6 +54,7 @@ export const createApp = () => {
         tiberWeeklyCompare: '/api/tiber/weekly/compare',
         legacyScenarios: '/api/scenarios',
         legacyScenarioProjection: '/api/project/scenarios',
+        pointScenarioLabCompat: '/api/point-scenarios/lab',
       },
     }),
   );
@@ -63,6 +65,7 @@ export const createApp = () => {
   registerTiberScoringRoutes(app);
   registerScenarioRoutes(app);
   registerProjectScenarioRoutes(app);
+  registerPointScenarioLabRoutes(app);
 
   app.notFound((c) => c.json({ ok: false, error: 'Not found' }, 404));
 
