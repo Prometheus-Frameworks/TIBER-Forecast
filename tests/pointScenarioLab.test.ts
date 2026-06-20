@@ -118,4 +118,70 @@ describe('point-scenario lab compatibility surface', () => {
     expect(result.data.rows[0].provenance.source_type).toBe('data_lab_surface');
     expect(result.data.rows[0].provenance.generated_at).toBe('2026-06-19T00:00:00.000Z');
   });
+
+  it('exposes dataset-level governance/contract/freshness metadata on the route', async () => {
+    const response = await app.request('/api/point-scenarios/lab');
+    const payload = await response.json();
+
+    expect(payload.metadata).toBeDefined();
+    // Exact dataset-level contract literal.
+    expect(payload.metadata.contractVersion).toBe('point_scenario_lab_v1');
+    // Dataset-level freshness timestamp is present and parseable.
+    expect(typeof payload.metadata.generatedAt).toBe('string');
+    expect(Number.isNaN(Date.parse(payload.metadata.generatedAt))).toBe(false);
+  });
+
+  it('marks the seeded route/export output as fixture, never governed', async () => {
+    const response = await app.request('/api/point-scenarios/lab');
+    const payload = await response.json();
+
+    expect(payload.metadata.governanceStatus).toBe('fixture');
+    expect(payload.metadata.governanceStatus).not.toBe('governed');
+    // We know the source explicitly (seeded registry), so it is an explicit marker.
+    expect(payload.metadata.governanceSource).toBe('explicit_marker');
+  });
+
+  it('keeps row-level provenance intact alongside the new dataset-level metadata', async () => {
+    const response = await app.request('/api/point-scenarios/lab');
+    const payload = await response.json();
+
+    for (const row of payload.rows) {
+      expect(row.provenance.provider).toBe('point-prediction-model');
+      expect(typeof row.provenance.model_version).toBe('string');
+      expect(typeof row.provenance.generated_at).toBe('string');
+    }
+    // Backward-compatible: existing canonical top-level shape is unchanged.
+    expect(Array.isArray(payload.rows)).toBe(true);
+    expect(payload.source).toEqual({
+      provider: 'point-prediction-model',
+      location: '/api/point-scenarios/lab',
+      mode: 'api',
+    });
+  });
+
+  it('the artifact export carries the same dataset-level metadata as the route', () => {
+    const result = buildPointScenarioLab({ mode: 'artifact', location: 'point_scenario_lab.json', generatedAt: '2026-06-19T00:00:00.000Z' });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(result.data.metadata.contractVersion).toBe('point_scenario_lab_v1');
+    expect(result.data.metadata.generatedAt).toBe('2026-06-19T00:00:00.000Z');
+    expect(result.data.metadata.governanceStatus).toBe('fixture');
+    expect(result.data.metadata.governanceSource).toBe('explicit_marker');
+  });
+
+  it('lets an explicit governed assertion flow through to dataset-level metadata', () => {
+    const result = buildPointScenarioLab({
+      generatedAt: '2026-06-19T00:00:00.000Z',
+      governance: { status: 'governed', source: 'explicit_marker', promotedAt: '2026-06-19T01:00:00.000Z' },
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(result.data.metadata.governanceStatus).toBe('governed');
+    expect(result.data.metadata.governanceSource).toBe('explicit_marker');
+    expect(result.data.metadata.promotedAt).toBe('2026-06-19T01:00:00.000Z');
+  });
 });

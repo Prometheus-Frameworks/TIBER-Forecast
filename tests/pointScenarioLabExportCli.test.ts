@@ -76,5 +76,11 @@ describe('point-scenario lab export CLI', () => {
     const payload = JSON.parse(readFileSync(outputPath, 'utf8'));
     expect(payload.season).toBeNull();
     expect(payload.available_seasons).toEqual([]);
+    // The on-demand export carries the same dataset-level metadata as the route,
+    // and the seeded artifact is explicitly fixture data (never governed).
+    expect(payload.metadata.contractVersion).toBe('point_scenario_lab_v1');
+    expect(typeof payload.metadata.generatedAt).toBe('string');
+    expect(payload.metadata.governanceStatus).toBe('fixture');
+    expect(payload.metadata.governanceStatus).not.toBe('governed');
   });
 });
