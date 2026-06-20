@@ -1,5 +1,7 @@
 import {
   POINT_SCENARIO_LAB_MODEL_VERSION,
+  type PointScenarioLabGovernanceSource,
+  type PointScenarioLabGovernanceStatus,
   type PointScenarioLabMode,
   type PointScenarioLabResponse,
   type PointScenarioLabRow,
@@ -8,6 +10,15 @@ import { scenarioRegistry } from '../../models/scenarios/registry.js';
 import type { ScenarioRunResult } from '../../models/scenarios/runScenario.js';
 import { projectBatch } from '../projectBatchService.js';
 import { serviceFailure, serviceSuccess, type ServiceResult } from '../result.js';
+import { resolvePointScenarioLabMetadata } from './governance.js';
+
+/** Producer-side governance assertion for the dataset-level metadata block. */
+export interface PointScenarioLabGovernanceInput {
+  status?: PointScenarioLabGovernanceStatus;
+  source?: PointScenarioLabGovernanceSource;
+  promotedAt?: string | null;
+  promotionNotes?: string | null;
+}
 
 export interface BuildPointScenarioLabOptions {
   /** Optional season to scope the lab payload to. Seeded scenarios are season-agnostic. */
@@ -16,12 +27,31 @@ export interface BuildPointScenarioLabOptions {
   mode?: PointScenarioLabMode;
   /** Where the payload is being served from (e.g. the route path or artifact path). */
   location?: string | null;
-  /** Override the wall-clock used for provenance (mostly for deterministic tests). */
+  /** Override the wall-clock used for provenance and dataset-level metadata (mostly for deterministic tests). */
   generatedAt?: string;
+  /**
+   * Explicit producer-side governance assertion for the dataset-level metadata.
+   * When omitted, the payload is marked as fixture data (see `FIXTURE_GOVERNANCE`):
+   * the builder composes the seeded scenario registry, which is illustrative
+   * fixture data and must never be reported as governed.
+   */
+  governance?: PointScenarioLabGovernanceInput;
 }
 
 const PROVIDER = 'point-prediction-model';
 const SOURCE_NAME = 'scenario-export';
+
+/**
+ * Default governance for builder output. The seeded scenario registry is
+ * illustrative fixture data, so PPM marks it explicitly as `fixture`. This is an
+ * explicit marker (we know the source), not a guess — but it is non-promotable,
+ * so a downstream gate keeps it out of governed flows.
+ */
+const FIXTURE_GOVERNANCE: PointScenarioLabGovernanceInput = {
+  status: 'fixture',
+  source: 'explicit_marker',
+  promotionNotes: 'Seeded illustrative point scenarios; fixture data, not governed.',
+};
 
 const sourceTypeForMode = (mode: PointScenarioLabMode): string =>
   mode === 'artifact' ? 'data_lab_surface' : 'compatibility_route';
@@ -115,6 +145,17 @@ export const buildPointScenarioLab = (
     toLabRow(result, { mode, generatedAt, season }),
   );
 
+  // Default to the explicit fixture marker for the seeded registry; honor an
+  // explicit producer assertion when a governed pipeline supplies one.
+  const governance = options.governance ?? FIXTURE_GOVERNANCE;
+  const metadata = resolvePointScenarioLabMetadata({
+    governanceStatus: governance.status,
+    governanceSource: governance.source,
+    generatedAt,
+    promotedAt: governance.promotedAt,
+    promotionNotes: governance.promotionNotes,
+  });
+
   return serviceSuccess<PointScenarioLabResponse>({
     season,
     available_seasons: season == null ? [] : [season],
@@ -124,5 +165,6 @@ export const buildPointScenarioLab = (
       location: options.location ?? null,
       mode,
     },
+    metadata,
   });
 };
