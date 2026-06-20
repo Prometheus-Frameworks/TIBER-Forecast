@@ -56,7 +56,7 @@ export const resolvePointScenarioLabMetadata = (
 
   // Fail closed: no recognized assertion => `unknown`, which a gate must treat
   // as non-promotable. We never infer `governed`.
-  const governanceStatus: PointScenarioLabGovernanceStatus = asserted ?? 'unknown';
+  let governanceStatus: PointScenarioLabGovernanceStatus = asserted ?? 'unknown';
 
   // A source is only meaningful alongside an asserted status. Path inference is
   // honored as a weak hint when explicitly passed, but is never synthesized here.
@@ -67,6 +67,14 @@ export const resolvePointScenarioLabMetadata = (
     governanceSource = input.governanceSource;
   } else {
     governanceSource = 'explicit_marker';
+  }
+
+  // `governed` is the only promotable status, so it may be reported only when it
+  // is backed by an explicit marker. A `governed` claim arriving with a weak path
+  // hint (or no source) is downgraded to `unknown` so path inference can never
+  // surface as governed to a downstream promotion gate.
+  if (governanceStatus === 'governed' && governanceSource !== 'explicit_marker') {
+    governanceStatus = 'unknown';
   }
 
   const metadata: PointScenarioLabMetadata = {

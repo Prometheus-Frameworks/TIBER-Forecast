@@ -38,6 +38,24 @@ describe('resolvePointScenarioLabMetadata (fail-closed dataset metadata)', () =>
     expect(metadata.governanceSource).toBe('unknown');
   });
 
+  it('downgrades a governed claim that is not backed by an explicit marker', () => {
+    const viaPath = resolvePointScenarioLabMetadata({
+      generatedAt: GENERATED_AT,
+      governanceStatus: 'governed',
+      governanceSource: 'path_inference',
+    });
+    // A weak path hint must never surface as governed to a promotion gate.
+    expect(viaPath.governanceStatus).toBe('unknown');
+    expect(viaPath.governanceStatus).not.toBe('governed');
+
+    const viaUnknownSource = resolvePointScenarioLabMetadata({
+      generatedAt: GENERATED_AT,
+      governanceStatus: 'governed',
+      governanceSource: 'unknown',
+    });
+    expect(viaUnknownSource.governanceStatus).toBe('unknown');
+  });
+
   it('treats path inference as a weak hint only (never synthesized, only honored when explicit)', () => {
     const metadata = resolvePointScenarioLabMetadata({
       generatedAt: GENERATED_AT,
