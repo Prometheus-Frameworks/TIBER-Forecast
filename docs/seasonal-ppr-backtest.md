@@ -110,8 +110,13 @@ required to build the target.
 
 **Loader rules** (`src/datasets/seasonal/loadSeasonalPprDataset.ts`):
 
-- Group by `player_id`; preserve `player_name`/`position`/team from the latest
-  available season's final week (deterministic).
+- Group by `player_id`. The **model-facing `position` comes from the
+  input-season (2024) aggregate** — never the target season — so a player who
+  changes positions between 2024 and 2025 cannot leak target-season information
+  into the position feature, the position-mean baseline, or by-position metrics.
+  `team_2024` is likewise taken from the input season. The display
+  `player_name` may use the latest available season's final week (deterministic)
+  because it never feeds model features, baselines, or evaluation.
 - **Season actual rule** (explicit + tested): use the final (max-week) row's
   `season_ppr` when finite; otherwise sum weekly `ppr_points`. No synthetic
   missing-week rows are inserted.

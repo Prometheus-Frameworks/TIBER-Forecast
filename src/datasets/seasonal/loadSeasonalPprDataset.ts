@@ -9,8 +9,10 @@
  * season), per player.
  *
  * Honesty / fail-closed rules (as specified):
- *  - Group by `player_id`; preserve player_name/position/final team
- *    deterministically (latest available season's final week).
+ *  - Group by `player_id`. The model-facing position and team come from the
+ *    INPUT season (never the target season) so a 2024->2025 position change
+ *    cannot leak target-season info into features/baselines/metrics. The display
+ *    player_name may use the latest available season (it never feeds the model).
  *  - Season actual is derived by an EXPLICIT rule: use the final (max-week)
  *    row's `season_ppr` when finite; otherwise sum weekly `ppr_points`.
  *  - Drop rows with missing/invalid `ppr_points`, `player_id`, `season`, or
