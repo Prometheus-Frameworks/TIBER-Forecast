@@ -11,6 +11,24 @@ where the 2025 actual PPR layer is sourced from TIBER-Data. Its only purpose is
 to prove the backtest → report → artifact loop and to make the model's
 limitations obvious — including whether it actually beats a dumb baseline.
 
+## What this is (and is not)
+
+What the PR ships and validates is the **governed loader / evaluation / report /
+artifact harness**, not an approved predictive model:
+
+1. This validates the PPM loader → backtest → report → artifact harness.
+2. The bundled scaffold is **not** full real 2025 coverage — it is PPM-local
+   scaffold/fixture data, never the upstream TIBER-Data artifact.
+3. The current MAE/RMSE is **not** approval for 2026 predictive use.
+4. Real model-quality approval is **deferred** until the canonical TIBER-Data
+   artifact is mounted (via `--ppr-artifact`) and verified.
+5. **No** TIBER-Fantasy integration happens here.
+6. **No** TIBER-Rookies ML is revived.
+7. **No** neural networks and **no** advice language.
+
+PPM does not own or publish TIBER-Data's canonical artifact paths; it consumes
+them only when mounted/provided through the CLI seam.
+
 ## What it predicts
 
 - **Target**: full-season total PPR fantasy points scored in the 2025 NFL

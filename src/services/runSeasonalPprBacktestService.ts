@@ -255,8 +255,9 @@ export const runSeasonalPprBacktestService = (
       top_misses: topMisses,
       limitations: [
         'OUTPUT IS MODEL INFERENCE, NOT OBSERVED REALITY. Predicted PPR values are estimates from a simple model and must not be presented as facts or as advice.',
-        'Dataset is a curated TIBER-Data mirror snapshot with fixture governance; it is not a live governed pull and must not be promoted as governed.',
-        'HARNESS/LOADER VALIDATION ONLY. This proves the TIBER-Data weekly-outcome loader, contract, and backtest loop run and compare against baselines. It does NOT approve the model for 2026 predictive use until a canonical source-backed/governed TIBER-Data artifact is wired and verified.',
+        'Dataset shown here is PPM-local scaffold/fixture coverage with fixture governance, not full real 2025 coverage and not a live governed TIBER-Data pull; it must not be promoted as governed.',
+        'HARNESS/LOADER VALIDATION ONLY. This proves the TIBER-Data weekly-outcome loader, contract, and backtest loop run and compare against baselines. It does NOT approve the model for 2026 predictive use until a canonical source-backed/governed TIBER-Data artifact is mounted and verified.',
+        'Scope guardrails: no TIBER-Fantasy integration, no TIBER-Rookies ML, no neural networks, and no advice language are part of this harness.',
         'Single season pair (2024 inputs -> 2025 outcomes). LOOCV reduces but does not eliminate optimism; there is no out-of-period holdout season.',
         'Small sample of skill-position players only (QB/RB/WR/TE). Results do not generalize to all players, depth pieces, or rookies without 2024 input data.',
         'Season-ending injuries, role/team changes, and rookie breakouts are not modeled and drive the largest misses.',
