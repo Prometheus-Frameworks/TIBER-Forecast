@@ -21,8 +21,12 @@ limitations obvious — including whether it actually beats a dumb baseline.
 ## Run it
 
 ```bash
-npm run backtest:seasonal-ppr -- [outputDir] [--generated-at=<iso>] [--lambda=<n>]
+npm run backtest:seasonal-ppr -- [outputDir] [--generated-at=<iso>] [--lambda=<n>] [--ppr-artifact=<path>]
 ```
+
+With `--ppr-artifact=<path>` the runner reads a real TIBER-Data weekly PPR
+artifact and aggregates it through the loader (see **TIBER-Data integration**
+below). Without it, a bundled **scaffold-only** weekly fixture is used.
 
 Defaults to `data/backtests/seasonal-ppr/`. Passing a fixed `--generated-at`
 makes the run fully deterministic (byte-identical artifacts). Outputs:
@@ -62,20 +66,70 @@ eliminate optimism — see limitations.
 The report includes MAE, RMSE, Pearson correlation, rank correlation, a
 by-position breakdown for every model/baseline, and the largest misses.
 
+## TIBER-Data integration (the loader)
+
+> **This is a harness/loader PR, not a model-quality approval.** It proves the
+> ingestion → aggregation → backtest loop works against the real TIBER-Data
+> artifact shape and compares against baselines. It does **not** approve the
+> model for 2026 predictive use until a canonical source-backed/governed
+> TIBER-Data artifact is wired and verified.
+
+The dataset is built by aggregating TIBER-Data **weekly** outcome rows into
+2024→2025 player rows, rather than from a hand-written table. Integration
+targets (consumed only when mounted; never trusted by path name):
+
+| Lane | Path |
+| --- | --- |
+| Promoted PPR | `exports/promoted/nfl/player_weekly_ppr_outcomes_v1.json` |
+| Source-backed PPR | `data/processed/evidence/player_weekly_ppr_outcomes_2025.source_backed.json` |
+| Promoted usage | `exports/promoted/nfl/player_weekly_usage_v1.json` |
+| Source-backed usage | `data/processed/evidence/player_weekly_usage_2025.source_backed.json` |
+
+The weekly PPR and usage row schemas are mirrored in
+`src/contracts/tiberDataWeeklyOutcomes.ts`. The seasonal target is derived from
+the **PPR** artifact; the usage schema is supported for completeness but is not
+required to build the target.
+
+**Loader rules** (`src/datasets/seasonal/loadSeasonalPprDataset.ts`):
+
+- Group by `player_id`; preserve `player_name`/`position`/team from the latest
+  available season's final week (deterministic).
+- **Season actual rule** (explicit + tested): use the final (max-week) row's
+  `season_ppr` when finite; otherwise sum weekly `ppr_points`. No synthetic
+  missing-week rows are inserted.
+- Null numeric source fields are treated as zero when shaping output.
+- Drop rows with missing/invalid `ppr_points`, `player_id`, `season`, or `week`.
+- A player with 2024 inputs but no usable 2025 outcome → `unavailable`
+  (null actual). A player with only 2025 rows (no 2024 inputs, e.g. rookies) is
+  skipped — it cannot form a 2024→2025 row.
+- **Fail closed** (no dataset) when the same `season|week|player_id` appears with
+  conflicting values; identical duplicates are collapsed with a warning.
+
+### Bundled scaffold
+
+Because this session cannot reach TIBER-Data, a clearly-labeled scaffold weekly
+artifact (`src/datasets/seasonal/fixtures/tiberDataWeeklyPprScaffold.ts`,
+synthesized from `seasonalPprSeedSnapshot.ts`) stands in so the harness runs and
+is testable. It is scaffold-only fixture coverage. To run against real data:
+
+```bash
+npm run backtest:seasonal-ppr -- --ppr-artifact=/path/to/player_weekly_ppr_outcomes_v1.json
+```
+
 ## Governance and fail-closed behavior
 
-- The dataset (`tiber-data-seasonal-ppr-2024-2025`) is a curated, versioned
-  **mirror snapshot** of the TIBER-Data seasonal skill-position PPR table. PPM
-  does not pull live from TIBER-Data (see
-  `tiber-data-fixture-adapter-decision.md`). Its governance status is `fixture`,
-  never `governed`, and it must never masquerade as governed to a promotion gate.
+- Governance status is **`fixture`** by default and is **never** upgraded by path
+  name. `governed` is honored only when TIBER-Data supplies an **explicit marker**
+  (`{ status: 'governed', source: 'explicit_marker' }`); a `governed` claim with
+  any weaker source is downgraded to `fixture`.
 - Rows whose 2025 actual outcome is missing/invalid **fail closed**: they are
   emitted with `governance_status: "unavailable"`, `predicted_ppr: null`, and are
   excluded from all error metrics.
-- The service fails (no artifact) when there are too few usable rows to fit the
-  model, rather than emitting a degenerate report.
+- The loader fails closed on conflicting source rows; the service fails (no
+  artifact) when there are too few usable rows to fit the model.
 - Every report and every prediction row carries
-  `output_kind: "model-inference"`.
+  `output_kind: "model-inference"`. No downstream repo consumes these outputs
+  until a later contract/display PR is approved.
 
 ## Prediction artifact row shape
 
@@ -91,6 +145,8 @@ These are stamped into the report and worth repeating:
 
 - Output is inference, not fact, and not advice.
 - Fixture-sourced dataset; not a live governed pull.
+- **Harness/loader validation only — not approved for 2026 predictive use** until
+  a canonical source-backed/governed TIBER-Data artifact is wired and verified.
 - Single season pair; LOOCV is not an out-of-period holdout.
 - Small skill-position sample; does not generalize to all players or rookies
   without 2024 input data.
@@ -98,6 +154,15 @@ These are stamped into the report and worth repeating:
   largest misses.
 - 2024 box-score volume/efficiency features only; no schedule/age/scheme signals.
 - Not integrated with TIBER-Fantasy; no downstream behavior changes.
+
+## Code map (loader additions)
+
+- Weekly artifact contract: `src/contracts/tiberDataWeeklyOutcomes.ts`
+- Loader: `src/datasets/seasonal/loadSeasonalPprDataset.ts`
+- Artifact parser: `src/datasets/seasonal/parseTiberDataWeeklyArtifact.ts`
+- Scaffold fixture + seed: `src/datasets/seasonal/fixtures/`
+- Default dataset (built via loader): `src/datasets/seasonal/tiberDataSeasonalPprDataset.ts`
+- Loader tests: `tests/loadSeasonalPprDataset.test.ts`
 
 ## Code map
 

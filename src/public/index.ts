@@ -175,6 +175,26 @@ export type {
   SeasonalPprBacktestReport,
 } from '../contracts/seasonalPprBacktest.js';
 export { tiberDataSeasonalPprDataset } from '../datasets/seasonal/tiberDataSeasonalPprDataset.js';
+export {
+  TIBER_DATA_WEEKLY_PPR_ARTIFACT_VERSION,
+  TIBER_DATA_WEEKLY_USAGE_ARTIFACT_VERSION,
+  TIBER_DATA_ARTIFACT_PATHS,
+  tiberDataWeeklyScoringPositions,
+  computePprPoints,
+  nullableToZero,
+} from '../contracts/tiberDataWeeklyOutcomes.js';
+export type {
+  TiberDataWeeklyPprRow,
+  TiberDataWeeklyUsageRow,
+} from '../contracts/tiberDataWeeklyOutcomes.js';
+export { loadSeasonalPprDatasetFromWeeklyOutcomes } from '../datasets/seasonal/loadSeasonalPprDataset.js';
+export type {
+  LoadSeasonalPprDatasetOptions,
+  SeasonalDatasetGovernanceMarker,
+} from '../datasets/seasonal/loadSeasonalPprDataset.js';
+export { parseTiberDataWeeklyPprArtifact } from '../datasets/seasonal/parseTiberDataWeeklyArtifact.js';
+export { buildScaffoldWeeklyPprRows, tiberDataWeeklyPprScaffoldRows } from '../datasets/seasonal/fixtures/tiberDataWeeklyPprScaffold.js';
+export { seasonalPprSeedSnapshot } from '../datasets/seasonal/fixtures/seasonalPprSeedSnapshot.js';
 export { trainSeasonalRidgeModel, seasonalPprFeatureList } from '../models/seasonal/seasonalPprModel.js';
 export { baselinePrevYearPpr, baselinePositionMean } from '../models/seasonal/seasonalPprBaselines.js';
 export {
