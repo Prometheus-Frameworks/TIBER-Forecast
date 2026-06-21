@@ -14,7 +14,8 @@
     "dev:api": "tsx watch src/server.ts",
     "build": "tsc --noEmit",
     "test": "vitest run",
-    "export:point-scenario-lab": "tsx scripts/exportPointScenarioLab.ts"
+    "export:point-scenario-lab": "tsx scripts/exportPointScenarioLab.ts",
+    "backtest:seasonal-ppr": "tsx scripts/runSeasonalPprBacktest.ts"
   },
   "engines": {
     "node": ">=20"

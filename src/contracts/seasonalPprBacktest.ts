@@ -1,0 +1,187 @@
+/**
+ * Contract for the seasonal PPR backtest (Issue #49).
+ *
+ * This is the first governed Point-Prediction-Model backtest: it uses 2024
+ * input/player data to predict known 2025 full-season PPR outcomes, where the
+ * 2025 actual PPR layer is sourced from TIBER-Data.
+ *
+ * Design intent (mirrors `src/contracts/projectionArtifacts.ts` and the
+ * point-scenario-lab governance resolver): PPM is the *producer* here, so every
+ * output is explicitly stamped as MODEL INFERENCE — never observed reality — and
+ * governance fails closed. A row is only ever reported with a usable prediction
+ * when its target outcome is present and finite; anything missing/invalid is
+ * marked `unavailable` rather than silently coerced. Nothing downstream
+ * (TIBER-Fantasy Management, Team Direction, promotion gates) may consume these
+ * outputs until a later contract/display PR is approved.
+ */
+import type { ScoringPosition } from './scoring.js';
+import type { TiberDataSourceDatasetRef } from './tiberDataProjectionInput.js';
+
+export const SEASONAL_PPR_BACKTEST_MODEL_VERSION = 'seasonal-ppr-ridge-v1' as const;
+export const SEASONAL_PPR_BACKTEST_REPORT_VERSION = 'seasonal-ppr-backtest-report-v1' as const;
+export const SEASONAL_PPR_PREDICTION_ARTIFACT_VERSION = 'seasonal-ppr-prediction-v1' as const;
+
+export const SEASONAL_PPR_INPUT_SEASON = 2024 as const;
+export const SEASONAL_PPR_TARGET_SEASON = 2025 as const;
+
+/**
+ * Plain-language definition of what is being predicted. Stamped onto the report
+ * so the artifact is self-describing and cannot be mistaken for per-game,
+ * non-PPR, or projected-vs-actual output.
+ */
+export const SEASONAL_PPR_TARGET_DEFINITION =
+  'Full-season total PPR fantasy points scored in the 2025 NFL regular season, predicted from 2024-season input features only.' as const;
+
+/**
+ * Every emitted row/report is inference, not observed reality. This marker is
+ * stamped on outputs so a downstream reader can never treat a predicted value as
+ * a measured fact.
+ */
+export const SEASONAL_PPR_OUTPUT_KIND = 'model-inference' as const;
+export type SeasonalPprOutputKind = typeof SEASONAL_PPR_OUTPUT_KIND;
+
+/**
+ * Per-row governance status. Fails closed: a row is `inference` (usable) only
+ * when its target outcome is present and finite; `unavailable` otherwise. We
+ * never synthesize `governed` here — the dataset itself is fixture-sourced.
+ */
+export type SeasonalPprRowGovernanceStatus = 'inference' | 'unavailable';
+
+/**
+ * Dataset-level governance, aligned with the point-scenario-lab statuses. The
+ * curated TIBER-Data mirror used by this backtest is `fixture` — it must never
+ * masquerade as `governed`.
+ */
+export type SeasonalPprDatasetGovernanceStatus = 'governed' | 'fixture' | 'ungoverned' | 'unknown';
+
+/** Whether a row carried enough present input features to be scored by the model. */
+export type SeasonalPprFeatureCoverageStatus = 'complete' | 'partial';
+
+/** A single input feature consumed by the seasonal model, for report transparency. */
+export interface SeasonalPprFeatureSpec {
+  name: string;
+  kind: 'numeric' | 'categorical';
+  description: string;
+}
+
+/**
+ * One curated player observation: 2024 input features plus the 2025 actual PPR
+ * outcome (sourced from TIBER-Data). `ppr_2025_actual` is `null` when the
+ * outcome is unavailable, which forces the row to fail closed.
+ */
+export interface SeasonalPlayerObservation {
+  player_id: string;
+  player_name: string;
+  position: ScoringPosition;
+  team_2024: string;
+  /** 2024 input features. */
+  games_2024: number;
+  ppr_2024: number;
+  receptions_2024: number;
+  targets_2024: number;
+  rush_attempts_2024: number;
+  /** 2025 actual outcome layer, sourced from TIBER-Data. Null => unavailable. */
+  ppr_2025_actual: number | null;
+}
+
+/** Dataset descriptor: provenance + governance for the curated observation set. */
+export interface SeasonalPprDatasetDescriptor {
+  dataset_id: string;
+  dataset_version: string;
+  governance_status: SeasonalPprDatasetGovernanceStatus;
+  /** TIBER-Data refs for the 2025 actual PPR outcome layer and 2024 inputs. */
+  source_dataset_refs: TiberDataSourceDatasetRef[];
+  /** Honest provenance note. */
+  provenance: string;
+  observations: SeasonalPlayerObservation[];
+}
+
+/** One prediction row in the governed artifact (one per player observation). */
+export interface SeasonalPprPredictionRow {
+  artifact_version: typeof SEASONAL_PPR_PREDICTION_ARTIFACT_VERSION;
+  output_kind: SeasonalPprOutputKind;
+  model_version: typeof SEASONAL_PPR_BACKTEST_MODEL_VERSION;
+  player_id: string;
+  player_name: string;
+  position: ScoringPosition;
+  input_season: typeof SEASONAL_PPR_INPUT_SEASON;
+  target_season: typeof SEASONAL_PPR_TARGET_SEASON;
+  /** Model-inferred 2025 PPR. Null when the row is `unavailable`. */
+  predicted_ppr: number | null;
+  /** Observed 2025 PPR from TIBER-Data. Null when unavailable. */
+  actual_ppr: number | null;
+  /** |predicted - actual|. Null when either side is unavailable. */
+  absolute_error: number | null;
+  feature_coverage_status: SeasonalPprFeatureCoverageStatus;
+  /** Names of features that were present (non-default) for this row. */
+  features_present: string[];
+  governance_status: SeasonalPprRowGovernanceStatus;
+  source_dataset_refs: TiberDataSourceDatasetRef[];
+  dataset_version: string;
+  generated_at: string;
+}
+
+/** MAE/RMSE/correlation summary over a set of scored rows. */
+export interface SeasonalPprErrorSummary {
+  sample_size: number;
+  mae: number;
+  rmse: number;
+  /** Pearson correlation between predicted and actual; null when undefined. */
+  correlation: number | null;
+  /** Spearman-style rank correlation; null when undefined. */
+  rank_correlation: number | null;
+}
+
+/** Named model/baseline result for the report's comparison table. */
+export interface SeasonalPprModelEvaluation {
+  name: string;
+  is_baseline: boolean;
+  description: string;
+  overall: SeasonalPprErrorSummary;
+  by_position: Partial<Record<ScoringPosition, SeasonalPprErrorSummary>>;
+}
+
+/** A single large miss, for limitations transparency. */
+export interface SeasonalPprMiss {
+  player_id: string;
+  player_name: string;
+  position: ScoringPosition;
+  predicted_ppr: number;
+  actual_ppr: number;
+  absolute_error: number;
+}
+
+export interface SeasonalPprBacktestReport {
+  report_version: typeof SEASONAL_PPR_BACKTEST_REPORT_VERSION;
+  output_kind: SeasonalPprOutputKind;
+  model_version: typeof SEASONAL_PPR_BACKTEST_MODEL_VERSION;
+  generated_at: string;
+  target_definition: typeof SEASONAL_PPR_TARGET_DEFINITION;
+  input_season: typeof SEASONAL_PPR_INPUT_SEASON;
+  target_season: typeof SEASONAL_PPR_TARGET_SEASON;
+  dataset: {
+    dataset_id: string;
+    dataset_version: string;
+    governance_status: SeasonalPprDatasetGovernanceStatus;
+    source_dataset_refs: TiberDataSourceDatasetRef[];
+    provenance: string;
+    /** Observations supplied to the backtest. */
+    observation_count: number;
+    /** Rows with a usable 2025 actual outcome (scored). */
+    scored_row_count: number;
+    /** Rows failed closed for missing/invalid outcome. */
+    unavailable_row_count: number;
+  };
+  feature_list: SeasonalPprFeatureSpec[];
+  /** Per-feature count of rows missing (defaulted) coverage. */
+  missing_feature_coverage: Array<{ feature: string; rows_missing: number }>;
+  /** Validation strategy used for the model so reviewers can judge optimism. */
+  evaluation_method: string;
+  model: SeasonalPprModelEvaluation;
+  baselines: SeasonalPprModelEvaluation[];
+  /** Whether the model's overall MAE beats the best baseline's overall MAE. */
+  beats_baseline: boolean;
+  beats_baseline_summary: string;
+  top_misses: SeasonalPprMiss[];
+  limitations: string[];
+}
