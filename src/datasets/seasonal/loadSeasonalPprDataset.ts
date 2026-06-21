@@ -272,16 +272,21 @@ export const loadSeasonalPprDatasetFromWeeklyOutcomes = (
     const targetRows = seasons.get(targetSeason);
     const targetAgg = targetRows && targetRows.length > 0 ? aggregateSeason(targetSeason, targetRows) : undefined;
 
-    // Identity is preserved from the latest available season's final week.
-    const identity = targetAgg ?? inputAgg;
-    if (!isSkillPosition(identity.position)) {
+    // The model-facing position MUST come from the input season only: it is
+    // one-hot encoded as a feature and drives the position-mean baseline and
+    // by-position metrics, so using the target-season position for a player who
+    // changed positions would leak 2025 information into a 2024-inputs backtest.
+    const modelPosition = inputAgg.position;
+    if (!isSkillPosition(modelPosition)) {
       continue;
     }
+    // Display name may use the latest available season (it never feeds the model).
+    const displayName = (targetAgg ?? inputAgg).player_name;
 
     observations.push({
       player_id: playerId,
-      player_name: identity.player_name,
-      position: identity.position,
+      player_name: displayName,
+      position: modelPosition,
       team_2024: inputAgg.team,
       games_2024: inputAgg.games_played,
       ppr_2024: Number(inputAgg.season_actual.toFixed(4)),

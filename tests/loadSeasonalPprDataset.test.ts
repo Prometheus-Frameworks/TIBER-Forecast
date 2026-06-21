@@ -163,6 +163,21 @@ describe('loadSeasonalPprDatasetFromWeeklyOutcomes', () => {
     expect(ds.observations[0].rush_attempts_2024).toBe(0);
   });
 
+  it('uses the input-season position (no target-season leakage) when a player changes position', () => {
+    // Player is RB in 2024 (input) and WR in 2025 (target). The model-facing
+    // position must reflect 2024 only, since position feeds the model/baseline.
+    const result = loadSeasonalPprDatasetFromWeeklyOutcomes(
+      [
+        baseRow({ player_id: 'switch', season: 2024, week: 1, position: 'RB', ppr_points: 10 }),
+        baseRow({ player_id: 'switch', season: 2025, week: 1, position: 'WR', ppr_points: 12 }),
+      ],
+      {},
+    );
+    const ds = ok(result);
+    const obs = ds.observations.find((row) => row.player_id === 'switch');
+    expect(obs?.position).toBe('RB');
+  });
+
   it('skips players that have only a target season (no input features)', () => {
     const result = loadSeasonalPprDatasetFromWeeklyOutcomes(
       [
