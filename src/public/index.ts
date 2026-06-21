@@ -150,6 +150,53 @@ export { compareProjectionToConsensusService } from '../services/compareProjecti
 export { scoreMarketEdgesService } from '../services/scoreMarketEdgesService.js';
 export { scoreRegressionCandidatesService, scoreRegressionCandidates, buildProjectionDiagnostic } from '../services/scoreRegressionCandidatesService.js';
 export { runModelBacktestService } from '../services/runModelBacktestService.js';
+
+// Seasonal PPR backtest (Issue #49): 2024 inputs -> 2025 PPR, actuals from TIBER-Data.
+export {
+  SEASONAL_PPR_BACKTEST_MODEL_VERSION,
+  SEASONAL_PPR_BACKTEST_REPORT_VERSION,
+  SEASONAL_PPR_PREDICTION_ARTIFACT_VERSION,
+  SEASONAL_PPR_INPUT_SEASON,
+  SEASONAL_PPR_TARGET_SEASON,
+  SEASONAL_PPR_TARGET_DEFINITION,
+  SEASONAL_PPR_OUTPUT_KIND,
+} from '../contracts/seasonalPprBacktest.js';
+export type {
+  SeasonalPlayerObservation,
+  SeasonalPprDatasetDescriptor,
+  SeasonalPprDatasetGovernanceStatus,
+  SeasonalPprRowGovernanceStatus,
+  SeasonalPprFeatureCoverageStatus,
+  SeasonalPprFeatureSpec,
+  SeasonalPprPredictionRow,
+  SeasonalPprErrorSummary,
+  SeasonalPprModelEvaluation,
+  SeasonalPprMiss,
+  SeasonalPprBacktestReport,
+} from '../contracts/seasonalPprBacktest.js';
+export { tiberDataSeasonalPprDataset } from '../datasets/seasonal/tiberDataSeasonalPprDataset.js';
+export { trainSeasonalRidgeModel, seasonalPprFeatureList } from '../models/seasonal/seasonalPprModel.js';
+export { baselinePrevYearPpr, baselinePositionMean } from '../models/seasonal/seasonalPprBaselines.js';
+export {
+  summarizeSeasonalErrors,
+  summarizeSeasonalErrorsByPosition,
+} from '../datasets/seasonal/evaluateSeasonalPpr.js';
+export { runSeasonalPprBacktestService } from '../services/runSeasonalPprBacktestService.js';
+export type {
+  RunSeasonalPprBacktestOptions,
+  RunSeasonalPprBacktestOutput,
+  RunSeasonalPprBacktestResult,
+} from '../services/runSeasonalPprBacktestService.js';
+export {
+  writeSeasonalPprBacktestArtifacts,
+  SEASONAL_PPR_REPORT_FILENAME,
+  SEASONAL_PPR_PREDICTIONS_FILENAME,
+} from '../artifacts/writeSeasonalPprBacktestArtifacts.js';
+export type {
+  WriteSeasonalPprBacktestArtifactsInput,
+  WriteSeasonalPprBacktestArtifactsOutput,
+  WrittenSeasonalPprArtifact,
+} from '../artifacts/writeSeasonalPprBacktestArtifacts.js';
 export type {
   BuildFeatureBatchOutput,
   BuildHistoricalDatasetOutput,

@@ -32,6 +32,7 @@ See `docs/migration-scoring-kernel.md` and `src/legacy/README.md`.
 ## Architecture / governance docs
 - [Ownership boundaries and contract map](docs/ownership-boundaries.md)
 - [TIBER-Data ingestion readiness report](docs/tiber-data-ingestion-readiness.md)
+- [Seasonal PPR backtest (2024 → 2025), model inference only](docs/seasonal-ppr-backtest.md)
 - `docs/migration-scoring-kernel.md`
 - `src/legacy/README.md`
 
