@@ -64,8 +64,45 @@ const numericVector = (observation: SeasonalPlayerObservation): number[] =>
 const positionDummies = (position: ScoringPosition): number[] =>
   POSITIONS.filter((candidate) => candidate !== 'TE').map((candidate) => (candidate === position ? 1 : 0));
 
+/**
+ * One additive term in the ridge prediction: `contribution = coefficient *
+ * design_value`. Reported for interpretability only — it describes how the model
+ * combined inputs, NOT any causal football effect.
+ */
+export interface SeasonalRidgeContribution {
+  /** Feature label, e.g. `ppr_2024` or `position=WR`. */
+  feature: string;
+  kind: 'numeric' | 'position';
+  /** Raw input value (e.g. 240 PPR, or 1 for the active position dummy). */
+  input_value: number;
+  /** Value actually fed to the model: standardized numeric, or 0/1 dummy. */
+  standardized_value: number;
+  /** Learned coefficient for this column. */
+  coefficient: number;
+  /** `coefficient * standardized_value`; sign shows push up/down. */
+  contribution: number;
+}
+
+/**
+ * Deterministic, additive decomposition of a single prediction:
+ * `prediction = max(0, intercept + sum(contributions))`. Exposes the existing
+ * learned coefficients; it does not change what `predict` returns.
+ */
+export interface SeasonalRidgeExplanation {
+  intercept: number;
+  /** intercept + sum of contributions (pre-clamp). */
+  raw_prediction: number;
+  /** max(0, raw_prediction) — matches `predict`. */
+  prediction: number;
+  /** True when the non-negativity clamp changed the raw prediction. */
+  clamped: boolean;
+  contributions: SeasonalRidgeContribution[];
+}
+
 export interface SeasonalRidgeModel {
   predict: (observation: SeasonalPlayerObservation) => number;
+  /** Additive feature-contribution breakdown for one observation (mechanics only). */
+  explain: (observation: SeasonalPlayerObservation) => SeasonalRidgeExplanation;
 }
 
 export interface TrainSeasonalRidgeOptions {
@@ -142,14 +179,50 @@ export const trainSeasonalRidgeModel = (
   const xty = multiplyVector(xt, targets);
   const coefficients = solveLinearSystem(xtx, xty);
 
+  // Non-reference position columns, in the same order as `positionDummies`.
+  const nonReferencePositions = POSITIONS.filter((candidate) => candidate !== 'TE');
+  const numericCount = NUMERIC_FEATURES.length;
+
+  const rawPrediction = (observation: SeasonalPlayerObservation): number =>
+    designRow(observation).reduce((sum, value, index) => sum + value * coefficients[index], 0);
+
   return {
-    predict: (observation) => {
-      const prediction = designRow(observation).reduce(
-        (sum, value, index) => sum + value * coefficients[index],
-        0,
-      );
+    predict: (observation) =>
       // PPR totals are non-negative; clamp to avoid implausible negatives.
-      return Math.max(0, prediction);
+      Math.max(0, rawPrediction(observation)),
+
+    explain: (observation) => {
+      const numeric = numericVector(observation);
+      const standardized = standardize(numeric);
+      const intercept = coefficients[0];
+
+      const contributions: SeasonalRidgeContribution[] = NUMERIC_FEATURES.map((feature, i) => ({
+        feature: feature.name,
+        kind: 'numeric' as const,
+        input_value: numeric[i],
+        standardized_value: standardized[i],
+        coefficient: coefficients[1 + i],
+        contribution: coefficients[1 + i] * standardized[i],
+      }));
+
+      // Position is one-hot with TE as the reference level (absorbed into the
+      // intercept). Report the player's own position column: its coefficient for
+      // QB/RB/WR, or a zero contribution for the TE reference.
+      const activeIndex = nonReferencePositions.findIndex((candidate) => candidate === observation.position);
+      const positionCoefficient = activeIndex >= 0 ? coefficients[1 + numericCount + activeIndex] : 0;
+      const positionDummy = activeIndex >= 0 ? 1 : 0;
+      contributions.push({
+        feature: `position=${observation.position}`,
+        kind: 'position',
+        input_value: positionDummy,
+        standardized_value: positionDummy,
+        coefficient: positionCoefficient,
+        contribution: positionCoefficient * positionDummy,
+      });
+
+      const raw = rawPrediction(observation);
+      const prediction = Math.max(0, raw);
+      return { intercept, raw_prediction: raw, prediction, clamped: prediction !== raw, contributions };
     },
   };
 };

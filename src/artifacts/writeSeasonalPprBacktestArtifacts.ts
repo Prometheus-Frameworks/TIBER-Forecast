@@ -14,6 +14,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type {
   SeasonalPprBacktestReport,
+  SeasonalPprPredictionExplanation,
   SeasonalPprPredictionRow,
 } from '../contracts/seasonalPprBacktest.js';
 import { serviceFailure, serviceSuccess } from '../services/result.js';
@@ -21,15 +22,18 @@ import type { ServiceResult } from '../services/result.js';
 
 export const SEASONAL_PPR_REPORT_FILENAME = 'seasonal_ppr_backtest_report.json';
 export const SEASONAL_PPR_PREDICTIONS_FILENAME = 'seasonal_ppr_predictions.jsonl';
+export const SEASONAL_PPR_EXPLANATIONS_FILENAME = 'seasonal_ppr_prediction_explanations.jsonl';
 
 export interface WriteSeasonalPprBacktestArtifactsInput {
   output_dir: string;
   report: SeasonalPprBacktestReport;
   predictions: SeasonalPprPredictionRow[];
+  /** Per-player explanation rows; written as an additive JSONL artifact. */
+  explanations: SeasonalPprPredictionExplanation[];
 }
 
 export interface WrittenSeasonalPprArtifact {
-  artifact: 'report' | 'predictions';
+  artifact: 'report' | 'predictions' | 'explanations';
   path: string;
   row_count: number;
 }
@@ -54,15 +58,18 @@ export const writeSeasonalPprBacktestArtifacts = async (
 
     const reportPath = path.join(outputDir, SEASONAL_PPR_REPORT_FILENAME);
     const predictionsPath = path.join(outputDir, SEASONAL_PPR_PREDICTIONS_FILENAME);
+    const explanationsPath = path.join(outputDir, SEASONAL_PPR_EXPLANATIONS_FILENAME);
 
     await writeFile(reportPath, prettyJson(input.report), 'utf8');
     await writeFile(predictionsPath, jsonl(input.predictions), 'utf8');
+    await writeFile(explanationsPath, jsonl(input.explanations), 'utf8');
 
     return serviceSuccess({
       output_dir: outputDir,
       written_artifacts: [
         { artifact: 'report', path: reportPath, row_count: 1 },
         { artifact: 'predictions', path: predictionsPath, row_count: input.predictions.length },
+        { artifact: 'explanations', path: explanationsPath, row_count: input.explanations.length },
       ],
     });
   } catch (error) {

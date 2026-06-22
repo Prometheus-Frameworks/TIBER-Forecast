@@ -11,10 +11,47 @@
 import type {
   SeasonalPprBacktestReport,
   SeasonalPprErrorSummary,
+  SeasonalPprFeatureContribution,
+  SeasonalPprPredictionExplanation,
   SeasonalPprPredictionRow,
 } from '../contracts/seasonalPprBacktest.js';
 import { seasonalPprFixtureWarningApplies } from './buildModelContextExport.js';
 import { SEASONAL_PPR_GENERATE_COMMAND } from './loadSeasonalPprArtifacts.js';
+
+/** Plain-language operator glossary for the headline metrics (Issue #57). */
+const METRIC_GLOSSARY: ReadonlyArray<{ metric: string; tag: string; explanation: string }> = [
+  {
+    metric: 'MAE',
+    tag: 'Average miss',
+    explanation: 'Average absolute prediction error in PPR points. Lower is better.',
+  },
+  {
+    metric: 'RMSE',
+    tag: 'Big-miss sensitive',
+    explanation:
+      'Like MAE, but large misses are penalized more heavily. If RMSE is much higher than MAE, the model has some large misses.',
+  },
+  {
+    metric: 'Correlation',
+    tag: 'Direction signal',
+    explanation:
+      'How strongly predicted and actual PPR move together. Higher means the model generally points in the right direction.',
+  },
+  {
+    metric: 'Rank correlation',
+    tag: 'Ordering signal',
+    explanation: 'How well the model orders players relative to actual outcomes.',
+  },
+  {
+    metric: 'Beats baseline',
+    tag: 'Better than dumb comparison',
+    explanation:
+      'Whether the model beat the best simple baseline. Useful, but not sufficient for trust or deployment approval.',
+  },
+];
+
+const METRIC_GLOSSARY_REMINDER =
+  'These metrics describe harness performance on the current artifact. They do not make the model decision-grade or approved for 2026 predictive use.';
 
 const escapeHtml = (value: unknown): string =>
   String(value)
@@ -67,7 +104,13 @@ const PAGE_STYLE = `
   ul.lim { padding-left: 18px; margin: 0; }
   ul.lim li { margin: 4px 0; color: #cdd5ea; font-size: 13px; }
   .links a { color: #8fb4ff; margin-right: 14px; font-size: 13px; }
+  a.explain { color: #8fb4ff; font-size: 12px; text-decoration: none; }
+  a.explain:hover { text-decoration: underline; }
   code { background: #131a2a; padding: 1px 6px; border-radius: 4px; font-size: 12px; }
+  td.pos, span.pos { color: #6ee7a8; }
+  td.neg, span.neg { color: #f0a0b8; }
+  .panel { background: #121826; border: 1px solid #2d3a5e; border-radius: 8px; padding: 14px 16px; margin: 0 0 12px; }
+  .panel h3 { margin: 14px 0 6px; font-size: 13px; color: #93a0bf; }
   footer { margin-top: 36px; color: #6b7693; font-size: 12px; }
 `;
 
@@ -121,10 +164,14 @@ const topMissBars = (report: SeasonalPprBacktestReport): BarItem[] =>
     .slice(0, 10)
     .map((miss) => ({ label: `${miss.player_name} (${miss.position})`, value: miss.absolute_error, variant: 'miss' as const }));
 
-const renderPredictionTable = (predictions: SeasonalPprPredictionRow[]): string => {
+const renderPredictionTable = (
+  predictions: SeasonalPprPredictionRow[],
+  explainableIds?: ReadonlySet<string>,
+): string => {
   if (predictions.length === 0) {
     return '<p class="sub">No prediction rows available.</p>';
   }
+  const explainColumn = explainableIds !== undefined && explainableIds.size > 0;
   // Show the most informative subset: largest absolute errors first, with
   // unavailable rows (null error) sorted last. Full set is at the export links.
   const ordered = [...predictions].sort((a, b) => {
@@ -136,6 +183,13 @@ const renderPredictionTable = (predictions: SeasonalPprPredictionRow[]): string 
   const rows = shown
     .map((row) => {
       const tagClass = row.governance_status === 'inference' ? 'tag-inference' : 'tag-unavailable';
+      const explainCell = explainColumn
+        ? `<td>${
+            explainableIds?.has(row.player_id)
+              ? `<a class="explain" href="/studio?explain=${encodeURIComponent(row.player_id)}#explain">Explain</a>`
+              : '—'
+          }</td>`
+        : '';
       return `<tr>
         <td>${escapeHtml(row.player_name)}</td>
         <td>${escapeHtml(row.position)}</td>
@@ -144,6 +198,7 @@ const renderPredictionTable = (predictions: SeasonalPprPredictionRow[]): string 
         <td class="num">${fmt(row.absolute_error, 1)}</td>
         <td>${escapeHtml(row.feature_coverage_status)}</td>
         <td><span class="tag ${tagClass}">${escapeHtml(row.governance_status)}</span></td>
+        ${explainCell}
       </tr>`;
     })
     .join('');
@@ -151,8 +206,82 @@ const renderPredictionTable = (predictions: SeasonalPprPredictionRow[]): string 
       Full set: <a href="/api/studio/seasonal-ppr/predictions">predictions JSON</a>.</p>
     <table><thead><tr>
       <th>Player</th><th>Pos</th><th>Predicted PPR</th><th>Actual PPR</th><th>Abs error</th>
-      <th>Feature coverage</th><th>Governance</th>
+      <th>Feature coverage</th><th>Governance</th>${explainColumn ? '<th>Explain</th>' : ''}
     </tr></thead><tbody>${rows}</tbody></table>`;
+};
+
+/** Plain-language metric glossary table + the not-decision-grade reminder. */
+const renderMetricGlossary = (): string => {
+  const rows = METRIC_GLOSSARY.map(
+    (entry) => `<tr>
+      <td><strong>${escapeHtml(entry.metric)}</strong></td>
+      <td><span class="chip">${escapeHtml(entry.tag)}</span></td>
+      <td>${escapeHtml(entry.explanation)}</td>
+    </tr>`,
+  ).join('');
+  return `<table><thead><tr><th>Metric</th><th>Tag</th><th>What it means</th></tr></thead>
+      <tbody>${rows}</tbody></table>
+    <div class="banner banner-warn" style="font-weight:500">${escapeHtml(METRIC_GLOSSARY_REMINDER)}</div>`;
+};
+
+const renderContributionRows = (
+  contributions: SeasonalPprFeatureContribution[],
+  variant: 'pos' | 'neg',
+): string => {
+  if (contributions.length === 0) {
+    return `<tr><td colspan="3" class="sub">None.</td></tr>`;
+  }
+  return contributions
+    .map(
+      (c) => `<tr>
+        <td>${escapeHtml(c.feature)}</td>
+        <td class="num">${fmt(c.input_value, 2)}</td>
+        <td class="num ${variant}">${c.contribution >= 0 ? '+' : ''}${fmt(c.contribution, 2)}</td>
+      </tr>`,
+    )
+    .join('');
+};
+
+/** Per-player model-mechanics explanation panel (rendered for ?explain=<id>). */
+const renderExplanationPanel = (explanation: SeasonalPprPredictionExplanation): string => {
+  const meta = `<div class="grid">
+      ${card('Player', `${explanation.player_name} (${explanation.player_id})`)}
+      ${card('Position', explanation.position)}
+      ${card('Predicted PPR', fmt(explanation.predicted_ppr, 1))}
+      ${card('Actual PPR', fmt(explanation.actual_ppr, 1))}
+      ${card('Absolute error', fmt(explanation.absolute_error, 1))}
+      ${card('Model baseline (intercept)', fmt(explanation.intercept, 1))}
+      ${card('Model version', explanation.model_version)}
+      ${card('Data source', explanation.data_source)}
+      ${card('Governance', explanation.governance_status)}
+      ${card('Input season', explanation.input_season)}
+      ${card('Target season', explanation.target_season)}
+    </div>`;
+
+  if (explanation.explanation_status !== 'explained') {
+    return `<div class="panel" id="explain">
+      <h2 style="margin-top:0">Explain — ${escapeHtml(explanation.player_name)}</h2>
+      <div class="banner banner-warn">This row is <strong>unavailable</strong> (no usable 2025 outcome), so it has
+        no model prediction to explain. No contributions are synthesized.</div>
+      ${meta}
+      <div class="banner banner-inference" style="font-weight:500">${escapeHtml(explanation.explanation_warning)}</div>
+    </div>`;
+  }
+
+  const table = (heading: string, contribs: SeasonalPprFeatureContribution[], variant: 'pos' | 'neg'): string =>
+    `<h3>${escapeHtml(heading)}</h3>
+     <table><thead><tr><th>Feature</th><th>Input value</th><th>Model contribution</th></tr></thead>
+       <tbody>${renderContributionRows(contribs, variant)}</tbody></table>`;
+
+  return `<div class="panel" id="explain">
+      <h2 style="margin-top:0">Explain — ${escapeHtml(explanation.player_name)}</h2>
+      <div class="banner banner-inference" style="font-weight:500">${escapeHtml(explanation.explanation_warning)}</div>
+      ${meta}
+      <p class="sub">prediction = model baseline (${fmt(explanation.intercept, 1)}) + the feature contributions below.
+        Contributions are <code>coefficient × standardized feature value</code> — model mechanics, not football causes.</p>
+      ${table('Pushed prediction up', explanation.top_positive_contributions, 'pos')}
+      ${table('Pushed prediction down', explanation.top_negative_contributions, 'neg')}
+    </div>`;
 };
 
 const shell = (title: string, body: string): string =>
@@ -173,11 +302,30 @@ export const renderStudioNotFound = (message: string): string =>
      <p class="sub">This page is a read-only inspection surface; it never synthesizes report data.</p>`,
   );
 
+export interface RenderStudioPageOptions {
+  /** Per-player explanations, when the additive artifact is present. */
+  explanations?: SeasonalPprPredictionExplanation[];
+  /** `?explain=<playerId>` selection to render an explanation panel. */
+  explainPlayerId?: string;
+}
+
 export const renderStudioPage = (
   report: SeasonalPprBacktestReport,
   predictions: SeasonalPprPredictionRow[],
+  options: RenderStudioPageOptions = {},
 ): string => {
   const fixtureWarn = seasonalPprFixtureWarningApplies(report);
+
+  const explanations = options.explanations ?? [];
+  const explanationsById = new Map(explanations.map((row) => [row.player_id, row]));
+  // Only rows that actually carry an additive decomposition are linkable.
+  const explainableIds = new Set(
+    explanations.filter((row) => row.explanation_status === 'explained').map((row) => row.player_id),
+  );
+  const selectedExplanation =
+    options.explainPlayerId !== undefined ? explanationsById.get(options.explainPlayerId) : undefined;
+  const explanationPanel = selectedExplanation ? renderExplanationPanel(selectedExplanation) : '';
+  const explanationsAvailable = explanations.length > 0;
   // Fail closed on provenance: only the two known discriminator values are
   // asserted. A missing/unrecognized data_source (e.g. an older or externally
   // mounted report that predates this field) is labeled "unknown" rather than
@@ -240,6 +388,9 @@ export const renderStudioPage = (
     </div>
     <div class="banner banner-inference" style="font-weight:500">${escapeHtml(report.beats_baseline_summary)}</div>
 
+    <h2>What these metrics mean</h2>
+    ${renderMetricGlossary()}
+
     <h2>Model vs baseline — MAE</h2>
     ${renderBars(maeBars(report))}
 
@@ -252,8 +403,18 @@ export const renderStudioPage = (
     <h2>Top misses by absolute error</h2>
     ${renderBars(topMissBars(report), 1)}
 
+    ${
+      explanationPanel
+        ? `<h2>Per-player explanation</h2>${explanationPanel}`
+        : explanationsAvailable
+          ? `<h2>Per-player explanation</h2>
+             <p class="sub">Click <strong>Explain</strong> on a prediction row below to see how the ridge model
+               combined that player's input features (model mechanics, not football causes).</p>`
+          : ''
+    }
+
     <h2>Predictions</h2>
-    ${renderPredictionTable(predictions)}
+    ${renderPredictionTable(predictions, explainableIds)}
 
     <h2>Limitations</h2>
     <ul class="lim">${report.limitations.map((line) => `<li>${escapeHtml(line)}</li>`).join('')}</ul>
@@ -262,6 +423,7 @@ export const renderStudioPage = (
     <p class="links">
       <a href="/api/studio/seasonal-ppr/report">report JSON</a>
       <a href="/api/studio/seasonal-ppr/predictions">predictions JSON</a>
+      ${explanationsAvailable ? '<a href="/api/studio/seasonal-ppr/explanations">explanations JSON</a>' : ''}
       <a href="/api/studio/seasonal-ppr/export/model-context">AI-agent model context</a>
     </p>
 

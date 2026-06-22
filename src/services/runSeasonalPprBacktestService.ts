@@ -20,6 +20,8 @@
 import {
   SEASONAL_PPR_BACKTEST_MODEL_VERSION,
   SEASONAL_PPR_BACKTEST_REPORT_VERSION,
+  SEASONAL_PPR_EXPLANATION_ARTIFACT_VERSION,
+  SEASONAL_PPR_EXPLANATION_WARNING,
   SEASONAL_PPR_INPUT_SEASON,
   SEASONAL_PPR_OUTPUT_KIND,
   SEASONAL_PPR_PREDICTION_ARTIFACT_VERSION,
@@ -28,7 +30,9 @@ import {
   type SeasonalPlayerObservation,
   type SeasonalPprBacktestReport,
   type SeasonalPprDatasetDescriptor,
+  type SeasonalPprFeatureContribution,
   type SeasonalPprModelEvaluation,
+  type SeasonalPprPredictionExplanation,
   type SeasonalPprPredictionRow,
 } from '../contracts/seasonalPprBacktest.js';
 import {
@@ -41,11 +45,25 @@ import {
   seasonalPprFeatureList,
   seasonalPprNumericFeatureNames,
   trainSeasonalRidgeModel,
+  type SeasonalRidgeExplanation,
 } from '../models/seasonal/seasonalPprModel.js';
 import { serviceFailure, serviceSuccess } from './result.js';
 import type { ServiceResult } from './result.js';
 
 const MIN_SCORED_ROWS = 4;
+/** How many positive/negative contributions to surface in the top lists. */
+const TOP_CONTRIBUTIONS = 3;
+
+const round4 = (value: number): number => Number(value.toFixed(4));
+
+const roundContribution = (c: SeasonalPprFeatureContribution): SeasonalPprFeatureContribution => ({
+  feature: c.feature,
+  kind: c.kind,
+  input_value: round4(c.input_value),
+  standardized_value: round4(c.standardized_value),
+  coefficient: round4(c.coefficient),
+  contribution: round4(c.contribution),
+});
 
 export interface RunSeasonalPprBacktestOptions {
   /** Deterministic timestamp stamped onto every output. Defaults to now. */
@@ -57,6 +75,8 @@ export interface RunSeasonalPprBacktestOptions {
 export interface RunSeasonalPprBacktestOutput {
   report: SeasonalPprBacktestReport;
   predictions: SeasonalPprPredictionRow[];
+  /** Per-player model-mechanics explanations (one per observation). */
+  explanations: SeasonalPprPredictionExplanation[];
 }
 
 export type RunSeasonalPprBacktestResult = ServiceResult<RunSeasonalPprBacktestOutput>;
@@ -121,6 +141,9 @@ export const runSeasonalPprBacktestService = (
     const modelLoocv = new Map<string, number>();
     const positionMeanLoocv = new Map<string, number>();
     const prevYearPredictions = new Map<string, number>();
+    // The SAME per-target LOOCV model that produced each prediction, captured so
+    // explanations faithfully reconstruct the stored predicted_ppr.
+    const explanationLoocv = new Map<string, SeasonalRidgeExplanation>();
 
     const prevYearModel = baselinePrevYearPpr();
 
@@ -128,6 +151,7 @@ export const runSeasonalPprBacktestService = (
       const trainRows = scored.filter((row) => row.player_id !== target.player_id);
       const model = trainSeasonalRidgeModel(trainRows, { lambda: options.lambda });
       modelLoocv.set(target.player_id, model.predict(target));
+      explanationLoocv.set(target.player_id, model.explain(target));
 
       const positionMean = baselinePositionMean(trainRows);
       positionMeanLoocv.set(target.player_id, positionMean.predict(target));
@@ -226,6 +250,67 @@ export const runSeasonalPprBacktestService = (
         };
       });
 
+    // Deterministic per-player explanation rows (sorted by player_id), one per
+    // observation. Scored rows carry the additive ridge decomposition from their
+    // own LOOCV model; unavailable rows fail gracefully with no synthesized data.
+    const explanations: SeasonalPprPredictionExplanation[] = [...observations]
+      .sort((a, b) => a.player_id.localeCompare(b.player_id))
+      .map((observation) => {
+        const explanation = explanationLoocv.get(observation.player_id);
+        const base = {
+          artifact_version: SEASONAL_PPR_EXPLANATION_ARTIFACT_VERSION,
+          output_kind: SEASONAL_PPR_OUTPUT_KIND,
+          model_version: SEASONAL_PPR_BACKTEST_MODEL_VERSION,
+          report_version: SEASONAL_PPR_BACKTEST_REPORT_VERSION,
+          player_id: observation.player_id,
+          player_name: observation.player_name,
+          position: observation.position,
+          input_season: SEASONAL_PPR_INPUT_SEASON,
+          target_season: SEASONAL_PPR_TARGET_SEASON,
+          data_source: dataset.data_source,
+          governance_status: dataset.governance_status,
+          explanation_warning: SEASONAL_PPR_EXPLANATION_WARNING,
+          generated_at: generatedAt,
+        } as const;
+
+        if (!explanation) {
+          // Unavailable row (no usable actual => no LOOCV model): explain nothing.
+          return {
+            ...base,
+            explanation_status: 'unavailable',
+            predicted_ppr: null,
+            actual_ppr: null,
+            absolute_error: null,
+            intercept: null,
+            feature_contributions: [],
+            top_positive_contributions: [],
+            top_negative_contributions: [],
+          };
+        }
+
+        const contributions = explanation.contributions.map(roundContribution);
+        const positives = contributions
+          .filter((c) => c.contribution > 0)
+          .sort((a, b) => b.contribution - a.contribution || a.feature.localeCompare(b.feature));
+        const negatives = contributions
+          .filter((c) => c.contribution < 0)
+          .sort((a, b) => a.contribution - b.contribution || a.feature.localeCompare(b.feature));
+
+        const predicted = round4(explanation.prediction);
+        const actual = observation.ppr_2025_actual as number;
+        return {
+          ...base,
+          explanation_status: 'explained',
+          predicted_ppr: predicted,
+          actual_ppr: actual,
+          absolute_error: round4(Math.abs(predicted - actual)),
+          intercept: round4(explanation.intercept),
+          feature_contributions: contributions,
+          top_positive_contributions: positives.slice(0, TOP_CONTRIBUTIONS),
+          top_negative_contributions: negatives.slice(0, TOP_CONTRIBUTIONS),
+        };
+      });
+
     const report: SeasonalPprBacktestReport = {
       report_version: SEASONAL_PPR_BACKTEST_REPORT_VERSION,
       output_kind: SEASONAL_PPR_OUTPUT_KIND,
@@ -267,7 +352,7 @@ export const runSeasonalPprBacktestService = (
       ],
     };
 
-    return serviceSuccess({ report, predictions });
+    return serviceSuccess({ report, predictions, explanations });
   } catch (error) {
     return serviceFailure({
       code: 'SEASONAL_PPR_BACKTEST_FAILED',

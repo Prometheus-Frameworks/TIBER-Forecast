@@ -51,6 +51,8 @@ makes the run fully deterministic (byte-identical artifacts). Outputs:
 
 - `seasonal_ppr_backtest_report.json` — the evaluation report.
 - `seasonal_ppr_predictions.jsonl` — one governed prediction row per player.
+- `seasonal_ppr_prediction_explanations.jsonl` — one model-mechanics explanation
+  row per player (additive; see [Per-player explanations](#per-player-explanations-model-mechanics)).
 
 The runner is intentionally **not** wired into `build`/`start` and is **not**
 auto-promoted.
@@ -176,6 +178,34 @@ Each line in `seasonal_ppr_predictions.jsonl` includes: `player_id`,
 `source_dataset_refs`, `dataset_version`, `feature_coverage_status`,
 `features_present`, `governance_status`, `output_kind`, and `generated_at`.
 
+## Per-player explanations (model mechanics)
+
+The ridge model is linear, so each prediction decomposes exactly into additive
+terms: `prediction = max(0, intercept + Σ(coefficient × standardized feature
+value))`. The backtest emits a deterministic, **additive** explanation artifact —
+`seasonal_ppr_prediction_explanations.jsonl`, one row per observation — built from
+the **same per-player LOOCV model** that produced the stored prediction, so the
+contributions reconstruct `predicted_ppr` exactly.
+
+Each explanation row carries: `artifact_version`, `output_kind`, `model_version`,
+`report_version`, `player_id`, `player_name`, `position`, `input_season`,
+`target_season`, `data_source`, `governance_status`, `explanation_status`
+(`explained` | `unavailable`), `predicted_ppr`, `actual_ppr`, `absolute_error`,
+`intercept`, `feature_contributions`, `top_positive_contributions`,
+`top_negative_contributions`, `explanation_warning`, and `generated_at`. Each
+contribution lists `feature`, `kind` (`numeric` | `position`), `input_value`,
+`standardized_value`, `coefficient`, and `contribution`.
+
+> **This is model mechanics, not causality.** The explanation shows how the ridge
+> model combined input features to produce a number. It does **not** claim those
+> features *caused* the real outcome, it is **not advice**, and it does **not**
+> imply start/sit/trade/draft/waiver decisions or 2026 predictive-use approval.
+
+`unavailable` rows (no usable 2025 outcome → no fitted model) fail gracefully:
+`explanation_status: "unavailable"` with empty contributions. Nothing is
+synthesized. The artifact is additive — the report and prediction artifacts are
+unchanged — so older/mounted artifact sets without this file still work.
+
 ## Limitations
 
 These are stamped into the report and worth repeating:
@@ -202,13 +232,20 @@ never synthesizes data and fails gracefully when artifacts are missing.
 
 Routes:
 
-- `GET /studio` — server-rendered inspection page (run metadata, model vs
-  baseline MAE/RMSE bars, by-position MAE, top misses, prediction table,
-  limitations). Prominently labels output as model inference / read-only / not
-  observed reality / not advice, and — for non-governed data — not approved for
-  2026 predictive use.
+- `GET /studio` — server-rendered inspection page (run metadata, a plain-language
+  **metric glossary** for MAE/RMSE/correlation/rank-correlation/beats-baseline,
+  model vs baseline MAE/RMSE bars, by-position MAE, top misses, prediction table
+  with **Explain** links, limitations). Prominently labels output as model
+  inference / read-only / not observed reality / not advice, and — for
+  non-governed data — not approved for 2026 predictive use.
+- `GET /studio?explain=<playerId>` — renders a per-player model-mechanics
+  explanation panel (positive/negative feature contributions, the warning, and
+  identity/provenance metadata).
 - `GET /api/studio/seasonal-ppr/report` — the report JSON.
 - `GET /api/studio/seasonal-ppr/predictions` — parsed prediction rows.
+- `GET /api/studio/seasonal-ppr/explanations` — all per-player explanation rows.
+- `GET /api/studio/seasonal-ppr/explanations/:playerId` — one player's explanation
+  (404 when the explanation artifact or player is missing).
 - `GET /api/studio/seasonal-ppr/export/model-context` — compact,
   AI-agent-friendly model-context export (carries the interpretation warning).
 

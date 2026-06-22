@@ -1,6 +1,9 @@
 import { Hono } from 'hono';
 import { buildSeasonalPprModelContextExport } from '../../studio/buildModelContextExport.js';
-import { loadSeasonalPprStudioArtifacts } from '../../studio/loadSeasonalPprArtifacts.js';
+import {
+  loadSeasonalPprExplanations,
+  loadSeasonalPprStudioArtifacts,
+} from '../../studio/loadSeasonalPprArtifacts.js';
 import { renderStudioNotFound, renderStudioPage } from '../../studio/renderStudioPage.js';
 
 /**
@@ -13,14 +16,22 @@ import { renderStudioNotFound, renderStudioPage } from '../../studio/renderStudi
  * fail gracefully with generation instructions; data is never synthesized.
  */
 export const registerStudioRoutes = (app: Hono) => {
-  // Server-rendered inspection page.
+  // Server-rendered inspection page. `?explain=<playerId>` renders a per-player
+  // model-mechanics explanation panel when explanation artifacts are present.
   app.get('/studio', async (c) => {
     const result = await loadSeasonalPprStudioArtifacts();
     if (!result.ok) {
       const message = result.errors[0]?.message ?? 'No seasonal PPR backtest artifact found.';
       return c.html(renderStudioNotFound(message), 404);
     }
-    return c.html(renderStudioPage(result.data.report, result.data.predictions));
+    // Explanations are an additive artifact; tolerate their absence so the page
+    // still renders for older/mounted artifact sets that predate the file.
+    const explanationsResult = await loadSeasonalPprExplanations();
+    const explanations = explanationsResult.ok ? explanationsResult.data.explanations : undefined;
+    const explainPlayerId = c.req.query('explain');
+    return c.html(
+      renderStudioPage(result.data.report, result.data.predictions, { explanations, explainPlayerId }),
+    );
   });
 
   // Latest seasonal PPR backtest report JSON (raw report shape).
@@ -51,5 +62,42 @@ export const registerStudioRoutes = (app: Hono) => {
       return c.json({ ok: false, errors: result.errors }, 404);
     }
     return c.json(buildSeasonalPprModelContextExport(result.data.report));
+  });
+
+  // Per-player model-mechanics explanations (additive artifact, read-only).
+  app.get('/api/studio/seasonal-ppr/explanations', async (c) => {
+    const result = await loadSeasonalPprExplanations();
+    if (!result.ok) {
+      return c.json({ ok: false, errors: result.errors }, 404);
+    }
+    return c.json({
+      count: result.data.explanations.length,
+      explanations: result.data.explanations,
+    });
+  });
+
+  // A single player's explanation; 404 when the artifact or player is missing.
+  app.get('/api/studio/seasonal-ppr/explanations/:playerId', async (c) => {
+    const result = await loadSeasonalPprExplanations();
+    if (!result.ok) {
+      return c.json({ ok: false, errors: result.errors }, 404);
+    }
+    const playerId = c.req.param('playerId');
+    const explanation = result.data.explanations.find((row) => row.player_id === playerId);
+    if (!explanation) {
+      return c.json(
+        {
+          ok: false,
+          errors: [
+            {
+              code: 'SEASONAL_PPR_EXPLANATION_PLAYER_NOT_FOUND',
+              message: `No explanation row found for player_id "${playerId}".`,
+            },
+          ],
+        },
+        404,
+      );
+    }
+    return c.json(explanation);
   });
 };

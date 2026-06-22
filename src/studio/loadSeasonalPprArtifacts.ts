@@ -10,11 +10,13 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import {
+  SEASONAL_PPR_EXPLANATIONS_FILENAME,
   SEASONAL_PPR_PREDICTIONS_FILENAME,
   SEASONAL_PPR_REPORT_FILENAME,
 } from '../artifacts/writeSeasonalPprBacktestArtifacts.js';
 import type {
   SeasonalPprBacktestReport,
+  SeasonalPprPredictionExplanation,
   SeasonalPprPredictionRow,
 } from '../contracts/seasonalPprBacktest.js';
 import { serviceFailure, serviceSuccess, type ServiceResult } from '../services/result.js';
@@ -125,4 +127,67 @@ export const loadSeasonalPprStudioArtifacts = async (
     predictions,
     sourcePaths: { report: reportPath, predictions: predictionsPath },
   });
+};
+
+/** Parse a JSONL string into explanation rows; throws on a malformed line. */
+export const parseExplanationsJsonl = (raw: string): SeasonalPprPredictionExplanation[] =>
+  raw
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+    .map((line, index) => {
+      try {
+        return JSON.parse(line) as SeasonalPprPredictionExplanation;
+      } catch {
+        throw new Error(`Malformed explanation row at line ${index + 1}.`);
+      }
+    });
+
+export interface SeasonalPprStudioExplanations {
+  explanations: SeasonalPprPredictionExplanation[];
+  /** Resolved absolute path the explanations were read from. */
+  sourcePath: string;
+}
+
+/**
+ * Read-only loader for the additive per-player explanation artifact. Kept
+ * SEPARATE from the report/predictions load so an older or externally mounted
+ * artifact set that predates this file still renders the main Studio page; the
+ * explanation surfaces fail gracefully (404 + generation guidance) instead.
+ */
+export const loadSeasonalPprExplanations = async (
+  artifactDir?: string,
+): Promise<ServiceResult<SeasonalPprStudioExplanations>> => {
+  const dir = resolveDir(artifactDir);
+  const explanationsPath = path.join(dir, SEASONAL_PPR_EXPLANATIONS_FILENAME);
+
+  let raw: string;
+  try {
+    raw = await readFile(explanationsPath, 'utf8');
+  } catch (error) {
+    if (isMissing(error)) {
+      return serviceFailure({
+        code: 'SEASONAL_PPR_EXPLANATIONS_NOT_FOUND',
+        message: `No seasonal PPR explanation artifact found at ${explanationsPath}.`,
+        details: { generateWith: SEASONAL_PPR_GENERATE_COMMAND, expectedDir: dir },
+      });
+    }
+    return serviceFailure({
+      code: 'SEASONAL_PPR_EXPLANATIONS_READ_FAILED',
+      message: error instanceof Error ? error.message : 'Failed to read the seasonal PPR explanation artifact.',
+    });
+  }
+
+  let explanations: SeasonalPprPredictionExplanation[];
+  try {
+    explanations = parseExplanationsJsonl(raw);
+  } catch (error) {
+    return serviceFailure({
+      code: 'SEASONAL_PPR_EXPLANATIONS_INVALID',
+      message: error instanceof Error ? error.message : 'Failed to parse the seasonal PPR explanation artifact.',
+      details: { generateWith: SEASONAL_PPR_GENERATE_COMMAND },
+    });
+  }
+
+  return serviceSuccess({ explanations, sourcePath: explanationsPath });
 };
