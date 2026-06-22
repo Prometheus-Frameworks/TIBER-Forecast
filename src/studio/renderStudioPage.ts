@@ -178,13 +178,24 @@ export const renderStudioPage = (
   predictions: SeasonalPprPredictionRow[],
 ): string => {
   const fixtureWarn = seasonalPprFixtureWarningApplies(report);
+  // Fail closed on provenance: only the two known discriminator values are
+  // asserted. A missing/unrecognized data_source (e.g. an older or externally
+  // mounted report that predates this field) is labeled "unknown" rather than
+  // silently claimed to be the bundled scaffold.
   const dataSource = report.dataset.data_source;
-  const dataSourceLabel = dataSource === 'mounted-artifact' ? 'mounted TIBER-Data artifact' : 'bundled scaffold fixture';
+  const dataSourceChip =
+    dataSource === 'mounted-artifact' || dataSource === 'bundled-scaffold' ? dataSource : 'unknown';
+  const dataSourceLabel =
+    dataSource === 'mounted-artifact'
+      ? 'mounted TIBER-Data artifact'
+      : dataSource === 'bundled-scaffold'
+        ? 'bundled scaffold fixture'
+        : 'unknown / unlabeled source';
 
   const warnBanner = fixtureWarn
     ? `<div class="banner banner-warn">NOT APPROVED FOR 2026 PREDICTIVE USE — dataset governance is
-        "${escapeHtml(report.dataset.governance_status)}" (fixture/scaffold) and this run used the
-        ${escapeHtml(dataSourceLabel)}, not a governed real TIBER-Data pull. Harness validation only.</div>`
+        "${escapeHtml(report.dataset.governance_status)}" (fixture/scaffold) with data source
+        "${escapeHtml(dataSourceLabel)}", not a governed real TIBER-Data pull. Harness validation only.</div>`
     : '';
 
   const body = `
@@ -197,7 +208,7 @@ export const renderStudioPage = (
     <div class="chips">
       <span class="chip">output: ${escapeHtml(report.output_kind)}</span>
       <span class="chip">governance: ${escapeHtml(report.dataset.governance_status)}</span>
-      <span class="chip">data source: ${escapeHtml(dataSource)}</span>
+      <span class="chip">data source: ${escapeHtml(dataSourceChip)}</span>
       <span class="chip">model: ${escapeHtml(report.model_version)}</span>
       <span class="chip">report: ${escapeHtml(report.report_version)}</span>
     </div>

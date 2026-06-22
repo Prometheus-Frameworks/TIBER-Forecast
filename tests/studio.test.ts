@@ -160,6 +160,39 @@ describe('renderStudioPage', () => {
     expect(renderStudioPage(base('bundled-scaffold'), [])).toContain('bundled scaffold fixture');
     expect(renderStudioPage(base('mounted-artifact'), [])).toContain('mounted TIBER-Data artifact');
   });
+
+  it('does not claim scaffold provenance for a missing/unknown data_source', () => {
+    // An older or externally mounted report may lack data_source entirely.
+    const report = {
+      input_season: 2024,
+      target_season: 2025,
+      output_kind: 'model-inference',
+      model_version: 'm',
+      report_version: 'r',
+      generated_at: 'now',
+      target_definition: 't',
+      beats_baseline_summary: 's',
+      beats_baseline: true,
+      model: { name: 'm', overall: {}, by_position: {} },
+      baselines: [],
+      top_misses: [],
+      limitations: [],
+      dataset: {
+        dataset_id: 'd',
+        dataset_version: 'v',
+        governance_status: 'fixture',
+        // data_source intentionally absent
+        observation_count: 0,
+        scored_row_count: 0,
+        unavailable_row_count: 0,
+      },
+    } as unknown as SeasonalPprBacktestReport;
+
+    const html = renderStudioPage(report, []);
+    expect(html).toContain('unknown / unlabeled source');
+    expect(html).toContain('data source: unknown');
+    expect(html).not.toContain('bundled scaffold fixture');
+  });
 });
 
 describe('studio routes', () => {
