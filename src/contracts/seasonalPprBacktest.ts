@@ -20,6 +20,7 @@ import type { TiberDataSourceDatasetRef } from './tiberDataProjectionInput.js';
 export const SEASONAL_PPR_BACKTEST_MODEL_VERSION = 'seasonal-ppr-ridge-v1' as const;
 export const SEASONAL_PPR_BACKTEST_REPORT_VERSION = 'seasonal-ppr-backtest-report-v1' as const;
 export const SEASONAL_PPR_PREDICTION_ARTIFACT_VERSION = 'seasonal-ppr-prediction-v1' as const;
+export const SEASONAL_PPR_EXPLANATION_ARTIFACT_VERSION = 'seasonal-ppr-explanation-v1' as const;
 
 export const SEASONAL_PPR_INPUT_SEASON = 2024 as const;
 export const SEASONAL_PPR_TARGET_SEASON = 2025 as const;
@@ -129,6 +130,63 @@ export interface SeasonalPprPredictionRow {
   governance_status: SeasonalPprRowGovernanceStatus;
   source_dataset_refs: TiberDataSourceDatasetRef[];
   dataset_version: string;
+  generated_at: string;
+}
+
+/**
+ * Fixed warning stamped on every explanation so a reader can never mistake the
+ * additive ridge decomposition for a causal football claim or for advice.
+ */
+export const SEASONAL_PPR_EXPLANATION_WARNING =
+  'This is a model-mechanics explanation, not a causal football explanation. It shows how the ridge model combined input features to produce the prediction. It is not advice and not observed reality.' as const;
+
+/**
+ * Whether a prediction row could be explained. `explained` requires a scored row
+ * with a fitted model; `unavailable` rows (null prediction) carry no synthesized
+ * contributions and fail gracefully at the row level.
+ */
+export type SeasonalPprExplanationStatus = 'explained' | 'unavailable';
+
+/** One additive feature term: `contribution = coefficient * standardized_value`. */
+export interface SeasonalPprFeatureContribution {
+  feature: string;
+  kind: 'numeric' | 'position';
+  input_value: number;
+  standardized_value: number;
+  coefficient: number;
+  contribution: number;
+}
+
+/**
+ * One per-player explanation row (one per observation, parallel to the
+ * prediction rows). Model mechanics only — see `SEASONAL_PPR_EXPLANATION_WARNING`.
+ */
+export interface SeasonalPprPredictionExplanation {
+  artifact_version: typeof SEASONAL_PPR_EXPLANATION_ARTIFACT_VERSION;
+  output_kind: SeasonalPprOutputKind;
+  model_version: typeof SEASONAL_PPR_BACKTEST_MODEL_VERSION;
+  report_version: typeof SEASONAL_PPR_BACKTEST_REPORT_VERSION;
+  player_id: string;
+  player_name: string;
+  position: ScoringPosition;
+  input_season: typeof SEASONAL_PPR_INPUT_SEASON;
+  target_season: typeof SEASONAL_PPR_TARGET_SEASON;
+  data_source: SeasonalPprDataSource;
+  governance_status: SeasonalPprDatasetGovernanceStatus;
+  explanation_status: SeasonalPprExplanationStatus;
+  /** Model-inferred 2025 PPR (null for unavailable rows). */
+  predicted_ppr: number | null;
+  actual_ppr: number | null;
+  absolute_error: number | null;
+  /** Ridge intercept (baseline before feature contributions); null if unexplained. */
+  intercept: number | null;
+  /** All additive contributions; empty for unavailable rows (never synthesized). */
+  feature_contributions: SeasonalPprFeatureContribution[];
+  /** Contributions that pushed the prediction up, largest first. */
+  top_positive_contributions: SeasonalPprFeatureContribution[];
+  /** Contributions that pushed the prediction down, largest magnitude first. */
+  top_negative_contributions: SeasonalPprFeatureContribution[];
+  explanation_warning: typeof SEASONAL_PPR_EXPLANATION_WARNING;
   generated_at: string;
 }
 

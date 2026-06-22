@@ -156,6 +156,8 @@ export {
   SEASONAL_PPR_BACKTEST_MODEL_VERSION,
   SEASONAL_PPR_BACKTEST_REPORT_VERSION,
   SEASONAL_PPR_PREDICTION_ARTIFACT_VERSION,
+  SEASONAL_PPR_EXPLANATION_ARTIFACT_VERSION,
+  SEASONAL_PPR_EXPLANATION_WARNING,
   SEASONAL_PPR_INPUT_SEASON,
   SEASONAL_PPR_TARGET_SEASON,
   SEASONAL_PPR_TARGET_DEFINITION,
@@ -169,6 +171,9 @@ export type {
   SeasonalPprFeatureCoverageStatus,
   SeasonalPprFeatureSpec,
   SeasonalPprPredictionRow,
+  SeasonalPprExplanationStatus,
+  SeasonalPprFeatureContribution,
+  SeasonalPprPredictionExplanation,
   SeasonalPprErrorSummary,
   SeasonalPprModelEvaluation,
   SeasonalPprMiss,
@@ -196,6 +201,11 @@ export { parseTiberDataWeeklyPprArtifact } from '../datasets/seasonal/parseTiber
 export { buildScaffoldWeeklyPprRows, tiberDataWeeklyPprScaffoldRows } from '../datasets/seasonal/fixtures/tiberDataWeeklyPprScaffold.js';
 export { seasonalPprSeedSnapshot } from '../datasets/seasonal/fixtures/seasonalPprSeedSnapshot.js';
 export { trainSeasonalRidgeModel, seasonalPprFeatureList } from '../models/seasonal/seasonalPprModel.js';
+export type {
+  SeasonalRidgeModel,
+  SeasonalRidgeContribution,
+  SeasonalRidgeExplanation,
+} from '../models/seasonal/seasonalPprModel.js';
 export { baselinePrevYearPpr, baselinePositionMean } from '../models/seasonal/seasonalPprBaselines.js';
 export {
   summarizeSeasonalErrors,
@@ -211,6 +221,7 @@ export {
   writeSeasonalPprBacktestArtifacts,
   SEASONAL_PPR_REPORT_FILENAME,
   SEASONAL_PPR_PREDICTIONS_FILENAME,
+  SEASONAL_PPR_EXPLANATIONS_FILENAME,
 } from '../artifacts/writeSeasonalPprBacktestArtifacts.js';
 export type {
   WriteSeasonalPprBacktestArtifactsInput,

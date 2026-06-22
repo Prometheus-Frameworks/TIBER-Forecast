@@ -127,6 +127,47 @@ describe('runSeasonalPprBacktestService', () => {
     expect(JSON.stringify(second)).toBe(JSON.stringify(first));
   });
 
+  it('emits one model-mechanics explanation per observation, reconstructing predictions', () => {
+    const { report, predictions, explanations } = runOk();
+    expect(explanations).toHaveLength(predictions.length);
+
+    const explanationById = new Map(explanations.map((row) => [row.player_id, row]));
+    for (const prediction of predictions) {
+      const explanation = explanationById.get(prediction.player_id);
+      expect(explanation).toBeDefined();
+      if (!explanation) continue;
+
+      // Provenance + identity carried onto every explanation row.
+      expect(explanation.model_version).toBe(SEASONAL_PPR_BACKTEST_MODEL_VERSION);
+      expect(explanation.data_source).toBe(report.dataset.data_source);
+      expect(explanation.governance_status).toBe(report.dataset.governance_status);
+      expect(explanation.input_season).toBe(SEASONAL_PPR_INPUT_SEASON);
+      expect(explanation.target_season).toBe(SEASONAL_PPR_TARGET_SEASON);
+      expect(explanation.explanation_warning).toMatch(/model-mechanics explanation, not a causal football/);
+
+      if (prediction.governance_status === 'unavailable') {
+        // Unexplained rows fail gracefully — no synthesized contributions.
+        expect(explanation.explanation_status).toBe('unavailable');
+        expect(explanation.predicted_ppr).toBeNull();
+        expect(explanation.intercept).toBeNull();
+        expect(explanation.feature_contributions).toEqual([]);
+        expect(explanation.top_positive_contributions).toEqual([]);
+        expect(explanation.top_negative_contributions).toEqual([]);
+      } else {
+        expect(explanation.explanation_status).toBe('explained');
+        expect(explanation.predicted_ppr).toBe(prediction.predicted_ppr);
+        // Additive reconstruction matches the stored prediction (post-clamp).
+        const sum =
+          (explanation.intercept as number) +
+          explanation.feature_contributions.reduce((acc, c) => acc + c.contribution, 0);
+        expect(Math.max(0, Number(sum.toFixed(4)))).toBeCloseTo(prediction.predicted_ppr as number, 1);
+        // Top lists are correctly signed.
+        for (const c of explanation.top_positive_contributions) expect(c.contribution).toBeGreaterThan(0);
+        for (const c of explanation.top_negative_contributions) expect(c.contribution).toBeLessThan(0);
+      }
+    }
+  });
+
   it('fails (no artifact) when there are too few usable rows', () => {
     const dataset: SeasonalPprDatasetDescriptor = {
       ...tiberDataSeasonalPprDataset,
@@ -173,6 +214,32 @@ describe('trainSeasonalRidgeModel', () => {
   it('throws on empty training data (fail closed)', () => {
     expect(() => trainSeasonalRidgeModel([])).toThrow();
   });
+
+  it('explain() reconstructs predict() additively without changing it', () => {
+    const rows: SeasonalPlayerObservation[] = Array.from({ length: 12 }, (_, index) => {
+      const ppr = 40 + index * 18;
+      return makeObservation({
+        player_id: `p${index}`,
+        position: index % 2 === 0 ? 'WR' : 'RB',
+        ppr_2024: ppr,
+        targets_2024: 80 + index,
+        ppr_2025_actual: ppr * 1.05,
+      });
+    });
+    const model = trainSeasonalRidgeModel(rows, { lambda: 0.5 });
+    const target = makeObservation({ player_id: 'x', position: 'WR', ppr_2024: 150, ppr_2025_actual: 0 });
+
+    const predicted = model.predict(target);
+    const explanation = model.explain(target);
+
+    // Additive decomposition reconstructs the (pre-clamp) raw prediction exactly.
+    const sum = explanation.intercept + explanation.contributions.reduce((s, c) => s + c.contribution, 0);
+    expect(sum).toBeCloseTo(explanation.raw_prediction, 9);
+    expect(explanation.prediction).toBe(predicted);
+    // One contribution per numeric feature plus a single position term.
+    expect(explanation.contributions.some((c) => c.feature === 'position=WR')).toBe(true);
+    expect(explanation.contributions.filter((c) => c.kind === 'numeric')).toHaveLength(5);
+  });
 });
 
 describe('writeSeasonalPprBacktestArtifacts', () => {
@@ -187,12 +254,13 @@ describe('writeSeasonalPprBacktestArtifacts', () => {
 
   it('writes a deterministic report and JSONL prediction artifact', async () => {
     tempDir = await mkdtemp(path.join(os.tmpdir(), 'seasonal-ppr-'));
-    const { report, predictions } = runOk();
+    const { report, predictions, explanations } = runOk();
 
     const written = await writeSeasonalPprBacktestArtifacts({
       output_dir: tempDir,
       report,
       predictions,
+      explanations,
     });
     expect(written.ok).toBe(true);
     if (!written.ok) {
@@ -208,7 +276,7 @@ describe('writeSeasonalPprBacktestArtifacts', () => {
     expect(JSON.parse(lines[0]).output_kind).toBe(SEASONAL_PPR_OUTPUT_KIND);
 
     // Re-writing the same payload yields byte-identical files.
-    const second = await writeSeasonalPprBacktestArtifacts({ output_dir: tempDir, report, predictions });
+    const second = await writeSeasonalPprBacktestArtifacts({ output_dir: tempDir, report, predictions, explanations });
     expect(second.ok).toBe(true);
     const reportRaw2 = await readFile(path.join(tempDir, SEASONAL_PPR_REPORT_FILENAME), 'utf8');
     expect(reportRaw2).toBe(reportRaw);

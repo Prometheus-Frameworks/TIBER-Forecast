@@ -5,7 +5,9 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { createApp } from '../src/api/app.js';
 import {
   DEFAULT_SEASONAL_PPR_ARTIFACT_DIR,
+  loadSeasonalPprExplanations,
   loadSeasonalPprStudioArtifacts,
+  parseExplanationsJsonl,
   parsePredictionsJsonl,
   SEASONAL_PPR_GENERATE_COMMAND,
 } from '../src/studio/loadSeasonalPprArtifacts.js';
@@ -251,5 +253,124 @@ describe('studio routes', () => {
     } finally {
       await rm(emptyDir, { recursive: true, force: true });
     }
+  });
+});
+
+describe('parseExplanationsJsonl', () => {
+  it('parses non-empty lines and ignores blanks', () => {
+    const rows = parseExplanationsJsonl('{"player_id":"a"}\n\n{"player_id":"b"}\n');
+    expect(rows).toHaveLength(2);
+  });
+
+  it('throws on a malformed line', () => {
+    expect(() => parseExplanationsJsonl('{"player_id":"a"}\nnot-json')).toThrow(/line 2/);
+  });
+});
+
+describe('seasonal PPR explanation surfaces', () => {
+  afterEach(() => {
+    delete process.env.PPM_STUDIO_ARTIFACT_DIR;
+  });
+
+  it('loads the committed explanation artifact', async () => {
+    const result = await loadSeasonalPprExplanations();
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.explanations.length).toBeGreaterThan(0);
+      const explained = result.data.explanations.find((row) => row.explanation_status === 'explained');
+      expect(explained?.explanation_warning).toMatch(/model-mechanics explanation/);
+      expect(explained?.feature_contributions.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('serves all explanations and a single player, 404 for an unknown player', async () => {
+    const app = createApp();
+
+    const all = await app.request('/api/studio/seasonal-ppr/explanations');
+    expect(all.status).toBe(200);
+    const allBody = (await all.json()) as {
+      count: number;
+      explanations: Array<{ player_id: string; explanation_status: string }>;
+    };
+    expect(allBody.count).toBeGreaterThan(0);
+
+    const explained = allBody.explanations.find((row) => row.explanation_status === 'explained');
+    const single = await app.request(`/api/studio/seasonal-ppr/explanations/${explained?.player_id}`);
+    expect(single.status).toBe(200);
+    expect((await single.json() as { player_id: string }).player_id).toBe(explained?.player_id);
+
+    const missing = await app.request('/api/studio/seasonal-ppr/explanations/no-such-player');
+    expect(missing.status).toBe(404);
+    expect((await missing.json() as { ok: boolean }).ok).toBe(false);
+  });
+
+  it('renders the ?explain= panel with contributions and the mechanics warning', async () => {
+    const app = createApp();
+    const all = (await (await app.request('/api/studio/seasonal-ppr/explanations')).json()) as {
+      explanations: Array<{ player_id: string; explanation_status: string }>;
+    };
+    const explained = all.explanations.find((row) => row.explanation_status === 'explained');
+
+    const page = await app.request(`/studio?explain=${explained?.player_id}`);
+    expect(page.status).toBe(200);
+    const html = await page.text();
+    expect(html).toContain('Per-player explanation');
+    expect(html).toContain('This is a model-mechanics explanation, not a causal football');
+    expect(html).toContain('Pushed prediction up');
+    expect(html).toContain('Pushed prediction down');
+    expect(html).toContain('Model contribution');
+  });
+
+  it('fails gracefully (404) when the explanation artifact is absent', async () => {
+    const partialDir = await mkdtemp(path.join(os.tmpdir(), 'ppm-studio-noexpl-'));
+    process.env.PPM_STUDIO_ARTIFACT_DIR = partialDir;
+    try {
+      // Copy only report + predictions, not the explanations file.
+      await copyFile(
+        path.join(DEFAULT_SEASONAL_PPR_ARTIFACT_DIR, 'seasonal_ppr_backtest_report.json'),
+        path.join(partialDir, 'seasonal_ppr_backtest_report.json'),
+      );
+      await copyFile(
+        path.join(DEFAULT_SEASONAL_PPR_ARTIFACT_DIR, 'seasonal_ppr_predictions.jsonl'),
+        path.join(partialDir, 'seasonal_ppr_predictions.jsonl'),
+      );
+      const app = createApp();
+
+      // Main page still renders (explanations are additive) without Explain links.
+      const page = await app.request('/studio');
+      expect(page.status).toBe(200);
+      const html = await page.text();
+      expect(html).toContain('PPM Studio');
+      expect(html).not.toContain('?explain=');
+
+      // Explanation API fails closed with guidance.
+      const explanations = await app.request('/api/studio/seasonal-ppr/explanations');
+      expect(explanations.status).toBe(404);
+      const body = (await explanations.json()) as { ok: boolean; errors: Array<{ code: string }> };
+      expect(body.ok).toBe(false);
+      expect(body.errors[0].code).toBe('SEASONAL_PPR_EXPLANATIONS_NOT_FOUND');
+    } finally {
+      await rm(partialDir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('renderStudioPage metric glossary', () => {
+  const loadOkPair = async () => {
+    const result = await loadSeasonalPprStudioArtifacts();
+    if (!result.ok) throw new Error('expected artifacts');
+    return result.data;
+  };
+
+  it('explains MAE, RMSE, correlation, rank correlation, and baseline in plain language', async () => {
+    const { report, predictions } = await loadOkPair();
+    const html = renderStudioPage(report, predictions);
+    expect(html).toContain('What these metrics mean');
+    expect(html).toContain('Average miss');
+    expect(html).toContain('Big-miss sensitive');
+    expect(html).toContain('Direction signal');
+    expect(html).toContain('Ordering signal');
+    expect(html).toContain('Better than dumb comparison');
+    expect(html).toContain('do not make the model decision-grade or approved for 2026 predictive use');
   });
 });

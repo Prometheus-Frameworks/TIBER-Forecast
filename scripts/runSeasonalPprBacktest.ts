@@ -145,9 +145,9 @@ const main = async () => {
     return;
   }
 
-  const { report, predictions } = result.data;
+  const { report, predictions, explanations } = result.data;
 
-  const written = await writeSeasonalPprBacktestArtifacts({ output_dir: outputDir, report, predictions });
+  const written = await writeSeasonalPprBacktestArtifacts({ output_dir: outputDir, report, predictions, explanations });
   if (!written.ok) {
     console.error('Failed to write seasonal PPR backtest artifacts:');
     for (const error of written.errors) {

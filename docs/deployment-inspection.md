@@ -34,6 +34,8 @@ Open the deployment root and follow the `studio` links, or go directly to:
 | Studio page | `GET /studio` | Server-rendered "glass box" over the latest seasonal PPR report and predictions. Labels output as model inference and, for fixture/scaffold data, as not approved for 2026 predictive use. |
 | Report (JSON) | `GET /api/studio/seasonal-ppr/report` | Raw seasonal PPR backtest report. |
 | Predictions (JSON) | `GET /api/studio/seasonal-ppr/predictions` | Parsed prediction rows (`{ count, predictions }`) from the JSONL artifact. |
+| Explanations (JSON) | `GET /api/studio/seasonal-ppr/explanations` | Per-player model-mechanics explanation rows (additive artifact). Single player: `GET /api/studio/seasonal-ppr/explanations/:playerId`. |
+| Player explanation (page) | `GET /studio?explain=<playerId>` | Server-rendered panel: how the ridge model combined a player's features (model mechanics, not causal football). |
 | Model-context export (JSON) | `GET /api/studio/seasonal-ppr/export/model-context` | Compact, copy/paste-friendly export of the report for use in another tool, carrying the same model-inference / not-advice notice. |
 
 If the artifacts are missing, every surface fails closed (HTTP 404) with
