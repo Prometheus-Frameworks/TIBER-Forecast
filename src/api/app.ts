@@ -40,8 +40,33 @@ export const createApp = () => {
   app.get('/', (c) =>
     c.json({
       ok: true,
-      service: 'tiber-fantasy-scoring-engine',
-      description: 'In-season fantasy scoring kernel (xFPG, replacement, VORP, ranges, confidence).',
+      service: 'point-prediction-model',
+      name: 'Point-Prediction-Model (PPM)',
+      description:
+        'Point-Prediction-Model (PPM): a model-inference API and a read-only studio for inspecting seasonal PPR backtest artifacts and exports.',
+      // Operator entry points for inspecting the deployed PPM Studio artifacts.
+      studio: {
+        page: '/studio',
+        seasonalPprReport: '/api/studio/seasonal-ppr/report',
+        seasonalPprPredictions: '/api/studio/seasonal-ppr/predictions',
+        seasonalPprModelContext: '/api/studio/seasonal-ppr/export/model-context',
+      },
+      // Plain-language status of what is currently deployed. See
+      // docs/deployment-inspection.md for the full operator guide.
+      notice: {
+        summary:
+          'Currently deployed artifacts are model inference only — read-only, fixture/scaffold-backed, and not approved for 2026 predictive use.',
+        artifactStatus: [
+          'model inference',
+          'read-only',
+          'fixture/scaffold-backed',
+          'not observed reality',
+          'not advice',
+          'not approved for 2026 predictive use unless a governed real TIBER-Data artifact has been mounted and verified',
+        ],
+        docs: 'docs/deployment-inspection.md',
+      },
+      // In-season fantasy scoring kernel endpoints are retained for compatibility.
       endpoints: {
         health: '/health',
         scoringWeeklyPlayer: '/api/scoring/weekly/player',
