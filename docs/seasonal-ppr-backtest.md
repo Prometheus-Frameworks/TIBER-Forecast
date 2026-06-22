@@ -178,6 +178,29 @@ These are stamped into the report and worth repeating:
 - 2024 box-score volume/efficiency features only; no schedule/age/scheme signals.
 - Not integrated with TIBER-Fantasy; no downstream behavior changes.
 
+## PPM Studio (read-only inspection surface)
+
+A minimal "glass box" for inspecting these artifacts before anything is exposed
+downstream (Issue #51). It is served by the existing Hono API
+(`npm run start:api`) and reads the committed artifacts from
+`data/backtests/seasonal-ppr/` (override with `PPM_STUDIO_ARTIFACT_DIR`). It
+never synthesizes data and fails gracefully when artifacts are missing.
+
+Routes:
+
+- `GET /studio` — server-rendered inspection page (run metadata, model vs
+  baseline MAE/RMSE bars, by-position MAE, top misses, prediction table,
+  limitations). Prominently labels output as model inference / read-only / not
+  observed reality / not advice, and — for non-governed data — not approved for
+  2026 predictive use.
+- `GET /api/studio/seasonal-ppr/report` — the report JSON.
+- `GET /api/studio/seasonal-ppr/predictions` — parsed prediction rows.
+- `GET /api/studio/seasonal-ppr/export/model-context` — compact,
+  AI-agent-friendly model-context export (carries the interpretation warning).
+
+Studio is inspection/export only: it does not change model math, retrain,
+integrate with TIBER-Fantasy, or make any output more authoritative.
+
 ## Code map (loader additions)
 
 - Weekly artifact contract: `src/contracts/tiberDataWeeklyOutcomes.ts`
