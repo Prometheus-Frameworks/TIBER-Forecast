@@ -87,19 +87,37 @@ export const loadSeasonalPprStudioArtifacts = async (
     });
   }
 
-  // Predictions are optional for read-through: a present report with missing
-  // predictions still renders, just with an empty table.
-  let predictions: SeasonalPprPredictionRow[] = [];
+  // Fail closed on an incomplete artifact set: the runner always writes the
+  // report and predictions together, so a missing predictions file is an
+  // incomplete/partial mount, not an empty result. Surfacing it (rather than
+  // rendering "no rows") avoids misleading an operator into trusting a partial
+  // backtest artifact set.
+  let predictionsRaw: string;
   try {
-    predictions = parsePredictionsJsonl(await readFile(predictionsPath, 'utf8'));
+    predictionsRaw = await readFile(predictionsPath, 'utf8');
   } catch (error) {
-    if (!isMissing(error)) {
+    if (isMissing(error)) {
       return serviceFailure({
-        code: 'SEASONAL_PPR_PREDICTIONS_INVALID',
-        message: error instanceof Error ? error.message : 'Failed to read the seasonal PPR predictions artifact.',
-        details: { generateWith: SEASONAL_PPR_GENERATE_COMMAND },
+        code: 'SEASONAL_PPR_PREDICTIONS_NOT_FOUND',
+        message: `No seasonal PPR predictions artifact found at ${predictionsPath} (the report is present but the prediction set is missing).`,
+        details: { generateWith: SEASONAL_PPR_GENERATE_COMMAND, expectedDir: dir },
       });
     }
+    return serviceFailure({
+      code: 'SEASONAL_PPR_PREDICTIONS_READ_FAILED',
+      message: error instanceof Error ? error.message : 'Failed to read the seasonal PPR predictions artifact.',
+    });
+  }
+
+  let predictions: SeasonalPprPredictionRow[];
+  try {
+    predictions = parsePredictionsJsonl(predictionsRaw);
+  } catch (error) {
+    return serviceFailure({
+      code: 'SEASONAL_PPR_PREDICTIONS_INVALID',
+      message: error instanceof Error ? error.message : 'Failed to parse the seasonal PPR predictions artifact.',
+      details: { generateWith: SEASONAL_PPR_GENERATE_COMMAND },
+    });
   }
 
   return serviceSuccess({

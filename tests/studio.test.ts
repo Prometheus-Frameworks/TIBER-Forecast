@@ -1,9 +1,10 @@
-import { mkdtemp, rm } from 'node:fs/promises';
+import { copyFile, mkdtemp, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { createApp } from '../src/api/app.js';
 import {
+  DEFAULT_SEASONAL_PPR_ARTIFACT_DIR,
   loadSeasonalPprStudioArtifacts,
   parsePredictionsJsonl,
   SEASONAL_PPR_GENERATE_COMMAND,
@@ -47,6 +48,24 @@ describe('loadSeasonalPprStudioArtifacts', () => {
       }
     } finally {
       await rm(emptyDir, { recursive: true, force: true });
+    }
+  });
+
+  it('fails closed when the report is present but predictions are missing', async () => {
+    const partialDir = await mkdtemp(path.join(os.tmpdir(), 'ppm-studio-partial-'));
+    try {
+      // Copy only the report into the partial mount (no predictions JSONL).
+      const sourceReport = path.join(DEFAULT_SEASONAL_PPR_ARTIFACT_DIR, 'seasonal_ppr_backtest_report.json');
+      await copyFile(sourceReport, path.join(partialDir, 'seasonal_ppr_backtest_report.json'));
+
+      const result = await loadSeasonalPprStudioArtifacts(partialDir);
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.errors[0].code).toBe('SEASONAL_PPR_PREDICTIONS_NOT_FOUND');
+        expect(JSON.stringify(result.errors[0].details)).toContain(SEASONAL_PPR_GENERATE_COMMAND);
+      }
+    } finally {
+      await rm(partialDir, { recursive: true, force: true });
     }
   });
 });
