@@ -19,6 +19,7 @@ import { loadSeasonalPprDatasetFromWeeklyOutcomes } from './loadSeasonalPprDatas
 const result = loadSeasonalPprDatasetFromWeeklyOutcomes(tiberDataWeeklyPprScaffoldRows, {
   datasetId: 'tiber-data-seasonal-ppr-2024-2025',
   datasetVersion: 'scaffold-snapshot-2026-06-01',
+  dataSource: 'bundled-scaffold',
   provenanceNote:
     'Built from a bundled scaffold weekly artifact; replace with a mounted TIBER-Data artifact for real coverage.',
 });

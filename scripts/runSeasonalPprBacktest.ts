@@ -101,9 +101,14 @@ const resolveDataset = async (
     return { ok: false, error: parsed.errors.map((e) => `[${e.code}] ${e.message}`).join('; ') };
   }
 
-  // Governed status is intentionally NOT set from the CLI/path. Real governance
-  // must arrive as an explicit TIBER-Data marker; the dataset stays fixture here.
-  const loaded = loadSeasonalPprDatasetFromWeeklyOutcomes(parsed.data, { artifactPath: resolved });
+  // The rows came from a mounted/copied artifact file, so the provenance
+  // data_source is `mounted-artifact`. Governed status is intentionally NOT set
+  // from the CLI/path: real governance must arrive as an explicit TIBER-Data
+  // marker, so the dataset stays `fixture` here regardless of the file path.
+  const loaded = loadSeasonalPprDatasetFromWeeklyOutcomes(parsed.data, {
+    artifactPath: resolved,
+    dataSource: 'mounted-artifact',
+  });
   if (!loaded.ok) {
     return { ok: false, error: loaded.errors.map((e) => `[${e.code}] ${e.message}`).join('; ') };
   }
@@ -155,6 +160,16 @@ const main = async () => {
   console.log('Seasonal PPR backtest (MODEL INFERENCE — not observed reality)');
   console.log(`  model:           ${report.model_version}`);
   console.log(`  dataset:         ${report.dataset.dataset_id}@${report.dataset.dataset_version} [${report.dataset.governance_status}]`);
+  console.log(`  data source:     ${report.dataset.data_source}`);
+  if (report.dataset.data_source === 'mounted-artifact') {
+    console.log(
+      report.dataset.governance_status === 'governed'
+        ? '  verification:    MOUNTED artifact, governed marker honored — verified against a governed TIBER-Data artifact.'
+        : '  verification:    MOUNTED artifact, but governance is NOT governed — still fail-closed (fixture). Not approved for 2026 predictive use.',
+    );
+  } else {
+    console.log('  verification:    BUNDLED scaffold fixture — not a mounted TIBER-Data artifact. Not approved for 2026 predictive use.');
+  }
   console.log(`  rows scored:     ${report.dataset.scored_row_count} (unavailable: ${report.dataset.unavailable_row_count})`);
   console.log(`  model MAE/RMSE:  ${report.model.overall.mae.toFixed(2)} / ${report.model.overall.rmse.toFixed(2)}`);
   for (const baseline of report.baselines) {

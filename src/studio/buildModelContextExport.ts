@@ -41,6 +41,7 @@ export interface SeasonalPprModelContextExport {
   dataset_id: string;
   dataset_version: string;
   governance_status: string;
+  data_source: string;
   source_dataset_refs: TiberDataSourceDatasetRef[];
   row_counts: {
     observations: number;
@@ -92,6 +93,7 @@ export const buildSeasonalPprModelContextExport = (
   dataset_id: report.dataset.dataset_id,
   dataset_version: report.dataset.dataset_version,
   governance_status: report.dataset.governance_status,
+  data_source: report.dataset.data_source,
   source_dataset_refs: report.dataset.source_dataset_refs,
   row_counts: {
     observations: report.dataset.observation_count,

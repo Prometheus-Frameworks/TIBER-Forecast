@@ -10,6 +10,7 @@
     "dataset_id": "tiber-data-seasonal-ppr-2024-2025",
     "dataset_version": "scaffold-snapshot-2026-06-01",
     "governance_status": "fixture",
+    "data_source": "bundled-scaffold",
     "source_dataset_refs": [
       {
         "dataset_id": "tiber-data:scaffold-fixture",
@@ -17,7 +18,7 @@
         "uri": "tiber-data:scaffold-fixture"
       }
     ],
-    "provenance": "Aggregated from TIBER-Data weekly PPR outcome rows (player_weekly_ppr_outcomes_v1) into 2024->2025 player-level rows. Governance: fixture (governed is only honored with an explicit TIBER-Data marker, never inferred from a path). Harness/loader validation only: the committed promoted artifacts are documented as scaffold-only fixture coverage and do not approve predictive loss for 2026 use. Built from a bundled scaffold weekly artifact; replace with a mounted TIBER-Data artifact for real coverage.",
+    "provenance": "Aggregated from TIBER-Data weekly PPR outcome rows (player_weekly_ppr_outcomes_v1) into 2024->2025 player-level rows. Data source: bundled-scaffold (scaffold = bundled fixture; mounted-artifact = a real TIBER-Data artifact provided via the runner seam). Governance: fixture (governed is only honored with an explicit TIBER-Data marker, never inferred from a path or data source). Harness/loader validation only: the committed promoted artifacts are documented as scaffold-only fixture coverage and do not approve predictive loss for 2026 use. Built from a bundled scaffold weekly artifact; replace with a mounted TIBER-Data artifact for real coverage.",
     "observation_count": 39,
     "scored_row_count": 38,
     "unavailable_row_count": 1

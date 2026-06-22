@@ -137,7 +137,21 @@ is testable. It is scaffold-only fixture coverage. To run against real data:
 
 ```bash
 npm run backtest:seasonal-ppr -- --ppr-artifact=/path/to/player_weekly_ppr_outcomes_v1.json
+# or, against the canonical promoted lane:
+npm run verify:seasonal-ppr
 ```
+
+### Scaffold vs mounted artifact (`data_source`)
+
+Every run records a machine-readable `dataset.data_source`
+(`bundled-scaffold` | `mounted-artifact`) alongside the human-readable provenance
+string, so scaffold and mounted-artifact runs are never ambiguous. It is surfaced
+in the report JSON, in PPM Studio (chip + card + banner), and in the
+model-context export. `data_source` is **provenance only** and is independent of
+governance — a `mounted-artifact` run is still `fixture` until an explicit
+governed marker is present. See
+[seasonal-ppr-artifact-verification.md](seasonal-ppr-artifact-verification.md)
+for the full mounted-artifact verification guide.
 
 ## Governance and fail-closed behavior
 
