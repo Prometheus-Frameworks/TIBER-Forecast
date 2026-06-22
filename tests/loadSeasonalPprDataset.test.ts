@@ -217,6 +217,30 @@ describe('loadSeasonalPprDatasetFromWeeklyOutcomes', () => {
     expect(governed.governance_status).toBe('governed');
   });
 
+  it('records data_source orthogonally to governance (mounted artifact stays fixture without a marker)', () => {
+    const rows = [baseRow({ season: 2024, week: 1 }), baseRow({ season: 2025, week: 1 })];
+
+    // Default provenance is mounted-artifact (the loader's documented job), and a
+    // mounted artifact is STILL fixture until an explicit governed marker arrives.
+    const def = ok(loadSeasonalPprDatasetFromWeeklyOutcomes(rows, {}));
+    expect(def.data_source).toBe('mounted-artifact');
+    expect(def.governance_status).toBe('fixture');
+
+    // An explicit governed marker does not change the data source.
+    const governed = ok(
+      loadSeasonalPprDatasetFromWeeklyOutcomes(rows, {
+        governanceMarker: { status: 'governed', source: 'explicit_marker' },
+      }),
+    );
+    expect(governed.data_source).toBe('mounted-artifact');
+    expect(governed.governance_status).toBe('governed');
+
+    // Callers can declare the bundled-scaffold provenance explicitly.
+    const scaffold = ok(loadSeasonalPprDatasetFromWeeklyOutcomes(rows, { dataSource: 'bundled-scaffold' }));
+    expect(scaffold.data_source).toBe('bundled-scaffold');
+    expect(scaffold.governance_status).toBe('fixture');
+  });
+
   it('regenerating the scaffold is deterministic', () => {
     expect(JSON.stringify(buildScaffoldWeeklyPprRows())).toBe(JSON.stringify(tiberDataWeeklyPprScaffoldRows));
   });

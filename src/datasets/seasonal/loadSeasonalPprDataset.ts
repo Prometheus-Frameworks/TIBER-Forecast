@@ -28,6 +28,7 @@ import {
   SEASONAL_PPR_INPUT_SEASON,
   SEASONAL_PPR_TARGET_SEASON,
   type SeasonalPlayerObservation,
+  type SeasonalPprDataSource,
   type SeasonalPprDatasetDescriptor,
   type SeasonalPprDatasetGovernanceStatus,
 } from '../../contracts/seasonalPprBacktest.js';
@@ -58,6 +59,14 @@ export interface LoadSeasonalPprDatasetOptions {
   datasetVersion?: string;
   /** Explicit governed marker; omitted/invalid => fixture. */
   governanceMarker?: SeasonalDatasetGovernanceMarker;
+  /**
+   * Provenance of the weekly rows: the bundled scaffold fixture vs a real
+   * mounted/copied TIBER-Data artifact. Defaults to `mounted-artifact` because
+   * the loader's documented job is real ingestion; the scaffold dataset is the
+   * one explicit exception that declares `bundled-scaffold`. Never affects
+   * governance.
+   */
+  dataSource?: SeasonalPprDataSource;
   /** Optional path the rows were read from, recorded in provenance only. */
   artifactPath?: string;
   /** Optional extra provenance note appended to the dataset provenance. */
@@ -324,10 +333,12 @@ export const loadSeasonalPprDatasetFromWeeklyOutcomes = (
   }));
 
   const governanceStatus = resolveGovernance(options.governanceMarker);
+  const dataSource: SeasonalPprDataSource = options.dataSource ?? 'mounted-artifact';
 
   const provenanceParts = [
     `Aggregated from TIBER-Data weekly PPR outcome rows (player_weekly_ppr_outcomes_v1) into ${inputSeason}->${targetSeason} player-level rows.`,
-    `Governance: ${governanceStatus} (governed is only honored with an explicit TIBER-Data marker, never inferred from a path).`,
+    `Data source: ${dataSource} (scaffold = bundled fixture; mounted-artifact = a real TIBER-Data artifact provided via the runner seam).`,
+    `Governance: ${governanceStatus} (governed is only honored with an explicit TIBER-Data marker, never inferred from a path or data source).`,
     'Harness/loader validation only: the committed promoted artifacts are documented as scaffold-only fixture coverage and do not approve predictive loss for 2026 use.',
   ];
   if (options.artifactPath) {
@@ -341,6 +352,7 @@ export const loadSeasonalPprDatasetFromWeeklyOutcomes = (
     dataset_id: options.datasetId ?? DEFAULT_DATASET_ID,
     dataset_version: datasetVersion,
     governance_status: governanceStatus,
+    data_source: dataSource,
     source_dataset_refs: sourceDatasetRefs,
     provenance: provenanceParts.join(' '),
     observations,

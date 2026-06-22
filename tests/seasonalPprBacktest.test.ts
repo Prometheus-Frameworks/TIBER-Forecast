@@ -57,6 +57,8 @@ describe('runSeasonalPprBacktestService', () => {
     // One prediction row per observation; dataset provenance preserved.
     expect(predictions).toHaveLength(tiberDataSeasonalPprDataset.observations.length);
     expect(report.dataset.governance_status).toBe('fixture');
+    // The default dataset is the bundled scaffold fixture, not a mounted artifact.
+    expect(report.dataset.data_source).toBe('bundled-scaffold');
     expect(report.dataset.source_dataset_refs.length).toBeGreaterThan(0);
   });
 

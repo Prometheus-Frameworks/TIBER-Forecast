@@ -54,6 +54,15 @@ export type SeasonalPprRowGovernanceStatus = 'inference' | 'unavailable';
  */
 export type SeasonalPprDatasetGovernanceStatus = 'governed' | 'fixture' | 'ungoverned' | 'unknown';
 
+/**
+ * Where the backtest's weekly source rows came from. This is provenance only and
+ * is ORTHOGONAL to governance: a `mounted-artifact` run is still `fixture` unless
+ * the artifact carries an explicit governed marker. It exists so an operator (and
+ * PPM Studio) can tell at a glance whether a run used the bundled scaffold fixture
+ * or a real mounted/copied TIBER-Data artifact, without parsing the provenance text.
+ */
+export type SeasonalPprDataSource = 'bundled-scaffold' | 'mounted-artifact';
+
 /** Whether a row carried enough present input features to be scored by the model. */
 export type SeasonalPprFeatureCoverageStatus = 'complete' | 'partial';
 
@@ -89,6 +98,8 @@ export interface SeasonalPprDatasetDescriptor {
   dataset_id: string;
   dataset_version: string;
   governance_status: SeasonalPprDatasetGovernanceStatus;
+  /** Bundled scaffold fixture vs a mounted/copied real TIBER-Data artifact. */
+  data_source: SeasonalPprDataSource;
   /** TIBER-Data refs for the 2025 actual PPR outcome layer and 2024 inputs. */
   source_dataset_refs: TiberDataSourceDatasetRef[];
   /** Honest provenance note. */
@@ -163,6 +174,8 @@ export interface SeasonalPprBacktestReport {
     dataset_id: string;
     dataset_version: string;
     governance_status: SeasonalPprDatasetGovernanceStatus;
+    /** Bundled scaffold fixture vs a mounted/copied real TIBER-Data artifact. */
+    data_source: SeasonalPprDataSource;
     source_dataset_refs: TiberDataSourceDatasetRef[];
     provenance: string;
     /** Observations supplied to the backtest. */

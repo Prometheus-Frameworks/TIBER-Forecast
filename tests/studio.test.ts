@@ -97,6 +97,9 @@ describe('buildSeasonalPprModelContextExport', () => {
     expect(ctx.model_metrics.mae).toBe(report.model.overall.mae);
     expect(ctx.limitations.length).toBeGreaterThan(0);
     expect(ctx.top_misses.length).toBeGreaterThan(0);
+    // Provenance: scaffold vs mounted artifact is carried into the export.
+    expect(ctx.data_source).toBe(report.dataset.data_source);
+    expect(['bundled-scaffold', 'mounted-artifact']).toContain(ctx.data_source);
   });
 });
 
@@ -125,6 +128,70 @@ describe('renderStudioPage', () => {
     expect(html).toContain('NOT APPROVED FOR 2026 PREDICTIVE USE');
     expect(html).toContain(report.model_version);
     expect(html).toContain(report.beats_baseline_summary);
+  });
+
+  it('surfaces whether the run used the bundled scaffold or a mounted artifact', () => {
+    const base = (dataSource: string): SeasonalPprBacktestReport =>
+      ({
+        input_season: 2024,
+        target_season: 2025,
+        output_kind: 'model-inference',
+        model_version: 'm',
+        report_version: 'r',
+        generated_at: 'now',
+        target_definition: 't',
+        beats_baseline_summary: 's',
+        beats_baseline: true,
+        model: { name: 'm', overall: {}, by_position: {} },
+        baselines: [],
+        top_misses: [],
+        limitations: [],
+        dataset: {
+          dataset_id: 'd',
+          dataset_version: 'v',
+          governance_status: 'fixture',
+          data_source: dataSource,
+          observation_count: 0,
+          scored_row_count: 0,
+          unavailable_row_count: 0,
+        },
+      } as unknown as SeasonalPprBacktestReport);
+
+    expect(renderStudioPage(base('bundled-scaffold'), [])).toContain('bundled scaffold fixture');
+    expect(renderStudioPage(base('mounted-artifact'), [])).toContain('mounted TIBER-Data artifact');
+  });
+
+  it('does not claim scaffold provenance for a missing/unknown data_source', () => {
+    // An older or externally mounted report may lack data_source entirely.
+    const report = {
+      input_season: 2024,
+      target_season: 2025,
+      output_kind: 'model-inference',
+      model_version: 'm',
+      report_version: 'r',
+      generated_at: 'now',
+      target_definition: 't',
+      beats_baseline_summary: 's',
+      beats_baseline: true,
+      model: { name: 'm', overall: {}, by_position: {} },
+      baselines: [],
+      top_misses: [],
+      limitations: [],
+      dataset: {
+        dataset_id: 'd',
+        dataset_version: 'v',
+        governance_status: 'fixture',
+        // data_source intentionally absent
+        observation_count: 0,
+        scored_row_count: 0,
+        unavailable_row_count: 0,
+      },
+    } as unknown as SeasonalPprBacktestReport;
+
+    const html = renderStudioPage(report, []);
+    expect(html).toContain('unknown / unlabeled source');
+    expect(html).toContain('data source: unknown');
+    expect(html).not.toContain('bundled scaffold fixture');
   });
 });
 

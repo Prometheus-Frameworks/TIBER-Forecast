@@ -238,6 +238,7 @@ export const runSeasonalPprBacktestService = (
         dataset_id: dataset.dataset_id,
         dataset_version: dataset.dataset_version,
         governance_status: dataset.governance_status,
+        data_source: dataset.data_source,
         source_dataset_refs: dataset.source_dataset_refs,
         provenance: dataset.provenance,
         observation_count: observations.length,
