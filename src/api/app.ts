@@ -6,6 +6,7 @@ import { registerPointScenarioLabRoutes } from './routes/pointScenarioLab.js';
 import { registerProjectScenarioRoutes } from './routes/projectScenarios.js';
 import { registerScenarioRoutes } from './routes/scenarios.js';
 import { registerScoringRoutes } from './routes/scoring.js';
+import { registerStudioRoutes } from './routes/studio.js';
 import { registerTiberScoringRoutes } from './routes/tiberScoring.js';
 
 const defaultAllowedOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173'];
@@ -55,6 +56,10 @@ export const createApp = () => {
         legacyScenarios: '/api/scenarios',
         legacyScenarioProjection: '/api/project/scenarios',
         pointScenarioLabCompat: '/api/point-scenarios/lab',
+        studio: '/studio',
+        studioSeasonalPprReport: '/api/studio/seasonal-ppr/report',
+        studioSeasonalPprPredictions: '/api/studio/seasonal-ppr/predictions',
+        studioSeasonalPprModelContext: '/api/studio/seasonal-ppr/export/model-context',
       },
     }),
   );
@@ -66,6 +71,7 @@ export const createApp = () => {
   registerScenarioRoutes(app);
   registerProjectScenarioRoutes(app);
   registerPointScenarioLabRoutes(app);
+  registerStudioRoutes(app);
 
   app.notFound((c) => c.json({ ok: false, error: 'Not found' }, 404));
 

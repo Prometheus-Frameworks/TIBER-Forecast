@@ -59,6 +59,10 @@ describe('API server', () => {
         legacyScenarios: '/api/scenarios',
         legacyScenarioProjection: '/api/project/scenarios',
         pointScenarioLabCompat: '/api/point-scenarios/lab',
+        studio: '/studio',
+        studioSeasonalPprReport: '/api/studio/seasonal-ppr/report',
+        studioSeasonalPprPredictions: '/api/studio/seasonal-ppr/predictions',
+        studioSeasonalPprModelContext: '/api/studio/seasonal-ppr/export/model-context',
       },
     });
   });
