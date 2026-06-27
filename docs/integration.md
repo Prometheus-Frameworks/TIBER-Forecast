@@ -29,7 +29,7 @@ import {
   projectScenario,
   projectBatch,
   projectFromRawEvents,
-} from '../Point-prediction-Model/src/public/index.js';
+} from '../TIBER-Forecast/src/public/index.js';
 ```
 
 ## Result envelope

@@ -3,8 +3,9 @@
 > **Status:** naming/framing convention (docs/spec). This document defines the
 > preferred vocabulary for the seasonal fantasy-point modeling lane and the
 > backwards-compatibility rules that keep existing scripts, code identifiers, and
-> the GitHub repository name working unchanged. It changes *language*, not
-> behavior.
+> the npm package name working unchanged. It changes *language*, not behavior.
+> (The GitHub repository has since been renamed to `TIBER-Forecast`; see the
+> [Backwards-compatibility policy](#backwards-compatibility-policy).)
 
 ## Why this exists
 
@@ -14,9 +15,9 @@ it does not *predict* a known truth, it produces an uncertain **forecast** of a
 future outcome from the information available at a cutoff. Issue #62 moves the
 lane toward honest forecasting vocabulary while preserving every working surface.
 
-This is deliberately a vocabulary and documentation change. It does **not**
-rename the repository, break scripts, or rename code symbols (see
-[Backwards-compatibility policy](#backwards-compatibility-policy)).
+This is deliberately a vocabulary and documentation change. It does **not** break
+scripts, rename code symbols, or change the npm package name or artifact fields
+(see [Backwards-compatibility policy](#backwards-compatibility-policy)).
 
 ## Preferred names
 
@@ -64,8 +65,11 @@ New and edited prose should:
 This change is safe because it does not touch any executable or contracted
 surface:
 
-1. **No GitHub repository rename.** The repo stays `point-prediction-model` in
-   this PR. Any rename is a separate, explicitly-authorized operational change.
+1. **GitHub repository renamed (out-of-band).** The repository has since been
+   renamed to `Prometheus-Frameworks/TIBER-Forecast`; GitHub redirects the old
+   `point-prediction-model` path. That was a separate operational change — the
+   npm package name (`point-prediction-model`), scripts, code symbols, and
+   artifact fields below are still unchanged.
 2. **No script removal or rename.** Existing npm scripts
    (`backtest:seasonal-ppr`, `verify:seasonal-ppr`, …) keep working. Forecast-named
    **aliases** may be **added** alongside them (e.g. `forecast:seasonal-ppr` →

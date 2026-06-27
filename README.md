@@ -35,8 +35,10 @@ reframed as a **Fantasy Point Forecast** lane: it produces uncertain **forecasts
 of future fantasy outcomes from inputs available at a cutoff — **model inference,
 not observed reality, and not advice**. The seasonal backtest is the current
 baseline ("Run 1"). "PPM" / "PPM Studio" remain valid as legacy/internal
-shorthand (Forecast Lab); this PR renames no scripts, code symbols, artifact
-fields, or the repository itself.
+shorthand (Forecast Lab). The GitHub repository is now
+`Prometheus-Frameworks/TIBER-Forecast` (the old `point-prediction-model` path
+redirects); the npm package name, scripts, code symbols, and artifact fields are
+unchanged.
 
 - [Forecast lane naming & framing + backwards-compatibility policy](docs/forecast-lane.md)
 - [Run 2 TTS feature contract (what Forecast wants from Teamstate, governance & cutoff gates)](docs/run2-tts-feature-contract.md)
