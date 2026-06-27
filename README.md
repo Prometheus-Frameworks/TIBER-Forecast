@@ -29,12 +29,28 @@ Scenario-first infrastructure is preserved but intentionally demoted from the pr
 
 See `docs/migration-scoring-kernel.md` and `src/legacy/README.md`.
 
+## Forecast lane (seasonal Fantasy Point Forecast)
+The seasonal modeling lane (historically "Point Prediction Model / PPM") is being
+reframed as a **Fantasy Point Forecast** lane: it produces uncertain **forecasts**
+of future fantasy outcomes from inputs available at a cutoff — **model inference,
+not observed reality, and not advice**. The seasonal backtest is the current
+baseline ("Run 1"). "PPM" / "PPM Studio" remain valid as legacy/internal
+shorthand (Forecast Lab); this PR renames no scripts, code symbols, artifact
+fields, or the repository itself.
+
+- [Forecast lane naming & framing + backwards-compatibility policy](docs/forecast-lane.md)
+- [Run 2 TTS feature contract (what Forecast wants from Teamstate, governance & cutoff gates)](docs/run2-tts-feature-contract.md)
+- [Run manifest & run-to-run visibility spec](docs/run-manifest-spec.md)
+
+The seasonal runner is available as `npm run backtest:seasonal-ppr` and, as a
+backwards-compatible alias, `npm run forecast:seasonal-ppr` (identical command).
+
 ## Architecture / governance docs
 - [Ownership boundaries and contract map](docs/ownership-boundaries.md)
 - [TIBER-Data ingestion readiness report](docs/tiber-data-ingestion-readiness.md)
 - [Seasonal PPR backtest (2024 → 2025), model inference only](docs/seasonal-ppr-backtest.md)
 - [Seasonal PPR mounted-artifact verification](docs/seasonal-ppr-artifact-verification.md)
-- [Deployment & inspection guide (PPM Studio)](docs/deployment-inspection.md)
+- [Deployment & inspection guide (PPM Studio / Forecast Lab)](docs/deployment-inspection.md)
 - `docs/migration-scoring-kernel.md`
 - `src/legacy/README.md`
 
