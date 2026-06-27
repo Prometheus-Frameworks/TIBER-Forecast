@@ -8,62 +8,157 @@ import {
   type ProjectionRunManifestArtifact,
 } from '../src/public/index.js';
 
-const governedTeamstate = {
-  artifact_type: 'teamstate_readiness_report',
+const governedTeamstateReadiness = {
+  kind: 'team_week_raw_v0_governed_readiness',
+  artifact: 'team_week_raw_v0',
+  teamstateGovernedArtifact: true,
+  productionReady: false,
   provenanceStatus: 'governed_real_data',
-  governance: { status: 'governed', marker: 'explicit_marker', source: 'team_week_raw_v0' },
-  source_artifact_refs: [{ artifact_id: 'team_week_raw_v0:2024', artifact_type: 'team_week_raw_v0', artifact_version: '2024' }],
-  validation_refs: [{ artifact_id: 'teamstate-validation:2024', artifact_type: 'teamstate_validation' }],
-  lineage_refs: [{ artifact_id: 'checkpoint-66', artifact_type: 'handoff_checkpoint' }],
-  field_readiness: {
-    pressure: { availability: 'unavailable', reason: 'insufficient_data', timing: 'deferred' },
-    red_zone: { posture: 'partial_nulls_allowed', partial_nulls_preserved: true },
-    fantasy_split_fields: { accepted_only_as_upstream_nulls: true, stripped: true },
+  governance: { governanceStatus: 'governed', governanceSource: 'explicit_marker' },
+  sourceArtifacts: ['exports/governed/team_week_raw_v0/2024/team_week_raw_v0.jsonl'],
+  validationReportPath: 'exports/governed/team_week_raw_v0/2024/validation-report.json',
+  lineageManifestPath: 'exports/governed/team_week_raw_v0/2024/lineage-manifest.json',
+  upstreamFieldReadiness: {
+    source: 'team_week_raw_v0',
+    rowCount: 544,
+    teamCount: 32,
+    weeks: '1-18',
   },
-  pressure: null,
+  rowCount: 544,
+  pressurePosture: 'unavailable_insufficient_data_deferred',
+  deferredFields: ['pressureRateAllowed'],
+  deferredInsufficientFields: ['pressureRateAllowed'],
+  partialNullFields: ['redZoneTdRate'],
+  fieldReadiness: [
+    { field: 'pressureRateAllowed', availability: 'unavailable', reason: 'insufficient_data', timing: 'deferred' },
+    { field: 'redZoneTdRate', availability: 'partial_null', null_posture: 'preserve_upstream_nulls' },
+  ],
+  readinessStatus: 'ready_minimal_boundary',
 };
 
 describe('governed Teamstate Forecast input boundary', () => {
-  it('accepts only governed explicit-marker Teamstate input and preserves governance references', () => {
-    const result = readGovernedTeamstateInput(governedTeamstate);
+  it('accepts the real Teamstate governed readiness shape and preserves normalized references', () => {
+    const result = readGovernedTeamstateInput(governedTeamstateReadiness);
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.data).toMatchObject({
       boundary_version: TEAMSTATE_FORECAST_INPUT_BOUNDARY_VERSION,
+      source_kind: 'team_week_raw_v0_governed_readiness',
+      source_artifact: 'team_week_raw_v0',
+      readiness_status: 'ready_minimal_boundary',
       used: true,
       posture: 'governed',
       provenance_status: 'governed_real_data',
       governance: { status: 'governed', marker: 'explicit_marker' },
-      pressure: { availability: 'unavailable', reason: 'insufficient_data', timing: 'deferred' },
-      red_zone: { partial_nulls_preserved: true, posture: 'partial_nulls_allowed' },
+      pressure: {
+        availability: 'unavailable',
+        reason: 'insufficient_data',
+        timing: 'deferred',
+        source_posture: 'unavailable_insufficient_data_deferred',
+        deferred_field: 'pressureRateAllowed',
+      },
+      red_zone: { partial_nulls_preserved: true, posture: 'partial_nulls_allowed', partial_null_field: 'redZoneTdRate' },
     });
-    expect(result.data.source_artifact_refs).toEqual(governedTeamstate.source_artifact_refs);
-    expect(result.data.validation_refs).toEqual(governedTeamstate.validation_refs);
-    expect(result.data.lineage_refs).toEqual(governedTeamstate.lineage_refs);
-    expect(result.data.omitted_fields).toEqual(
-      expect.arrayContaining([expect.objectContaining({ field: 'pressure' }), expect.objectContaining({ field: 'fantasy_split_fields' })]),
-    );
+    expect(result.data.source_artifact_refs).toEqual([
+      {
+        artifact_id: governedTeamstateReadiness.sourceArtifacts[0],
+        artifact_type: 'teamstate_source_artifact',
+        uri: governedTeamstateReadiness.sourceArtifacts[0],
+      },
+    ]);
+    expect(result.data.validation_refs).toEqual([
+      {
+        artifact_id: governedTeamstateReadiness.validationReportPath,
+        artifact_type: 'teamstate_validation_report',
+        uri: governedTeamstateReadiness.validationReportPath,
+      },
+    ]);
+    expect(result.data.lineage_refs).toEqual([
+      {
+        artifact_id: governedTeamstateReadiness.lineageManifestPath,
+        artifact_type: 'teamstate_lineage_manifest',
+        uri: governedTeamstateReadiness.lineageManifestPath,
+      },
+    ]);
+    expect(result.data.field_readiness).toBe(governedTeamstateReadiness.fieldReadiness);
+    expect(result.data.upstream_field_readiness).toBe(governedTeamstateReadiness.upstreamFieldReadiness);
+    expect(result.data.omitted_fields).toEqual(expect.arrayContaining([expect.objectContaining({ field: 'pressureRateAllowed' })]));
   });
 
-  it('fails closed when Teamstate governance is not explicit-marker governed real data', () => {
-    const result = readGovernedTeamstateInput({ ...governedTeamstate, governance: { status: 'governed' } });
+  it('fails closed when the Teamstate readiness kind is missing or wrong', () => {
+    const result = readGovernedTeamstateInput({ ...governedTeamstateReadiness, kind: 'invented_shape' });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors).toEqual(expect.arrayContaining([expect.objectContaining({ code: 'TEAMSTATE_INPUT_KIND_INVALID' })]));
+  });
+
+  it('fails closed when the Teamstate artifact is missing or wrong', () => {
+    const result = readGovernedTeamstateInput({ ...governedTeamstateReadiness, artifact: 'other_artifact' });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors).toEqual(expect.arrayContaining([expect.objectContaining({ code: 'TEAMSTATE_INPUT_ARTIFACT_INVALID' })]));
+  });
+
+  it('fails closed when governance is missing or malformed', () => {
+    const { governance: _governance, ...withoutGovernance } = governedTeamstateReadiness;
+    const result = readGovernedTeamstateInput(withoutGovernance);
 
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.errors).toEqual(expect.arrayContaining([expect.objectContaining({ code: 'TEAMSTATE_INPUT_GOVERNANCE_INVALID' })]));
   });
 
-  it('rejects numeric pressure, including zero', () => {
-    const result = readGovernedTeamstateInput({ ...governedTeamstate, pressure: 0 });
+  it('fails closed when governance is not explicit-marker governed', () => {
+    const result = readGovernedTeamstateInput({
+      ...governedTeamstateReadiness,
+      governance: { governanceStatus: 'governed', governanceSource: 'implicit' },
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors).toEqual(expect.arrayContaining([expect.objectContaining({ code: 'TEAMSTATE_INPUT_GOVERNANCE_INVALID' })]));
+  });
+
+  it('fails closed when field-readiness metadata is missing', () => {
+    const result = readGovernedTeamstateInput({ ...governedTeamstateReadiness, fieldReadiness: undefined });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors).toEqual(expect.arrayContaining([expect.objectContaining({ code: 'TEAMSTATE_INPUT_FIELD_READINESS_MISSING' })]));
+  });
+
+  it('fails closed when validation or lineage references are missing', () => {
+    const result = readGovernedTeamstateInput({ ...governedTeamstateReadiness, validationReportPath: null, lineageManifestPath: null });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: 'TEAMSTATE_INPUT_VALIDATION_REF_MISSING' }),
+        expect.objectContaining({ code: 'TEAMSTATE_INPUT_LINEAGE_REF_MISSING' }),
+      ]),
+    );
+  });
+
+  it('rejects numeric pressure representations, including zero', () => {
+    const result = readGovernedTeamstateInput({
+      ...governedTeamstateReadiness,
+      fieldReadiness: [
+        { field: 'pressureRateAllowed', availability: 'unavailable', reason: 'insufficient_data', timing: 'deferred', pressureRateAllowed: 0 },
+        { field: 'redZoneTdRate', availability: 'partial_null', null_posture: 'preserve_upstream_nulls' },
+      ],
+    });
 
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.errors).toEqual(expect.arrayContaining([expect.objectContaining({ code: 'TEAMSTATE_INPUT_PRESSURE_NUMERIC_REJECTED' })]));
   });
 
-  it('adds optional Run 2 Teamstate input and Run 1 vs Run 2 scaffold metadata to run manifests', () => {
-    const boundary = readGovernedTeamstateInput(governedTeamstate);
+  it('stores pressure as unavailable/deferred and leaves run comparison scaffold as not_run in manifests', () => {
+    const boundary = readGovernedTeamstateInput(governedTeamstateReadiness);
     expect(boundary.ok).toBe(true);
     if (!boundary.ok) return;
 
@@ -89,7 +184,7 @@ describe('governed Teamstate Forecast input boundary', () => {
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.data.teamstate_input?.pressure).toEqual({ availability: 'unavailable', reason: 'insufficient_data', timing: 'deferred' });
+    expect(result.data.teamstate_input?.pressure).toMatchObject({ availability: 'unavailable', reason: 'insufficient_data', timing: 'deferred' });
     expect(result.data.run_comparison).toMatchObject({ mode: 'run1_vs_run2_scaffold_only', metric_comparison_status: 'not_run' });
   });
 });
