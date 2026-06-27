@@ -112,6 +112,85 @@ carries a `diff_vs_previous` block:
 - The first run has `previous_run_id: null` and an empty diff — the report should
   say "baseline run, no prior run to compare."
 
+## Golden trace players / eye-test audit cases
+
+Forecast Lab should support a small set of human-readable **trace players** used to
+sanity-check whether run-to-run movement makes sense. These are **not** training
+targets, **not** overfit exceptions, and **not** proof by themselves. They are
+audit/debug cases for explaining whether the artifact chain is seeing signal that a
+human reviewer would expect — a debugging/inspection feature, **not fantasy
+advice**.
+
+### First example: JSN (Jaxon Smith-Njigba)
+
+- Run 1 saw his 2024 production and produced a mediocre 2025 forecast.
+- Future runs should show whether **added artifacts move the forecast toward the
+  eventual smash case, and why** — not just that the number changed.
+- **TTS** should explain the Seattle / team-environment side (pace, pass-rate,
+  efficiency, scoring environment).
+- **Prospect / college artifacts** should not mishandle the strong college profile
+  or treat an injury-limited season as a clean failure.
+- **Role / usage artifacts** should expose target-earning, route, depth-chart, and
+  opportunity signals where governed.
+
+### Trace-player archetypes to define over time
+
+A small, deliberately diverse set — enough to cover the failure modes a human would
+catch, not a leaderboard:
+
+- hidden breakout / under-forecast smash,
+- obvious rebound / workload resurgence,
+- elite talent in an uncertain or poor team environment,
+- age / regression / name-value trap,
+- availability- or injury-distorted profile,
+- rookie / devy transition case,
+- false-positive hype player.
+
+### What the report/UI should show per trace player
+
+- what the **prior run** saw,
+- which **new artifact/features** were added,
+- how the **forecast moved** (with range/uncertainty, not a bare point),
+- which inputs pushed the forecast **up / down**,
+- which inputs were **missing / deferred / ungoverned**,
+- whether **later actual outcomes agreed or disagreed** once the season completed.
+
+> Trace players are an inspection/debugging surface. They explain *why* the
+> artifact chain moved a forecast; they are not advice, not a target to fit, and a
+> single trace agreeing (or disagreeing) with reality does not validate (or
+> invalidate) the lane on its own.
+
+## Future-season reality anchor vs consensus baseline
+
+For seasons that have **not happened yet**, actual PPR does not exist. External
+projection sources are **not reality** — they are market/consensus **anchors**.
+Forecast must keep three values distinct:
+
+| Field | Meaning | Status |
+| --- | --- | --- |
+| `actual_ppr` | The real target/outcome | **Nullable** until the season completes; the only ground truth, never invented early. |
+| `consensus_projection_median_ppr` | Median of selected external projection sources | **Comparison baseline / market anchor only — not truth** and never the training target (unless the explicit task is consensus forecasting). |
+| `forecast_ppr` *(or equivalent forecast output)* | Forecast's own estimate from inputs valid at the forecast cutoff | Model inference, with uncertainty. |
+
+### What the report/UI should show for a future-season forecast
+
+- **TIBER Forecast:** X PPR.
+- **Consensus projection median:** Y PPR.
+- **Delta vs consensus:** X − Y.
+- **Why Forecast is above/below consensus** (which drivers explain the gap).
+- **Which artifacts/features drove the difference.**
+- **Which fields are missing / deferred / ungoverned.**
+
+After the season completes, `actual_ppr` becomes available and **both** TIBER
+Forecast **and** the consensus baseline can be graded against reality — so consensus
+is itself a benchmark to beat, not the goal.
+
+> **Guardrail:** do not train the model to chase consensus unless the explicit task
+> *is* consensus forecasting. For normal fantasy-point forecasting,
+> `consensus_projection_median_ppr` is a **benchmark / market anchor**, not the
+> target. Surfacing the delta vs consensus is a reporting feature; minimizing it is
+> not an objective.
+
 ## Relationship to current artifacts
 
 The existing seasonal backtest already emits much of this (report +
