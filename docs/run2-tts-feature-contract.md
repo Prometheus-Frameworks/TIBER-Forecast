@@ -230,3 +230,50 @@ The report records:
 What it explicitly does **not** do: no feature matrix, no model-ready rows, no
 training, no evaluation, no Run 2 execution, no Run 1↔Run 2 comparison, and no
 pressure construction/imputation/backfill/estimate/inference/zero-fill.
+
+## Run 2 feature table rehearsal (implemented)
+
+The next step after the feature inclusion preflight: rehearse the *shape* of a
+future Run 2 feature table from governed, eligible fields only — without target
+leakage, pressure fabrication, or model execution.
+
+- Helper: `buildRun2FeatureTableRehearsal(input, options?)`
+  (`src/rehearsal/runRun2FeatureTableRehearsal.ts`), exported from the public API.
+- Grounded in the full chain and does not bypass earlier checks:
+  `readGovernedTeamstateInput` → `buildRun2ManifestRehearsal` →
+  `buildRun2FeatureInclusionPreflight` → feature table rehearsal. Accepts a
+  governed readiness report (full chain, fail-closed) or a prebuilt preflight
+  report (its embedded rehearsal is re-derived and re-hardened; the supplied
+  classification lists are recomputed, never trusted blindly).
+
+The report records:
+
+- `rehearsal_status: "feature_table_shape_only"`,
+  `execution_status: "not_trained"`, `evaluation_status: "not_evaluated"`,
+  `run_2_executed: false`.
+- `row_grain: "player_season_forecast_rehearsal"`.
+- `feature_columns`: only fields the preflight admits (governed, available).
+- `partial_null_columns`: admitted partial-null fields (e.g. `redZoneTdRate`),
+  preserved as `null` in rows — never zero-filled.
+- `excluded_columns`: pressure, fantasy-split, target/leakage, and
+  deferred/ungoverned fields, with explicit reasons.
+- `target_columns`: label-only (`available_during_forecast: false`,
+  `joined: false`), kept separate from input features (default
+  `fullSeasonPprActual`).
+- `target_leakage_status: "no_target_derived_fields_included"` and
+  `pressure_status: "unavailable_insufficient_data_deferred_excluded"`.
+- `rehearsal_rows`: a couple of explicitly-toy rows
+  (`row_kind: "rehearsal_shape_only_not_model_ready"`) with metadata
+  placeholders and `null` feature values; pressure and target columns are
+  absent.
+- Source Teamstate governance and source / validation / lineage refs preserved,
+  plus linkage to the preflight and the manifest rehearsal.
+
+Columns are separated into allowed feature, partial-null feature, excluded,
+label/target-only, and metadata/provenance groups. Target columns such as
+actual future PPR stay out of the input features.
+
+What it explicitly does **not** do: no production feature matrix, no
+model-ready training rows, no training, no evaluation, no Run 2 execution, no
+Run 1↔Run 2 comparison, and no pressure construction/imputation/backfill/
+estimate/inference/zero-fill.
