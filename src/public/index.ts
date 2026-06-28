@@ -125,6 +125,18 @@ export {
   RUN2_FEATURE_INCLUSION_PREFLIGHT_VERSION,
   buildRun2FeatureInclusionPreflight,
 } from '../rehearsal/runRun2FeatureInclusionPreflight.js';
+export type {
+  BuildRun2FeatureTableRehearsalInput,
+  Run2FeatureTableRehearsalReport,
+  Run2FeatureTableRehearsalRow,
+  Run2FeatureTableRehearsalStatus,
+  Run2FeatureTableTargetColumn,
+} from '../rehearsal/runRun2FeatureTableRehearsal.js';
+export {
+  RUN2_FEATURE_TABLE_REHEARSAL_VERSION,
+  RUN2_FEATURE_TABLE_ROW_GRAIN,
+  buildRun2FeatureTableRehearsal,
+} from '../rehearsal/runRun2FeatureTableRehearsal.js';
 export { fixtureGovernedTeamstateReadinessReport } from '../rehearsal/fixtures/governedTeamstateReadinessFixture.js';
 
 export {
