@@ -5,6 +5,7 @@ import type {
   TiberDataSourceDatasetRef,
 } from './tiberDataProjectionInput.js';
 import { tiberDataScoringPositions } from './tiberDataProjectionInput.js';
+import type { ForecastTeamstateInputMetadata, RunComparisonMetadataScaffold } from './teamstateInput.js';
 import { serviceFailure, serviceSuccess, type ServiceError, type ServiceResult, type ServiceWarning } from '../services/result.js';
 
 export const PROJECTION_RUN_MANIFEST_ARTIFACT_VERSION = 'projection-run-manifest-v1' as const;
@@ -61,6 +62,8 @@ export interface ProjectionRunManifestArtifact {
   outputs: ProjectionRunOutputRef[];
   warnings: ServiceWarning[];
   missing_fields: TiberDataProjectionMissingField[];
+  teamstate_input?: ForecastTeamstateInputMetadata;
+  run_comparison?: RunComparisonMetadataScaffold;
 }
 
 export interface WeeklyPlayerProjectionArtifactRow {
@@ -267,6 +270,12 @@ export const validateProjectionRunManifest = (artifact: unknown): ServiceResult<
   requireObjectArray(artifact.outputs, 'outputs', errors);
   requireObjectArray(artifact.warnings, 'warnings', errors);
   requireObjectArray(artifact.missing_fields, 'missing_fields', errors);
+  if (artifact.teamstate_input !== undefined && !isRecord(artifact.teamstate_input)) {
+    errors.push({ code: 'PROJECTION_ARTIFACT_FIELD_INVALID', message: 'teamstate_input must be an object when provided.', details: { field: 'teamstate_input' } });
+  }
+  if (artifact.run_comparison !== undefined && !isRecord(artifact.run_comparison)) {
+    errors.push({ code: 'PROJECTION_ARTIFACT_FIELD_INVALID', message: 'run_comparison must be an object when provided.', details: { field: 'run_comparison' } });
+  }
 
   return finishValidation<ProjectionRunManifestArtifact>(artifact, errors);
 };
