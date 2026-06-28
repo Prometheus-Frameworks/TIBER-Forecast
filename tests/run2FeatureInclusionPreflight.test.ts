@@ -176,6 +176,70 @@ describe('Run 2 feature inclusion preflight', () => {
     expect(result.data).not.toHaveProperty('evaluation');
   });
 
+  it('fails closed on a forged rehearsal-shaped object with the right version but ungoverned metadata', () => {
+    const forged = {
+      rehearsal_version: 'run2-teamstate-manifest-rehearsal-v1',
+      rehearsal_status: 'dry_run_manifest_only',
+      model_execution: 'not_run',
+      run_2_executed: false,
+      // Fabricated, ungoverned Teamstate metadata that never passed the real boundary.
+      teamstate_input: {
+        posture: 'ungoverned',
+        provenance_status: 'fabricated',
+        governance: { status: 'ungoverned', marker: 'none' },
+        field_readiness: [{ field: 'pressureRateAllowed', value: 0.42 }],
+        pressure: { availability: 'available', reason: 'computed', timing: 'now' },
+        omitted_fields: [],
+        source_artifact_refs: [],
+        validation_refs: [],
+        lineage_refs: [],
+      },
+      field_disposition: { included: [], omitted_deferred: [] },
+      manifest: { outputs: [], model_refs: [] },
+      notes: [],
+    };
+
+    const result = buildRun2FeatureInclusionPreflight(forged);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: 'RUN2_PREFLIGHT_REHEARSAL_INPUT_INVALID' })]),
+    );
+  });
+
+  it('fails closed on a rehearsal-shaped object whose pressure posture has been tampered with', () => {
+    const tampered = {
+      rehearsal_version: 'run2-teamstate-manifest-rehearsal-v1',
+      rehearsal_status: 'dry_run_manifest_only',
+      model_execution: 'not_run',
+      run_2_executed: false,
+      teamstate_input: {
+        posture: 'governed',
+        provenance_status: 'governed_real_data',
+        governance: { status: 'governed', marker: 'explicit_marker' },
+        field_readiness: [{ field: 'pressureRateAllowed', finiteCount: 544, nullCount: 0, status: 'available' }],
+        // Pressure flipped to available — must be rejected even though governance looks valid.
+        pressure: { availability: 'available', reason: 'computed', timing: 'now', deferred_field: 'pressureRateAllowed' },
+        omitted_fields: [],
+        source_artifact_refs: [],
+        validation_refs: [],
+        lineage_refs: [],
+      },
+      field_disposition: { included: [], omitted_deferred: [] },
+      manifest: { outputs: [], model_refs: [] },
+      notes: [],
+    };
+
+    const result = buildRun2FeatureInclusionPreflight(tampered);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: 'RUN2_PREFLIGHT_REHEARSAL_INPUT_INVALID' })]),
+    );
+  });
+
   it('accepts an already-built Run 2 manifest rehearsal result to keep the boundary chain explicit', () => {
     const rehearsal = buildRun2ManifestRehearsal(fixtureGovernedTeamstateReadinessReport);
     expect(rehearsal.ok).toBe(true);

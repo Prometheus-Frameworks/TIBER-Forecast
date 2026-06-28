@@ -1,6 +1,6 @@
 import type { ProjectionArtifactRef } from '../contracts/projectionArtifacts.js';
 import type { ForecastTeamstateInputMetadata, TeamstatePressureReadinessMetadata } from '../contracts/teamstateInput.js';
-import { serviceSuccess, type ServiceResult } from '../services/result.js';
+import { serviceFailure, serviceSuccess, type ServiceError, type ServiceResult } from '../services/result.js';
 import {
   RUN2_MANIFEST_REHEARSAL_VERSION,
   buildRun2ManifestRehearsal,
@@ -79,6 +79,50 @@ const readinessFieldName = (entry: Record<string, unknown>): string | undefined 
 
 const isRehearsalResult = (value: unknown): value is Run2ManifestRehearsalResult =>
   isRecord(value) && value.rehearsal_version === RUN2_MANIFEST_REHEARSAL_VERSION;
+
+// A prebuilt rehearsal result bypasses readGovernedTeamstateInput / buildRun2ManifestRehearsal,
+// so before trusting one we re-prove the governed boundary chain it must have come from. A
+// forged object that only sets the version string fails closed here rather than being classified.
+const validatePrebuiltRehearsalChain = (rehearsal: Run2ManifestRehearsalResult): ServiceError[] => {
+  const errors: ServiceError[] = [];
+  const reject = (message: string): void => {
+    errors.push({ code: 'RUN2_PREFLIGHT_REHEARSAL_INPUT_INVALID', message });
+  };
+
+  if (rehearsal.rehearsal_status !== 'dry_run_manifest_only') reject('rehearsal_status must be dry_run_manifest_only.');
+  if (rehearsal.model_execution !== 'not_run') reject('model_execution must be not_run.');
+  if (rehearsal.run_2_executed !== false) reject('run_2_executed must be false.');
+
+  const teamstate: unknown = rehearsal.teamstate_input;
+  if (!isRecord(teamstate)) {
+    reject('teamstate_input must be a governed Teamstate metadata object.');
+    return errors;
+  }
+
+  if (teamstate.posture !== 'governed') reject('teamstate_input.posture must be governed.');
+  if (teamstate.provenance_status !== 'governed_real_data') reject('teamstate_input.provenance_status must be governed_real_data.');
+
+  const governance = isRecord(teamstate.governance) ? teamstate.governance : undefined;
+  if (governance?.status !== 'governed' || governance.marker !== 'explicit_marker') {
+    reject('teamstate_input.governance must be { status: governed, marker: explicit_marker }.');
+  }
+
+  const pressure = isRecord(teamstate.pressure) ? teamstate.pressure : undefined;
+  if (pressure?.availability !== 'unavailable' || pressure.reason !== 'insufficient_data' || pressure.timing !== 'deferred') {
+    reject('teamstate_input.pressure must remain unavailable / insufficient_data / deferred.');
+  }
+
+  // If the manifest carries its own teamstate_input it must match the rehearsal's (no swapped metadata).
+  const manifest = isRecord(rehearsal.manifest) ? rehearsal.manifest : undefined;
+  if (
+    manifest?.teamstate_input !== undefined &&
+    JSON.stringify(manifest.teamstate_input) !== JSON.stringify(teamstate)
+  ) {
+    reject('manifest.teamstate_input must match the rehearsal teamstate_input.');
+  }
+
+  return errors;
+};
 
 interface ClassifiedFeatures {
   included: string[];
@@ -180,6 +224,8 @@ export const buildRun2FeatureInclusionPreflight = (
 ): ServiceResult<Run2FeatureInclusionPreflightReport> => {
   let rehearsal: Run2ManifestRehearsalResult;
   if (isRehearsalResult(input)) {
+    const chainErrors = validatePrebuiltRehearsalChain(input);
+    if (chainErrors.length > 0) return serviceFailure(chainErrors);
     rehearsal = input;
   } else {
     const rehearsalResult = buildRun2ManifestRehearsal(input, options);
