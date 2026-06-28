@@ -81,10 +81,11 @@ const buildFieldDisposition = (metadata: ForecastTeamstateInputMetadata): Run2Fi
 
   if (Array.isArray(metadata.field_readiness)) {
     for (const entry of metadata.field_readiness) {
-      if (!isRecord(entry)) continue;
-      const field = readinessFieldName(entry);
+      // The boundary also accepts bare string field names; those carry no status, so they
+      // start as included and are reconciled against omitted_fields below.
+      const field = typeof entry === 'string' ? entry : isRecord(entry) ? readinessFieldName(entry) : undefined;
       if (field === undefined) continue;
-      const status = typeof entry.status === 'string' ? entry.status : undefined;
+      const status = isRecord(entry) && typeof entry.status === 'string' ? entry.status : undefined;
       if (status !== undefined && DEFERRED_READINESS_STATUSES.has(status)) {
         if (!omittedDeferred.includes(field)) omittedDeferred.push(field);
       } else if (!included.includes(field)) {

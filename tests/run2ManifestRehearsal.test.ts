@@ -81,6 +81,23 @@ describe('Run 2 Teamstate dry-run manifest rehearsal', () => {
     expect(result.data.field_disposition.omitted_deferred).toEqual(expect.arrayContaining(['pressureRateAllowed']));
   });
 
+  it('classifies bare string fieldReadiness entries that the boundary accepts', () => {
+    // readGovernedTeamstateInput also accepts fieldReadiness as plain field-name strings.
+    const result = buildRun2ManifestRehearsal({
+      ...fixtureGovernedTeamstateReadinessReport,
+      fieldReadiness: ['teamWeekId', 'redZoneTdRate', 'pressureRateAllowed'],
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    // Preserved partial-null / available fields stay included even without per-entry status...
+    expect(result.data.field_disposition.included).toEqual(expect.arrayContaining(['teamWeekId', 'redZoneTdRate']));
+    expect(result.data.field_disposition.included).not.toContain('pressureRateAllowed');
+    // ...while the boundary's omitted pressure field is still recorded as omitted/deferred.
+    expect(result.data.field_disposition.omitted_deferred).toEqual(expect.arrayContaining(['pressureRateAllowed']));
+  });
+
   it('records pressureRateAllowed as unavailable / insufficient_data / deferred', () => {
     const result = buildRun2ManifestRehearsal(fixtureGovernedTeamstateReadinessReport);
     expect(result.ok).toBe(true);
