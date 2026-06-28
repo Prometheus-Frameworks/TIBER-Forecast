@@ -150,3 +150,43 @@ broken team→player join before any real-signal claim is made.
    cutoff, feature set version, and the Run 1↔Run 2 diff.
 5. Production metrics comparison is gated on `governed_real_data`; everything else
    is rehearsal-only and labeled non-production.
+
+## Run 2 dry-run manifest rehearsal (implemented)
+
+Forecast can assemble a Run 2 rehearsal manifest from a governed Teamstate
+readiness report **without** running a model. This proves the governed
+input boundary end-to-end (governance, refs, field readiness, deferred
+pressure) before any training or evaluation occurs.
+
+- Helper: `buildRun2ManifestRehearsal(teamstateReadinessReport, options?)`
+  (`src/rehearsal/runRun2ManifestRehearsal.ts`), exported from the public API.
+- Input: a governed `team_week_raw_v0_governed_readiness` report, validated
+  through the PR #68 boundary (`readGovernedTeamstateInput`). A representative
+  fixture is exported as `fixtureGovernedTeamstateReadinessReport`.
+- It is a **pure manifest assembly** step: it does not call the scorer and
+  shares nothing with `runProjectionRehearsal` (which does score).
+
+The rehearsal result records:
+
+- `rehearsal_status: "dry_run_manifest_only"`, `model_execution: "not_run"`,
+  and `run_2_executed: false`.
+- `teamstate_input`: the normalized governed Teamstate metadata — governance
+  posture, source / validation / lineage refs, upstream + Teamstate field
+  readiness, and the omitted/deferred field reasons.
+- `field_disposition`: fields **included** from Teamstate (`available` /
+  preserved `partial_nulls`, e.g. `redZoneTdRate`) versus **omitted/deferred**
+  (`pressureRateAllowed`, insufficient data).
+- `pressureRateAllowed` as `unavailable` / `insufficient_data` / `deferred`;
+  red-zone partial-null posture preserved.
+- `run_comparison` scaffold kept metadata-only with
+  `metric_comparison_status: "not_run"`.
+
+The emitted manifest carries **no outputs and no model refs**, and a
+`RUN2_DRY_RUN_MANIFEST_ONLY` warning, so it cannot be mistaken for a completed
+model run. Numeric pressure is never introduced: a fabricated pressure value
+(e.g. top-level `pressureRateAllowed: 0`) is rejected by the boundary and the
+rehearsal fails closed rather than assembling a manifest.
+
+What it explicitly does **not** do: no model training, no evaluation, no Run 2
+execution, no Run 1↔Run 2 metric comparison, and no pressure construction,
+imputation, backfill, estimation, inference, or zero-fill.
