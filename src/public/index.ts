@@ -115,6 +115,16 @@ export {
   RUN2_MANIFEST_REHEARSAL_VERSION,
   buildRun2ManifestRehearsal,
 } from '../rehearsal/runRun2ManifestRehearsal.js';
+export type {
+  Run2FeatureExclusion,
+  Run2FeatureExclusionDisposition,
+  Run2FeatureInclusionPreflightReport,
+  Run2FeatureLeakagePosture,
+} from '../rehearsal/runRun2FeatureInclusionPreflight.js';
+export {
+  RUN2_FEATURE_INCLUSION_PREFLIGHT_VERSION,
+  buildRun2FeatureInclusionPreflight,
+} from '../rehearsal/runRun2FeatureInclusionPreflight.js';
 export { fixtureGovernedTeamstateReadinessReport } from '../rehearsal/fixtures/governedTeamstateReadinessFixture.js';
 
 export {

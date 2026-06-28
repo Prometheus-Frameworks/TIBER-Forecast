@@ -190,3 +190,43 @@ rehearsal fails closed rather than assembling a manifest.
 What it explicitly does **not** do: no model training, no evaluation, no Run 2
 execution, no Run 1↔Run 2 metric comparison, and no pressure construction,
 imputation, backfill, estimation, inference, or zero-fill.
+
+## Run 2 feature inclusion preflight (implemented)
+
+Before any real feature table is built, Forecast can answer: *what governed
+Teamstate fields would be allowed into a future Run 2 feature table, what must
+be blocked, and why?* This is a pure field-eligibility classification — no
+feature matrix, no model-ready rows, no training or evaluation.
+
+- Helper: `buildRun2FeatureInclusionPreflight(input, options?)`
+  (`src/rehearsal/runRun2FeatureInclusionPreflight.ts`), exported from the
+  public API.
+- It is grounded in the governed boundary chain: pass a governed
+  `team_week_raw_v0_governed_readiness` report (run through
+  `buildRun2ManifestRehearsal`, failing closed on ungoverned input) **or** an
+  already-built Run 2 manifest rehearsal result. It does not bypass
+  `readGovernedTeamstateInput`.
+
+The report records:
+
+- `execution_status: "not_trained"`, `evaluation_status: "not_evaluated"`,
+  `run_2_executed: false`.
+- `included_features`: governed, `available` Teamstate fields only.
+- `partial_null_features`: governed fields with preserved partial-null posture
+  (e.g. `redZoneTdRate`) — never zero-filled.
+- `excluded_features` + `exclusion_reasons`: explicit per-field reasons.
+- `pressureRateAllowed` excluded with disposition
+  `pressure_unavailable_insufficient_data_deferred` (carried through from the
+  governed boundary's `unavailable` / `insufficient_data` / `deferred` pressure
+  posture); pressure is never constructed or imputed.
+- Fantasy-split fields and target-derived / future-season field names are
+  blocked (`fantasy_split_field`, `target_leakage_risk`); ungoverned, deferred,
+  missing, or fabricated fields are excluded.
+- `leakage_posture`: `no_future_season_target_leakage`, with an (expected
+  empty) `target_derived_fields` list — input-season team-environment fields
+  only, no model target read or joined.
+- Source Teamstate governance and source / validation / lineage refs preserved.
+
+What it explicitly does **not** do: no feature matrix, no model-ready rows, no
+training, no evaluation, no Run 2 execution, no Run 1↔Run 2 comparison, and no
+pressure construction/imputation/backfill/estimate/inference/zero-fill.
