@@ -104,6 +104,19 @@ export type { ProjectionRehearsalResult, RunProjectionRehearsalInput } from '../
 export { runProjectionRehearsal } from '../rehearsal/runProjectionRehearsal.js';
 export { fixtureLeagueContext, fixtureTiberDataProjectionBundle } from '../rehearsal/fixtures/projectionRehearsalFixtures.js';
 
+export type {
+  BuildRun2ManifestRehearsalInput,
+  Run2FieldDisposition,
+  Run2ManifestRehearsalResult,
+  Run2RehearsalStatus,
+} from '../rehearsal/runRun2ManifestRehearsal.js';
+export {
+  RUN2_DRY_RUN_MANIFEST_WARNING_CODE,
+  RUN2_MANIFEST_REHEARSAL_VERSION,
+  buildRun2ManifestRehearsal,
+} from '../rehearsal/runRun2ManifestRehearsal.js';
+export { fixtureGovernedTeamstateReadinessReport } from '../rehearsal/fixtures/governedTeamstateReadinessFixture.js';
+
 export {
   PROJECTION_INPUT_COVERAGE_ARTIFACT_VERSION,
   PROJECTION_RUN_MANIFEST_ARTIFACT_VERSION,
