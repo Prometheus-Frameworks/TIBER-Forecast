@@ -86,14 +86,33 @@ const fieldReadinessIncludes = (fieldReadiness: unknown, field: string): boolean
     return entry.field === field || entry.name === field || entry.fieldName === field;
   });
 
-const hasNumericPressureRepresentation = (value: unknown, pressurePath = false): boolean => {
-  if (typeof value === 'number' && Number.isFinite(value)) return pressurePath;
-  if (Array.isArray(value)) return value.some((entry) => hasNumericPressureRepresentation(entry, pressurePath));
+// Keys that directly name an actual pressure feature value. A finite number (or an
+// array of numbers) held directly by one of these keys is a fabricated/real pressure
+// feature value and must be rejected.
+const PRESSURE_FEATURE_KEYS = new Set(['pressure', 'pressurerateallowed']);
+
+const isPressureFeatureKey = (key: string): boolean => PRESSURE_FEATURE_KEYS.has(key.toLowerCase());
+
+// A pressure feature is "numeric" when the value held directly by a pressure-feature key
+// is a finite number, or an array that contains a finite number. Objects are treated as
+// readiness/diagnostic metadata (e.g. { finiteCount, nullCount, status }) and are walked
+// further rather than rejected outright.
+const isNumericPressureValue = (value: unknown): boolean => {
+  if (typeof value === 'number') return Number.isFinite(value);
+  if (Array.isArray(value)) return value.some(isNumericPressureValue);
+  return false;
+};
+
+// Rejects actual pressure feature values (top-level or nested `pressure` / `pressureRateAllowed`
+// holding a number) while preserving valid numeric readiness/count metadata such as
+// `finiteCount`, `nullCount`, and `rowCount` that Teamstate emits inside fieldReadiness entries.
+const hasNumericPressureFeature = (value: unknown): boolean => {
+  if (Array.isArray(value)) return value.some(hasNumericPressureFeature);
   if (!isRecord(value)) return false;
 
   return Object.entries(value).some(([key, nestedValue]) => {
-    const keyRepresentsPressure = key.toLowerCase().includes('pressure') || key === 'pressureRateAllowed';
-    return hasNumericPressureRepresentation(nestedValue, pressurePath || keyRepresentsPressure);
+    if (isPressureFeatureKey(key) && isNumericPressureValue(nestedValue)) return true;
+    return hasNumericPressureFeature(nestedValue);
   });
 };
 
@@ -149,7 +168,7 @@ export const readGovernedTeamstateInput = (artifact: unknown): ServiceResult<For
   if (lineageRef === undefined) {
     errors.push({ code: 'TEAMSTATE_INPUT_LINEAGE_REF_MISSING', message: 'Teamstate lineageManifestPath is required.' });
   }
-  if (hasNumericPressureRepresentation(artifact)) {
+  if (hasNumericPressureFeature(artifact)) {
     errors.push({ code: 'TEAMSTATE_INPUT_PRESSURE_NUMERIC_REJECTED', message: 'Teamstate pressureRateAllowed / pressure must remain unavailable / insufficient_data / deferred, never numeric or zero.' });
   }
 

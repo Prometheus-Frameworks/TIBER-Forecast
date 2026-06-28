@@ -29,9 +29,10 @@ const governedTeamstateReadiness = {
   deferredFields: ['pressureRateAllowed'],
   deferredInsufficientFields: ['pressureRateAllowed'],
   partialNullFields: ['redZoneTdRate'],
+  availableFields: ['teamWeekId'],
   fieldReadiness: [
-    { field: 'pressureRateAllowed', availability: 'unavailable', reason: 'insufficient_data', timing: 'deferred' },
-    { field: 'redZoneTdRate', availability: 'partial_null', null_posture: 'preserve_upstream_nulls' },
+    { field: 'pressureRateAllowed', finiteCount: 0, nullCount: 544, status: 'deferred_insufficient_data' },
+    { field: 'redZoneTdRate', finiteCount: 412, nullCount: 132, status: 'partial_nulls' },
   ],
   readinessStatus: 'ready_minimal_boundary',
 };
@@ -143,12 +144,42 @@ describe('governed Teamstate Forecast input boundary', () => {
     );
   });
 
-  it('rejects numeric pressure representations, including zero', () => {
+  it('accepts numeric readiness/diagnostic counts on the pressure fieldReadiness entry', () => {
     const result = readGovernedTeamstateInput({
       ...governedTeamstateReadiness,
       fieldReadiness: [
-        { field: 'pressureRateAllowed', availability: 'unavailable', reason: 'insufficient_data', timing: 'deferred', pressureRateAllowed: 0 },
-        { field: 'redZoneTdRate', availability: 'partial_null', null_posture: 'preserve_upstream_nulls' },
+        { field: 'pressureRateAllowed', finiteCount: 0, nullCount: 544, status: 'deferred_insufficient_data' },
+        { field: 'redZoneTdRate', finiteCount: 412, nullCount: 132, status: 'partial_nulls' },
+      ],
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.data.pressure).toMatchObject({ availability: 'unavailable', reason: 'insufficient_data', timing: 'deferred' });
+  });
+
+  it('rejects a top-level numeric pressure feature value, including zero', () => {
+    const result = readGovernedTeamstateInput({ ...governedTeamstateReadiness, pressure: 0 });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors).toEqual(expect.arrayContaining([expect.objectContaining({ code: 'TEAMSTATE_INPUT_PRESSURE_NUMERIC_REJECTED' })]));
+  });
+
+  it('rejects a top-level numeric pressureRateAllowed feature value, including zero', () => {
+    const result = readGovernedTeamstateInput({ ...governedTeamstateReadiness, pressureRateAllowed: 0 });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors).toEqual(expect.arrayContaining([expect.objectContaining({ code: 'TEAMSTATE_INPUT_PRESSURE_NUMERIC_REJECTED' })]));
+  });
+
+  it('rejects a nested direct numeric pressureRateAllowed feature value inside a fieldReadiness entry', () => {
+    const result = readGovernedTeamstateInput({
+      ...governedTeamstateReadiness,
+      fieldReadiness: [
+        { field: 'pressureRateAllowed', finiteCount: 0, nullCount: 544, status: 'deferred_insufficient_data', pressureRateAllowed: 0 },
+        { field: 'redZoneTdRate', finiteCount: 412, nullCount: 132, status: 'partial_nulls' },
       ],
     });
 
