@@ -4,6 +4,7 @@ import {
   SEASONAL_PPR_INPUT_SEASON,
   SEASONAL_PPR_TARGET_DEFINITION,
   SEASONAL_PPR_TARGET_SEASON,
+  type SeasonalPlayerObservation,
   type SeasonalPprDatasetDescriptor,
 } from '../contracts/seasonalPprBacktest.js';
 import { tiberDataSeasonalPprDataset } from '../datasets/seasonal/tiberDataSeasonalPprDataset.js';
@@ -61,6 +62,13 @@ export interface Run2FeatureMatrixCandidateRow {
   team_2024: string;
   input_season: typeof SEASONAL_PPR_INPUT_SEASON;
   target_season: typeof SEASONAL_PPR_TARGET_SEASON;
+  /**
+   * Existing Run 1 numeric input features for this row, taken unstandardized from the
+   * `SeasonalPlayerObservation` (e.g. `ppr_2024`, `ppr_per_game_2024` derived as Run 1 does).
+   * No standardization, training, or prediction — these are the real Run 1 inputs the candidate
+   * matrix is built on. The target (`ppr_2025_actual`) is never included here.
+   */
+  run1_feature_values: Record<string, number>;
   /** Appended governed Teamstate feature columns; `null` until a governed artifact is bound. */
   teamstate_feature_values: Record<string, null>;
   /** Appended partial-null Teamstate columns; `null` preserves upstream nulls (never zero-filled). */
@@ -121,6 +129,25 @@ const isFeatureTableReport = (value: unknown): value is Run2FeatureTableRehearsa
 const isBlockedColumn = (column: string): boolean =>
   PRESSURE_FEATURE_KEYS.has(column.toLowerCase()) || column === RUN1_TARGET_COLUMN;
 
+// Unstandardized Run 1 numeric feature value, derived exactly as the seasonal ridge model does
+// (`ppr_per_game_2024` is ppr/games, guarded for zero games). No standardization or training.
+const run1NumericFeatureValue = (observation: SeasonalPlayerObservation, name: string): number => {
+  switch (name) {
+    case 'ppr_2024':
+      return observation.ppr_2024;
+    case 'ppr_per_game_2024':
+      return observation.games_2024 > 0 ? observation.ppr_2024 / observation.games_2024 : 0;
+    case 'games_2024':
+      return observation.games_2024;
+    case 'targets_2024':
+      return observation.targets_2024;
+    case 'rush_attempts_2024':
+      return observation.rush_attempts_2024;
+    default:
+      return 0;
+  }
+};
+
 /**
  * Builds a pre-train Run 2 feature matrix candidate: governed, preflight-allowed Teamstate columns
  * attached to the existing Run 1 player-season grain (`SeasonalPlayerObservation`).
@@ -164,6 +191,9 @@ export const buildRun2FeatureMatrixCandidate = (
     team_2024: observation.team_2024,
     input_season: SEASONAL_PPR_INPUT_SEASON,
     target_season: SEASONAL_PPR_TARGET_SEASON,
+    run1_feature_values: Object.fromEntries(
+      run1FeatureColumns.map((column) => [column, run1NumericFeatureValue(observation, column)]),
+    ),
     teamstate_feature_values: nullColumns(teamstateFeatureColumns),
     teamstate_partial_null_values: nullColumns(teamstatePartialNullColumns),
     target: { column: RUN1_TARGET_COLUMN, role: 'label_only', value: observation.ppr_2025_actual },

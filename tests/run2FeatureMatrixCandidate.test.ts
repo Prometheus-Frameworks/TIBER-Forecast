@@ -205,6 +205,39 @@ describe('Run 2 pre-train feature matrix candidate builder', () => {
     }
   });
 
+  it('carries the actual unstandardized Run 1 numeric feature values on each candidate row', () => {
+    const result = buildRun2FeatureMatrixCandidate(fixtureGovernedTeamstateReadinessReport, { dataset: toyDataset });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const [first, second] = result.data.candidate_rows;
+
+    // Real 2024 inputs from the supplied dataset, unstandardized.
+    expect(first.run1_feature_values.ppr_2024).toBe(240.5);
+    expect(first.run1_feature_values.games_2024).toBe(17);
+    expect(first.run1_feature_values.targets_2024).toBe(140);
+    expect(first.run1_feature_values.rush_attempts_2024).toBe(2);
+    // ppr_per_game_2024 is derived consistently with Run 1 (ppr / games).
+    expect(first.run1_feature_values.ppr_per_game_2024).toBeCloseTo(240.5 / 17, 10);
+    expect(second.run1_feature_values.ppr_per_game_2024).toBeCloseTo(180.0 / 15, 10);
+
+    // The row's run1_feature_values keys match the advertised run1_feature_columns exactly.
+    expect(Object.keys(first.run1_feature_values).sort()).toEqual([...result.data.run1_feature_columns].sort());
+  });
+
+  it('keeps the target out of run1_feature_values and Teamstate appended values null', () => {
+    const result = buildRun2FeatureMatrixCandidate(fixtureGovernedTeamstateReadinessReport, { dataset: toyDataset });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    for (const row of result.data.candidate_rows) {
+      expect(Object.keys(row.run1_feature_values)).not.toContain('ppr_2025_actual');
+      expect(Object.keys(row.run1_feature_values)).not.toContain('pressureRateAllowed');
+      for (const value of Object.values(row.teamstate_feature_values)) expect(value).toBeNull();
+      for (const value of Object.values(row.teamstate_partial_null_values)) expect(value).toBeNull();
+    }
+  });
+
   it('preserves the same input/target season contract', () => {
     const result = buildRun2FeatureMatrixCandidate(fixtureGovernedTeamstateReadinessReport);
     expect(result.ok).toBe(true);
