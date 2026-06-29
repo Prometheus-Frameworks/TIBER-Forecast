@@ -125,13 +125,13 @@ export interface Run2BoundFeatureMatrixReport {
   notes: string[];
 }
 
-export interface BindRun2GovernedTeamstateValuesInput extends AssessRun2TeamstateValueBindingReadinessInput {
-  /**
-   * Governed Teamstate team-week values to aggregate. When omitted, the binder reads them from the
-   * governed artifact's `teamWeekValues` field. Only the chain's preflight-allowed columns are read.
-   */
-  teamstate_team_week_values?: TeamstateTeamWeekValueRow[];
-}
+/**
+ * Binding options. There is deliberately NO side-channel for team-week values: the values to bind are
+ * read only from the governed artifact's own `teamWeekValues` field, so bound data always shares the
+ * governance / source / validation / lineage / cutoff provenance of the artifact that passed readiness.
+ * An arbitrary external value set can never be bound as if it were governed.
+ */
+export type BindRun2GovernedTeamstateValuesInput = AssessRun2TeamstateValueBindingReadinessInput;
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -146,8 +146,9 @@ const isBindableColumn = (column: string): boolean => {
   return !FORBIDDEN_BIND_SIGNALS.some((signal) => lower.includes(signal));
 };
 
-const readTeamWeekValues = (input: unknown, options: BindRun2GovernedTeamstateValuesInput): TeamstateTeamWeekValueRow[] => {
-  if (Array.isArray(options.teamstate_team_week_values)) return options.teamstate_team_week_values;
+// Values are read ONLY from the governed artifact that passed readiness — never from a caller-supplied
+// side-channel — so bound values always carry the artifact's governance/cutoff/refs provenance.
+const readTeamWeekValues = (input: unknown): TeamstateTeamWeekValueRow[] => {
   if (isRecord(input) && Array.isArray(input.teamWeekValues)) return input.teamWeekValues as TeamstateTeamWeekValueRow[];
   return [];
 };
@@ -297,7 +298,7 @@ export const bindRun2GovernedTeamstateValues = (
   const partialNullColumns = candidate.partial_null_columns.filter(isBindableColumn);
   const allowedColumns = [...new Set([...featureColumns, ...partialNullColumns])];
 
-  const teamWeekValues = readTeamWeekValues(input, options);
+  const teamWeekValues = readTeamWeekValues(input);
 
   // Aggregate available input-season team-week values to team-season means.
   const accumulators = new Map<string, TeamAccumulator>();

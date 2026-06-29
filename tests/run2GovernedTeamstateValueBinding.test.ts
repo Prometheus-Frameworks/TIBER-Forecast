@@ -199,6 +199,34 @@ describe('Run 2 governed Teamstate value binding', () => {
     }
   });
 
+  it('ignores any caller-supplied team-week values side-channel (binds only the governed artifact)', () => {
+    // Simulate a caller trying to inject arbitrary, ungoverned values through options. The binder must
+    // never bind them: values come only from the governed artifact's own teamWeekValues.
+    const arbitraryValues = [
+      { teamCode: 'BAL', season: 2024, week: 1, epaPerPlay: 9.9, successRate: 9.9, redZoneTdRate: 9.9, pressureRateAllowed: null },
+    ];
+    const sideChannelOptions = { teamstate_team_week_values: arbitraryValues } as unknown as Parameters<
+      typeof bindRun2GovernedTeamstateValues
+    >[1];
+
+    // (a) A ready governed artifact with NO teamWeekValues + arbitrary option values -> nothing binds.
+    const { teamWeekValues: _values, ...noValues } = readyArtifact;
+    const injected = bindRun2GovernedTeamstateValues(noValues, sideChannelOptions);
+    expect(injected.ok).toBe(true);
+    if (!injected.ok) return;
+    expect(injected.data.binding_status).toBe('not_bound_no_team_week_values');
+    expect(injected.data.binding_coverage.team_week_rows_used).toBe(0);
+
+    // (b) A ready governed artifact WITH its own values + arbitrary option values -> only the
+    // artifact's values are bound (the 9.9 side-channel never reaches BAL).
+    const both = bindRun2GovernedTeamstateValues(readyArtifact, sideChannelOptions);
+    expect(both.ok).toBe(true);
+    if (!both.ok) return;
+    const balRow = both.data.bound_rows.find((row) => row.team_2024 === 'BAL');
+    expect(balRow?.teamstate_feature_values.epaPerPlay).toBeCloseTo(0.15, 10);
+    expect(balRow?.teamstate_feature_values.epaPerPlay).not.toBeCloseTo(9.9, 5);
+  });
+
   it('emits a not-bound report when no input-season team-week values are supplied', () => {
     const { teamWeekValues: _values, ...noValues } = readyArtifact;
     const result = bindRun2GovernedTeamstateValues(noValues);

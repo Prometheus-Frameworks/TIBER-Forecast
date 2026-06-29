@@ -386,10 +386,13 @@ value binding. Binding proceeds **only** when the readiness gate returns
 
 The readiness summary carries field-readiness *counts*, not per-row numbers, so the
 governed artifact also supplies the team-week **values** to aggregate, under a
-`teamWeekValues` array (or via `options.teamstate_team_week_values`). Each row is a
-governed team-week record (`teamCode`, `season`, `week`, plus numeric/null metric
-columns). Only the chain's preflight-allowed columns are read; pressure, fantasy-
-split, and target/future/leakage columns are never read even if present.
+`teamWeekValues` array. Values are read **only** from the governed artifact that
+passed readiness — there is deliberately no caller-supplied side-channel — so bound
+values always carry the same governance / source / validation / lineage / cutoff
+provenance as the artifact. Each row is a governed team-week record (`teamCode`,
+`season`, `week`, plus numeric/null metric columns). Only the chain's
+preflight-allowed columns are read; pressure, fantasy-split, and
+target/future/leakage columns are never read even if present.
 
 ### Aggregation (team-week → player-season)
 
