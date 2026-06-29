@@ -46,7 +46,7 @@ Per-position MAE (where the Run 1 evaluation produces it):
 ## 4. How the TTS artifact changed Run 1
 
 - Added Teamstate/TTS feature columns: epaPerPlay, successRate, redZoneTdRate.
-- 8 of 38 scored rows had matched governed Teamstate values; 31 rows were unmatched and kept null (null-preserved).
+- Of 39 observations, 8 had matched governed Teamstate values and 31 were unmatched and kept null (null-preserved); 38 rows had a usable 2025 actual and formed the scored metric population.
 - Null/partial-null Teamstate values were handled by train_fold_mean_imputation (non-leaky; never silent raw zero-fill).
 - Under the primary MAE metric, real governed Teamstate raised error (worsened) vs Run 1; the shuffled control raised error (worsened) vs Run 1.
 - Conservative reading: failed_sanity_control. This is one controlled experiment on the current (fixture/scaffold-scale) coverage and is NOT evidence of general predictive value.

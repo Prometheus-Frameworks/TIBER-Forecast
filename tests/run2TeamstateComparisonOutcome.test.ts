@@ -87,6 +87,9 @@ describe('Run 2 Teamstate comparison outcome record', () => {
     expect(record.tts_impact!.unmatched_rows).toBe(report.coverage!.teamstate_unmatched_rows);
     expect(record.tts_impact!.null_handling_method).toBe(report.null_handling!.method);
     expect(record.tts_impact!.signal_interpretation).toBe(report.interpretation.signal_interpretation);
+    // Coverage counts are scope-consistent: matched + unmatched == observation_count (not scored).
+    expect(record.tts_impact!.matched_rows + record.tts_impact!.unmatched_rows).toBe(record.tts_impact!.observation_count);
+    expect(record.tts_impact!.scored_row_count).toBe(report.coverage!.scored_row_count);
     expect(record.tts_impact!.summary.join(' ').toLowerCase()).toContain('not evidence of general predictive value');
   });
 

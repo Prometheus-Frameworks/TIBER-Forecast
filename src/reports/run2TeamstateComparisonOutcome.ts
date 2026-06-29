@@ -61,8 +61,12 @@ export interface Run2OutcomeExperimentIdentity {
 
 export interface Run2OutcomeTtsImpact {
   teamstate_feature_columns: string[];
+  /** Observation-scoped counts (matched + unmatched = observation_count). */
+  observation_count: number;
   matched_rows: number;
   unmatched_rows: number;
+  /** Rows with a usable 2025 actual that formed the scored metric population. */
+  scored_row_count: number;
   null_handling_method: string;
   real_vs_run1_mae_direction: Run2MaeDirection;
   shuffled_vs_run1_mae_direction: Run2MaeDirection;
@@ -167,8 +171,10 @@ const buildTtsImpact = (report: Run2TeamstateComparisonReport): Run2OutcomeTtsIm
 
   return {
     teamstate_feature_columns: report.teamstate_feature_columns,
+    observation_count: report.coverage.observation_count,
     matched_rows: report.coverage.teamstate_matched_rows,
     unmatched_rows: report.coverage.teamstate_unmatched_rows,
+    scored_row_count: report.coverage.scored_row_count,
     null_handling_method: report.null_handling?.method ?? 'unknown',
     real_vs_run1_mae_direction: realDir,
     shuffled_vs_run1_mae_direction: shuffledDir,
@@ -176,7 +182,7 @@ const buildTtsImpact = (report: Run2TeamstateComparisonReport): Run2OutcomeTtsIm
     signal_interpretation: report.interpretation.signal_interpretation,
     summary: [
       `Added Teamstate/TTS feature columns: ${report.teamstate_feature_columns.join(', ') || '(none)'}.`,
-      `${report.coverage.teamstate_matched_rows} of ${report.coverage.scored_row_count} scored rows had matched governed Teamstate values; ${report.coverage.teamstate_unmatched_rows} rows were unmatched and kept null (null-preserved).`,
+      `Of ${report.coverage.observation_count} observations, ${report.coverage.teamstate_matched_rows} had matched governed Teamstate values and ${report.coverage.teamstate_unmatched_rows} were unmatched and kept null (null-preserved); ${report.coverage.scored_row_count} rows had a usable 2025 actual and formed the scored metric population.`,
       `Null/partial-null Teamstate values were handled by ${report.null_handling?.method ?? 'the documented method'} (non-leaky; never silent raw zero-fill).`,
       `Under the primary MAE metric, real governed Teamstate ${directionWord(realDir)} vs Run 1; the shuffled control ${directionWord(shuffledDir)} vs Run 1.`,
       `Conservative reading: ${report.interpretation.signal_interpretation}. This is one controlled experiment on the current (fixture/scaffold-scale) coverage and is NOT evidence of general predictive value.`,

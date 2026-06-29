@@ -250,8 +250,10 @@
       "successRate",
       "redZoneTdRate"
     ],
+    "observation_count": 39,
     "matched_rows": 8,
     "unmatched_rows": 31,
+    "scored_row_count": 38,
     "null_handling_method": "train_fold_mean_imputation",
     "real_vs_run1_mae_direction": "worse",
     "shuffled_vs_run1_mae_direction": "worse",
@@ -259,7 +261,7 @@
     "signal_interpretation": "failed_sanity_control",
     "summary": [
       "Added Teamstate/TTS feature columns: epaPerPlay, successRate, redZoneTdRate.",
-      "8 of 38 scored rows had matched governed Teamstate values; 31 rows were unmatched and kept null (null-preserved).",
+      "Of 39 observations, 8 had matched governed Teamstate values and 31 were unmatched and kept null (null-preserved); 38 rows had a usable 2025 actual and formed the scored metric population.",
       "Null/partial-null Teamstate values were handled by train_fold_mean_imputation (non-leaky; never silent raw zero-fill).",
       "Under the primary MAE metric, real governed Teamstate raised error (worsened) vs Run 1; the shuffled control raised error (worsened) vs Run 1.",
       "Conservative reading: failed_sanity_control. This is one controlled experiment on the current (fixture/scaffold-scale) coverage and is NOT evidence of general predictive value."
