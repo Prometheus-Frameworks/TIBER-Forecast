@@ -114,6 +114,16 @@ export const buildRun2CoverageGateEvidenceFromTeamstate = (
   const coveredSet = new Set(coveredTeams);
   const featureColumns = [...RUN2_TEAMSTATE_FEATURE_COLUMNS];
 
+  // The report claims the Run 2 feature columns are a subset of the emitted Forecast input columns and
+  // are backed by the derived availability table. Verify that here: a required column that was NOT
+  // emitted for Forecast consumption (omitted/renamed) or is absent from the availability fixture is
+  // untrusted, so every one of its cells is treated as null (governed value unavailable). It is never
+  // counted as non-null off the hard-coded list alone — that would let unemitted columns pass the gate.
+  const emittedColumnSet = new Set(coverageEvidence.emitted.forecastInputColumns);
+  const availabilityColumnSet = new Set(availability.featureColumns);
+  const columnIsTrusted = (column: string): boolean =>
+    emittedColumnSet.has(column) && availabilityColumnSet.has(column);
+
   // Row-level join diagnostics: exactly one record per scored row.
   const joinDiagnostics: Run2CoverageJoinRow[] = scored.map((row) => {
     const matched = coveredSet.has(row.team_2024);
@@ -139,7 +149,7 @@ export const buildRun2CoverageGateEvidenceFromTeamstate = (
     const teamAvailability = availability.teams[row.team_2024];
     const matched = coveredSet.has(row.team_2024);
     for (const column of featureColumns) {
-      const finiteWeeks = matched && teamAvailability ? (teamAvailability[column] ?? 0) : 0;
+      const finiteWeeks = matched && columnIsTrusted(column) && teamAvailability ? (teamAvailability[column] ?? 0) : 0;
       if (finiteWeeks > 0) nonNullCells += 1;
       else nullCellsByColumn[column] += 1;
     }
@@ -152,12 +162,25 @@ export const buildRun2CoverageGateEvidenceFromTeamstate = (
     return { position, matched: matchedAtPosition.length, scored: scoredAtPosition.length };
   });
 
+  // Governance must hold for BOTH the emitted artifact AND the coverage evidence: the covered-team
+  // set, source identity, and join source refs all come from `coverageEvidence`, so an ungoverned,
+  // sha-less, or stale coverage-evidence mirror must fail the gate even if the full artifact is
+  // governed. The pinned governed-source sha must be present (the value match is asserted upstream by
+  // the Teamstate checksum-pin guard and the derived availability provenance).
+  const fullArtifactGoverned =
+    fullArtifact.governance.governanceStatus === 'governed' &&
+    fullArtifact.governance.governanceSource === 'explicit_marker' &&
+    fullArtifact.provenanceStatus === 'governed_real_data';
+  const coverageEvidenceGoverned =
+    coverageEvidence.source.governanceStatus === 'governed' &&
+    coverageEvidence.source.governanceSource === 'explicit_marker' &&
+    coverageEvidence.source.provenanceStatus === 'governed_real_data' &&
+    typeof coverageEvidence.source.sha256 === 'string' &&
+    coverageEvidence.source.sha256.length > 0;
+
   return {
     governance: {
-      governance_marker_present:
-        fullArtifact.governance.governanceStatus === 'governed' &&
-        fullArtifact.governance.governanceSource === 'explicit_marker' &&
-        fullArtifact.provenanceStatus === 'governed_real_data',
+      governance_marker_present: fullArtifactGoverned && coverageEvidenceGoverned,
       artifact_version: fullArtifact.artifact,
       row_grain: fullArtifact.rowGrain,
       generated_at: fullArtifact.forecastCutoff.sourceGeneratedAt,

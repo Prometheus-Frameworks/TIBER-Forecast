@@ -102,6 +102,40 @@ describe('Run 2 Teamstate coverage gate evaluation against full-mode evidence (#
     expect(evaluateRun2TeamstateCoverageGate(missing).decision).toBe('fail_closed_incomplete_evidence');
   });
 
+  it('fails closed when the coverage evidence itself is ungoverned or sha-less (not just the full artifact)', () => {
+    // covered_teams / source identity come from coverageEvidence, so an ungoverned mirror must fail
+    // even though the full artifact is governed.
+    const ungovernedSource = {
+      ...baseInputs(),
+      coverageEvidence: { ...coverageEvidence, source: { ...coverageEvidence.source, governanceStatus: 'ungoverned' } },
+    };
+    expect(evaluateRun2CoverageGateFromTeamstate(ungovernedSource).result.status).toBe('teamstate_coverage_gate_failed_missing_governance');
+
+    const shaLessSource = {
+      ...baseInputs(),
+      coverageEvidence: { ...coverageEvidence, source: { ...coverageEvidence.source, sha256: null } },
+    };
+    const shaLess = evaluateRun2CoverageGateFromTeamstate(shaLessSource).result;
+    expect(shaLess.status).toBe('teamstate_coverage_gate_failed_missing_governance');
+    expect(shaLess.decision).toBe('must_not_rerun');
+  });
+
+  it('does not count a Run 2 feature column that was not emitted for Forecast consumption', () => {
+    // Drop redZoneTdRate from the emitted forecast input columns: its cells must all become null
+    // (untrusted), driving non-null coverage below threshold rather than counting off the hard-coded list.
+    const emittedWithout = coverageEvidence.emitted.forecastInputColumns.filter((c) => c !== 'redZoneTdRate');
+    const inputs = {
+      ...baseInputs(),
+      coverageEvidence: { ...coverageEvidence, emitted: { ...coverageEvidence.emitted, forecastInputColumns: emittedWithout } },
+    };
+    const evidence = buildRun2CoverageGateEvidenceFromTeamstate(inputs);
+    expect(evidence.null_cells_by_column.redZoneTdRate).toBe(38);
+    expect(evidence.teamstate_cell_nonnull).toBe(76);
+    const result = evaluateRun2CoverageGateFromTeamstate(inputs).result;
+    expect(result.nonnull_cell_coverage.passed).toBe(false);
+    expect(result.decision).toBe('must_not_rerun');
+  });
+
   it('the previous 3-team BAL/CIN/PHI evidence shape fails the gate', () => {
     const result = evaluateRun2TeamstateCoverageGate(RUN2_PREVIOUS_RECORDED_COVERAGE_EVIDENCE);
     expect(result.status).toBe('teamstate_coverage_gate_failed_team_coverage');
