@@ -70,6 +70,27 @@ describe('Run 2 governed Teamstate value binding', () => {
     expect(data.cutoff_validation.recorded_cutoff_as_of).toBe('2025-03-01T00:00:00.000Z');
   });
 
+  it('preserves the recorded cutoff even when the artifact uses gate-accepted cutoff aliases', () => {
+    // Nested alias: forecastCutoff.season instead of inputSeason (the readiness gate accepts it).
+    const { forecastCutoff: _cutoff, ...rest } = readyArtifact;
+    const nestedAlias = { ...rest, forecastCutoff: { season: 2024, asOf: '2025-03-01T00:00:00.000Z' } };
+    const nested = bindRun2GovernedTeamstateValues(nestedAlias);
+    expect(nested.ok).toBe(true);
+    if (!nested.ok) return;
+    expect(nested.data.binding_status).toBe('governed_teamstate_values_bound');
+    expect(nested.data.recorded_cutoff.input_season).toBe(2024);
+    expect(nested.data.recorded_cutoff.as_of).toBe('2025-03-01T00:00:00.000Z');
+
+    // Top-level aliases: forecastCutoffInputSeason / forecastCutoffAsOf, no forecastCutoff object.
+    const topLevelAlias = { ...rest, forecastCutoffInputSeason: 2024, forecastCutoffAsOf: '2025-02-01T00:00:00.000Z' };
+    const topLevel = bindRun2GovernedTeamstateValues(topLevelAlias);
+    expect(topLevel.ok).toBe(true);
+    if (!topLevel.ok) return;
+    expect(topLevel.data.binding_status).toBe('governed_teamstate_values_bound');
+    expect(topLevel.data.recorded_cutoff.input_season).toBe(2024);
+    expect(topLevel.data.recorded_cutoff.as_of).toBe('2025-02-01T00:00:00.000Z');
+  });
+
   it('keeps one row per Run 1 SeasonalPlayerObservation', () => {
     const data = bindReady();
     expect(data.row_grain).toBe('player_season_forecast');

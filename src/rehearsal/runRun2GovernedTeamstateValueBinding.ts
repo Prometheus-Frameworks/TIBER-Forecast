@@ -152,14 +152,21 @@ const readTeamWeekValues = (input: unknown, options: BindRun2GovernedTeamstateVa
   return [];
 };
 
-const readRecordedCutoff = (input: unknown): Run2RecordedCutoff => {
+// The authoritative input_season / as_of come from the readiness gate's own (alias-aware) extraction
+// — the gate accepts forecastCutoff.season/cutoffSeason and top-level forecastCutoffInputSeason/
+// forecastCutoffAsOf, so reading only forecastCutoff.inputSeason/asOf here would drop the cutoff
+// metadata that authorized binding. The remaining fields are provenance extras read directly.
+const readRecordedCutoff = (
+  input: unknown,
+  requiredCutoff: Run2TeamstateValueBindingReadinessReport['required_cutoff'],
+): Run2RecordedCutoff => {
   const cutoff = isRecord(input) && isRecord(input.forecastCutoff) ? input.forecastCutoff : undefined;
   const num = (value: unknown): number | null => (typeof value === 'number' && Number.isFinite(value) ? value : null);
   const str = (value: unknown): string | null => (typeof value === 'string' && value.trim() !== '' ? value : null);
   const bool = (value: unknown): boolean | null => (typeof value === 'boolean' ? value : null);
   return {
-    input_season: num(cutoff?.inputSeason),
-    as_of: str(cutoff?.asOf),
+    input_season: requiredCutoff.recorded_cutoff_input_season ?? num(cutoff?.inputSeason),
+    as_of: requiredCutoff.recorded_cutoff_as_of ?? str(cutoff?.asOf),
     target_season: num(cutoff?.targetSeason),
     target_season_start: str(cutoff?.targetSeasonStart),
     source_generated_at: str(cutoff?.sourceGeneratedAt),
@@ -202,7 +209,7 @@ export const bindRun2GovernedTeamstateValues = (
   if (!readinessResult.ok) return readinessResult;
   const readiness = readinessResult.data;
 
-  const recordedCutoff = readRecordedCutoff(input);
+  const recordedCutoff = readRecordedCutoff(input, readiness.required_cutoff);
   const readinessRef = { readiness_version: readiness.readiness_version, readiness_status: readiness.readiness_status };
 
   const baseReport = (
