@@ -220,6 +220,14 @@ export {
   interpretRun2Comparison,
   runRun2TeamstateComparison,
 } from '../rehearsal/runRun2TeamstateComparison.js';
+export {
+  FULL_MODE_GOVERNED_SOURCE_SHA256,
+  FULL_MODE_TEAMSTATE_FIELD_READINESS,
+  RUN2_RERUN_NEXT_STEP_BY_SIGNAL,
+  buildFullModeTeamstateBindingArtifact,
+  nextStepForRerun,
+  runRun2ComparisonRerunFromValues,
+} from '../rehearsal/runRun2ComparisonRerun.js';
 export type {
   Run2MaeDirection,
   Run2OperatorDecision,
