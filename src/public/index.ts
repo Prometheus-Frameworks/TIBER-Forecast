@@ -237,6 +237,27 @@ export {
   operatorDecisionForComparison,
   renderRun2TeamstateComparisonOutcomeMarkdown,
 } from '../reports/run2TeamstateComparisonOutcome.js';
+export type {
+  Run2CoverageCutoffEvidence,
+  Run2CoverageGateCheck,
+  Run2CoverageGateDecision,
+  Run2CoverageGateResult,
+  Run2CoverageGateStatus,
+  Run2CoverageGovernanceEvidence,
+  Run2CoverageJoinRow,
+  Run2CoveragePositionEvidence,
+  Run2TeamstateCoverageEvidence,
+} from '../reports/run2TeamstateCoverageGate.js';
+export {
+  NFL_TEAM_CODES_32,
+  RUN2_COVERAGE_GATE_VERSION,
+  RUN2_GATE_MIN_NONNULL_CELL_COVERAGE,
+  RUN2_GATE_MIN_SCORED_ROW_COVERAGE,
+  RUN2_GATE_MIN_TEAM_COVERAGE,
+  RUN2_GATE_PREFERRED_TEAM_COVERAGE,
+  RUN2_PREVIOUS_RECORDED_COVERAGE_EVIDENCE,
+  evaluateRun2TeamstateCoverageGate,
+} from '../reports/run2TeamstateCoverageGate.js';
 
 export {
   PROJECTION_INPUT_COVERAGE_ARTIFACT_VERSION,
