@@ -79,6 +79,26 @@ describe('Run 2 three-arm Teamstate comparison', () => {
     expect(result.data.arms).toBeNull();
   });
 
+  it('fails closed when a Teamstate column shadows a Run 1 feature name', () => {
+    // A governed artifact that exposes a Teamstate field named like a Run 1 feature (ppr_2024) would,
+    // if allowed, overwrite the Run 1 value in the merged arm rows. The comparison must reject it.
+    const shadowing = {
+      ...readyArtifact,
+      fieldReadiness: [
+        ...readyArtifact.fieldReadiness,
+        { field: 'ppr_2024', finiteCount: 544, nullCount: 0, status: 'available' },
+      ],
+      availableFields: [...readyArtifact.availableFields, 'ppr_2024'],
+      teamWeekValues: readyArtifact.teamWeekValues.map((row) => ({ ...row, ppr_2024: 123 })),
+    };
+    const result = runRun2TeamstateComparison(shadowing);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.data.comparison_status).toBe('fail_closed');
+    expect(result.data.interpretation.failure_reason_if_any).toMatch(/shadows a Run 1 feature column: ppr_2024/);
+    expect(result.data.arms).toBeNull();
+  });
+
   it('completes with three arms under identical population, target, and folds', () => {
     const data = runReady();
     expect(data.comparison_status).toBe('completed');

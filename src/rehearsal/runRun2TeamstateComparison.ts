@@ -434,6 +434,14 @@ export const runRun2TeamstateComparison = (
   if (run1Columns.some((column) => column.toLowerCase().includes('2025') || column.toLowerCase() === 'ppr_2025_actual')) {
     return failClosed('a Run 1 feature column names the target season / label');
   }
+  // A Teamstate column that shadows a Run 1 feature name (e.g. ppr_2024) would overwrite the Run 1
+  // value when the arm-row feature objects are merged, so the arm would no longer be "Run 1 + Teamstate".
+  // Reject any name overlap before building rows so the unchanged-Run-1 guarantee always holds.
+  const run1ColumnSet = new Set(run1Columns);
+  const shadowingColumn = teamstateColumns.find((column) => run1ColumnSet.has(column));
+  if (shadowingColumn !== undefined) {
+    return failClosed(`a Teamstate feature column shadows a Run 1 feature column: ${shadowingColumn}`);
+  }
 
   // --- Parity guardrails: same population / target / folds / unchanged Run 1 values (fail closed) ---
   const boundById = new Map(bound.bound_rows.map((row) => [row.player_id, row]));
