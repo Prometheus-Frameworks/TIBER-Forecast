@@ -200,6 +200,26 @@ export {
   buildRun2ShuffledTeamstateSanityArm,
 } from '../rehearsal/runRun2ShuffledTeamstateSanityArm.js';
 export { isDerangement, mulberry32, seededDerangement, seededPermutation } from '../rehearsal/util/seededShuffle.js';
+export type {
+  RunRun2TeamstateComparisonInput,
+  Run2ArmMetrics,
+  Run2ArmName,
+  Run2ArmParity,
+  Run2ComparisonInterpretation,
+  Run2ComparisonStatus,
+  Run2CoverageSummary,
+  Run2MetricDelta,
+  Run2NullHandlingSummary,
+  Run2SignalInterpretation,
+  Run2TeamstateComparisonReport,
+} from '../rehearsal/runRun2TeamstateComparison.js';
+export {
+  RUN2_COMPARISON_NULL_HANDLING,
+  RUN2_COMPARISON_RIDGE_LAMBDA,
+  RUN2_TEAMSTATE_COMPARISON_VERSION,
+  interpretRun2Comparison,
+  runRun2TeamstateComparison,
+} from '../rehearsal/runRun2TeamstateComparison.js';
 
 export {
   PROJECTION_INPUT_COVERAGE_ARTIFACT_VERSION,

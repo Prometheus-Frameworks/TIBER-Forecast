@@ -484,3 +484,62 @@ identity/join metadata (including `original_teamstate_source_team`,
 `shuffled_teamstate_source_team`, `teamstate_shuffled`, `unmatched_null_preserved`), and
 the label-only target. It emits no predictions, metrics, model refs, evaluation refs, or
 Run 1 ↔ Run 2 comparison.
+
+## Three-arm Run 2 comparison (#86): the first metrics-bearing run
+
+`runRun2TeamstateComparison(input, options?)`
+(`src/rehearsal/runRun2TeamstateComparison.ts`, exported from the public API) is the
+first **metrics-bearing** Run 2 step. It executes one controlled three-arm backtest
+comparison under a single identical evaluation setup:
+
+- **Arm A — Run 1 baseline:** the audited #77 seasonal PPR setup (2024 box-score
+  features + position, ridge λ=1.0, LOOCV → actual 2025 full-season PPR). Arm A
+  reproduces the existing Run 1 backtest metrics exactly.
+- **Arm B — real Teamstate Run 2:** Arm A plus the real governed bound Teamstate
+  features from #82.
+- **Arm C — shuffled-Teamstate control:** Arm A plus the shuffled Teamstate values
+  from #84 (destroyed-signal control).
+
+It is grounded in (and never bypasses) the chain: `bindRun2GovernedTeamstateValues`
+→ `buildRun2ShuffledTeamstateSanityArm` → controlled comparison.
+
+### Same setup, only Teamstate values differ
+
+All three arms share the same scored population, the same `ppr_2025_actual`
+label-only target, the same LOOCV folds, the same ridge model family (λ=1.0), and the
+same unchanged Run 1 feature values. Adding Teamstate columns to the same ridge is
+**not** a model-family change — only the feature columns differ between arms.
+
+**Null handling:** null Teamstate feature values are imputed to the per-fold
+**training mean** (`train_fold_mean_imputation`), which standardizes to 0 / is
+ridge-neutral and uses only training rows (non-leaky). Individual missing cells are
+never silently raw-zero-filled; the only use of `0` is the documented neutral fallback
+when a column is fully null across the training fold (no mean exists), which still
+standardizes to a ridge-neutral 0. Pressure / fantasy-split / target-future-leakage
+fields are never used as inputs.
+
+### Metrics, deltas, interpretation
+
+The report carries per-arm `overall` + `by_position` metrics (MAE / RMSE / Pearson /
+rank correlation, reusing the existing `summarizeSeasonalErrors` definitions), the
+three pairwise deltas (real−Run1, shuffled−Run1, real−shuffled), arm-parity proof,
+coverage and null-handling summaries, governance / cutoff / source / validation /
+lineage refs, and a conservative `interpretation` block. MAE is the primary metric:
+
+- real improves vs Run 1 and shuffled does not → `possible_teamstate_signal`;
+- real and shuffled both improve → `suspicious_shuffle_also_improves`;
+- neither improves → `no_measured_teamstate_lift_in_this_setup`;
+- shuffled beats real → `failed_sanity_control`.
+
+### Fails closed (no metric claim) when
+
+The governed bind is not ready; the shuffled control is not ready or a no-op; the
+arms' populations differ; the target/label differs; folds/eval differ; a target/label
+leaks into inputs; pressure/fantasy appear as inputs; Run 1 feature values are
+mutated; or arm parity cannot be proven. A fail-closed report sets
+`comparison_status: fail_closed`, null arms/deltas, and
+`signal_interpretation: no_metric_claim_fail_closed` with a `failure_reason_if_any`.
+
+This is **one controlled experiment, not proof of general predictive value** — no
+production promotion, no product/advice output, and no claim that Teamstate is
+generally predictive.
