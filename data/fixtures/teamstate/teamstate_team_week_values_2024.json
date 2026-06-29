@@ -1,0 +1,4916 @@
+{
+  "kind": "teamstate_team_week_values",
+  "issue": "TIBER-Forecast#96",
+  "season": 2024,
+  "note": "Per-team-week governed Teamstate values (3 Run 2-bound columns + deferred-null pressure) projected from the gate-passed governed TIBER-Data source, for unchanged-rerun value binding. Pressure stays null (deferred). Derived once; sha-pinned.",
+  "provenance": {
+    "sourceRepo": "Prometheus-Frameworks/TIBER-Data",
+    "sourceArtifactPath": "exports/candidates/team_week_raw/team_week_raw_v0_2024_real_source_candidate.json",
+    "governedSourceSha256": "2aed00e68c1620af10d2ea4350104f7e183ff6ee050f5d385a503ef027281de9",
+    "refs": [
+      "TIBER-Data#181",
+      "TIBER-Data#182",
+      "TIBER-Teamstate#72",
+      "TIBER-Forecast#94"
+    ]
+  },
+  "rowCount": 544,
+  "teamWeekValues": [
+    {
+      "teamCode": "ARI",
+      "season": 2024,
+      "week": 1,
+      "epaPerPlay": 0.046561,
+      "successRate": 0.372881,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "ATL",
+      "season": 2024,
+      "week": 1,
+      "epaPerPlay": -0.351385,
+      "successRate": 0.428571,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "BAL",
+      "season": 2024,
+      "week": 1,
+      "epaPerPlay": 0.080649,
+      "successRate": 0.540541,
+      "redZoneTdRate": 0.25,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "BUF",
+      "season": 2024,
+      "week": 1,
+      "epaPerPlay": 0.222084,
+      "successRate": 0.578947,
+      "redZoneTdRate": 0.571429,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CAR",
+      "season": 2024,
+      "week": 1,
+      "epaPerPlay": -0.485417,
+      "successRate": 0.290909,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CHI",
+      "season": 2024,
+      "week": 1,
+      "epaPerPlay": -0.274424,
+      "successRate": 0.372549,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CIN",
+      "season": 2024,
+      "week": 1,
+      "epaPerPlay": -0.17895,
+      "successRate": 0.416667,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CLE",
+      "season": 2024,
+      "week": 1,
+      "epaPerPlay": -0.271864,
+      "successRate": 0.257143,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DAL",
+      "season": 2024,
+      "week": 1,
+      "epaPerPlay": -0.110945,
+      "successRate": 0.355932,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DEN",
+      "season": 2024,
+      "week": 1,
+      "epaPerPlay": -0.311077,
+      "successRate": 0.275362,
+      "redZoneTdRate": 0.25,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DET",
+      "season": 2024,
+      "week": 1,
+      "epaPerPlay": 0.105776,
+      "successRate": 0.508197,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "GB",
+      "season": 2024,
+      "week": 1,
+      "epaPerPlay": 0.201921,
+      "successRate": 0.431034,
+      "redZoneTdRate": 0.25,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "HOU",
+      "season": 2024,
+      "week": 1,
+      "epaPerPlay": 0.155444,
+      "successRate": 0.486486,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "IND",
+      "season": 2024,
+      "week": 1,
+      "epaPerPlay": 0.075118,
+      "successRate": 0.44186,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "JAX",
+      "season": 2024,
+      "week": 1,
+      "epaPerPlay": -0.147964,
+      "successRate": 0.4,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "KC",
+      "season": 2024,
+      "week": 1,
+      "epaPerPlay": 0.208406,
+      "successRate": 0.44898,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LAC",
+      "season": 2024,
+      "week": 1,
+      "epaPerPlay": -0.071714,
+      "successRate": 0.372549,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LAR",
+      "season": 2024,
+      "week": 1,
+      "epaPerPlay": 0.043882,
+      "successRate": 0.472973,
+      "redZoneTdRate": 0.4,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LV",
+      "season": 2024,
+      "week": 1,
+      "epaPerPlay": -0.334838,
+      "successRate": 0.322034,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "MIA",
+      "season": 2024,
+      "week": 1,
+      "epaPerPlay": 0.024073,
+      "successRate": 0.4,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "MIN",
+      "season": 2024,
+      "week": 1,
+      "epaPerPlay": 0.155555,
+      "successRate": 0.48,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NE",
+      "season": 2024,
+      "week": 1,
+      "epaPerPlay": -0.006899,
+      "successRate": 0.442623,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NO",
+      "season": 2024,
+      "week": 1,
+      "epaPerPlay": 0.20582,
+      "successRate": 0.467742,
+      "redZoneTdRate": 0.8,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NYG",
+      "season": 2024,
+      "week": 1,
+      "epaPerPlay": -0.357242,
+      "successRate": 0.308824,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NYJ",
+      "season": 2024,
+      "week": 1,
+      "epaPerPlay": -0.011962,
+      "successRate": 0.458333,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "PHI",
+      "season": 2024,
+      "week": 1,
+      "epaPerPlay": 0.056383,
+      "successRate": 0.465753,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "PIT",
+      "season": 2024,
+      "week": 1,
+      "epaPerPlay": -0.099795,
+      "successRate": 0.393939,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "SEA",
+      "season": 2024,
+      "week": 1,
+      "epaPerPlay": -0.064676,
+      "successRate": 0.438596,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "SF",
+      "season": 2024,
+      "week": 1,
+      "epaPerPlay": 0.100599,
+      "successRate": 0.449275,
+      "redZoneTdRate": 0.4,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "TB",
+      "season": 2024,
+      "week": 1,
+      "epaPerPlay": 0.266362,
+      "successRate": 0.525424,
+      "redZoneTdRate": 0.75,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "TEN",
+      "season": 2024,
+      "week": 1,
+      "epaPerPlay": -0.264145,
+      "successRate": 0.377049,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "WAS",
+      "season": 2024,
+      "week": 1,
+      "epaPerPlay": 0.140042,
+      "successRate": 0.490909,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "ARI",
+      "season": 2024,
+      "week": 2,
+      "epaPerPlay": 0.34683,
+      "successRate": 0.548387,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "ATL",
+      "season": 2024,
+      "week": 2,
+      "epaPerPlay": 0.171326,
+      "successRate": 0.482143,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "BAL",
+      "season": 2024,
+      "week": 2,
+      "epaPerPlay": -0.010844,
+      "successRate": 0.442623,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "BUF",
+      "season": 2024,
+      "week": 2,
+      "epaPerPlay": 0.230716,
+      "successRate": 0.428571,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CAR",
+      "season": 2024,
+      "week": 2,
+      "epaPerPlay": -0.490618,
+      "successRate": 0.23913,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CHI",
+      "season": 2024,
+      "week": 2,
+      "epaPerPlay": -0.313639,
+      "successRate": 0.318182,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CIN",
+      "season": 2024,
+      "week": 2,
+      "epaPerPlay": 0.04587,
+      "successRate": 0.52459,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CLE",
+      "season": 2024,
+      "week": 2,
+      "epaPerPlay": 0.022339,
+      "successRate": 0.4,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DAL",
+      "season": 2024,
+      "week": 2,
+      "epaPerPlay": -0.171857,
+      "successRate": 0.384615,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DEN",
+      "season": 2024,
+      "week": 2,
+      "epaPerPlay": -0.243117,
+      "successRate": 0.339286,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DET",
+      "season": 2024,
+      "week": 2,
+      "epaPerPlay": -0.069473,
+      "successRate": 0.426829,
+      "redZoneTdRate": 0.166667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "GB",
+      "season": 2024,
+      "week": 2,
+      "epaPerPlay": -0.002082,
+      "successRate": 0.358209,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "HOU",
+      "season": 2024,
+      "week": 2,
+      "epaPerPlay": -0.14968,
+      "successRate": 0.35,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "IND",
+      "season": 2024,
+      "week": 2,
+      "epaPerPlay": -0.095694,
+      "successRate": 0.423077,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "JAX",
+      "season": 2024,
+      "week": 2,
+      "epaPerPlay": -0.033993,
+      "successRate": 0.407407,
+      "redZoneTdRate": 0.25,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "KC",
+      "season": 2024,
+      "week": 2,
+      "epaPerPlay": -0.070001,
+      "successRate": 0.474576,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LAC",
+      "season": 2024,
+      "week": 2,
+      "epaPerPlay": 0.111351,
+      "successRate": 0.532258,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LAR",
+      "season": 2024,
+      "week": 2,
+      "epaPerPlay": -0.263042,
+      "successRate": 0.442308,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LV",
+      "season": 2024,
+      "week": 2,
+      "epaPerPlay": -0.165233,
+      "successRate": 0.40678,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "MIA",
+      "season": 2024,
+      "week": 2,
+      "epaPerPlay": -0.26673,
+      "successRate": 0.44,
+      "redZoneTdRate": 0.25,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "MIN",
+      "season": 2024,
+      "week": 2,
+      "epaPerPlay": -0.042214,
+      "successRate": 0.490196,
+      "redZoneTdRate": 0.25,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NE",
+      "season": 2024,
+      "week": 2,
+      "epaPerPlay": 0.056435,
+      "successRate": 0.439394,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NO",
+      "season": 2024,
+      "week": 2,
+      "epaPerPlay": 0.461252,
+      "successRate": 0.584906,
+      "redZoneTdRate": 0.8,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NYG",
+      "season": 2024,
+      "week": 2,
+      "epaPerPlay": 0.139859,
+      "successRate": 0.45098,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NYJ",
+      "season": 2024,
+      "week": 2,
+      "epaPerPlay": 0.035649,
+      "successRate": 0.418182,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "PHI",
+      "season": 2024,
+      "week": 2,
+      "epaPerPlay": 0.105384,
+      "successRate": 0.462687,
+      "redZoneTdRate": 0.4,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "PIT",
+      "season": 2024,
+      "week": 2,
+      "epaPerPlay": -0.120627,
+      "successRate": 0.293103,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "SEA",
+      "season": 2024,
+      "week": 2,
+      "epaPerPlay": 0.02223,
+      "successRate": 0.46875,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "SF",
+      "season": 2024,
+      "week": 2,
+      "epaPerPlay": -0.074484,
+      "successRate": 0.492537,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "TB",
+      "season": 2024,
+      "week": 2,
+      "epaPerPlay": -0.099976,
+      "successRate": 0.369565,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "TEN",
+      "season": 2024,
+      "week": 2,
+      "epaPerPlay": -0.089541,
+      "successRate": 0.366667,
+      "redZoneTdRate": 0.25,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "WAS",
+      "season": 2024,
+      "week": 2,
+      "epaPerPlay": 0.156488,
+      "successRate": 0.447761,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "ARI",
+      "season": 2024,
+      "week": 3,
+      "epaPerPlay": -0.238405,
+      "successRate": 0.415094,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "ATL",
+      "season": 2024,
+      "week": 3,
+      "epaPerPlay": -0.099511,
+      "successRate": 0.4,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "BAL",
+      "season": 2024,
+      "week": 3,
+      "epaPerPlay": 0.373456,
+      "successRate": 0.5,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "BUF",
+      "season": 2024,
+      "week": 3,
+      "epaPerPlay": 0.44653,
+      "successRate": 0.491525,
+      "redZoneTdRate": 0.8,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CAR",
+      "season": 2024,
+      "week": 3,
+      "epaPerPlay": 0.218757,
+      "successRate": 0.514706,
+      "redZoneTdRate": 0.6,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CHI",
+      "season": 2024,
+      "week": 3,
+      "epaPerPlay": -0.192594,
+      "successRate": 0.361446,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CIN",
+      "season": 2024,
+      "week": 3,
+      "epaPerPlay": 0.390776,
+      "successRate": 0.566667,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CLE",
+      "season": 2024,
+      "week": 3,
+      "epaPerPlay": -0.400452,
+      "successRate": 0.354839,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DAL",
+      "season": 2024,
+      "week": 3,
+      "epaPerPlay": 0.033414,
+      "successRate": 0.371429,
+      "redZoneTdRate": 0.75,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DEN",
+      "season": 2024,
+      "week": 3,
+      "epaPerPlay": 0.084537,
+      "successRate": 0.52381,
+      "redZoneTdRate": 0.4,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DET",
+      "season": 2024,
+      "week": 3,
+      "epaPerPlay": 0.04478,
+      "successRate": 0.560606,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "GB",
+      "season": 2024,
+      "week": 3,
+      "epaPerPlay": 0.116078,
+      "successRate": 0.389831,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "HOU",
+      "season": 2024,
+      "week": 3,
+      "epaPerPlay": -0.218758,
+      "successRate": 0.306452,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "IND",
+      "season": 2024,
+      "week": 3,
+      "epaPerPlay": -0.213087,
+      "successRate": 0.352941,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "JAX",
+      "season": 2024,
+      "week": 3,
+      "epaPerPlay": -0.243414,
+      "successRate": 0.367647,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "KC",
+      "season": 2024,
+      "week": 3,
+      "epaPerPlay": 0.099487,
+      "successRate": 0.594203,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LAC",
+      "season": 2024,
+      "week": 3,
+      "epaPerPlay": -0.164683,
+      "successRate": 0.333333,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LAR",
+      "season": 2024,
+      "week": 3,
+      "epaPerPlay": 0.11957,
+      "successRate": 0.436364,
+      "redZoneTdRate": 0.75,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LV",
+      "season": 2024,
+      "week": 3,
+      "epaPerPlay": -0.102316,
+      "successRate": 0.457627,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "MIA",
+      "season": 2024,
+      "week": 3,
+      "epaPerPlay": -0.43058,
+      "successRate": 0.339286,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "MIN",
+      "season": 2024,
+      "week": 3,
+      "epaPerPlay": 0.108817,
+      "successRate": 0.474576,
+      "redZoneTdRate": 0.8,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NE",
+      "season": 2024,
+      "week": 3,
+      "epaPerPlay": -0.399666,
+      "successRate": 0.333333,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NO",
+      "season": 2024,
+      "week": 3,
+      "epaPerPlay": -0.18868,
+      "successRate": 0.296296,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NYG",
+      "season": 2024,
+      "week": 3,
+      "epaPerPlay": 0.044357,
+      "successRate": 0.439394,
+      "redZoneTdRate": 0.75,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NYJ",
+      "season": 2024,
+      "week": 3,
+      "epaPerPlay": 0.256456,
+      "successRate": 0.571429,
+      "redZoneTdRate": 0.75,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "PHI",
+      "season": 2024,
+      "week": 3,
+      "epaPerPlay": 0.016462,
+      "successRate": 0.421875,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "PIT",
+      "season": 2024,
+      "week": 3,
+      "epaPerPlay": 0.131607,
+      "successRate": 0.460317,
+      "redZoneTdRate": 0.25,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "SEA",
+      "season": 2024,
+      "week": 3,
+      "epaPerPlay": -0.004641,
+      "successRate": 0.448276,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "SF",
+      "season": 2024,
+      "week": 3,
+      "epaPerPlay": 0.200313,
+      "successRate": 0.476923,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "TB",
+      "season": 2024,
+      "week": 3,
+      "epaPerPlay": -0.376247,
+      "successRate": 0.446429,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "TEN",
+      "season": 2024,
+      "week": 3,
+      "epaPerPlay": -0.367218,
+      "successRate": 0.433962,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "WAS",
+      "season": 2024,
+      "week": 3,
+      "epaPerPlay": 0.51534,
+      "successRate": 0.6,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "ARI",
+      "season": 2024,
+      "week": 4,
+      "epaPerPlay": -0.086211,
+      "successRate": 0.465517,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "ATL",
+      "season": 2024,
+      "week": 4,
+      "epaPerPlay": 0.019697,
+      "successRate": 0.411765,
+      "redZoneTdRate": null,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "BAL",
+      "season": 2024,
+      "week": 4,
+      "epaPerPlay": 0.293669,
+      "successRate": 0.5,
+      "redZoneTdRate": 0.75,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "BUF",
+      "season": 2024,
+      "week": 4,
+      "epaPerPlay": -0.13562,
+      "successRate": 0.350877,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CAR",
+      "season": 2024,
+      "week": 4,
+      "epaPerPlay": 0.003687,
+      "successRate": 0.478261,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CHI",
+      "season": 2024,
+      "week": 4,
+      "epaPerPlay": 0.083259,
+      "successRate": 0.5,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CIN",
+      "season": 2024,
+      "week": 4,
+      "epaPerPlay": 0.167154,
+      "successRate": 0.435484,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CLE",
+      "season": 2024,
+      "week": 4,
+      "epaPerPlay": -0.117945,
+      "successRate": 0.368421,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DAL",
+      "season": 2024,
+      "week": 4,
+      "epaPerPlay": 0.207915,
+      "successRate": 0.54,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DEN",
+      "season": 2024,
+      "week": 4,
+      "epaPerPlay": -0.284922,
+      "successRate": 0.314815,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DET",
+      "season": 2024,
+      "week": 4,
+      "epaPerPlay": 0.457709,
+      "successRate": 0.5625,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "GB",
+      "season": 2024,
+      "week": 4,
+      "epaPerPlay": -0.139984,
+      "successRate": 0.391892,
+      "redZoneTdRate": 0.8,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "HOU",
+      "season": 2024,
+      "week": 4,
+      "epaPerPlay": 0.15695,
+      "successRate": 0.470588,
+      "redZoneTdRate": 0.75,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "IND",
+      "season": 2024,
+      "week": 4,
+      "epaPerPlay": 0.113641,
+      "successRate": 0.412698,
+      "redZoneTdRate": 0.6,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "JAX",
+      "season": 2024,
+      "week": 4,
+      "epaPerPlay": -0.013453,
+      "successRate": 0.438596,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "KC",
+      "season": 2024,
+      "week": 4,
+      "epaPerPlay": -0.087989,
+      "successRate": 0.472727,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LAC",
+      "season": 2024,
+      "week": 4,
+      "epaPerPlay": -0.214026,
+      "successRate": 0.283019,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LAR",
+      "season": 2024,
+      "week": 4,
+      "epaPerPlay": 0.055347,
+      "successRate": 0.526316,
+      "redZoneTdRate": 0.25,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LV",
+      "season": 2024,
+      "week": 4,
+      "epaPerPlay": -0.159348,
+      "successRate": 0.396226,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "MIA",
+      "season": 2024,
+      "week": 4,
+      "epaPerPlay": -0.434504,
+      "successRate": 0.277778,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "MIN",
+      "season": 2024,
+      "week": 4,
+      "epaPerPlay": 0.033447,
+      "successRate": 0.508197,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NE",
+      "season": 2024,
+      "week": 4,
+      "epaPerPlay": -0.47611,
+      "successRate": 0.322581,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NO",
+      "season": 2024,
+      "week": 4,
+      "epaPerPlay": 0.060149,
+      "successRate": 0.5,
+      "redZoneTdRate": 0.75,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NYG",
+      "season": 2024,
+      "week": 4,
+      "epaPerPlay": -0.044941,
+      "successRate": 0.359375,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NYJ",
+      "season": 2024,
+      "week": 4,
+      "epaPerPlay": -0.284885,
+      "successRate": 0.3,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "PHI",
+      "season": 2024,
+      "week": 4,
+      "epaPerPlay": -0.065841,
+      "successRate": 0.436364,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "PIT",
+      "season": 2024,
+      "week": 4,
+      "epaPerPlay": -0.059012,
+      "successRate": 0.462687,
+      "redZoneTdRate": 0.75,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "SEA",
+      "season": 2024,
+      "week": 4,
+      "epaPerPlay": 0.099375,
+      "successRate": 0.512821,
+      "redZoneTdRate": 0.6,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "SF",
+      "season": 2024,
+      "week": 4,
+      "epaPerPlay": 0.133549,
+      "successRate": 0.40678,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "TB",
+      "season": 2024,
+      "week": 4,
+      "epaPerPlay": 0.208754,
+      "successRate": 0.506849,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "TEN",
+      "season": 2024,
+      "week": 4,
+      "epaPerPlay": -0.123035,
+      "successRate": 0.344262,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "WAS",
+      "season": 2024,
+      "week": 4,
+      "epaPerPlay": 0.406176,
+      "successRate": 0.58209,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "ARI",
+      "season": 2024,
+      "week": 5,
+      "epaPerPlay": 0.106675,
+      "successRate": 0.436364,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "ATL",
+      "season": 2024,
+      "week": 5,
+      "epaPerPlay": 0.232206,
+      "successRate": 0.468354,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "BAL",
+      "season": 2024,
+      "week": 5,
+      "epaPerPlay": 0.290449,
+      "successRate": 0.552632,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "BUF",
+      "season": 2024,
+      "week": 5,
+      "epaPerPlay": -0.015058,
+      "successRate": 0.305085,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CAR",
+      "season": 2024,
+      "week": 5,
+      "epaPerPlay": -0.259972,
+      "successRate": 0.344828,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CHI",
+      "season": 2024,
+      "week": 5,
+      "epaPerPlay": 0.231959,
+      "successRate": 0.454545,
+      "redZoneTdRate": 0.75,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CIN",
+      "season": 2024,
+      "week": 5,
+      "epaPerPlay": 0.254125,
+      "successRate": 0.446154,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CLE",
+      "season": 2024,
+      "week": 5,
+      "epaPerPlay": -0.305688,
+      "successRate": 0.305085,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DAL",
+      "season": 2024,
+      "week": 5,
+      "epaPerPlay": 0.113175,
+      "successRate": 0.48,
+      "redZoneTdRate": 0.25,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DEN",
+      "season": 2024,
+      "week": 5,
+      "epaPerPlay": 0.069073,
+      "successRate": 0.481481,
+      "redZoneTdRate": 0.75,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "GB",
+      "season": 2024,
+      "week": 5,
+      "epaPerPlay": 0.018795,
+      "successRate": 0.428571,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "HOU",
+      "season": 2024,
+      "week": 5,
+      "epaPerPlay": -0.057969,
+      "successRate": 0.38806,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "IND",
+      "season": 2024,
+      "week": 5,
+      "epaPerPlay": 0.256873,
+      "successRate": 0.441176,
+      "redZoneTdRate": 0.6,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "JAX",
+      "season": 2024,
+      "week": 5,
+      "epaPerPlay": 0.278604,
+      "successRate": 0.421053,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "KC",
+      "season": 2024,
+      "week": 5,
+      "epaPerPlay": 0.147293,
+      "successRate": 0.584416,
+      "redZoneTdRate": 0.285714,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LAR",
+      "season": 2024,
+      "week": 5,
+      "epaPerPlay": -0.085958,
+      "successRate": 0.539474,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LV",
+      "season": 2024,
+      "week": 5,
+      "epaPerPlay": -0.21807,
+      "successRate": 0.369231,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "MIA",
+      "season": 2024,
+      "week": 5,
+      "epaPerPlay": -0.062111,
+      "successRate": 0.373333,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "MIN",
+      "season": 2024,
+      "week": 5,
+      "epaPerPlay": -0.276478,
+      "successRate": 0.359375,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NE",
+      "season": 2024,
+      "week": 5,
+      "epaPerPlay": -0.081535,
+      "successRate": 0.425926,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NO",
+      "season": 2024,
+      "week": 5,
+      "epaPerPlay": -0.099704,
+      "successRate": 0.352941,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NYG",
+      "season": 2024,
+      "week": 5,
+      "epaPerPlay": 0.02692,
+      "successRate": 0.492754,
+      "redZoneTdRate": 0.2,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NYJ",
+      "season": 2024,
+      "week": 5,
+      "epaPerPlay": -0.335599,
+      "successRate": 0.352113,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "PIT",
+      "season": 2024,
+      "week": 5,
+      "epaPerPlay": 0.045424,
+      "successRate": 0.491228,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "SEA",
+      "season": 2024,
+      "week": 5,
+      "epaPerPlay": -0.095423,
+      "successRate": 0.482759,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "SF",
+      "season": 2024,
+      "week": 5,
+      "epaPerPlay": -0.04177,
+      "successRate": 0.428571,
+      "redZoneTdRate": 0.166667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "TB",
+      "season": 2024,
+      "week": 5,
+      "epaPerPlay": 0.17326,
+      "successRate": 0.5,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "WAS",
+      "season": 2024,
+      "week": 5,
+      "epaPerPlay": 0.084496,
+      "successRate": 0.353846,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "ARI",
+      "season": 2024,
+      "week": 6,
+      "epaPerPlay": -0.124522,
+      "successRate": 0.454545,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "ATL",
+      "season": 2024,
+      "week": 6,
+      "epaPerPlay": 0.26767,
+      "successRate": 0.515625,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "BAL",
+      "season": 2024,
+      "week": 6,
+      "epaPerPlay": 0.169184,
+      "successRate": 0.507937,
+      "redZoneTdRate": 0.6,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "BUF",
+      "season": 2024,
+      "week": 6,
+      "epaPerPlay": 0.282084,
+      "successRate": 0.54386,
+      "redZoneTdRate": 0.75,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CAR",
+      "season": 2024,
+      "week": 6,
+      "epaPerPlay": -0.098541,
+      "successRate": 0.403226,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CHI",
+      "season": 2024,
+      "week": 6,
+      "epaPerPlay": 0.292748,
+      "successRate": 0.5,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CIN",
+      "season": 2024,
+      "week": 6,
+      "epaPerPlay": 0.033414,
+      "successRate": 0.44,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CLE",
+      "season": 2024,
+      "week": 6,
+      "epaPerPlay": -0.020476,
+      "successRate": 0.358491,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DAL",
+      "season": 2024,
+      "week": 6,
+      "epaPerPlay": -0.545867,
+      "successRate": 0.292308,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DEN",
+      "season": 2024,
+      "week": 6,
+      "epaPerPlay": -0.044494,
+      "successRate": 0.433962,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DET",
+      "season": 2024,
+      "week": 6,
+      "epaPerPlay": 0.373916,
+      "successRate": 0.46875,
+      "redZoneTdRate": 0.6,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "GB",
+      "season": 2024,
+      "week": 6,
+      "epaPerPlay": 0.286253,
+      "successRate": 0.529412,
+      "redZoneTdRate": 0.6,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "HOU",
+      "season": 2024,
+      "week": 6,
+      "epaPerPlay": 0.115578,
+      "successRate": 0.393443,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "IND",
+      "season": 2024,
+      "week": 6,
+      "epaPerPlay": -0.094913,
+      "successRate": 0.333333,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "JAX",
+      "season": 2024,
+      "week": 6,
+      "epaPerPlay": 0.009392,
+      "successRate": 0.40678,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LAC",
+      "season": 2024,
+      "week": 6,
+      "epaPerPlay": 0.085543,
+      "successRate": 0.430556,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LV",
+      "season": 2024,
+      "week": 6,
+      "epaPerPlay": -0.232254,
+      "successRate": 0.45,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NE",
+      "season": 2024,
+      "week": 6,
+      "epaPerPlay": -0.306118,
+      "successRate": 0.380952,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NO",
+      "season": 2024,
+      "week": 6,
+      "epaPerPlay": -0.410909,
+      "successRate": 0.363636,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NYG",
+      "season": 2024,
+      "week": 6,
+      "epaPerPlay": -0.137436,
+      "successRate": 0.464789,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NYJ",
+      "season": 2024,
+      "week": 6,
+      "epaPerPlay": 0.188709,
+      "successRate": 0.372881,
+      "redZoneTdRate": 0.25,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "PHI",
+      "season": 2024,
+      "week": 6,
+      "epaPerPlay": 0.171276,
+      "successRate": 0.5,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "PIT",
+      "season": 2024,
+      "week": 6,
+      "epaPerPlay": 0.114476,
+      "successRate": 0.416667,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "SEA",
+      "season": 2024,
+      "week": 6,
+      "epaPerPlay": 0.013638,
+      "successRate": 0.402778,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "SF",
+      "season": 2024,
+      "week": 6,
+      "epaPerPlay": 0.361955,
+      "successRate": 0.533333,
+      "redZoneTdRate": 0.6,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "TB",
+      "season": 2024,
+      "week": 6,
+      "epaPerPlay": 0.236573,
+      "successRate": 0.555556,
+      "redZoneTdRate": 0.8,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "TEN",
+      "season": 2024,
+      "week": 6,
+      "epaPerPlay": -0.025935,
+      "successRate": 0.381818,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "WAS",
+      "season": 2024,
+      "week": 6,
+      "epaPerPlay": 0.102317,
+      "successRate": 0.446429,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "ARI",
+      "season": 2024,
+      "week": 7,
+      "epaPerPlay": 0.035912,
+      "successRate": 0.490566,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "ATL",
+      "season": 2024,
+      "week": 7,
+      "epaPerPlay": -0.098771,
+      "successRate": 0.528571,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "BAL",
+      "season": 2024,
+      "week": 7,
+      "epaPerPlay": 0.47213,
+      "successRate": 0.518519,
+      "redZoneTdRate": 0.8,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "BUF",
+      "season": 2024,
+      "week": 7,
+      "epaPerPlay": 0.219628,
+      "successRate": 0.444444,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CAR",
+      "season": 2024,
+      "week": 7,
+      "epaPerPlay": -0.473995,
+      "successRate": 0.428571,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CIN",
+      "season": 2024,
+      "week": 7,
+      "epaPerPlay": -0.194615,
+      "successRate": 0.3,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CLE",
+      "season": 2024,
+      "week": 7,
+      "epaPerPlay": -0.170563,
+      "successRate": 0.368421,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DEN",
+      "season": 2024,
+      "week": 7,
+      "epaPerPlay": 0.124675,
+      "successRate": 0.559322,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DET",
+      "season": 2024,
+      "week": 7,
+      "epaPerPlay": 0.130934,
+      "successRate": 0.425926,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "GB",
+      "season": 2024,
+      "week": 7,
+      "epaPerPlay": -0.078215,
+      "successRate": 0.375,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "HOU",
+      "season": 2024,
+      "week": 7,
+      "epaPerPlay": -0.162112,
+      "successRate": 0.368421,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "IND",
+      "season": 2024,
+      "week": 7,
+      "epaPerPlay": -0.194599,
+      "successRate": 0.35,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "JAX",
+      "season": 2024,
+      "week": 7,
+      "epaPerPlay": 0.227177,
+      "successRate": 0.525424,
+      "redZoneTdRate": 0.6,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "KC",
+      "season": 2024,
+      "week": 7,
+      "epaPerPlay": 0.021757,
+      "successRate": 0.5,
+      "redZoneTdRate": 0.8,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LAC",
+      "season": 2024,
+      "week": 7,
+      "epaPerPlay": 0.049468,
+      "successRate": 0.428571,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LAR",
+      "season": 2024,
+      "week": 7,
+      "epaPerPlay": -0.287722,
+      "successRate": 0.42,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LV",
+      "season": 2024,
+      "week": 7,
+      "epaPerPlay": -0.340507,
+      "successRate": 0.333333,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "MIA",
+      "season": 2024,
+      "week": 7,
+      "epaPerPlay": -0.257233,
+      "successRate": 0.432836,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "MIN",
+      "season": 2024,
+      "week": 7,
+      "epaPerPlay": 0.072561,
+      "successRate": 0.365385,
+      "redZoneTdRate": null,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NE",
+      "season": 2024,
+      "week": 7,
+      "epaPerPlay": 0.092786,
+      "successRate": 0.333333,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NO",
+      "season": 2024,
+      "week": 7,
+      "epaPerPlay": -0.356598,
+      "successRate": 0.384615,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NYG",
+      "season": 2024,
+      "week": 7,
+      "epaPerPlay": -0.426614,
+      "successRate": 0.296296,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NYJ",
+      "season": 2024,
+      "week": 7,
+      "epaPerPlay": -0.042857,
+      "successRate": 0.436364,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "PHI",
+      "season": 2024,
+      "week": 7,
+      "epaPerPlay": 0.14654,
+      "successRate": 0.40625,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "PIT",
+      "season": 2024,
+      "week": 7,
+      "epaPerPlay": 0.156642,
+      "successRate": 0.378788,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "SEA",
+      "season": 2024,
+      "week": 7,
+      "epaPerPlay": 0.113132,
+      "successRate": 0.392857,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "SF",
+      "season": 2024,
+      "week": 7,
+      "epaPerPlay": -0.166286,
+      "successRate": 0.428571,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "TB",
+      "season": 2024,
+      "week": 7,
+      "epaPerPlay": 0.12473,
+      "successRate": 0.493506,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "TEN",
+      "season": 2024,
+      "week": 7,
+      "epaPerPlay": -0.223725,
+      "successRate": 0.363636,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "WAS",
+      "season": 2024,
+      "week": 7,
+      "epaPerPlay": 0.269226,
+      "successRate": 0.557377,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "ARI",
+      "season": 2024,
+      "week": 8,
+      "epaPerPlay": 0.298731,
+      "successRate": 0.540984,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "ATL",
+      "season": 2024,
+      "week": 8,
+      "epaPerPlay": 0.259984,
+      "successRate": 0.533333,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "BAL",
+      "season": 2024,
+      "week": 8,
+      "epaPerPlay": 0.097185,
+      "successRate": 0.5,
+      "redZoneTdRate": 0.6,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "BUF",
+      "season": 2024,
+      "week": 8,
+      "epaPerPlay": 0.313836,
+      "successRate": 0.545455,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CAR",
+      "season": 2024,
+      "week": 8,
+      "epaPerPlay": -0.145657,
+      "successRate": 0.4,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CHI",
+      "season": 2024,
+      "week": 8,
+      "epaPerPlay": -0.149121,
+      "successRate": 0.416667,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CIN",
+      "season": 2024,
+      "week": 8,
+      "epaPerPlay": -0.000932,
+      "successRate": 0.403509,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CLE",
+      "season": 2024,
+      "week": 8,
+      "epaPerPlay": 0.148054,
+      "successRate": 0.484848,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DAL",
+      "season": 2024,
+      "week": 8,
+      "epaPerPlay": -0.017974,
+      "successRate": 0.413793,
+      "redZoneTdRate": 0.75,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DEN",
+      "season": 2024,
+      "week": 8,
+      "epaPerPlay": 0.03537,
+      "successRate": 0.43662,
+      "redZoneTdRate": 0.8,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DET",
+      "season": 2024,
+      "week": 8,
+      "epaPerPlay": 0.02519,
+      "successRate": 0.446809,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "GB",
+      "season": 2024,
+      "week": 8,
+      "epaPerPlay": 0.109614,
+      "successRate": 0.453125,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "HOU",
+      "season": 2024,
+      "week": 8,
+      "epaPerPlay": -0.069422,
+      "successRate": 0.411765,
+      "redZoneTdRate": 0.4,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "IND",
+      "season": 2024,
+      "week": 8,
+      "epaPerPlay": -0.092705,
+      "successRate": 0.295082,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "JAX",
+      "season": 2024,
+      "week": 8,
+      "epaPerPlay": 0.061244,
+      "successRate": 0.482143,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "KC",
+      "season": 2024,
+      "week": 8,
+      "epaPerPlay": 0.175118,
+      "successRate": 0.546875,
+      "redZoneTdRate": 0.75,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LAC",
+      "season": 2024,
+      "week": 8,
+      "epaPerPlay": -0.002097,
+      "successRate": 0.31746,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LAR",
+      "season": 2024,
+      "week": 8,
+      "epaPerPlay": 0.186496,
+      "successRate": 0.47619,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LV",
+      "season": 2024,
+      "week": 8,
+      "epaPerPlay": -0.057852,
+      "successRate": 0.490566,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "MIA",
+      "season": 2024,
+      "week": 8,
+      "epaPerPlay": 0.192875,
+      "successRate": 0.5,
+      "redZoneTdRate": 0.75,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "MIN",
+      "season": 2024,
+      "week": 8,
+      "epaPerPlay": 0.107988,
+      "successRate": 0.44898,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NE",
+      "season": 2024,
+      "week": 8,
+      "epaPerPlay": 0.020774,
+      "successRate": 0.396825,
+      "redZoneTdRate": 0.75,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NO",
+      "season": 2024,
+      "week": 8,
+      "epaPerPlay": -0.199305,
+      "successRate": 0.323529,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NYG",
+      "season": 2024,
+      "week": 8,
+      "epaPerPlay": 0.058278,
+      "successRate": 0.41791,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NYJ",
+      "season": 2024,
+      "week": 8,
+      "epaPerPlay": 0.118585,
+      "successRate": 0.491228,
+      "redZoneTdRate": 0.6,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "PHI",
+      "season": 2024,
+      "week": 8,
+      "epaPerPlay": 0.337938,
+      "successRate": 0.491525,
+      "redZoneTdRate": 0.6,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "PIT",
+      "season": 2024,
+      "week": 8,
+      "epaPerPlay": 0.084049,
+      "successRate": 0.459016,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "SEA",
+      "season": 2024,
+      "week": 8,
+      "epaPerPlay": -0.2115,
+      "successRate": 0.456522,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "SF",
+      "season": 2024,
+      "week": 8,
+      "epaPerPlay": 0.25148,
+      "successRate": 0.52381,
+      "redZoneTdRate": 0.75,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "TB",
+      "season": 2024,
+      "week": 8,
+      "epaPerPlay": 0.087802,
+      "successRate": 0.514286,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "TEN",
+      "season": 2024,
+      "week": 8,
+      "epaPerPlay": -0.290408,
+      "successRate": 0.422535,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "WAS",
+      "season": 2024,
+      "week": 8,
+      "epaPerPlay": 0.074954,
+      "successRate": 0.444444,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "ARI",
+      "season": 2024,
+      "week": 9,
+      "epaPerPlay": -0.069494,
+      "successRate": 0.421053,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "ATL",
+      "season": 2024,
+      "week": 9,
+      "epaPerPlay": 0.128918,
+      "successRate": 0.490566,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "BAL",
+      "season": 2024,
+      "week": 9,
+      "epaPerPlay": 0.415576,
+      "successRate": 0.528302,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "BUF",
+      "season": 2024,
+      "week": 9,
+      "epaPerPlay": 0.151035,
+      "successRate": 0.517241,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CAR",
+      "season": 2024,
+      "week": 9,
+      "epaPerPlay": 0.011711,
+      "successRate": 0.395833,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CHI",
+      "season": 2024,
+      "week": 9,
+      "epaPerPlay": -0.228075,
+      "successRate": 0.289855,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CIN",
+      "season": 2024,
+      "week": 9,
+      "epaPerPlay": 0.088599,
+      "successRate": 0.536232,
+      "redZoneTdRate": 0.8,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CLE",
+      "season": 2024,
+      "week": 9,
+      "epaPerPlay": -0.270789,
+      "successRate": 0.381579,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DAL",
+      "season": 2024,
+      "week": 9,
+      "epaPerPlay": -0.020894,
+      "successRate": 0.424658,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DEN",
+      "season": 2024,
+      "week": 9,
+      "epaPerPlay": -0.160822,
+      "successRate": 0.313433,
+      "redZoneTdRate": 0.25,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DET",
+      "season": 2024,
+      "week": 9,
+      "epaPerPlay": 0.126635,
+      "successRate": 0.442308,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "GB",
+      "season": 2024,
+      "week": 9,
+      "epaPerPlay": -0.032947,
+      "successRate": 0.451613,
+      "redZoneTdRate": 0.25,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "HOU",
+      "season": 2024,
+      "week": 9,
+      "epaPerPlay": -0.075318,
+      "successRate": 0.337838,
+      "redZoneTdRate": 0.25,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "IND",
+      "season": 2024,
+      "week": 9,
+      "epaPerPlay": -0.326218,
+      "successRate": 0.354167,
+      "redZoneTdRate": null,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "JAX",
+      "season": 2024,
+      "week": 9,
+      "epaPerPlay": -0.227876,
+      "successRate": 0.32,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "KC",
+      "season": 2024,
+      "week": 9,
+      "epaPerPlay": 0.140353,
+      "successRate": 0.481928,
+      "redZoneTdRate": 0.8,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LAC",
+      "season": 2024,
+      "week": 9,
+      "epaPerPlay": 0.031493,
+      "successRate": 0.296296,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LAR",
+      "season": 2024,
+      "week": 9,
+      "epaPerPlay": -0.027723,
+      "successRate": 0.411765,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LV",
+      "season": 2024,
+      "week": 9,
+      "epaPerPlay": -0.28455,
+      "successRate": 0.338983,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "MIA",
+      "season": 2024,
+      "week": 9,
+      "epaPerPlay": 0.305568,
+      "successRate": 0.576271,
+      "redZoneTdRate": 0.6,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "MIN",
+      "season": 2024,
+      "week": 9,
+      "epaPerPlay": -0.042089,
+      "successRate": 0.5,
+      "redZoneTdRate": 0.6,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NE",
+      "season": 2024,
+      "week": 9,
+      "epaPerPlay": -0.08869,
+      "successRate": 0.4375,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NO",
+      "season": 2024,
+      "week": 9,
+      "epaPerPlay": 0.142784,
+      "successRate": 0.459459,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NYG",
+      "season": 2024,
+      "week": 9,
+      "epaPerPlay": 0.14067,
+      "successRate": 0.474576,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NYJ",
+      "season": 2024,
+      "week": 9,
+      "epaPerPlay": 0.047568,
+      "successRate": 0.388889,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "PHI",
+      "season": 2024,
+      "week": 9,
+      "epaPerPlay": 0.060314,
+      "successRate": 0.457143,
+      "redZoneTdRate": 0.8,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "SEA",
+      "season": 2024,
+      "week": 9,
+      "epaPerPlay": -0.248535,
+      "successRate": 0.39726,
+      "redZoneTdRate": 0.25,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "TB",
+      "season": 2024,
+      "week": 9,
+      "epaPerPlay": 0.189544,
+      "successRate": 0.423077,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "TEN",
+      "season": 2024,
+      "week": 9,
+      "epaPerPlay": 0.011146,
+      "successRate": 0.424658,
+      "redZoneTdRate": 0.4,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "WAS",
+      "season": 2024,
+      "week": 9,
+      "epaPerPlay": 0.31158,
+      "successRate": 0.54386,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "ARI",
+      "season": 2024,
+      "week": 10,
+      "epaPerPlay": 0.375026,
+      "successRate": 0.589286,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "ATL",
+      "season": 2024,
+      "week": 10,
+      "epaPerPlay": 0.073738,
+      "successRate": 0.520548,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "BAL",
+      "season": 2024,
+      "week": 10,
+      "epaPerPlay": 0.309227,
+      "successRate": 0.491228,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "BUF",
+      "season": 2024,
+      "week": 10,
+      "epaPerPlay": 0.01999,
+      "successRate": 0.463768,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CAR",
+      "season": 2024,
+      "week": 10,
+      "epaPerPlay": -0.017192,
+      "successRate": 0.431034,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CHI",
+      "season": 2024,
+      "week": 10,
+      "epaPerPlay": -0.401864,
+      "successRate": 0.322034,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CIN",
+      "season": 2024,
+      "week": 10,
+      "epaPerPlay": 0.113357,
+      "successRate": 0.453333,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DAL",
+      "season": 2024,
+      "week": 10,
+      "epaPerPlay": -0.708598,
+      "successRate": 0.303571,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DEN",
+      "season": 2024,
+      "week": 10,
+      "epaPerPlay": 0.072836,
+      "successRate": 0.418182,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DET",
+      "season": 2024,
+      "week": 10,
+      "epaPerPlay": -0.104963,
+      "successRate": 0.403226,
+      "redZoneTdRate": 0.75,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "HOU",
+      "season": 2024,
+      "week": 10,
+      "epaPerPlay": -0.226583,
+      "successRate": 0.323077,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "IND",
+      "season": 2024,
+      "week": 10,
+      "epaPerPlay": -0.251263,
+      "successRate": 0.409836,
+      "redZoneTdRate": 0.4,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "JAX",
+      "season": 2024,
+      "week": 10,
+      "epaPerPlay": -0.339063,
+      "successRate": 0.302326,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "KC",
+      "season": 2024,
+      "week": 10,
+      "epaPerPlay": 0.003226,
+      "successRate": 0.353846,
+      "redZoneTdRate": 0.25,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LAC",
+      "season": 2024,
+      "week": 10,
+      "epaPerPlay": 0.202103,
+      "successRate": 0.490909,
+      "redZoneTdRate": 0.6,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LAR",
+      "season": 2024,
+      "week": 10,
+      "epaPerPlay": -0.243763,
+      "successRate": 0.447761,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "MIA",
+      "season": 2024,
+      "week": 10,
+      "epaPerPlay": -0.120699,
+      "successRate": 0.384615,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "MIN",
+      "season": 2024,
+      "week": 10,
+      "epaPerPlay": -0.003555,
+      "successRate": 0.475,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NE",
+      "season": 2024,
+      "week": 10,
+      "epaPerPlay": 0.004982,
+      "successRate": 0.433333,
+      "redZoneTdRate": 0.25,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NO",
+      "season": 2024,
+      "week": 10,
+      "epaPerPlay": 0.003852,
+      "successRate": 0.372549,
+      "redZoneTdRate": 0.25,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NYG",
+      "season": 2024,
+      "week": 10,
+      "epaPerPlay": -0.123981,
+      "successRate": 0.507042,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NYJ",
+      "season": 2024,
+      "week": 10,
+      "epaPerPlay": -0.157246,
+      "successRate": 0.454545,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "PHI",
+      "season": 2024,
+      "week": 10,
+      "epaPerPlay": -0.050117,
+      "successRate": 0.46875,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "PIT",
+      "season": 2024,
+      "week": 10,
+      "epaPerPlay": -0.02265,
+      "successRate": 0.361111,
+      "redZoneTdRate": 0.75,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "SF",
+      "season": 2024,
+      "week": 10,
+      "epaPerPlay": 0.240112,
+      "successRate": 0.525424,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "TB",
+      "season": 2024,
+      "week": 10,
+      "epaPerPlay": -0.055727,
+      "successRate": 0.396552,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "TEN",
+      "season": 2024,
+      "week": 10,
+      "epaPerPlay": 0.116893,
+      "successRate": 0.45098,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "WAS",
+      "season": 2024,
+      "week": 10,
+      "epaPerPlay": -0.136459,
+      "successRate": 0.423729,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "ATL",
+      "season": 2024,
+      "week": 11,
+      "epaPerPlay": -0.273909,
+      "successRate": 0.363636,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "BAL",
+      "season": 2024,
+      "week": 11,
+      "epaPerPlay": -0.090137,
+      "successRate": 0.415094,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "BUF",
+      "season": 2024,
+      "week": 11,
+      "epaPerPlay": 0.104834,
+      "successRate": 0.434783,
+      "redZoneTdRate": 0.75,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CHI",
+      "season": 2024,
+      "week": 11,
+      "epaPerPlay": 0.217286,
+      "successRate": 0.514706,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CIN",
+      "season": 2024,
+      "week": 11,
+      "epaPerPlay": 0.103205,
+      "successRate": 0.371795,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CLE",
+      "season": 2024,
+      "week": 11,
+      "epaPerPlay": 0.029556,
+      "successRate": 0.376812,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DAL",
+      "season": 2024,
+      "week": 11,
+      "epaPerPlay": -0.305347,
+      "successRate": 0.35443,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DEN",
+      "season": 2024,
+      "week": 11,
+      "epaPerPlay": 0.377195,
+      "successRate": 0.533333,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DET",
+      "season": 2024,
+      "week": 11,
+      "epaPerPlay": 0.569022,
+      "successRate": 0.675676,
+      "redZoneTdRate": 0.833333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "GB",
+      "season": 2024,
+      "week": 11,
+      "epaPerPlay": 0.295383,
+      "successRate": 0.52381,
+      "redZoneTdRate": 0.6,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "HOU",
+      "season": 2024,
+      "week": 11,
+      "epaPerPlay": 0.193837,
+      "successRate": 0.433333,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "IND",
+      "season": 2024,
+      "week": 11,
+      "epaPerPlay": 0.047156,
+      "successRate": 0.402985,
+      "redZoneTdRate": 0.75,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "JAX",
+      "season": 2024,
+      "week": 11,
+      "epaPerPlay": -0.371692,
+      "successRate": 0.297872,
+      "redZoneTdRate": null,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "KC",
+      "season": 2024,
+      "week": 11,
+      "epaPerPlay": 0.11798,
+      "successRate": 0.519231,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LAC",
+      "season": 2024,
+      "week": 11,
+      "epaPerPlay": 0.04701,
+      "successRate": 0.419355,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LAR",
+      "season": 2024,
+      "week": 11,
+      "epaPerPlay": 0.40364,
+      "successRate": 0.520833,
+      "redZoneTdRate": 0.75,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LV",
+      "season": 2024,
+      "week": 11,
+      "epaPerPlay": 0.095852,
+      "successRate": 0.435484,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "MIA",
+      "season": 2024,
+      "week": 11,
+      "epaPerPlay": 0.314492,
+      "successRate": 0.507937,
+      "redZoneTdRate": 0.75,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "MIN",
+      "season": 2024,
+      "week": 11,
+      "epaPerPlay": -0.053564,
+      "successRate": 0.378788,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NE",
+      "season": 2024,
+      "week": 11,
+      "epaPerPlay": 0.102063,
+      "successRate": 0.513889,
+      "redZoneTdRate": 0.4,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NO",
+      "season": 2024,
+      "week": 11,
+      "epaPerPlay": 0.311306,
+      "successRate": 0.5,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NYJ",
+      "season": 2024,
+      "week": 11,
+      "epaPerPlay": -0.101012,
+      "successRate": 0.346154,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "PHI",
+      "season": 2024,
+      "week": 11,
+      "epaPerPlay": 0.200993,
+      "successRate": 0.463768,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "PIT",
+      "season": 2024,
+      "week": 11,
+      "epaPerPlay": -0.250725,
+      "successRate": 0.319444,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "SEA",
+      "season": 2024,
+      "week": 11,
+      "epaPerPlay": 0.003459,
+      "successRate": 0.474576,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "SF",
+      "season": 2024,
+      "week": 11,
+      "epaPerPlay": 0.102959,
+      "successRate": 0.473684,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "TEN",
+      "season": 2024,
+      "week": 11,
+      "epaPerPlay": -0.142607,
+      "successRate": 0.272727,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "WAS",
+      "season": 2024,
+      "week": 11,
+      "epaPerPlay": -0.136025,
+      "successRate": 0.428571,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "ARI",
+      "season": 2024,
+      "week": 12,
+      "epaPerPlay": -0.184707,
+      "successRate": 0.357143,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "BAL",
+      "season": 2024,
+      "week": 12,
+      "epaPerPlay": 0.347095,
+      "successRate": 0.465517,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CAR",
+      "season": 2024,
+      "week": 12,
+      "epaPerPlay": 0.17825,
+      "successRate": 0.465517,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CHI",
+      "season": 2024,
+      "week": 12,
+      "epaPerPlay": 0.060482,
+      "successRate": 0.430556,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CLE",
+      "season": 2024,
+      "week": 12,
+      "epaPerPlay": 0.003488,
+      "successRate": 0.490909,
+      "redZoneTdRate": 0.75,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DAL",
+      "season": 2024,
+      "week": 12,
+      "epaPerPlay": -0.055231,
+      "successRate": 0.459016,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DEN",
+      "season": 2024,
+      "week": 12,
+      "epaPerPlay": 0.039019,
+      "successRate": 0.4,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DET",
+      "season": 2024,
+      "week": 12,
+      "epaPerPlay": 0.153576,
+      "successRate": 0.521127,
+      "redZoneTdRate": 0.75,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "GB",
+      "season": 2024,
+      "week": 12,
+      "epaPerPlay": 0.125202,
+      "successRate": 0.477612,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "HOU",
+      "season": 2024,
+      "week": 12,
+      "epaPerPlay": -0.226993,
+      "successRate": 0.333333,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "IND",
+      "season": 2024,
+      "week": 12,
+      "epaPerPlay": -0.1425,
+      "successRate": 0.333333,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "KC",
+      "season": 2024,
+      "week": 12,
+      "epaPerPlay": 0.282169,
+      "successRate": 0.558824,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LAC",
+      "season": 2024,
+      "week": 12,
+      "epaPerPlay": 0.007558,
+      "successRate": 0.416667,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LAR",
+      "season": 2024,
+      "week": 12,
+      "epaPerPlay": -0.002287,
+      "successRate": 0.474576,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LV",
+      "season": 2024,
+      "week": 12,
+      "epaPerPlay": -0.212082,
+      "successRate": 0.39726,
+      "redZoneTdRate": 0.2,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "MIA",
+      "season": 2024,
+      "week": 12,
+      "epaPerPlay": 0.00217,
+      "successRate": 0.460317,
+      "redZoneTdRate": 0.75,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "MIN",
+      "season": 2024,
+      "week": 12,
+      "epaPerPlay": 0.071628,
+      "successRate": 0.461538,
+      "redZoneTdRate": 0.428571,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NE",
+      "season": 2024,
+      "week": 12,
+      "epaPerPlay": -0.216888,
+      "successRate": 0.387097,
+      "redZoneTdRate": null,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NYG",
+      "season": 2024,
+      "week": 12,
+      "epaPerPlay": -0.252627,
+      "successRate": 0.381818,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "PHI",
+      "season": 2024,
+      "week": 12,
+      "epaPerPlay": 0.34005,
+      "successRate": 0.5,
+      "redZoneTdRate": 0.4,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "PIT",
+      "season": 2024,
+      "week": 12,
+      "epaPerPlay": -0.023127,
+      "successRate": 0.373134,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "SEA",
+      "season": 2024,
+      "week": 12,
+      "epaPerPlay": -0.065461,
+      "successRate": 0.389831,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "SF",
+      "season": 2024,
+      "week": 12,
+      "epaPerPlay": -0.420665,
+      "successRate": 0.304348,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "TB",
+      "season": 2024,
+      "week": 12,
+      "epaPerPlay": 0.262437,
+      "successRate": 0.5,
+      "redZoneTdRate": 0.8,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "TEN",
+      "season": 2024,
+      "week": 12,
+      "epaPerPlay": -0.09637,
+      "successRate": 0.375,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "WAS",
+      "season": 2024,
+      "week": 12,
+      "epaPerPlay": -0.045596,
+      "successRate": 0.393939,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "ARI",
+      "season": 2024,
+      "week": 13,
+      "epaPerPlay": 0.036538,
+      "successRate": 0.473684,
+      "redZoneTdRate": 0.2,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "ATL",
+      "season": 2024,
+      "week": 13,
+      "epaPerPlay": -0.237771,
+      "successRate": 0.415584,
+      "redZoneTdRate": 0.25,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "BAL",
+      "season": 2024,
+      "week": 13,
+      "epaPerPlay": -0.001764,
+      "successRate": 0.394366,
+      "redZoneTdRate": 0.4,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "BUF",
+      "season": 2024,
+      "week": 13,
+      "epaPerPlay": 0.345804,
+      "successRate": 0.528302,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CAR",
+      "season": 2024,
+      "week": 13,
+      "epaPerPlay": 0.00209,
+      "successRate": 0.485294,
+      "redZoneTdRate": 0.25,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CHI",
+      "season": 2024,
+      "week": 13,
+      "epaPerPlay": 0.006918,
+      "successRate": 0.396552,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CIN",
+      "season": 2024,
+      "week": 13,
+      "epaPerPlay": -0.000493,
+      "successRate": 0.526316,
+      "redZoneTdRate": 0.8,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CLE",
+      "season": 2024,
+      "week": 13,
+      "epaPerPlay": -0.074433,
+      "successRate": 0.392857,
+      "redZoneTdRate": 0.75,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DAL",
+      "season": 2024,
+      "week": 13,
+      "epaPerPlay": -0.141451,
+      "successRate": 0.348485,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DEN",
+      "season": 2024,
+      "week": 13,
+      "epaPerPlay": 0.068921,
+      "successRate": 0.423729,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DET",
+      "season": 2024,
+      "week": 13,
+      "epaPerPlay": 0.073953,
+      "successRate": 0.463768,
+      "redZoneTdRate": 0.4,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "GB",
+      "season": 2024,
+      "week": 13,
+      "epaPerPlay": 0.211004,
+      "successRate": 0.471698,
+      "redZoneTdRate": 0.6,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "HOU",
+      "season": 2024,
+      "week": 13,
+      "epaPerPlay": 0.073346,
+      "successRate": 0.396552,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "IND",
+      "season": 2024,
+      "week": 13,
+      "epaPerPlay": 0.073545,
+      "successRate": 0.526316,
+      "redZoneTdRate": 0.75,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "JAX",
+      "season": 2024,
+      "week": 13,
+      "epaPerPlay": 0.084946,
+      "successRate": 0.402985,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "KC",
+      "season": 2024,
+      "week": 13,
+      "epaPerPlay": -0.043106,
+      "successRate": 0.338462,
+      "redZoneTdRate": 0.2,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LAC",
+      "season": 2024,
+      "week": 13,
+      "epaPerPlay": -0.317391,
+      "successRate": 0.302326,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LAR",
+      "season": 2024,
+      "week": 13,
+      "epaPerPlay": 0.126783,
+      "successRate": 0.490566,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LV",
+      "season": 2024,
+      "week": 13,
+      "epaPerPlay": 0.078428,
+      "successRate": 0.435484,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "MIA",
+      "season": 2024,
+      "week": 13,
+      "epaPerPlay": 0.085964,
+      "successRate": 0.507692,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "MIN",
+      "season": 2024,
+      "week": 13,
+      "epaPerPlay": -0.065826,
+      "successRate": 0.52,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NE",
+      "season": 2024,
+      "week": 13,
+      "epaPerPlay": 0.171492,
+      "successRate": 0.523077,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NO",
+      "season": 2024,
+      "week": 13,
+      "epaPerPlay": -0.073056,
+      "successRate": 0.382353,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NYG",
+      "season": 2024,
+      "week": 13,
+      "epaPerPlay": -0.228465,
+      "successRate": 0.389831,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NYJ",
+      "season": 2024,
+      "week": 13,
+      "epaPerPlay": -0.291851,
+      "successRate": 0.360656,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "PHI",
+      "season": 2024,
+      "week": 13,
+      "epaPerPlay": 0.045061,
+      "successRate": 0.442308,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "PIT",
+      "season": 2024,
+      "week": 13,
+      "epaPerPlay": 0.276133,
+      "successRate": 0.578125,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "SEA",
+      "season": 2024,
+      "week": 13,
+      "epaPerPlay": -0.015964,
+      "successRate": 0.339286,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "SF",
+      "season": 2024,
+      "week": 13,
+      "epaPerPlay": -0.24711,
+      "successRate": 0.326087,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "TB",
+      "season": 2024,
+      "week": 13,
+      "epaPerPlay": -0.030902,
+      "successRate": 0.447368,
+      "redZoneTdRate": 0.4,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "TEN",
+      "season": 2024,
+      "week": 13,
+      "epaPerPlay": -0.084641,
+      "successRate": 0.3,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "WAS",
+      "season": 2024,
+      "week": 13,
+      "epaPerPlay": 0.292314,
+      "successRate": 0.592105,
+      "redZoneTdRate": 0.714286,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "ARI",
+      "season": 2024,
+      "week": 14,
+      "epaPerPlay": -0.085325,
+      "successRate": 0.451613,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "ATL",
+      "season": 2024,
+      "week": 14,
+      "epaPerPlay": 0.086286,
+      "successRate": 0.542857,
+      "redZoneTdRate": 0.4,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "BUF",
+      "season": 2024,
+      "week": 14,
+      "epaPerPlay": 0.447543,
+      "successRate": 0.5,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CAR",
+      "season": 2024,
+      "week": 14,
+      "epaPerPlay": 0.019043,
+      "successRate": 0.382353,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CHI",
+      "season": 2024,
+      "week": 14,
+      "epaPerPlay": -0.139474,
+      "successRate": 0.403846,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CIN",
+      "season": 2024,
+      "week": 14,
+      "epaPerPlay": 0.1566,
+      "successRate": 0.52381,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CLE",
+      "season": 2024,
+      "week": 14,
+      "epaPerPlay": -0.162209,
+      "successRate": 0.391304,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DAL",
+      "season": 2024,
+      "week": 14,
+      "epaPerPlay": -0.016483,
+      "successRate": 0.440678,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DET",
+      "season": 2024,
+      "week": 14,
+      "epaPerPlay": 0.061294,
+      "successRate": 0.486842,
+      "redZoneTdRate": 0.8,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "GB",
+      "season": 2024,
+      "week": 14,
+      "epaPerPlay": 0.131878,
+      "successRate": 0.454545,
+      "redZoneTdRate": 0.8,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "JAX",
+      "season": 2024,
+      "week": 14,
+      "epaPerPlay": 0.030805,
+      "successRate": 0.421053,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "KC",
+      "season": 2024,
+      "week": 14,
+      "epaPerPlay": 0.016505,
+      "successRate": 0.52381,
+      "redZoneTdRate": 0.25,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LAC",
+      "season": 2024,
+      "week": 14,
+      "epaPerPlay": 0.086773,
+      "successRate": 0.403509,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LAR",
+      "season": 2024,
+      "week": 14,
+      "epaPerPlay": 0.285635,
+      "successRate": 0.513889,
+      "redZoneTdRate": 0.833333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LV",
+      "season": 2024,
+      "week": 14,
+      "epaPerPlay": -0.148239,
+      "successRate": 0.412698,
+      "redZoneTdRate": 0.25,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "MIA",
+      "season": 2024,
+      "week": 14,
+      "epaPerPlay": 0.219487,
+      "successRate": 0.569231,
+      "redZoneTdRate": 0.75,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "MIN",
+      "season": 2024,
+      "week": 14,
+      "epaPerPlay": 0.457628,
+      "successRate": 0.509434,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NO",
+      "season": 2024,
+      "week": 14,
+      "epaPerPlay": -0.081973,
+      "successRate": 0.415385,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NYG",
+      "season": 2024,
+      "week": 14,
+      "epaPerPlay": -0.149359,
+      "successRate": 0.342466,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NYJ",
+      "season": 2024,
+      "week": 14,
+      "epaPerPlay": 0.232455,
+      "successRate": 0.52381,
+      "redZoneTdRate": 0.4,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "PHI",
+      "season": 2024,
+      "week": 14,
+      "epaPerPlay": 0.125823,
+      "successRate": 0.472727,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "PIT",
+      "season": 2024,
+      "week": 14,
+      "epaPerPlay": -0.105427,
+      "successRate": 0.366667,
+      "redZoneTdRate": 0.6,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "SEA",
+      "season": 2024,
+      "week": 14,
+      "epaPerPlay": 0.155259,
+      "successRate": 0.491803,
+      "redZoneTdRate": 0.4,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "SF",
+      "season": 2024,
+      "week": 14,
+      "epaPerPlay": 0.407007,
+      "successRate": 0.5,
+      "redZoneTdRate": 0.833333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "TB",
+      "season": 2024,
+      "week": 14,
+      "epaPerPlay": 0.12408,
+      "successRate": 0.508475,
+      "redZoneTdRate": 0.75,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "TEN",
+      "season": 2024,
+      "week": 14,
+      "epaPerPlay": -0.158624,
+      "successRate": 0.370968,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "ARI",
+      "season": 2024,
+      "week": 15,
+      "epaPerPlay": 0.183601,
+      "successRate": 0.428571,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "ATL",
+      "season": 2024,
+      "week": 15,
+      "epaPerPlay": -0.209841,
+      "successRate": 0.333333,
+      "redZoneTdRate": null,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "BAL",
+      "season": 2024,
+      "week": 15,
+      "epaPerPlay": 0.443264,
+      "successRate": 0.603448,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "BUF",
+      "season": 2024,
+      "week": 15,
+      "epaPerPlay": 0.479914,
+      "successRate": 0.567164,
+      "redZoneTdRate": 0.714286,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CAR",
+      "season": 2024,
+      "week": 15,
+      "epaPerPlay": -0.328902,
+      "successRate": 0.36,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CHI",
+      "season": 2024,
+      "week": 15,
+      "epaPerPlay": -0.198296,
+      "successRate": 0.387097,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CIN",
+      "season": 2024,
+      "week": 15,
+      "epaPerPlay": 0.194904,
+      "successRate": 0.47619,
+      "redZoneTdRate": 0.6,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CLE",
+      "season": 2024,
+      "week": 15,
+      "epaPerPlay": -0.522239,
+      "successRate": 0.372881,
+      "redZoneTdRate": null,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DAL",
+      "season": 2024,
+      "week": 15,
+      "epaPerPlay": 0.203798,
+      "successRate": 0.558824,
+      "redZoneTdRate": 0.75,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DEN",
+      "season": 2024,
+      "week": 15,
+      "epaPerPlay": -0.314375,
+      "successRate": 0.327586,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DET",
+      "season": 2024,
+      "week": 15,
+      "epaPerPlay": 0.257717,
+      "successRate": 0.493333,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "GB",
+      "season": 2024,
+      "week": 15,
+      "epaPerPlay": 0.067431,
+      "successRate": 0.491803,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "HOU",
+      "season": 2024,
+      "week": 15,
+      "epaPerPlay": -0.195612,
+      "successRate": 0.404255,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "IND",
+      "season": 2024,
+      "week": 15,
+      "epaPerPlay": -0.45204,
+      "successRate": 0.291667,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "JAX",
+      "season": 2024,
+      "week": 15,
+      "epaPerPlay": 0.133381,
+      "successRate": 0.545455,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "KC",
+      "season": 2024,
+      "week": 15,
+      "epaPerPlay": -0.077425,
+      "successRate": 0.410959,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LAC",
+      "season": 2024,
+      "week": 15,
+      "epaPerPlay": -0.371571,
+      "successRate": 0.375,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LAR",
+      "season": 2024,
+      "week": 15,
+      "epaPerPlay": -0.095589,
+      "successRate": 0.4,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LV",
+      "season": 2024,
+      "week": 15,
+      "epaPerPlay": -0.26475,
+      "successRate": 0.40625,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "MIA",
+      "season": 2024,
+      "week": 15,
+      "epaPerPlay": -0.216693,
+      "successRate": 0.435484,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "MIN",
+      "season": 2024,
+      "week": 15,
+      "epaPerPlay": 0.032161,
+      "successRate": 0.507042,
+      "redZoneTdRate": 0.75,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NE",
+      "season": 2024,
+      "week": 15,
+      "epaPerPlay": 0.044623,
+      "successRate": 0.55102,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NO",
+      "season": 2024,
+      "week": 15,
+      "epaPerPlay": -0.070301,
+      "successRate": 0.36,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NYG",
+      "season": 2024,
+      "week": 15,
+      "epaPerPlay": -0.228196,
+      "successRate": 0.322034,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NYJ",
+      "season": 2024,
+      "week": 15,
+      "epaPerPlay": 0.38513,
+      "successRate": 0.396226,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "PHI",
+      "season": 2024,
+      "week": 15,
+      "epaPerPlay": 0.198697,
+      "successRate": 0.472973,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "PIT",
+      "season": 2024,
+      "week": 15,
+      "epaPerPlay": -0.277817,
+      "successRate": 0.365854,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "SEA",
+      "season": 2024,
+      "week": 15,
+      "epaPerPlay": -0.339407,
+      "successRate": 0.321429,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "SF",
+      "season": 2024,
+      "week": 15,
+      "epaPerPlay": -0.28494,
+      "successRate": 0.301887,
+      "redZoneTdRate": null,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "TB",
+      "season": 2024,
+      "week": 15,
+      "epaPerPlay": 0.224413,
+      "successRate": 0.522388,
+      "redZoneTdRate": 0.25,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "TEN",
+      "season": 2024,
+      "week": 15,
+      "epaPerPlay": -0.115344,
+      "successRate": 0.53125,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "WAS",
+      "season": 2024,
+      "week": 15,
+      "epaPerPlay": 0.071633,
+      "successRate": 0.5,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "ARI",
+      "season": 2024,
+      "week": 16,
+      "epaPerPlay": 0.163339,
+      "successRate": 0.515625,
+      "redZoneTdRate": 0.75,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "ATL",
+      "season": 2024,
+      "week": 16,
+      "epaPerPlay": 0.079853,
+      "successRate": 0.507937,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "BAL",
+      "season": 2024,
+      "week": 16,
+      "epaPerPlay": 0.178102,
+      "successRate": 0.525424,
+      "redZoneTdRate": 0.6,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "BUF",
+      "season": 2024,
+      "week": 16,
+      "epaPerPlay": 0.034191,
+      "successRate": 0.465517,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CAR",
+      "season": 2024,
+      "week": 16,
+      "epaPerPlay": 0.246432,
+      "successRate": 0.453125,
+      "redZoneTdRate": 0.75,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CHI",
+      "season": 2024,
+      "week": 16,
+      "epaPerPlay": 0.014176,
+      "successRate": 0.423729,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CIN",
+      "season": 2024,
+      "week": 16,
+      "epaPerPlay": 0.114051,
+      "successRate": 0.545455,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CLE",
+      "season": 2024,
+      "week": 16,
+      "epaPerPlay": -0.28036,
+      "successRate": 0.349206,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DAL",
+      "season": 2024,
+      "week": 16,
+      "epaPerPlay": 0.013397,
+      "successRate": 0.377358,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DEN",
+      "season": 2024,
+      "week": 16,
+      "epaPerPlay": 0.193496,
+      "successRate": 0.444444,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DET",
+      "season": 2024,
+      "week": 16,
+      "epaPerPlay": 0.323271,
+      "successRate": 0.5625,
+      "redZoneTdRate": 0.4,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "GB",
+      "season": 2024,
+      "week": 16,
+      "epaPerPlay": 0.263936,
+      "successRate": 0.507463,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "HOU",
+      "season": 2024,
+      "week": 16,
+      "epaPerPlay": 0.092388,
+      "successRate": 0.37931,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "IND",
+      "season": 2024,
+      "week": 16,
+      "epaPerPlay": 0.218219,
+      "successRate": 0.5,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "JAX",
+      "season": 2024,
+      "week": 16,
+      "epaPerPlay": -0.211659,
+      "successRate": 0.295082,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "KC",
+      "season": 2024,
+      "week": 16,
+      "epaPerPlay": 0.149297,
+      "successRate": 0.470588,
+      "redZoneTdRate": 0.6,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LAC",
+      "season": 2024,
+      "week": 16,
+      "epaPerPlay": 0.224554,
+      "successRate": 0.517241,
+      "redZoneTdRate": 0.75,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LAR",
+      "season": 2024,
+      "week": 16,
+      "epaPerPlay": 0.107392,
+      "successRate": 0.510638,
+      "redZoneTdRate": 0.4,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LV",
+      "season": 2024,
+      "week": 16,
+      "epaPerPlay": -0.058815,
+      "successRate": 0.40625,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "MIA",
+      "season": 2024,
+      "week": 16,
+      "epaPerPlay": 0.164943,
+      "successRate": 0.507937,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "MIN",
+      "season": 2024,
+      "week": 16,
+      "epaPerPlay": 0.095053,
+      "successRate": 0.457627,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NE",
+      "season": 2024,
+      "week": 16,
+      "epaPerPlay": -0.025196,
+      "successRate": 0.455882,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NO",
+      "season": 2024,
+      "week": 16,
+      "epaPerPlay": -0.349466,
+      "successRate": 0.320755,
+      "redZoneTdRate": null,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NYG",
+      "season": 2024,
+      "week": 16,
+      "epaPerPlay": -0.429139,
+      "successRate": 0.454545,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NYJ",
+      "season": 2024,
+      "week": 16,
+      "epaPerPlay": -0.032648,
+      "successRate": 0.460317,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "PHI",
+      "season": 2024,
+      "week": 16,
+      "epaPerPlay": 0.026244,
+      "successRate": 0.366197,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "PIT",
+      "season": 2024,
+      "week": 16,
+      "epaPerPlay": -0.178961,
+      "successRate": 0.372881,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "SEA",
+      "season": 2024,
+      "week": 16,
+      "epaPerPlay": 0.038191,
+      "successRate": 0.5,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "SF",
+      "season": 2024,
+      "week": 16,
+      "epaPerPlay": 0.060021,
+      "successRate": 0.491525,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "TB",
+      "season": 2024,
+      "week": 16,
+      "epaPerPlay": 0.083361,
+      "successRate": 0.542857,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "TEN",
+      "season": 2024,
+      "week": 16,
+      "epaPerPlay": 0.037185,
+      "successRate": 0.464286,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "WAS",
+      "season": 2024,
+      "week": 16,
+      "epaPerPlay": -0.084152,
+      "successRate": 0.396825,
+      "redZoneTdRate": 0.75,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "ARI",
+      "season": 2024,
+      "week": 17,
+      "epaPerPlay": -0.009137,
+      "successRate": 0.527027,
+      "redZoneTdRate": 0.25,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "ATL",
+      "season": 2024,
+      "week": 17,
+      "epaPerPlay": 0.065875,
+      "successRate": 0.516667,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "BAL",
+      "season": 2024,
+      "week": 17,
+      "epaPerPlay": 0.311087,
+      "successRate": 0.590164,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "BUF",
+      "season": 2024,
+      "week": 17,
+      "epaPerPlay": 0.1666,
+      "successRate": 0.466667,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CAR",
+      "season": 2024,
+      "week": 17,
+      "epaPerPlay": -0.102825,
+      "successRate": 0.347826,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CHI",
+      "season": 2024,
+      "week": 17,
+      "epaPerPlay": -0.208509,
+      "successRate": 0.344828,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CIN",
+      "season": 2024,
+      "week": 17,
+      "epaPerPlay": 0.141981,
+      "successRate": 0.542169,
+      "redZoneTdRate": 0.571429,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CLE",
+      "season": 2024,
+      "week": 17,
+      "epaPerPlay": -0.364969,
+      "successRate": 0.342105,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DAL",
+      "season": 2024,
+      "week": 17,
+      "epaPerPlay": -0.304044,
+      "successRate": 0.4,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DEN",
+      "season": 2024,
+      "week": 17,
+      "epaPerPlay": 0.171675,
+      "successRate": 0.45,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DET",
+      "season": 2024,
+      "week": 17,
+      "epaPerPlay": 0.375594,
+      "successRate": 0.560606,
+      "redZoneTdRate": 0.75,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "GB",
+      "season": 2024,
+      "week": 17,
+      "epaPerPlay": -0.048507,
+      "successRate": 0.473684,
+      "redZoneTdRate": 0.75,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "HOU",
+      "season": 2024,
+      "week": 17,
+      "epaPerPlay": -0.414804,
+      "successRate": 0.314815,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "IND",
+      "season": 2024,
+      "week": 17,
+      "epaPerPlay": 0.057007,
+      "successRate": 0.479452,
+      "redZoneTdRate": 0.6,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "JAX",
+      "season": 2024,
+      "week": 17,
+      "epaPerPlay": 0.153341,
+      "successRate": 0.482143,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "KC",
+      "season": 2024,
+      "week": 17,
+      "epaPerPlay": 0.33679,
+      "successRate": 0.517241,
+      "redZoneTdRate": 0.8,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LAC",
+      "season": 2024,
+      "week": 17,
+      "epaPerPlay": 0.291103,
+      "successRate": 0.519481,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LAR",
+      "season": 2024,
+      "week": 17,
+      "epaPerPlay": -0.030911,
+      "successRate": 0.45283,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LV",
+      "season": 2024,
+      "week": 17,
+      "epaPerPlay": 0.102389,
+      "successRate": 0.430556,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "MIA",
+      "season": 2024,
+      "week": 17,
+      "epaPerPlay": -0.098001,
+      "successRate": 0.363636,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "MIN",
+      "season": 2024,
+      "week": 17,
+      "epaPerPlay": 0.092485,
+      "successRate": 0.522388,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NE",
+      "season": 2024,
+      "week": 17,
+      "epaPerPlay": -0.55185,
+      "successRate": 0.333333,
+      "redZoneTdRate": null,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NO",
+      "season": 2024,
+      "week": 17,
+      "epaPerPlay": -0.280249,
+      "successRate": 0.396226,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NYG",
+      "season": 2024,
+      "week": 17,
+      "epaPerPlay": 0.376804,
+      "successRate": 0.408163,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NYJ",
+      "season": 2024,
+      "week": 17,
+      "epaPerPlay": -0.218327,
+      "successRate": 0.473684,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "PHI",
+      "season": 2024,
+      "week": 17,
+      "epaPerPlay": 0.271425,
+      "successRate": 0.474576,
+      "redZoneTdRate": 0.6,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "PIT",
+      "season": 2024,
+      "week": 17,
+      "epaPerPlay": -0.110934,
+      "successRate": 0.438356,
+      "redZoneTdRate": 0.25,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "SEA",
+      "season": 2024,
+      "week": 17,
+      "epaPerPlay": -0.170816,
+      "successRate": 0.42,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "SF",
+      "season": 2024,
+      "week": 17,
+      "epaPerPlay": 0.344075,
+      "successRate": 0.610169,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "TB",
+      "season": 2024,
+      "week": 17,
+      "epaPerPlay": 0.45439,
+      "successRate": 0.605634,
+      "redZoneTdRate": 0.625,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "TEN",
+      "season": 2024,
+      "week": 17,
+      "epaPerPlay": 0.037288,
+      "successRate": 0.5,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "WAS",
+      "season": 2024,
+      "week": 17,
+      "epaPerPlay": 0.221503,
+      "successRate": 0.526316,
+      "redZoneTdRate": 0.8,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "ARI",
+      "season": 2024,
+      "week": 18,
+      "epaPerPlay": 0.267877,
+      "successRate": 0.516129,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "ATL",
+      "season": 2024,
+      "week": 18,
+      "epaPerPlay": 0.292308,
+      "successRate": 0.623377,
+      "redZoneTdRate": 0.833333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "BAL",
+      "season": 2024,
+      "week": 18,
+      "epaPerPlay": 0.157615,
+      "successRate": 0.439394,
+      "redZoneTdRate": 0.75,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "BUF",
+      "season": 2024,
+      "week": 18,
+      "epaPerPlay": -0.067147,
+      "successRate": 0.415385,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CAR",
+      "season": 2024,
+      "week": 18,
+      "epaPerPlay": 0.412314,
+      "successRate": 0.5,
+      "redZoneTdRate": 0.833333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CHI",
+      "season": 2024,
+      "week": 18,
+      "epaPerPlay": -0.17035,
+      "successRate": 0.375,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CIN",
+      "season": 2024,
+      "week": 18,
+      "epaPerPlay": -0.028872,
+      "successRate": 0.485714,
+      "redZoneTdRate": 0.25,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "CLE",
+      "season": 2024,
+      "week": 18,
+      "epaPerPlay": -0.453291,
+      "successRate": 0.259259,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DAL",
+      "season": 2024,
+      "week": 18,
+      "epaPerPlay": -0.043753,
+      "successRate": 0.413333,
+      "redZoneTdRate": 0.166667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DEN",
+      "season": 2024,
+      "week": 18,
+      "epaPerPlay": 0.410599,
+      "successRate": 0.577465,
+      "redZoneTdRate": 0.8,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "DET",
+      "season": 2024,
+      "week": 18,
+      "epaPerPlay": 0.014814,
+      "successRate": 0.484848,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "GB",
+      "season": 2024,
+      "week": 18,
+      "epaPerPlay": -0.092085,
+      "successRate": 0.442623,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "HOU",
+      "season": 2024,
+      "week": 18,
+      "epaPerPlay": 0.062634,
+      "successRate": 0.491228,
+      "redZoneTdRate": 0.25,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "IND",
+      "season": 2024,
+      "week": 18,
+      "epaPerPlay": 0.011511,
+      "successRate": 0.480519,
+      "redZoneTdRate": 0.333333,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "JAX",
+      "season": 2024,
+      "week": 18,
+      "epaPerPlay": 0.030342,
+      "successRate": 0.424242,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "KC",
+      "season": 2024,
+      "week": 18,
+      "epaPerPlay": -0.448915,
+      "successRate": 0.121212,
+      "redZoneTdRate": null,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LAC",
+      "season": 2024,
+      "week": 18,
+      "epaPerPlay": 0.276266,
+      "successRate": 0.542857,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LAR",
+      "season": 2024,
+      "week": 18,
+      "epaPerPlay": 0.039036,
+      "successRate": 0.446154,
+      "redZoneTdRate": 0.4,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "LV",
+      "season": 2024,
+      "week": 18,
+      "epaPerPlay": -0.102431,
+      "successRate": 0.425532,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "MIA",
+      "season": 2024,
+      "week": 18,
+      "epaPerPlay": -0.128101,
+      "successRate": 0.426471,
+      "redZoneTdRate": 0.4,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "MIN",
+      "season": 2024,
+      "week": 18,
+      "epaPerPlay": -0.338188,
+      "successRate": 0.295082,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NE",
+      "season": 2024,
+      "week": 18,
+      "epaPerPlay": 0.033465,
+      "successRate": 0.431034,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NO",
+      "season": 2024,
+      "week": 18,
+      "epaPerPlay": 0.002094,
+      "successRate": 0.412698,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NYG",
+      "season": 2024,
+      "week": 18,
+      "epaPerPlay": -0.118744,
+      "successRate": 0.388889,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "NYJ",
+      "season": 2024,
+      "week": 18,
+      "epaPerPlay": 0.044126,
+      "successRate": 0.419355,
+      "redZoneTdRate": 0.8,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "PHI",
+      "season": 2024,
+      "week": 18,
+      "epaPerPlay": -0.040409,
+      "successRate": 0.402985,
+      "redZoneTdRate": 0.5,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "PIT",
+      "season": 2024,
+      "week": 18,
+      "epaPerPlay": -0.174762,
+      "successRate": 0.344828,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "SEA",
+      "season": 2024,
+      "week": 18,
+      "epaPerPlay": 0.262881,
+      "successRate": 0.538462,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "SF",
+      "season": 2024,
+      "week": 18,
+      "epaPerPlay": 0.009233,
+      "successRate": 0.478873,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "TB",
+      "season": 2024,
+      "week": 18,
+      "epaPerPlay": 0.22457,
+      "successRate": 0.47619,
+      "redZoneTdRate": 0.666667,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "TEN",
+      "season": 2024,
+      "week": 18,
+      "epaPerPlay": -0.205269,
+      "successRate": 0.35,
+      "redZoneTdRate": 0.0,
+      "pressureRateAllowed": null
+    },
+    {
+      "teamCode": "WAS",
+      "season": 2024,
+      "week": 18,
+      "epaPerPlay": 0.106602,
+      "successRate": 0.490566,
+      "redZoneTdRate": 1.0,
+      "pressureRateAllowed": null
+    }
+  ]
+}
