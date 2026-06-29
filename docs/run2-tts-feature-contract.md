@@ -277,3 +277,44 @@ What it explicitly does **not** do: no production feature matrix, no
 model-ready training rows, no training, no evaluation, no Run 2 execution, no
 Run 1↔Run 2 comparison, and no pressure construction/imputation/backfill/
 estimate/inference/zero-fill.
+
+## Run 2 feature matrix candidate (pre-train, implemented)
+
+The first step that touches Run 1-shaped rows: assemble a **pre-train** Run 2
+feature matrix candidate by attaching governed, preflight-allowed Teamstate
+columns onto the existing Run 1 player-season grain. No training, evaluation, or
+Run 2 execution.
+
+- Helper: `buildRun2FeatureMatrixCandidate(input, options?)`
+  (`src/rehearsal/runRun2FeatureMatrixCandidate.ts`), exported from the public API.
+- Grounded in the full chain and does not bypass earlier checks:
+  `readGovernedTeamstateInput` → `buildRun2ManifestRehearsal` →
+  `buildRun2FeatureInclusionPreflight` → `buildRun2FeatureTableRehearsal` →
+  feature matrix candidate. Accepts a governed readiness report (full chain,
+  fail-closed) or a prebuilt feature table rehearsal report (its preflight is
+  re-derived and re-hardened). Run 1 rows come from a `SeasonalPprDatasetDescriptor`
+  (defaults to the scaffold seasonal dataset).
+- Row grain aligns with Run 1 `SeasonalPlayerObservation` (one candidate row per
+  observation, keyed by `player_id`), preserving the 2024 input cutoff, the 2025
+  target season, the Run 1 `target_definition`, and player population/fold identity.
+
+The candidate report records `candidate_status: "pre_train_feature_matrix_candidate"`,
+`execution_status: "not_trained"`, `evaluation_status: "not_evaluated"`,
+`run_2_executed: false`, `row_grain: "player_season_forecast"`, `row_count`,
+`feature_columns` (Run 1 numeric features + appended Teamstate columns),
+`partial_null_columns`, `excluded_columns`, label-only `target_columns`
+(`ppr_2025_actual`), `metadata_columns`, `pressure_status`,
+`target_leakage_status`, governance + source/validation/lineage refs, and linkage
+to the feature table rehearsal.
+
+**Join posture.** Because no governed mounted Teamstate artifact with a recorded
+forecast cutoff exists yet, `teamstate_join_posture.join_status` is
+`fixture_rehearsal_only`: it records the row grain, the join keys required
+(`player_input_season_team`, `input_season`), the cutoff that must be enforced
+(2024-input-season Teamstate only — no 2025 values), the columns that would be
+appended, and that Teamstate values remain `null` (not yet bound). Partial-null
+columns preserve `null` and are never zero-filled.
+
+What it explicitly does **not** do: no model-ready rows, no training, no
+evaluation, no Run 2 execution, no Run 1 ↔ Run 2 comparison, no pressure
+construction/imputation, and no predictions/metrics/model refs.

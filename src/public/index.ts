@@ -137,6 +137,19 @@ export {
   RUN2_FEATURE_TABLE_ROW_GRAIN,
   buildRun2FeatureTableRehearsal,
 } from '../rehearsal/runRun2FeatureTableRehearsal.js';
+export type {
+  BuildRun2FeatureMatrixCandidateInput,
+  Run2FeatureMatrixCandidateReport,
+  Run2FeatureMatrixCandidateRow,
+  Run2FeatureMatrixJoinPosture,
+  Run2FeatureMatrixJoinStatus,
+  Run2FeatureMatrixTargetColumn,
+} from '../rehearsal/runRun2FeatureMatrixCandidate.js';
+export {
+  RUN2_FEATURE_MATRIX_CANDIDATE_VERSION,
+  RUN2_FEATURE_MATRIX_ROW_GRAIN,
+  buildRun2FeatureMatrixCandidate,
+} from '../rehearsal/runRun2FeatureMatrixCandidate.js';
 export { fixtureGovernedTeamstateReadinessReport } from '../rehearsal/fixtures/governedTeamstateReadinessFixture.js';
 
 export {
