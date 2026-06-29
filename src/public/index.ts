@@ -150,6 +150,20 @@ export {
   RUN2_FEATURE_MATRIX_ROW_GRAIN,
   buildRun2FeatureMatrixCandidate,
 } from '../rehearsal/runRun2FeatureMatrixCandidate.js';
+export type {
+  AssessRun2TeamstateValueBindingReadinessInput,
+  Run2ExpectedTeamstateArtifact,
+  Run2RequiredCutoff,
+  Run2RequiredGovernance,
+  Run2RowGrainAlignment,
+  Run2TeamstateValueBindingReadinessReport,
+  Run2ValueBindingGate,
+  Run2ValueBindingReadinessStatus,
+} from '../rehearsal/runRun2TeamstateValueBindingReadiness.js';
+export {
+  RUN2_TEAMSTATE_VALUE_BINDING_READINESS_VERSION,
+  assessRun2TeamstateValueBindingReadiness,
+} from '../rehearsal/runRun2TeamstateValueBindingReadiness.js';
 export { fixtureGovernedTeamstateReadinessReport } from '../rehearsal/fixtures/governedTeamstateReadinessFixture.js';
 
 export {
