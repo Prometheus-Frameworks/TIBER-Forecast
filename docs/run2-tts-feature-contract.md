@@ -429,3 +429,58 @@ and linkage to the readiness and candidate reports. Each bound row separates Run
 input values, bound Teamstate values, partial-null Teamstate values, identity/join
 metadata, and the label-only target. It emits no predictions, metrics, model refs,
 evaluation refs, or Run 1 ↔ Run 2 comparison.
+
+## Shuffled-Teamstate sanity arm (#84): a destroyed-signal control
+
+`buildRun2ShuffledTeamstateSanityArm(input, options?)`
+(`src/rehearsal/runRun2ShuffledTeamstateSanityArm.ts`, exported from the public API)
+produces a deterministic **shuffled control arm** from the #82 governed bound matrix.
+It is a pre-train control scaffold for a *later* evaluation — **not** a result: no
+training, evaluation, Run 2 execution, Run 1 vs Run 2 comparison, predictions, or
+metrics.
+
+It is grounded in (and never bypasses) #82: it runs
+`bindRun2GovernedTeamstateValues` and only builds when the result is
+`binding_status: governed_teamstate_values_bound`. Otherwise it emits a not-built
+report (`sanity_arm_status: not_built_not_bound`) and shuffles nothing.
+
+### What is shuffled (and what is not)
+
+Only the **bound Teamstate value payloads** are permuted. The matched team value
+groups (one per matched `team_2024`, from the bound report's
+`binding_coverage.aggregates`) are permuted with a deterministic seeded derangement
+(`seeded_fisher_yates_derangement_over_matched_team_value_groups`, default seed
+`RUN2_SHUFFLE_DEFAULT_SEED`), and each candidate row receives the value group its team
+was assigned. This **preserves the marginal set of Teamstate value groups while
+breaking the real team→player relationship**.
+
+Never shuffled or mutated: Run 1 `run1_feature_values`, the label-only
+`ppr_2025_actual` target, player identity / position / `team_2024` / input & target
+seasons / fold identity, and the governance / source / validation / lineage / cutoff
+refs. Unmatched rows keep their null Teamstate values (never zero-filled), and
+partial-null values stay null after shuffling. Pressure, fantasy-split, and
+target/future/leakage fields are never introduced.
+
+- Determinism: same `(input, shuffle_seed)` → identical output. Changing the seed
+  selects a different derangement where more than one exists.
+- Identity avoidance: with ≥2 matched groups a full derangement is used, so no group
+  maps back to its own team (`shuffle_coverage.identity_avoided: true`). With a single
+  matched group a non-identity permutation is infeasible and the report says so.
+
+### Report
+
+`Run2ShuffledTeamstateSanityReport` records `sanity_arm_version`, `candidate_status:
+pre_train_shuffled_teamstate_sanity_candidate`, `sanity_arm_status`, `execution_status:
+not_trained`, `evaluation_status: not_evaluated`, `run_2_executed: false`,
+`comparison_status: not_run`, `row_grain: player_season_forecast`, input/target season,
+`shuffle_seed`, `shuffle_method`, a machine-readable `shuffle_map` (per matched team:
+which team's group it received and whether it moved away), `shuffle_coverage` (matched
+/ permuted group counts, shuffled / identity / unmatched row counts, `identity_avoided`),
+the Run 1 / shuffled-Teamstate / partial-null column groups, `excluded_columns`,
+pressure / target-leakage status, the recorded cutoff, governance + refs, the
+`shuffled_rows`, and linkage to the bound (#82) and readiness reports. Each shuffled row
+separates Run 1 input values, shuffled Teamstate values, shuffled partial-null values,
+identity/join metadata (including `original_teamstate_source_team`,
+`shuffled_teamstate_source_team`, `teamstate_shuffled`, `unmatched_null_preserved`), and
+the label-only target. It emits no predictions, metrics, model refs, evaluation refs, or
+Run 1 ↔ Run 2 comparison.

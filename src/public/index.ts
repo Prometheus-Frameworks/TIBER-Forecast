@@ -185,6 +185,21 @@ export {
   fixtureGovernedTeamstateBindingArtifact,
   fixtureGovernedTeamstateBindingTeamWeekValues,
 } from '../rehearsal/fixtures/governedTeamstateBindingFixture.js';
+export type {
+  BuildRun2ShuffledTeamstateSanityArmInput,
+  Run2SanityArmStatus,
+  Run2ShuffleCoverage,
+  Run2ShuffleMapEntry,
+  Run2ShuffledCandidateRow,
+  Run2ShuffledTeamstateSanityReport,
+} from '../rehearsal/runRun2ShuffledTeamstateSanityArm.js';
+export {
+  RUN2_SHUFFLED_SANITY_ARM_VERSION,
+  RUN2_SHUFFLE_DEFAULT_SEED,
+  RUN2_SHUFFLE_METHOD,
+  buildRun2ShuffledTeamstateSanityArm,
+} from '../rehearsal/runRun2ShuffledTeamstateSanityArm.js';
+export { isDerangement, mulberry32, seededDerangement, seededPermutation } from '../rehearsal/util/seededShuffle.js';
 
 export {
   PROJECTION_INPUT_COVERAGE_ARTIFACT_VERSION,
