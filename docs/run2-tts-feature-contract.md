@@ -364,3 +364,65 @@ What it explicitly does **not** do: bind any values, train, evaluate, run Run 2,
 compare Run 1 vs Run 2, construct/impute pressure, or emit predictions/metrics/
 model refs. A `not_ready` result must be honored fail-closed — fixtures or nulls
 must never be bound as if they were real governed data.
+
+## Value binding (#82): bind governed Teamstate values into the candidate matrix
+
+`bindRun2GovernedTeamstateValues(input, options?)`
+(`src/rehearsal/runRun2GovernedTeamstateValueBinding.ts`, exported from the public
+API) is the first step that actually **binds real governed Teamstate values** into
+the existing Run 2 candidate matrix. It is value binding only — no training, no
+evaluation, no Run 2 execution, no Run 1 vs Run 2 comparison, and no shuffled-
+Teamstate sanity arm.
+
+It is grounded in (and never bypasses) the full chain:
+`readGovernedTeamstateInput` → `buildRun2ManifestRehearsal` →
+`buildRun2FeatureInclusionPreflight` → `buildRun2FeatureTableRehearsal` →
+`buildRun2FeatureMatrixCandidate` → `assessRun2TeamstateValueBindingReadiness` →
+value binding. Binding proceeds **only** when the readiness gate returns
+`ready_for_value_binding`; otherwise it emits a not-bound report
+(`not_bound_readiness_not_met`) and binds nothing.
+
+### Team-week values channel
+
+The readiness summary carries field-readiness *counts*, not per-row numbers, so the
+governed artifact also supplies the team-week **values** to aggregate, under a
+`teamWeekValues` array (or via `options.teamstate_team_week_values`). Each row is a
+governed team-week record (`teamCode`, `season`, `week`, plus numeric/null metric
+columns). Only the chain's preflight-allowed columns are read; pressure, fantasy-
+split, and target/future/leakage columns are never read even if present.
+
+### Aggregation (team-week → player-season)
+
+- Method: `mean_of_available_input_season_team_week_values` (unweighted mean of the
+  finite values across a team's **2024 input-season** team-week rows).
+- Non-2024 (e.g. 2025 target-season) team-week rows are skipped and counted as
+  `ignored_non_input_season_rows` — never aggregated (no target-season leakage).
+- A column with no finite value for a team binds `null` — partial-null columns stay
+  null-aware and are **never** zero-filled.
+- Aggregates are bound to candidate rows by the explicit join keys
+  `team_2024 (player input-season team) = teamstate teamCode` and
+  `input_season = teamstate season`.
+
+### What binding preserves
+
+One row per Run 1 `SeasonalPlayerObservation`; the unstandardized
+`run1_feature_values`; `ppr_2025_actual` as a label-only target outside every input
+group; input season 2024 / target season 2025; player population/fold identity; and
+the governance / source / validation / lineage / recorded-cutoff refs (including the
+timezone-explicit cutoff `as_of`, kept distinct from the source build time
+`sourceGeneratedAt`).
+
+### Report
+
+`Run2BoundFeatureMatrixReport` records `candidate_status:
+pre_train_bound_feature_matrix_candidate`, `binding_status`, `execution_status:
+not_trained`, `evaluation_status: not_evaluated`, `run_2_executed: false`,
+`row_grain: player_season_forecast`, input/target season, `aggregation_method`,
+`join_keys_used`, the Run 1 / bound-Teamstate / partial-null column groups,
+`excluded_columns`, `pressure_status`, `target_leakage_status`, the recorded cutoff,
+governance + refs, a `binding_coverage` summary (matched/unmatched teams, contributing
+row counts, ignored non-input-season rows, per-team aggregates), the `bound_rows`,
+and linkage to the readiness and candidate reports. Each bound row separates Run 1
+input values, bound Teamstate values, partial-null Teamstate values, identity/join
+metadata, and the label-only target. It emits no predictions, metrics, model refs,
+evaluation refs, or Run 1 ↔ Run 2 comparison.
