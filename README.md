@@ -42,6 +42,7 @@ unchanged.
 
 - [Forecast lane naming & framing + backwards-compatibility policy](docs/forecast-lane.md)
 - [Run 2 TTS feature contract (what Forecast wants from Teamstate, governance & cutoff gates)](docs/run2-tts-feature-contract.md)
+- [Run 1 path audit for Run 2 integration (where the existing Run 1 pipeline builds inputs/targets/splits/eval and where Run 2 attaches)](docs/run1-path-audit-for-run2.md)
 - [Run manifest & run-to-run visibility spec](docs/run-manifest-spec.md)
 
 The seasonal runner is available as `npm run backtest:seasonal-ppr` and, as a
