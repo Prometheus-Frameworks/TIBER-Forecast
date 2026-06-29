@@ -1,0 +1,218 @@
+{
+  "kind": "teamstate_team_season_feature_availability",
+  "issue": "TIBER-Forecast#94",
+  "note": "Per-team finite (governed non-null) team-week counts for the Run 2 Teamstate feature columns, derived from the governed TIBER-Data 2024 team_week_raw_v0 source. Used to determine, per matched scored row, whether a governed team-season value exists for each feature column. A team has a non-null season aggregate for a column iff its finite count > 0. Derived once with provenance; not fetched at runtime.",
+  "season": 2024,
+  "featureColumns": [
+    "epaPerPlay",
+    "successRate",
+    "redZoneTdRate"
+  ],
+  "provenance": {
+    "sourceRepo": "Prometheus-Frameworks/TIBER-Data",
+    "sourceArtifactPath": "exports/candidates/team_week_raw/team_week_raw_v0_2024_real_source_candidate.json",
+    "governedSourceSha256": "2aed00e68c1620af10d2ea4350104f7e183ff6ee050f5d385a503ef027281de9",
+    "teamstateMirrorSha256": "2aed00e68c1620af10d2ea4350104f7e183ff6ee050f5d385a503ef027281de9",
+    "refs": [
+      "TIBER-Data#181",
+      "TIBER-Data#182",
+      "TIBER-Teamstate#72",
+      "TIBER-Teamstate#73",
+      "TIBER-Teamstate#74"
+    ]
+  },
+  "teams": {
+    "ARI": {
+      "teamWeekRows": 17,
+      "epaPerPlay": 17,
+      "successRate": 17,
+      "redZoneTdRate": 17
+    },
+    "ATL": {
+      "teamWeekRows": 17,
+      "epaPerPlay": 17,
+      "successRate": 17,
+      "redZoneTdRate": 15
+    },
+    "BAL": {
+      "teamWeekRows": 17,
+      "epaPerPlay": 17,
+      "successRate": 17,
+      "redZoneTdRate": 17
+    },
+    "BUF": {
+      "teamWeekRows": 17,
+      "epaPerPlay": 17,
+      "successRate": 17,
+      "redZoneTdRate": 17
+    },
+    "CAR": {
+      "teamWeekRows": 17,
+      "epaPerPlay": 17,
+      "successRate": 17,
+      "redZoneTdRate": 17
+    },
+    "CHI": {
+      "teamWeekRows": 17,
+      "epaPerPlay": 17,
+      "successRate": 17,
+      "redZoneTdRate": 17
+    },
+    "CIN": {
+      "teamWeekRows": 17,
+      "epaPerPlay": 17,
+      "successRate": 17,
+      "redZoneTdRate": 17
+    },
+    "CLE": {
+      "teamWeekRows": 17,
+      "epaPerPlay": 17,
+      "successRate": 17,
+      "redZoneTdRate": 16
+    },
+    "DAL": {
+      "teamWeekRows": 17,
+      "epaPerPlay": 17,
+      "successRate": 17,
+      "redZoneTdRate": 17
+    },
+    "DEN": {
+      "teamWeekRows": 17,
+      "epaPerPlay": 17,
+      "successRate": 17,
+      "redZoneTdRate": 17
+    },
+    "DET": {
+      "teamWeekRows": 17,
+      "epaPerPlay": 17,
+      "successRate": 17,
+      "redZoneTdRate": 17
+    },
+    "GB": {
+      "teamWeekRows": 17,
+      "epaPerPlay": 17,
+      "successRate": 17,
+      "redZoneTdRate": 17
+    },
+    "HOU": {
+      "teamWeekRows": 17,
+      "epaPerPlay": 17,
+      "successRate": 17,
+      "redZoneTdRate": 17
+    },
+    "IND": {
+      "teamWeekRows": 17,
+      "epaPerPlay": 17,
+      "successRate": 17,
+      "redZoneTdRate": 16
+    },
+    "JAX": {
+      "teamWeekRows": 17,
+      "epaPerPlay": 17,
+      "successRate": 17,
+      "redZoneTdRate": 16
+    },
+    "KC": {
+      "teamWeekRows": 17,
+      "epaPerPlay": 17,
+      "successRate": 17,
+      "redZoneTdRate": 16
+    },
+    "LAC": {
+      "teamWeekRows": 17,
+      "epaPerPlay": 17,
+      "successRate": 17,
+      "redZoneTdRate": 17
+    },
+    "LAR": {
+      "teamWeekRows": 17,
+      "epaPerPlay": 17,
+      "successRate": 17,
+      "redZoneTdRate": 17
+    },
+    "LV": {
+      "teamWeekRows": 17,
+      "epaPerPlay": 17,
+      "successRate": 17,
+      "redZoneTdRate": 17
+    },
+    "MIA": {
+      "teamWeekRows": 17,
+      "epaPerPlay": 17,
+      "successRate": 17,
+      "redZoneTdRate": 17
+    },
+    "MIN": {
+      "teamWeekRows": 17,
+      "epaPerPlay": 17,
+      "successRate": 17,
+      "redZoneTdRate": 16
+    },
+    "NE": {
+      "teamWeekRows": 17,
+      "epaPerPlay": 17,
+      "successRate": 17,
+      "redZoneTdRate": 15
+    },
+    "NO": {
+      "teamWeekRows": 17,
+      "epaPerPlay": 17,
+      "successRate": 17,
+      "redZoneTdRate": 16
+    },
+    "NYG": {
+      "teamWeekRows": 17,
+      "epaPerPlay": 17,
+      "successRate": 17,
+      "redZoneTdRate": 17
+    },
+    "NYJ": {
+      "teamWeekRows": 17,
+      "epaPerPlay": 17,
+      "successRate": 17,
+      "redZoneTdRate": 17
+    },
+    "PHI": {
+      "teamWeekRows": 17,
+      "epaPerPlay": 17,
+      "successRate": 17,
+      "redZoneTdRate": 17
+    },
+    "PIT": {
+      "teamWeekRows": 17,
+      "epaPerPlay": 17,
+      "successRate": 17,
+      "redZoneTdRate": 17
+    },
+    "SEA": {
+      "teamWeekRows": 17,
+      "epaPerPlay": 17,
+      "successRate": 17,
+      "redZoneTdRate": 17
+    },
+    "SF": {
+      "teamWeekRows": 17,
+      "epaPerPlay": 17,
+      "successRate": 17,
+      "redZoneTdRate": 16
+    },
+    "TB": {
+      "teamWeekRows": 17,
+      "epaPerPlay": 17,
+      "successRate": 17,
+      "redZoneTdRate": 17
+    },
+    "TEN": {
+      "teamWeekRows": 17,
+      "epaPerPlay": 17,
+      "successRate": 17,
+      "redZoneTdRate": 17
+    },
+    "WAS": {
+      "teamWeekRows": 17,
+      "epaPerPlay": 17,
+      "successRate": 17,
+      "redZoneTdRate": 17
+    }
+  }
+}

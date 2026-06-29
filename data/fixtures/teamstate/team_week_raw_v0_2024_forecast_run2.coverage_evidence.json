@@ -1,0 +1,250 @@
+{
+  "kind": "team_week_raw_v0_2024_forecast_run2_coverage_evidence",
+  "issue": "TIBER-Teamstate#72",
+  "emittedBy": "teamstate",
+  "source": {
+    "sourceArtifactPath": "data/governed/team_week_raw_v0_2024_real_source_candidate.json",
+    "sourceArtifactId": "team_week_raw_v0",
+    "sha256": "2aed00e68c1620af10d2ea4350104f7e183ff6ee050f5d385a503ef027281de9",
+    "governanceStatus": "governed",
+    "governanceSource": "explicit_marker",
+    "provenanceStatus": "governed_real_data",
+    "validationReportPath": "exports/candidates/team_week_raw/team_week_raw_v0_2024_real_source_candidate.validation.json",
+    "lineageManifestPath": "data/manifests/team_week_raw_v0_2024_real_source_candidate.manifest.json",
+    "upstreamCoverageAudit": "TIBER-Data: exports/candidates/team_week_raw/team_week_raw_v0_2024_teamstate_coverage_audit.json (issue #181 / PR #182)"
+  },
+  "input": {
+    "season": 2024,
+    "rowGrain": "team_week",
+    "teamCount": 32,
+    "rowCount": 544,
+    "expectedTeamCount": 32,
+    "expectedRowCount": 544,
+    "isFullLeague": true,
+    "presentTeams": [
+      "ARI",
+      "ATL",
+      "BAL",
+      "BUF",
+      "CAR",
+      "CHI",
+      "CIN",
+      "CLE",
+      "DAL",
+      "DEN",
+      "DET",
+      "GB",
+      "HOU",
+      "IND",
+      "JAX",
+      "KC",
+      "LAC",
+      "LAR",
+      "LV",
+      "MIA",
+      "MIN",
+      "NE",
+      "NO",
+      "NYG",
+      "NYJ",
+      "PHI",
+      "PIT",
+      "SEA",
+      "SF",
+      "TB",
+      "TEN",
+      "WAS"
+    ],
+    "missingTeams": []
+  },
+  "emitted": {
+    "readinessStatus": "ready_minimal_boundary",
+    "teamCount": 32,
+    "rowGrain": "team_week",
+    "preAggregationRowCount": 544,
+    "forecastInputColumns": [
+      "drives",
+      "epaPerPlay",
+      "explosivePlayRate",
+      "neutralPassRate",
+      "neutralPlays",
+      "offensivePlays",
+      "passEpaPerPlay",
+      "passRate",
+      "pointsAgainst",
+      "pointsFor",
+      "pointsPerDrive",
+      "redZoneTdRate",
+      "redZoneTrips",
+      "rushEpaPerPlay",
+      "rushRate",
+      "sacksAllowed",
+      "secondsPerPlay",
+      "successRate",
+      "turnovers"
+    ],
+    "forecastInputColumnCount": 19
+  },
+  "nullSemantics": {
+    "perColumn": [
+      {
+        "column": "pointsFor",
+        "status": "available",
+        "nonNullCount": 544,
+        "nullCount": 0,
+        "forecastInput": true
+      },
+      {
+        "column": "pointsAgainst",
+        "status": "available",
+        "nonNullCount": 544,
+        "nullCount": 0,
+        "forecastInput": true
+      },
+      {
+        "column": "offensivePlays",
+        "status": "available",
+        "nonNullCount": 544,
+        "nullCount": 0,
+        "forecastInput": true
+      },
+      {
+        "column": "neutralPlays",
+        "status": "available",
+        "nonNullCount": 544,
+        "nullCount": 0,
+        "forecastInput": true
+      },
+      {
+        "column": "secondsPerPlay",
+        "status": "available",
+        "nonNullCount": 544,
+        "nullCount": 0,
+        "forecastInput": true
+      },
+      {
+        "column": "passRate",
+        "status": "available",
+        "nonNullCount": 544,
+        "nullCount": 0,
+        "forecastInput": true
+      },
+      {
+        "column": "neutralPassRate",
+        "status": "available",
+        "nonNullCount": 544,
+        "nullCount": 0,
+        "forecastInput": true
+      },
+      {
+        "column": "rushRate",
+        "status": "available",
+        "nonNullCount": 544,
+        "nullCount": 0,
+        "forecastInput": true
+      },
+      {
+        "column": "epaPerPlay",
+        "status": "available",
+        "nonNullCount": 544,
+        "nullCount": 0,
+        "forecastInput": true
+      },
+      {
+        "column": "passEpaPerPlay",
+        "status": "available",
+        "nonNullCount": 544,
+        "nullCount": 0,
+        "forecastInput": true
+      },
+      {
+        "column": "rushEpaPerPlay",
+        "status": "available",
+        "nonNullCount": 544,
+        "nullCount": 0,
+        "forecastInput": true
+      },
+      {
+        "column": "successRate",
+        "status": "available",
+        "nonNullCount": 544,
+        "nullCount": 0,
+        "forecastInput": true
+      },
+      {
+        "column": "explosivePlayRate",
+        "status": "available",
+        "nonNullCount": 544,
+        "nullCount": 0,
+        "forecastInput": true
+      },
+      {
+        "column": "drives",
+        "status": "available",
+        "nonNullCount": 544,
+        "nullCount": 0,
+        "forecastInput": true
+      },
+      {
+        "column": "pointsPerDrive",
+        "status": "available",
+        "nonNullCount": 544,
+        "nullCount": 0,
+        "forecastInput": true
+      },
+      {
+        "column": "redZoneTrips",
+        "status": "available",
+        "nonNullCount": 544,
+        "nullCount": 0,
+        "forecastInput": true
+      },
+      {
+        "column": "redZoneTdRate",
+        "status": "partial_nulls",
+        "nonNullCount": 533,
+        "nullCount": 11,
+        "forecastInput": true
+      },
+      {
+        "column": "sacksAllowed",
+        "status": "available",
+        "nonNullCount": 544,
+        "nullCount": 0,
+        "forecastInput": true
+      },
+      {
+        "column": "turnovers",
+        "status": "available",
+        "nonNullCount": 544,
+        "nullCount": 0,
+        "forecastInput": true
+      },
+      {
+        "column": "pressureRateAllowed",
+        "status": "deferred_insufficient_data",
+        "nonNullCount": 0,
+        "nullCount": 544,
+        "forecastInput": false
+      }
+    ],
+    "pressureDisposition": "unavailable_insufficient_data_deferred_excluded",
+    "fantasySplitDisposition": "absent_excluded_from_forecast_use",
+    "noSilentZeroFill": true
+  },
+  "forecastGateProjection": {
+    "expectedTeamCoverage": "32/32",
+    "coversAllNflTeams": true,
+    "previousFailureTeamCoverage": "3/32 (BAL, CIN, PHI)",
+    "nonNullForecastInputCellNote": "All 18 emitted offensive-environment Forecast input columns are non-null on all 544 team-game rows; redZoneTdRate carries 11 legitimate zero-red-zone-trip nulls (null-aware, never zero-filled). pressureRateAllowed and the eight fantasy split fields are excluded from the Forecast input column set, so Forecast must scope its non-null-cell gate to the emitted forecastInputColumns and not require those excluded fields.",
+    "knownBlockers": [],
+    "doNotRunForecast": true
+  },
+  "notes": [
+    "Teamstate-side coverage evidence only; this does not run Forecast, evaluate Forecast's gate, train, score, predict, rank, or emit fantasy product.",
+    "Emitted from the full governed TIBER-Data 2024 team_week_raw_v0 source (32 teams x 17 played games = 544 rows), not an excerpt/scaffold/sample.",
+    "Row grain is team-week (played games; bye weeks are expected absence, not missing truth). Any later aggregation to team-season is downstream of this evidence.",
+    "Governance is explicit-marker only, echoed from the governed source; Teamstate does not re-govern.",
+    "pressureRateAllowed stays deferred/unavailable and fantasy splits stay absent/excluded; no field is zero-filled, imputed, or invented."
+  ]
+}

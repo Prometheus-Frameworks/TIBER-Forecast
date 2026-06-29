@@ -15,6 +15,7 @@
     "build": "tsc --noEmit",
     "test": "vitest run",
     "export:point-scenario-lab": "tsx scripts/exportPointScenarioLab.ts",
+    "evaluate:run2-coverage-gate": "tsx scripts/runRun2CoverageGateEvaluation.ts",
     "backtest:seasonal-ppr": "tsx scripts/runSeasonalPprBacktest.ts",
     "forecast:seasonal-ppr": "tsx scripts/runSeasonalPprBacktest.ts",
     "verify:seasonal-ppr": "tsx scripts/runSeasonalPprBacktest.ts --ppr-artifact=exports/promoted/nfl/player_weekly_ppr_outcomes_v1.json"
