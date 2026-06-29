@@ -36,9 +36,15 @@ const fullPassEvidence = (): Run2TeamstateCoverageEvidence => ({
     { position: 'WR', matched: 13, scored: 14 },
     { position: 'TE', matched: 5, scored: 6 },
   ],
-  join_diagnostics: [
-    { player_id: 'p1', position: 'QB', team_2024: 'BAL', teamstate_team_code: 'BAL', matched: true },
-  ],
+  // Complete row-level join evidence: one record per scored row, 35 matched (== matched_row_count).
+  join_diagnostics: Array.from({ length: 38 }, (_, i) => ({
+    player_id: `p${i}`,
+    position: 'WR',
+    team_2024: 'BAL',
+    teamstate_team_code: i < 35 ? 'BAL' : null,
+    matched: i < 35,
+    unmatched_reason: i < 35 ? null : 'team not covered',
+  })),
 });
 
 describe('Run 2 Teamstate coverage gate', () => {
@@ -80,6 +86,18 @@ describe('Run 2 Teamstate coverage gate', () => {
     const result = evaluateRun2TeamstateCoverageGate(evidence);
     expect(result.status).toBe('teamstate_coverage_gate_failed_join_diagnostics_missing');
     expect(result.decision).toBe('fail_closed_incomplete_evidence');
+  });
+
+  it('fails closed when join diagnostics are present but incomplete (placeholder rows)', () => {
+    // Coverage thresholds all pass, but only one placeholder join record is supplied for 38 scored rows.
+    const evidence = fullPassEvidence();
+    evidence.join_diagnostics = [
+      { player_id: 'p1', position: 'QB', team_2024: 'BAL', teamstate_team_code: 'BAL', matched: true },
+    ];
+    const result = evaluateRun2TeamstateCoverageGate(evidence);
+    expect(result.status).toBe('teamstate_coverage_gate_failed_join_diagnostics_missing');
+    expect(result.decision).toBe('fail_closed_incomplete_evidence');
+    expect(result.blocking_reasons.join(' ')).toContain('incomplete');
   });
 
   it('fails on insufficient team coverage (below 28/32)', () => {

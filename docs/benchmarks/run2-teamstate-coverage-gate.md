@@ -20,7 +20,7 @@ In fail-closed precedence order:
 
 1. **Governance prerequisites** — explicit governance marker, artifact version, row grain, `generated_at`, and non-empty source / validation / lineage refs.
 2. **Cutoff prerequisites** — recorded cutoff as-of, cutoff before the target-season start, no target-season leakage, no fantasy-result leakage.
-3. **Join diagnostics present** — row-level join evidence (player_id, name, position, `team_2024`, Teamstate `teamCode`, matched/unmatched, reason, source ref).
+3. **Join diagnostics complete** — row-level join evidence (player_id, name, position, `team_2024`, Teamstate `teamCode`, matched/unmatched, reason, source ref). Must be *present* to trust coverage at all, and *complete* (one record per scored row, with the diagnostics' matched count equal to `matched_row_count`) before the gate may pass — a single placeholder row cannot authorize a rerun.
 4. **Team coverage** — covered teams vs the 32 NFL teams.
 5. **Scored-row coverage** — fraction of scored Forecast rows that match governed Teamstate values.
 6. **Non-null cell coverage** — fraction of Teamstate feature cells that are real governed (non-null) values.
@@ -29,7 +29,7 @@ In fail-closed precedence order:
 ## 3. How it fails closed
 
 - Governance or cutoff incomplete → fail **before any coverage math is trusted**.
-- Join diagnostics missing/empty → **incomplete evidence**: fail closed and request row-level join evidence (so a true coverage gap is never confused with a join bug).
+- Join diagnostics missing/empty → **incomplete evidence**: fail closed and request row-level join evidence (so a true coverage gap is never confused with a join bug). Join diagnostics that are present but **incomplete** (fewer than one record per scored row, or a matched count that disagrees with `matched_row_count`) also fail closed before any pass, even when the coverage thresholds are met.
 - `null` evidence → `teamstate_coverage_gate_not_evaluated` (fail closed).
 - The first failing dimension determines the status; the result also lists every check, the blocking reason(s), and warnings.
 

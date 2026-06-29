@@ -234,7 +234,17 @@ export const evaluateRun2TeamstateCoverageGate = (
     typeof c.recorded_cutoff_as_of === 'string' && c.recorded_cutoff_as_of.length > 0 &&
     c.cutoff_before_target_season_start && c.no_target_season_leakage && c.no_fantasy_result_leakage;
 
-  const joinPresent = Array.isArray(evidence.join_diagnostics) && evidence.join_diagnostics.length > 0;
+  // Row-level join evidence must be PRESENT to even trust coverage, and COMPLETE before a pass:
+  // one diagnostic row per scored row, with the diagnostics' matched count equal to matched_row_count.
+  // Otherwise a single placeholder row could authorize a rerun without enough evidence to tell a true
+  // coverage gap from a join bug.
+  const joinRows = Array.isArray(evidence.join_diagnostics) ? evidence.join_diagnostics : [];
+  const joinPresent = joinRows.length > 0;
+  const joinMatchedCount = joinRows.filter((row) => row.matched).length;
+  const joinComplete =
+    joinPresent &&
+    joinRows.length === evidence.scored_row_count &&
+    joinMatchedCount === evidence.matched_row_count;
 
   const checks: Run2CoverageGateCheck[] = [
     {
@@ -252,11 +262,11 @@ export const evaluateRun2TeamstateCoverageGate = (
       detail: 'Cutoff prerequisites must be present and leakage-free before coverage is trusted.',
     },
     {
-      dimension: 'join_diagnostics_present',
-      passed: joinPresent,
-      observed: joinPresent ? `${evidence.join_diagnostics!.length} row-level join records` : 'no row-level join evidence',
-      threshold: 'row-level join diagnostics required (player/team/teamCode/matched/source)',
-      detail: 'Row-level join evidence is required to distinguish true coverage gaps from join bugs.',
+      dimension: 'join_diagnostics_complete',
+      passed: joinComplete,
+      observed: `${joinRows.length} join records (${joinMatchedCount} matched) vs ${evidence.scored_row_count} scored / ${evidence.matched_row_count} matched`,
+      threshold: 'one row-level join record per scored row, with matched count == matched_row_count',
+      detail: 'Complete row-level join evidence is required to distinguish true coverage gaps from join bugs.',
     },
     {
       dimension: 'team_coverage',
@@ -282,9 +292,6 @@ export const evaluateRun2TeamstateCoverageGate = (
   ];
 
   const warnings: string[] = [];
-  if (joinPresent && evidence.join_diagnostics!.filter((row) => row.matched).length !== evidence.matched_row_count) {
-    warnings.push('join_diagnostics matched-row count does not equal matched_row_count; verify the join evidence is complete.');
-  }
   for (const position of positionCoverage) {
     if (!position.has_meaningful_coverage) {
       warnings.push(`position ${position.position} has ${position.matched}/${position.scored} matched rows (no meaningful Teamstate coverage); by-position metrics for it would be uninformative.`);
@@ -322,6 +329,14 @@ export const evaluateRun2TeamstateCoverageGate = (
     status = 'teamstate_coverage_gate_failed_null_dominance';
     decision = 'must_not_rerun';
     blocking_reasons.push(`Non-null cell coverage ${pct(cellRatio)} is below the ${pct(RUN2_GATE_MIN_NONNULL_CELL_COVERAGE)} threshold (null/imputation dominates).`);
+  } else if (!joinComplete) {
+    // Coverage thresholds pass, but row-level join evidence is incomplete: fail closed rather than
+    // authorize a rerun on coverage numbers that lack per-row join backing.
+    status = 'teamstate_coverage_gate_failed_join_diagnostics_missing';
+    decision = 'fail_closed_incomplete_evidence';
+    blocking_reasons.push(
+      `Row-level join diagnostics are incomplete: ${joinRows.length} record(s) (${joinMatchedCount} matched) for ${evidence.scored_row_count} scored / ${evidence.matched_row_count} matched rows. One join record per scored row is required before a rerun.`,
+    );
   } else {
     status = 'teamstate_coverage_gate_passed';
     decision = 'may_rerun_unchanged_comparison';
