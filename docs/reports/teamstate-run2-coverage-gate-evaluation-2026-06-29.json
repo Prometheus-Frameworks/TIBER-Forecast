@@ -1,0 +1,673 @@
+{
+  "report_version": "teamstate-run2-coverage-gate-evaluation-v1",
+  "repo": "Prometheus-Frameworks/TIBER-Forecast",
+  "issue": "TIBER-Forecast#94",
+  "generated_at": "2026-06-29T00:00:00.000Z",
+  "evaluation_kind": "gate_evaluation_only_no_rerun",
+  "source_evidence_identity": {
+    "teamstate_repo": "Prometheus-Frameworks/TIBER-Teamstate",
+    "teamstate_coverage_evidence": "data/fixtures/teamstate/team_week_raw_v0_2024_forecast_run2.coverage_evidence.json",
+    "teamstate_full_artifact": "data/fixtures/teamstate/team_week_raw_v0_2024_forecast_run2.full.json",
+    "teamstate_source_artifact_path": "data/governed/team_week_raw_v0_2024_real_source_candidate.json",
+    "governed_source_sha256": "2aed00e68c1620af10d2ea4350104f7e183ff6ee050f5d385a503ef027281de9",
+    "upstream_coverage_audit": "TIBER-Data: exports/candidates/team_week_raw/team_week_raw_v0_2024_teamstate_coverage_audit.json (issue #181 / PR #182)",
+    "refs": [
+      "TIBER-Data#181",
+      "TIBER-Data#182",
+      "TIBER-Teamstate#72",
+      "TIBER-Teamstate#73",
+      "TIBER-Teamstate#74"
+    ]
+  },
+  "teamstate_evidence_summary": {
+    "input_teams": 32,
+    "input_rows": 544,
+    "missing_teams": [],
+    "emitted_readiness": "ready_minimal_boundary",
+    "emitted_forecast_input_columns": 19,
+    "governance": "governed / explicit_marker / governed_real_data"
+  },
+  "forecast_gate_thresholds": {
+    "team_coverage_min": 28,
+    "team_coverage_preferred": 32,
+    "scored_row_coverage_min": 0.8,
+    "nonnull_cell_coverage_min": 0.75
+  },
+  "forecast_feature_columns": [
+    "epaPerPlay",
+    "successRate",
+    "redZoneTdRate"
+  ],
+  "gate_input_evidence": {
+    "governance": {
+      "governance_marker_present": true,
+      "artifact_version": "team_week_raw_v0",
+      "row_grain": "team_week",
+      "generated_at": "2026-06-27T13:42:06+00:00",
+      "source_refs": [
+        "nflverse-data:pbp/play_by_play_2024",
+        "nflverse-data:schedules/games"
+      ],
+      "validation_refs": [
+        "exports/candidates/team_week_raw/team_week_raw_v0_2024_real_source_candidate.validation.json"
+      ],
+      "lineage_refs": [
+        "data/manifests/team_week_raw_v0_2024_real_source_candidate.manifest.json"
+      ]
+    },
+    "cutoff": {
+      "recorded_cutoff_as_of": "2025-03-01T00:00:00.000Z",
+      "cutoff_before_target_season_start": true,
+      "no_target_season_leakage": true,
+      "no_fantasy_result_leakage": true
+    },
+    "covered_teams": [
+      "ARI",
+      "ATL",
+      "BAL",
+      "BUF",
+      "CAR",
+      "CHI",
+      "CIN",
+      "CLE",
+      "DAL",
+      "DEN",
+      "DET",
+      "GB",
+      "HOU",
+      "IND",
+      "JAX",
+      "KC",
+      "LAC",
+      "LAR",
+      "LV",
+      "MIA",
+      "MIN",
+      "NE",
+      "NO",
+      "NYG",
+      "NYJ",
+      "PHI",
+      "PIT",
+      "SEA",
+      "SF",
+      "TB",
+      "TEN",
+      "WAS"
+    ],
+    "scored_row_count": 38,
+    "matched_row_count": 38,
+    "teamstate_feature_columns": [
+      "epaPerPlay",
+      "successRate",
+      "redZoneTdRate"
+    ],
+    "teamstate_cell_total": 114,
+    "teamstate_cell_nonnull": 114,
+    "null_cells_by_column": {
+      "epaPerPlay": 0,
+      "successRate": 0,
+      "redZoneTdRate": 0
+    },
+    "positions": [
+      {
+        "position": "QB",
+        "matched": 8,
+        "scored": 8
+      },
+      {
+        "position": "RB",
+        "matched": 10,
+        "scored": 10
+      },
+      {
+        "position": "WR",
+        "matched": 14,
+        "scored": 14
+      },
+      {
+        "position": "TE",
+        "matched": 6,
+        "scored": 6
+      }
+    ],
+    "join_diagnostics": [
+      {
+        "player_id": "00-0034796",
+        "player_name": "Lamar Jackson",
+        "position": "QB",
+        "team_2024": "BAL",
+        "teamstate_team_code": "BAL",
+        "matched": true,
+        "unmatched_reason": null,
+        "source_artifact_ref": "team_week_raw_v0"
+      },
+      {
+        "player_id": "00-0036971",
+        "player_name": "Jalen Hurts",
+        "position": "QB",
+        "team_2024": "PHI",
+        "teamstate_team_code": "PHI",
+        "matched": true,
+        "unmatched_reason": null,
+        "source_artifact_ref": "team_week_raw_v0"
+      },
+      {
+        "player_id": "00-0036389",
+        "player_name": "Joe Burrow",
+        "position": "QB",
+        "team_2024": "CIN",
+        "teamstate_team_code": "CIN",
+        "matched": true,
+        "unmatched_reason": null,
+        "source_artifact_ref": "team_week_raw_v0"
+      },
+      {
+        "player_id": "00-0037834",
+        "player_name": "Josh Allen",
+        "position": "QB",
+        "team_2024": "BUF",
+        "teamstate_team_code": "BUF",
+        "matched": true,
+        "unmatched_reason": null,
+        "source_artifact_ref": "team_week_raw_v0"
+      },
+      {
+        "player_id": "00-0039163",
+        "player_name": "Jayden Daniels",
+        "position": "QB",
+        "team_2024": "WAS",
+        "teamstate_team_code": "WAS",
+        "matched": true,
+        "unmatched_reason": null,
+        "source_artifact_ref": "team_week_raw_v0"
+      },
+      {
+        "player_id": "00-0034857",
+        "player_name": "Baker Mayfield",
+        "position": "QB",
+        "team_2024": "TB",
+        "teamstate_team_code": "TB",
+        "matched": true,
+        "unmatched_reason": null,
+        "source_artifact_ref": "team_week_raw_v0"
+      },
+      {
+        "player_id": "00-0033873",
+        "player_name": "Patrick Mahomes",
+        "position": "QB",
+        "team_2024": "KC",
+        "teamstate_team_code": "KC",
+        "matched": true,
+        "unmatched_reason": null,
+        "source_artifact_ref": "team_week_raw_v0"
+      },
+      {
+        "player_id": "00-0036442",
+        "player_name": "Jordan Love",
+        "position": "QB",
+        "team_2024": "GB",
+        "teamstate_team_code": "GB",
+        "matched": true,
+        "unmatched_reason": null,
+        "source_artifact_ref": "team_week_raw_v0"
+      },
+      {
+        "player_id": "00-0038542",
+        "player_name": "Saquon Barkley",
+        "position": "RB",
+        "team_2024": "PHI",
+        "teamstate_team_code": "PHI",
+        "matched": true,
+        "unmatched_reason": null,
+        "source_artifact_ref": "team_week_raw_v0"
+      },
+      {
+        "player_id": "00-0037539",
+        "player_name": "Jahmyr Gibbs",
+        "position": "RB",
+        "team_2024": "DET",
+        "teamstate_team_code": "DET",
+        "matched": true,
+        "unmatched_reason": null,
+        "source_artifact_ref": "team_week_raw_v0"
+      },
+      {
+        "player_id": "00-0036223",
+        "player_name": "Bijan Robinson",
+        "position": "RB",
+        "team_2024": "ATL",
+        "teamstate_team_code": "ATL",
+        "matched": true,
+        "unmatched_reason": null,
+        "source_artifact_ref": "team_week_raw_v0"
+      },
+      {
+        "player_id": "00-0034844",
+        "player_name": "Derrick Henry",
+        "position": "RB",
+        "team_2024": "BAL",
+        "teamstate_team_code": "BAL",
+        "matched": true,
+        "unmatched_reason": null,
+        "source_artifact_ref": "team_week_raw_v0"
+      },
+      {
+        "player_id": "00-0035700",
+        "player_name": "Josh Jacobs",
+        "position": "RB",
+        "team_2024": "GB",
+        "teamstate_team_code": "GB",
+        "matched": true,
+        "unmatched_reason": null,
+        "source_artifact_ref": "team_week_raw_v0"
+      },
+      {
+        "player_id": "00-0036924",
+        "player_name": "Kyren Williams",
+        "position": "RB",
+        "team_2024": "LAR",
+        "teamstate_team_code": "LAR",
+        "matched": true,
+        "unmatched_reason": null,
+        "source_artifact_ref": "team_week_raw_v0"
+      },
+      {
+        "player_id": "00-0038120",
+        "player_name": "De'Von Achane",
+        "position": "RB",
+        "team_2024": "MIA",
+        "teamstate_team_code": "MIA",
+        "matched": true,
+        "unmatched_reason": null,
+        "source_artifact_ref": "team_week_raw_v0"
+      },
+      {
+        "player_id": "00-0035685",
+        "player_name": "Chase Brown",
+        "position": "RB",
+        "team_2024": "CIN",
+        "teamstate_team_code": "CIN",
+        "matched": true,
+        "unmatched_reason": null,
+        "source_artifact_ref": "team_week_raw_v0"
+      },
+      {
+        "player_id": "00-0038977",
+        "player_name": "Bucky Irving",
+        "position": "RB",
+        "team_2024": "TB",
+        "teamstate_team_code": "TB",
+        "matched": true,
+        "unmatched_reason": null,
+        "source_artifact_ref": "team_week_raw_v0"
+      },
+      {
+        "player_id": "00-0034791",
+        "player_name": "Christian McCaffrey",
+        "position": "RB",
+        "team_2024": "SF",
+        "teamstate_team_code": "SF",
+        "matched": true,
+        "unmatched_reason": null,
+        "source_artifact_ref": "team_week_raw_v0"
+      },
+      {
+        "player_id": "00-0036322",
+        "player_name": "Ja'Marr Chase",
+        "position": "WR",
+        "team_2024": "CIN",
+        "teamstate_team_code": "CIN",
+        "matched": true,
+        "unmatched_reason": null,
+        "source_artifact_ref": "team_week_raw_v0"
+      },
+      {
+        "player_id": "00-0036262",
+        "player_name": "Justin Jefferson",
+        "position": "WR",
+        "team_2024": "MIN",
+        "teamstate_team_code": "MIN",
+        "matched": true,
+        "unmatched_reason": null,
+        "source_artifact_ref": "team_week_raw_v0"
+      },
+      {
+        "player_id": "00-0037240",
+        "player_name": "Amon-Ra St. Brown",
+        "position": "WR",
+        "team_2024": "DET",
+        "teamstate_team_code": "DET",
+        "matched": true,
+        "unmatched_reason": null,
+        "source_artifact_ref": "team_week_raw_v0"
+      },
+      {
+        "player_id": "00-0039337",
+        "player_name": "Brian Thomas Jr.",
+        "position": "WR",
+        "team_2024": "JAX",
+        "teamstate_team_code": "JAX",
+        "matched": true,
+        "unmatched_reason": null,
+        "source_artifact_ref": "team_week_raw_v0"
+      },
+      {
+        "player_id": "00-0036963",
+        "player_name": "Nico Collins",
+        "position": "WR",
+        "team_2024": "HOU",
+        "teamstate_team_code": "HOU",
+        "matched": true,
+        "unmatched_reason": null,
+        "source_artifact_ref": "team_week_raw_v0"
+      },
+      {
+        "player_id": "00-0033921",
+        "player_name": "Mike Evans",
+        "position": "WR",
+        "team_2024": "TB",
+        "teamstate_team_code": "TB",
+        "matched": true,
+        "unmatched_reason": null,
+        "source_artifact_ref": "team_week_raw_v0"
+      },
+      {
+        "player_id": "00-0035659",
+        "player_name": "A.J. Brown",
+        "position": "WR",
+        "team_2024": "PHI",
+        "teamstate_team_code": "PHI",
+        "matched": true,
+        "unmatched_reason": null,
+        "source_artifact_ref": "team_week_raw_v0"
+      },
+      {
+        "player_id": "00-0037247",
+        "player_name": "Terry McLaurin",
+        "position": "WR",
+        "team_2024": "WAS",
+        "teamstate_team_code": "WAS",
+        "matched": true,
+        "unmatched_reason": null,
+        "source_artifact_ref": "team_week_raw_v0"
+      },
+      {
+        "player_id": "00-0038543",
+        "player_name": "Puka Nacua",
+        "position": "WR",
+        "team_2024": "LAR",
+        "teamstate_team_code": "LAR",
+        "matched": true,
+        "unmatched_reason": null,
+        "source_artifact_ref": "team_week_raw_v0"
+      },
+      {
+        "player_id": "00-0039910",
+        "player_name": "Malik Nabers",
+        "position": "WR",
+        "team_2024": "NYG",
+        "teamstate_team_code": "NYG",
+        "matched": true,
+        "unmatched_reason": null,
+        "source_artifact_ref": "team_week_raw_v0"
+      },
+      {
+        "player_id": "00-0033040",
+        "player_name": "Tyreek Hill",
+        "position": "WR",
+        "team_2024": "MIA",
+        "teamstate_team_code": "MIA",
+        "matched": true,
+        "unmatched_reason": null,
+        "source_artifact_ref": "team_week_raw_v0"
+      },
+      {
+        "player_id": "00-0034348",
+        "player_name": "CeeDee Lamb",
+        "position": "WR",
+        "team_2024": "DAL",
+        "teamstate_team_code": "DAL",
+        "matched": true,
+        "unmatched_reason": null,
+        "source_artifact_ref": "team_week_raw_v0"
+      },
+      {
+        "player_id": "00-0039051",
+        "player_name": "Jaxon Smith-Njigba",
+        "position": "WR",
+        "team_2024": "SEA",
+        "teamstate_team_code": "SEA",
+        "matched": true,
+        "unmatched_reason": null,
+        "source_artifact_ref": "team_week_raw_v0"
+      },
+      {
+        "player_id": "00-0036902",
+        "player_name": "Garrett Wilson",
+        "position": "WR",
+        "team_2024": "NYJ",
+        "teamstate_team_code": "NYJ",
+        "matched": true,
+        "unmatched_reason": null,
+        "source_artifact_ref": "team_week_raw_v0"
+      },
+      {
+        "player_id": "00-0036971-te",
+        "player_name": "Brock Bowers",
+        "position": "TE",
+        "team_2024": "LV",
+        "teamstate_team_code": "LV",
+        "matched": true,
+        "unmatched_reason": null,
+        "source_artifact_ref": "team_week_raw_v0"
+      },
+      {
+        "player_id": "00-0033857",
+        "player_name": "George Kittle",
+        "position": "TE",
+        "team_2024": "SF",
+        "teamstate_team_code": "SF",
+        "matched": true,
+        "unmatched_reason": null,
+        "source_artifact_ref": "team_week_raw_v0"
+      },
+      {
+        "player_id": "00-0035229",
+        "player_name": "Trey McBride",
+        "position": "TE",
+        "team_2024": "ARI",
+        "teamstate_team_code": "ARI",
+        "matched": true,
+        "unmatched_reason": null,
+        "source_artifact_ref": "team_week_raw_v0"
+      },
+      {
+        "player_id": "00-0030506",
+        "player_name": "Travis Kelce",
+        "position": "TE",
+        "team_2024": "KC",
+        "teamstate_team_code": "KC",
+        "matched": true,
+        "unmatched_reason": null,
+        "source_artifact_ref": "team_week_raw_v0"
+      },
+      {
+        "player_id": "00-0037744",
+        "player_name": "Sam LaPorta",
+        "position": "TE",
+        "team_2024": "DET",
+        "teamstate_team_code": "DET",
+        "matched": true,
+        "unmatched_reason": null,
+        "source_artifact_ref": "team_week_raw_v0"
+      },
+      {
+        "player_id": "00-0038996",
+        "player_name": "Dalton Kincaid",
+        "position": "TE",
+        "team_2024": "BUF",
+        "teamstate_team_code": "BUF",
+        "matched": true,
+        "unmatched_reason": null,
+        "source_artifact_ref": "team_week_raw_v0"
+      }
+    ]
+  },
+  "join_diagnostics_summary": {
+    "records": 38,
+    "matched": 38,
+    "scored": 38,
+    "one_record_per_scored_row": true,
+    "unmatched": []
+  },
+  "gate_result": {
+    "gate_version": "run2-teamstate-coverage-gate-v1",
+    "status": "teamstate_coverage_gate_passed",
+    "decision": "may_rerun_unchanged_comparison",
+    "team_coverage": {
+      "covered_count": 32,
+      "preferred": 32,
+      "minimum": 28,
+      "covered_teams": [
+        "ARI",
+        "ATL",
+        "BAL",
+        "BUF",
+        "CAR",
+        "CHI",
+        "CIN",
+        "CLE",
+        "DAL",
+        "DEN",
+        "DET",
+        "GB",
+        "HOU",
+        "IND",
+        "JAX",
+        "KC",
+        "LAC",
+        "LAR",
+        "LV",
+        "MIA",
+        "MIN",
+        "NE",
+        "NO",
+        "NYG",
+        "NYJ",
+        "PHI",
+        "PIT",
+        "SEA",
+        "SF",
+        "TB",
+        "TEN",
+        "WAS"
+      ],
+      "missing_teams": [],
+      "passed": true
+    },
+    "scored_row_coverage": {
+      "matched": 38,
+      "scored": 38,
+      "ratio": 1,
+      "threshold": 0.8,
+      "passed": true
+    },
+    "nonnull_cell_coverage": {
+      "nonnull": 114,
+      "total": 114,
+      "ratio": 1,
+      "threshold": 0.75,
+      "passed": true,
+      "null_cells_by_column": {
+        "epaPerPlay": 0,
+        "successRate": 0,
+        "redZoneTdRate": 0
+      }
+    },
+    "position_coverage": [
+      {
+        "position": "QB",
+        "matched": 8,
+        "scored": 8,
+        "ratio": 1,
+        "has_meaningful_coverage": true
+      },
+      {
+        "position": "RB",
+        "matched": 10,
+        "scored": 10,
+        "ratio": 1,
+        "has_meaningful_coverage": true
+      },
+      {
+        "position": "WR",
+        "matched": 14,
+        "scored": 14,
+        "ratio": 1,
+        "has_meaningful_coverage": true
+      },
+      {
+        "position": "TE",
+        "matched": 6,
+        "scored": 6,
+        "ratio": 1,
+        "has_meaningful_coverage": true
+      }
+    ],
+    "checks": [
+      {
+        "dimension": "governance_prerequisites",
+        "passed": true,
+        "observed": "all governance/source/validation/lineage refs present",
+        "threshold": "explicit marker + artifact version + row grain + generated_at + source/validation/lineage refs",
+        "detail": "Governance prerequisites must be present before coverage is trusted."
+      },
+      {
+        "dimension": "cutoff_prerequisites",
+        "passed": true,
+        "observed": "recorded as-of 2025-03-01T00:00:00.000Z, pre-target, no leakage",
+        "threshold": "recorded as-of + cutoff before target-season start + no target-season/fantasy-result leakage",
+        "detail": "Cutoff prerequisites must be present and leakage-free before coverage is trusted."
+      },
+      {
+        "dimension": "join_diagnostics_complete",
+        "passed": true,
+        "observed": "38 join records (38 matched) vs 38 scored / 38 matched",
+        "threshold": "one row-level join record per scored row, with matched count == matched_row_count",
+        "detail": "Complete row-level join evidence is required to distinguish true coverage gaps from join bugs."
+      },
+      {
+        "dimension": "team_coverage",
+        "passed": true,
+        "observed": "32/32 teams",
+        "threshold": ">= 28/32 (preferred 32/32)",
+        "detail": "all teams covered"
+      },
+      {
+        "dimension": "scored_row_coverage",
+        "passed": true,
+        "observed": "38/38 (100.0%)",
+        "threshold": ">= 80.0% of scored rows matched",
+        "detail": "Most scored Forecast rows must carry governed Teamstate values."
+      },
+      {
+        "dimension": "nonnull_cell_coverage",
+        "passed": true,
+        "observed": "114/114 (100.0%)",
+        "threshold": ">= 75.0% real governed cells",
+        "detail": "Real governed values must dominate the Teamstate feature matrix (not null/imputed)."
+      }
+    ],
+    "blocking_reasons": [],
+    "warnings": [],
+    "notes": [
+      "Coverage gate only: it performs NO Run 2 rerun, no model fit/tuning, no feature change, and no null-handling change. It evaluates coverage evidence and returns a decision.",
+      "Null policy is unchanged and is comparison-time only: unavailable stays unavailable, never silent zero-fill; train-fold mean imputation is not applied here — the gate only measures how much imputation a rerun WOULD require.",
+      "A pass authorizes only an UNCHANGED rerun of the #86 three-arm comparison; it makes no claim that Teamstate works or does not work in general."
+    ]
+  },
+  "final_status": "teamstate_coverage_gate_passed",
+  "final_decision": "may_rerun_unchanged_comparison",
+  "next_step": "Open a separate issue for an UNCHANGED #86-style three-arm comparison rerun (same population/target/folds/model/null-handling). Do not rerun here."
+}

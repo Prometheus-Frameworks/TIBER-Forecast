@@ -258,6 +258,19 @@ export {
   RUN2_PREVIOUS_RECORDED_COVERAGE_EVIDENCE,
   evaluateRun2TeamstateCoverageGate,
 } from '../reports/run2TeamstateCoverageGate.js';
+export type {
+  MirroredTeamstateCoverageEvidence,
+  MirroredTeamstateFullArtifact,
+  Run2CoverageGateEvaluation,
+  Run2CoverageGateEvaluationInputs,
+  TeamSeasonFeatureAvailability,
+} from '../rehearsal/runRun2CoverageGateEvaluation.js';
+export {
+  RUN2_TEAMSTATE_FEATURE_COLUMNS,
+  buildRun2CoverageGateEvidenceFromTeamstate,
+  evaluateRun2CoverageGateFromTeamstate,
+  scoredForecastPopulation,
+} from '../rehearsal/runRun2CoverageGateEvaluation.js';
 
 export {
   PROJECTION_INPUT_COVERAGE_ARTIFACT_VERSION,

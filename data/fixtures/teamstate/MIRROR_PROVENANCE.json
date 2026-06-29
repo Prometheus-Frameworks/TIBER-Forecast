@@ -1,0 +1,35 @@
+{
+  "kind": "teamstate_full_mode_evidence_mirror",
+  "issue": "TIBER-Forecast#94",
+  "note": "Read-only mirror of the full-mode Teamstate Forecast Run 2 coverage evidence used to evaluate Forecast's Teamstate coverage gate. Copied verbatim from TIBER-Teamstate main (after PR #73 + PR #74). Forecast does not modify, re-govern, or re-derive these; the per-team feature availability fixture is derived once from the governed source bytes (sha-pinned) and committed for network-free reproducibility.",
+  "mirrored_files": [
+    {
+      "path": "team_week_raw_v0_2024_forecast_run2.coverage_evidence.json",
+      "upstream": "TIBER-Teamstate: data/fixtures/team_week_raw_forecast_run2/team_week_raw_v0_2024_forecast_run2.coverage_evidence.json"
+    },
+    {
+      "path": "team_week_raw_v0_2024_forecast_run2.full.json",
+      "upstream": "TIBER-Teamstate: data/fixtures/team_week_raw_forecast_run2/team_week_raw_v0_2024_forecast_run2.full.json"
+    },
+    {
+      "path": "team_season_feature_availability_2024.json",
+      "derivedFrom": "TIBER-Data: exports/candidates/team_week_raw/team_week_raw_v0_2024_real_source_candidate.json",
+      "note": "Per-team finite (governed non-null) team-week counts for the Run 2 Teamstate feature columns; derived deterministically from the governed source bytes."
+    }
+  ],
+  "governed_source": {
+    "repo": "Prometheus-Frameworks/TIBER-Data",
+    "sourceArtifactPath": "exports/candidates/team_week_raw/team_week_raw_v0_2024_real_source_candidate.json",
+    "sha256": "2aed00e68c1620af10d2ea4350104f7e183ff6ee050f5d385a503ef027281de9",
+    "validationReportPath": "exports/candidates/team_week_raw/team_week_raw_v0_2024_real_source_candidate.validation.json",
+    "lineageManifestPath": "data/manifests/team_week_raw_v0_2024_real_source_candidate.manifest.json",
+    "coverageAuditPath": "exports/candidates/team_week_raw/team_week_raw_v0_2024_teamstate_coverage_audit.json"
+  },
+  "refs": [
+    "TIBER-Data#181",
+    "TIBER-Data#182",
+    "TIBER-Teamstate#72",
+    "TIBER-Teamstate#73",
+    "TIBER-Teamstate#74"
+  ]
+}

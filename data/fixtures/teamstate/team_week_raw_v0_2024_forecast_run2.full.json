@@ -1,0 +1,321 @@
+{
+  "kind": "team_week_raw_v0_governed_readiness",
+  "artifact": "team_week_raw_v0",
+  "teamstateGovernedArtifact": true,
+  "productionReady": false,
+  "sourceArtifactPath": "data/governed/team_week_raw_v0_2024_real_source_candidate.json",
+  "sourceArtifacts": [
+    "nflverse-data:pbp/play_by_play_2024",
+    "nflverse-data:schedules/games"
+  ],
+  "validationReportPath": "exports/candidates/team_week_raw/team_week_raw_v0_2024_real_source_candidate.validation.json",
+  "lineageManifestPath": "data/manifests/team_week_raw_v0_2024_real_source_candidate.manifest.json",
+  "provenanceStatus": "governed_real_data",
+  "governance": {
+    "governanceStatus": "governed",
+    "governanceSource": "explicit_marker",
+    "notes": "Promoted to governed_real_data by explicit human promotion review (PR D, TIBER-Data #179): the candidate satisfied the full #171/#172 promotion gate under the #173/#174 pressureRateAllowed deferral (Option B) and the #175/#176 contract revision. governanceSource is explicit_marker set by that review; governed status holds only because provenanceStatus (governed_real_data) and the explicit marker agree. pressureRateAllowed remains null/deferred (unknown, never zero)."
+  },
+  "upstreamFieldReadiness": {
+    "pressureRateAllowed": "deferred",
+    "neutralPassRate": "available",
+    "redZoneTdRate": "partial_nulls",
+    "secondsPerPlay": "available",
+    "passRate": "available",
+    "rushRate": "available",
+    "passEpaPerPlay": "available",
+    "rushEpaPerPlay": "available"
+  },
+  "rowCount": 544,
+  "pressurePosture": "unavailable_insufficient_data_deferred",
+  "deferredFields": [
+    "pressureRateAllowed"
+  ],
+  "coverage": {
+    "valid": true,
+    "errors": [],
+    "teamCount": 32,
+    "totalRowCount": 544,
+    "isFullLeague": true
+  },
+  "readinessStatus": "ready_minimal_boundary",
+  "fieldReadiness": [
+    {
+      "field": "pointsFor",
+      "finiteCount": 544,
+      "nullCount": 0,
+      "status": "available"
+    },
+    {
+      "field": "pointsAgainst",
+      "finiteCount": 544,
+      "nullCount": 0,
+      "status": "available"
+    },
+    {
+      "field": "offensivePlays",
+      "finiteCount": 544,
+      "nullCount": 0,
+      "status": "available"
+    },
+    {
+      "field": "neutralPlays",
+      "finiteCount": 544,
+      "nullCount": 0,
+      "status": "available"
+    },
+    {
+      "field": "secondsPerPlay",
+      "finiteCount": 544,
+      "nullCount": 0,
+      "status": "available"
+    },
+    {
+      "field": "passRate",
+      "finiteCount": 544,
+      "nullCount": 0,
+      "status": "available"
+    },
+    {
+      "field": "neutralPassRate",
+      "finiteCount": 544,
+      "nullCount": 0,
+      "status": "available"
+    },
+    {
+      "field": "rushRate",
+      "finiteCount": 544,
+      "nullCount": 0,
+      "status": "available"
+    },
+    {
+      "field": "epaPerPlay",
+      "finiteCount": 544,
+      "nullCount": 0,
+      "status": "available"
+    },
+    {
+      "field": "passEpaPerPlay",
+      "finiteCount": 544,
+      "nullCount": 0,
+      "status": "available"
+    },
+    {
+      "field": "rushEpaPerPlay",
+      "finiteCount": 544,
+      "nullCount": 0,
+      "status": "available"
+    },
+    {
+      "field": "successRate",
+      "finiteCount": 544,
+      "nullCount": 0,
+      "status": "available"
+    },
+    {
+      "field": "explosivePlayRate",
+      "finiteCount": 544,
+      "nullCount": 0,
+      "status": "available"
+    },
+    {
+      "field": "drives",
+      "finiteCount": 544,
+      "nullCount": 0,
+      "status": "available"
+    },
+    {
+      "field": "pointsPerDrive",
+      "finiteCount": 544,
+      "nullCount": 0,
+      "status": "available"
+    },
+    {
+      "field": "redZoneTrips",
+      "finiteCount": 544,
+      "nullCount": 0,
+      "status": "available"
+    },
+    {
+      "field": "redZoneTdRate",
+      "finiteCount": 533,
+      "nullCount": 11,
+      "status": "partial_nulls"
+    },
+    {
+      "field": "sacksAllowed",
+      "finiteCount": 544,
+      "nullCount": 0,
+      "status": "available"
+    },
+    {
+      "field": "turnovers",
+      "finiteCount": 544,
+      "nullCount": 0,
+      "status": "available"
+    },
+    {
+      "field": "pressureRateAllowed",
+      "finiteCount": 0,
+      "nullCount": 544,
+      "status": "deferred_insufficient_data"
+    }
+  ],
+  "availableFields": [
+    "pointsFor",
+    "pointsAgainst",
+    "offensivePlays",
+    "neutralPlays",
+    "secondsPerPlay",
+    "passRate",
+    "neutralPassRate",
+    "rushRate",
+    "epaPerPlay",
+    "passEpaPerPlay",
+    "rushEpaPerPlay",
+    "successRate",
+    "explosivePlayRate",
+    "drives",
+    "pointsPerDrive",
+    "redZoneTrips",
+    "sacksAllowed",
+    "turnovers"
+  ],
+  "deferredInsufficientFields": [
+    "pressureRateAllowed"
+  ],
+  "partialNullFields": [
+    "redZoneTdRate"
+  ],
+  "notes": [
+    "Teamstate downstream consumption only: source governance is accepted from TIBER-Data explicit markers and is not re-governed here.",
+    "pressureRateAllowed remains unavailable/insufficient_data/deferred; it is never inferred from sacks, imputed, backfilled, or zero-filled.",
+    "redZoneTdRate nulls remain partial_nulls when only some rows are null.",
+    "Null fantasy split fields are stripped at this governed Teamstate boundary; non-null fantasy split values fail closed."
+  ],
+  "forecastRun2Artifact": true,
+  "forecastConsumable": true,
+  "emittedBy": "teamstate",
+  "targetSeason": 2025,
+  "forecastCutoff": {
+    "inputSeason": 2024,
+    "targetSeason": 2025,
+    "asOf": "2025-03-01T00:00:00.000Z",
+    "sourceGeneratedAt": "2026-06-27T13:42:06+00:00",
+    "targetSeasonStart": "2025-09-01T00:00:00.000Z",
+    "cutoffBeforeTargetSeason": true,
+    "safeFor": "forecast_run2_2024_input_to_2025_target"
+  },
+  "rowGrain": "team_week",
+  "teamCount": 32,
+  "weekCoverage": {
+    "window": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18
+    ],
+    "expectedGamesPerTeam": 17,
+    "expectedSeason": 2024,
+    "coverage": {
+      "valid": true,
+      "errors": [],
+      "teamCount": 32,
+      "totalRowCount": 544,
+      "isFullLeague": true
+    },
+    "isFullLeague": true
+  },
+  "downstreamBinding": {
+    "teamstateRowGrain": "team_week",
+    "teamWeekGrainKeys": [
+      "season",
+      "week",
+      "teamCode"
+    ],
+    "bindsToForecastHere": false,
+    "playerSeasonBinding": "Team-week aggregates may later bind to Forecast player-season rows by the player's input-season team and the input season; Teamstate does not perform that bind here.",
+    "joinKeysRequired": [
+      "player_input_season_team (team_2024)",
+      "input_season"
+    ],
+    "fieldMapping": [
+      {
+        "teamstateField": "season",
+        "forecastField": "input_season",
+        "note": "Teamstate input season binds to the Forecast input season."
+      },
+      {
+        "teamstateField": "teamCode",
+        "forecastField": "player_input_season_team (team_2024)",
+        "note": "Teamstate team code binds to the player's input-season team."
+      },
+      {
+        "teamstateField": "week",
+        "forecastField": "(aggregated away)",
+        "note": "Team-week rows are aggregated to team-season before player-season binding; week is not a Forecast join key."
+      }
+    ]
+  },
+  "forecastInputColumns": [
+    "drives",
+    "epaPerPlay",
+    "explosivePlayRate",
+    "neutralPassRate",
+    "neutralPlays",
+    "offensivePlays",
+    "passEpaPerPlay",
+    "passRate",
+    "pointsAgainst",
+    "pointsFor",
+    "pointsPerDrive",
+    "redZoneTdRate",
+    "redZoneTrips",
+    "rushEpaPerPlay",
+    "rushRate",
+    "sacksAllowed",
+    "secondsPerPlay",
+    "successRate",
+    "turnovers"
+  ],
+  "pressureForecastPosture": "unavailable_insufficient_data_deferred_excluded",
+  "fantasySplitPosture": {
+    "status": "absent_excluded_from_forecast_use",
+    "fields": [
+      "fantasyPointsForQB",
+      "fantasyPointsForRB",
+      "fantasyPointsForWR",
+      "fantasyPointsForTE",
+      "fantasyPointsAllowedQB",
+      "fantasyPointsAllowedRB",
+      "fantasyPointsAllowedWR",
+      "fantasyPointsAllowedTE"
+    ],
+    "presentInForecastInputColumns": false,
+    "presentInTeamstateRows": false
+  },
+  "targetLeakageStatus": "no_target_future_leakage_fields_emitted_as_input",
+  "forecastNotes": [
+    "This is the upstream Teamstate evidence packet Forecast #81 waits for before value binding is allowed; it is not Forecast Run 2, training, evaluation, scoring, ranking, or fantasy advice.",
+    "Governance is explicit-marker only and is never inferred from file path, file name, validation success, build success, or downstream demand.",
+    "forecastCutoff.inputSeason is the recorded 2024 cutoff; it stays strictly before the 2025 target season so no target-season Teamstate values can enter Forecast inputs.",
+    "forecastCutoff.asOf is the pre-target-season cutoff boundary the artifact claims; it must be timezone-explicit (Z or a numeric offset) and is validated as a deterministic instant strictly before forecastCutoff.targetSeasonStart. It is distinct from forecastCutoff.sourceGeneratedAt, which is the source/export build time and is never used as the semantic cutoff.",
+    "Row grain is team-week; downstream player-season binding uses the player input-season team and input season (Teamstate season/teamCode → Forecast input_season/player_input_season_team).",
+    "pressureRateAllowed remains unavailable/insufficient_data/deferred/excluded; no numeric pressure feature is emitted and pressure is never imputed, backfilled, estimated, or zero-filled.",
+    "Fantasy split fields stay absent/excluded from Forecast input use; partial-null columns (e.g. redZoneTdRate) remain null-aware and are never zero-filled."
+  ]
+}
