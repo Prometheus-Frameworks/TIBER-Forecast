@@ -543,3 +543,16 @@ mutated; or arm parity cannot be proven. A fail-closed report sets
 This is **one controlled experiment, not proof of general predictive value** — no
 production promotion, no product/advice output, and no claim that Teamstate is
 generally predictive.
+
+### Recorded outcome (#88)
+
+The durable outcome/decision checkpoint for a run of this comparison lives under
+`docs/reports/run2-teamstate-comparison-outcome-YYYY-MM-DD.{md,json}`. It records the
+three-arm metrics, deltas (with directionality), the conservative interpretation, the
+governance/cutoff/provenance refs, and a next-step operator decision —
+**without** tuning the model or changing any data/folds/target/evaluation. The record
+is built from the live `runRun2TeamstateComparison` output by
+`buildRun2TeamstateComparisonOutcome(...)` /
+`renderRun2TeamstateComparisonOutcomeMarkdown(...)`
+(`src/reports/run2TeamstateComparisonOutcome.ts`), so the committed numbers stay in
+sync with #86.
