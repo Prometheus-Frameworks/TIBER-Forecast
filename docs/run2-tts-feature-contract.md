@@ -318,3 +318,49 @@ columns preserve `null` and are never zero-filled.
 What it explicitly does **not** do: no model-ready rows, no training, no
 evaluation, no Run 2 execution, no Run 1 ↔ Run 2 comparison, no pressure
 construction/imputation, and no predictions/metrics/model refs.
+
+## Run 2 Teamstate value-binding readiness gate (implemented)
+
+Before binding real governed Teamstate values into the Run 2 candidate matrix,
+Forecast runs a fail-closed readiness gate that answers: *are the conditions
+present to bind real values without future leakage, fake pressure, fantasy-split
+contamination, ungoverned data, or ambiguous join semantics?* It binds nothing,
+trains nothing, evaluates nothing, and runs no Run 2.
+
+- Helper: `assessRun2TeamstateValueBindingReadiness(input, options?)`
+  (`src/rehearsal/runRun2TeamstateValueBindingReadiness.ts`), exported from the
+  public API.
+- Grounded in the candidate chain (`readGovernedTeamstateInput` → … →
+  `buildRun2FeatureMatrixCandidate`); it does not bypass earlier checks. A chain
+  failure (absent/ungoverned/fabricated-pressure artifact) yields a
+  `not_ready_for_value_binding` report, never a permissive pass.
+
+The genuinely new requirement is a **recorded forecast cutoff on the artifact**.
+Readiness is granted only when all gates pass:
+
+1. governed Teamstate artifact present (chain succeeds),
+2. explicit-marker governance (never inferred from path/name/build/downstream),
+3. a forecast cutoff is recorded,
+4. the cutoff input season equals Run 1's 2024,
+5. the cutoff is not target-season/future (no 2025 leakage),
+6. team-week → player-season grain is joinable,
+7. explicit deterministic join keys,
+8. only preflight-allowed columns are eligible,
+9. partial-null columns stay null-aware (never zero-filled),
+10. pressure stays excluded,
+11. fantasy-split fields excluded,
+12. target/leakage fields blocked.
+
+The report records `readiness_status`, `binding_status: not_bound_readiness_only`,
+`execution_status` / `evaluation_status` / `run_2_executed: false`,
+`expected_teamstate_artifact`, `required_governance`, `required_cutoff` (with the
+recorded value found), `required_join_keys`, `row_grain_alignment`,
+`allowed_columns`, `partial_null_columns`, `excluded_columns`, `pressure_status`,
+`target_leakage_status`, per-gate results, `missing_requirements`,
+`blocking_reasons`, governance + source/validation/lineage refs, and linkage to
+the candidate chain.
+
+What it explicitly does **not** do: bind any values, train, evaluate, run Run 2,
+compare Run 1 vs Run 2, construct/impute pressure, or emit predictions/metrics/
+model refs. A `not_ready` result must be honored fail-closed — fixtures or nulls
+must never be bound as if they were real governed data.
