@@ -512,8 +512,11 @@ same unchanged Run 1 feature values. Adding Teamstate columns to the same ridge 
 
 **Null handling:** null Teamstate feature values are imputed to the per-fold
 **training mean** (`train_fold_mean_imputation`), which standardizes to 0 / is
-ridge-neutral and uses only training rows (non-leaky). Raw zero-fill is never used.
-Pressure / fantasy-split / target-future-leakage fields are never used as inputs.
+ridge-neutral and uses only training rows (non-leaky). Individual missing cells are
+never silently raw-zero-filled; the only use of `0` is the documented neutral fallback
+when a column is fully null across the training fold (no mean exists), which still
+standardizes to a ridge-neutral 0. Pressure / fantasy-split / target-future-leakage
+fields are never used as inputs.
 
 ### Metrics, deltas, interpretation
 

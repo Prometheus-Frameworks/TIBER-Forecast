@@ -562,7 +562,7 @@ export const runRun2TeamstateComparison = (
 
   const nullHandling: Run2NullHandlingSummary = {
     method: RUN2_COMPARISON_NULL_HANDLING,
-    note: 'Null Teamstate feature values are imputed to the per-fold TRAINING mean (standardized to 0 / ridge-neutral). This is explicit and non-leaky; raw zero-fill is never used.',
+    note: 'Null Teamstate feature values are imputed to the per-fold TRAINING column mean (standardized to 0 / ridge-neutral); explicit and non-leaky. Individual missing cells are never silently raw-zero-filled. The only use of 0 is the documented neutral fallback when a column is fully null across the training fold (no mean exists), which still standardizes to a ridge-neutral 0.',
     real_run2_imputed_null_cells: countNullCells(armBRows, teamstateColumns),
     shuffled_control_imputed_null_cells: countNullCells(armCRows, teamstateColumns),
   };
