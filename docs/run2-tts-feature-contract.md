@@ -556,3 +556,13 @@ is built from the live `runRun2TeamstateComparison` output by
 `renderRun2TeamstateComparisonOutcomeMarkdown(...)`
 (`src/reports/run2TeamstateComparisonOutcome.ts`), so the committed numbers stay in
 sync with #86.
+
+### Failed-sanity-control audit (#90)
+
+When a run trips `failed_sanity_control`, the investigation is recorded under
+`docs/audits/run2-failed-sanity-control-audit-YYYY-MM-DD.md`. It audits coverage,
+by-position impact, the team/join path, null/imputation dominance, the shuffled-control
+behavior, and feature shape, ranks likely causes, and recommends the next narrow
+diagnostic — **without** changing model/data/feature/null-handling logic or making any
+Teamstate signal claim. A failed sanity control blocks signal claims until coverage is
+real and real beats both Run 1 and the shuffled control beyond fixture-scale variance.
