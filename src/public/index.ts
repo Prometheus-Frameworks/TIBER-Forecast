@@ -164,7 +164,27 @@ export {
   RUN2_TEAMSTATE_VALUE_BINDING_READINESS_VERSION,
   assessRun2TeamstateValueBindingReadiness,
 } from '../rehearsal/runRun2TeamstateValueBindingReadiness.js';
+export type {
+  BindRun2GovernedTeamstateValuesInput,
+  Run2BindingCoverage,
+  Run2BoundCandidateRow,
+  Run2BoundFeatureMatrixReport,
+  Run2BoundTeamstateAggregate,
+  Run2RecordedCutoff,
+  Run2ValueBindingStatus,
+  TeamstateTeamWeekValueRow,
+} from '../rehearsal/runRun2GovernedTeamstateValueBinding.js';
+export {
+  RUN2_BINDING_JOIN_KEYS,
+  RUN2_GOVERNED_VALUE_BINDING_VERSION,
+  RUN2_TEAMSTATE_AGGREGATION_METHOD,
+  bindRun2GovernedTeamstateValues,
+} from '../rehearsal/runRun2GovernedTeamstateValueBinding.js';
 export { fixtureGovernedTeamstateReadinessReport } from '../rehearsal/fixtures/governedTeamstateReadinessFixture.js';
+export {
+  fixtureGovernedTeamstateBindingArtifact,
+  fixtureGovernedTeamstateBindingTeamWeekValues,
+} from '../rehearsal/fixtures/governedTeamstateBindingFixture.js';
 
 export {
   PROJECTION_INPUT_COVERAGE_ARTIFACT_VERSION,
