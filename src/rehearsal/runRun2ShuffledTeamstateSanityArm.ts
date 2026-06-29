@@ -212,6 +212,27 @@ export const buildRun2ShuffledTeamstateSanityArm = (
   const matchedTeams = [...bound.binding_coverage.matched_teams].sort();
   const aggregateByTeam = new Map(bound.binding_coverage.aggregates.map((aggregate) => [aggregate.team, aggregate.values]));
 
+  // A bind can report governed_teamstate_values_bound (input-season rows exist) while NO candidate
+  // team matched any governed aggregate — e.g. a dataset whose teams are absent from teamWeekValues.
+  // With zero matched groups there is no signal to destroy, so fail closed (not-built) rather than
+  // emitting a null-only no-op that a later evaluation could mistake for a valid control arm.
+  if (matchedTeams.length === 0) {
+    const coverage: Run2ShuffleCoverage = {
+      total_rows: bound.row_count,
+      matched_group_count: 0,
+      permuted_group_count: 0,
+      shuffled_row_count: 0,
+      identity_row_count: 0,
+      unmatched_row_count: bound.row_count,
+      identity_avoided: false,
+    };
+    return serviceSuccess(
+      baseReport('not_built_not_bound', [], coverage, [], [
+        'The bound report has zero matched Teamstate value groups (no candidate team_2024 matched a governed team-week aggregate), so there is no signal to destroy; no shuffled control arm is built.',
+      ]),
+    );
+  }
+
   // Seeded derangement assigns each team the value group of another team where feasible.
   const permutation =
     matchedTeams.length >= 2 ? seededDerangement(matchedTeams.length, seed) : matchedTeams.map((_, index) => index);

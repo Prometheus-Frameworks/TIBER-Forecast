@@ -6,6 +6,7 @@ import {
   buildRun2ShuffledTeamstateSanityArm,
   fixtureGovernedTeamstateBindingArtifact,
   tiberDataSeasonalPprDataset,
+  type SeasonalPprDatasetDescriptor,
 } from '../src/public/index.js';
 
 const readyArtifact = fixtureGovernedTeamstateBindingArtifact;
@@ -35,6 +36,43 @@ describe('Run 2 shuffled-Teamstate sanity arm', () => {
     expect(result.data.sanity_arm_status).toBe('not_built_not_bound');
     expect(result.data.shuffled_rows).toEqual([]);
     expect(result.data.bound.binding_status).not.toBe('governed_teamstate_values_bound');
+  });
+
+  it('emits a not-built report when the bind has zero matched Teamstate groups (no team intersection)', () => {
+    // A Run 1 dataset whose teams are absent from the artifact's teamWeekValues: the bind still
+    // reports governed_teamstate_values_bound (input-season rows exist) but matches nothing.
+    const dataset: SeasonalPprDatasetDescriptor = {
+      dataset_id: 'test-no-team-intersection',
+      dataset_version: 'v0',
+      governance_status: 'fixture',
+      data_source: 'bundled-scaffold',
+      source_dataset_refs: [],
+      provenance: 'test-only dataset with a team absent from teamWeekValues',
+      observations: [
+        {
+          player_id: 'p-zzz',
+          player_name: 'Test Player',
+          position: 'WR',
+          team_2024: 'ZZZ',
+          games_2024: 10,
+          ppr_2024: 100,
+          receptions_2024: 50,
+          targets_2024: 70,
+          rush_attempts_2024: 0,
+          ppr_2025_actual: 120,
+        },
+      ],
+    };
+    const result = buildRun2ShuffledTeamstateSanityArm(readyArtifact, { dataset });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    // The underlying bind is "bound" but matched no team.
+    expect(result.data.bound.binding_status).toBe('governed_teamstate_values_bound');
+    expect(result.data.bound.binding_coverage.matched_teams).toEqual([]);
+    // The control arm fails closed rather than emitting a null-only no-op as "ready".
+    expect(result.data.sanity_arm_status).toBe('not_built_not_bound');
+    expect(result.data.shuffled_rows).toEqual([]);
+    expect(result.data.shuffle_coverage.matched_group_count).toBe(0);
   });
 
   it('emits a not-built report when ready but no team-week values were bound', () => {
