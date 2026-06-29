@@ -1,0 +1,302 @@
+{
+  "outcome_record_version": "run2-teamstate-comparison-outcome-v1",
+  "repo": "Prometheus-Frameworks/TIBER-Forecast",
+  "generated_at": "2026-06-29",
+  "comparison_status": "completed",
+  "experiment_identity": {
+    "repo": "Prometheus-Frameworks/TIBER-Forecast",
+    "comparison_version": "run2-teamstate-comparison-v1",
+    "input_season": 2024,
+    "target_season": 2025,
+    "target_definition": "Full-season total PPR fantasy points scored in the 2025 NFL regular season, predicted from 2024-season input features only.",
+    "evaluation_method": "Leave-one-out cross-validation (LOOCV) over scored rows; ridge (lambda=1.0) over standardized features + position one-hot, identical across all three arms (same population, target, folds, model family).",
+    "model_family": "seasonal-ppr-ridge",
+    "ridge_lambda": 1,
+    "null_handling_method": "train_fold_mean_imputation",
+    "recorded_cutoff": {
+      "input_season": 2024,
+      "as_of": "2025-03-01T00:00:00.000Z",
+      "target_season": 2025,
+      "target_season_start": "2025-09-01T00:00:00.000Z",
+      "source_generated_at": "2026-06-25T19:20:51+00:00",
+      "cutoff_before_target_season": true
+    },
+    "source_artifact_refs": [
+      {
+        "artifact_id": "exports/governed/team_week_raw_v0/2024/team_week_raw_v0.jsonl",
+        "artifact_type": "teamstate_source_artifact",
+        "uri": "exports/governed/team_week_raw_v0/2024/team_week_raw_v0.jsonl"
+      }
+    ],
+    "validation_refs": [
+      {
+        "artifact_id": "exports/governed/team_week_raw_v0/2024/validation-report.json",
+        "artifact_type": "teamstate_validation_report",
+        "uri": "exports/governed/team_week_raw_v0/2024/validation-report.json"
+      }
+    ],
+    "lineage_refs": [
+      {
+        "artifact_id": "exports/governed/team_week_raw_v0/2024/lineage-manifest.json",
+        "artifact_type": "teamstate_lineage_manifest",
+        "uri": "exports/governed/team_week_raw_v0/2024/lineage-manifest.json"
+      }
+    ],
+    "teamstate_governance": {
+      "status": "governed",
+      "marker": "explicit_marker"
+    },
+    "linked_issues": [
+      "#82",
+      "#84",
+      "#86"
+    ]
+  },
+  "arms": [
+    {
+      "arm": "run1_baseline",
+      "description": "Run 1 box-score baseline: ridge over 2024 features + position, LOOCV.",
+      "feature_columns": [
+        "ppr_2024",
+        "ppr_per_game_2024",
+        "games_2024",
+        "targets_2024",
+        "rush_attempts_2024"
+      ],
+      "teamstate_feature_columns": [],
+      "overall": {
+        "sample_size": 38,
+        "mae": 35.1476538355775,
+        "rmse": 43.64041863230445,
+        "correlation": 0.728605421870201,
+        "rank_correlation": 0.7056570740781267
+      },
+      "by_position": {
+        "TE": {
+          "sample_size": 6,
+          "mae": 18.29788380457484,
+          "rmse": 22.04725270541711,
+          "correlation": 0.8352892504401256,
+          "rank_correlation": 0.8857142857142857
+        },
+        "WR": {
+          "sample_size": 14,
+          "mae": 43.88353039130697,
+          "rmse": 54.22288039186678,
+          "correlation": 0.45057299791699323,
+          "rank_correlation": 0.46373626373626375
+        },
+        "QB": {
+          "sample_size": 8,
+          "mae": 26.694521250905566,
+          "rmse": 30.43330344826698,
+          "correlation": 0.5665525127122917,
+          "rank_correlation": 0.38095238095238093
+        },
+        "RB": {
+          "sample_size": 10,
+          "mae": 39.78979474389539,
+          "rmse": 45.69770986176727,
+          "correlation": 0.13220303840562345,
+          "rank_correlation": 0.23636363636363636
+        }
+      }
+    },
+    {
+      "arm": "real_teamstate_run2",
+      "description": "Run 1 features plus real governed bound Teamstate features, same LOOCV setup.",
+      "feature_columns": [
+        "ppr_2024",
+        "ppr_per_game_2024",
+        "games_2024",
+        "targets_2024",
+        "rush_attempts_2024",
+        "epaPerPlay",
+        "successRate",
+        "redZoneTdRate"
+      ],
+      "teamstate_feature_columns": [
+        "epaPerPlay",
+        "successRate",
+        "redZoneTdRate"
+      ],
+      "overall": {
+        "sample_size": 38,
+        "mae": 38.53288184702487,
+        "rmse": 47.31570655406329,
+        "correlation": 0.6780274671798598,
+        "rank_correlation": 0.6789583105372579
+      },
+      "by_position": {
+        "TE": {
+          "sample_size": 6,
+          "mae": 18.324771283730815,
+          "rmse": 22.017458795984034,
+          "correlation": 0.8332566570835902,
+          "rank_correlation": 0.8857142857142857
+        },
+        "WR": {
+          "sample_size": 14,
+          "mae": 44.89748086010869,
+          "rmse": 54.93107171829511,
+          "correlation": 0.4280180706684715,
+          "rank_correlation": 0.46373626373626375
+        },
+        "QB": {
+          "sample_size": 8,
+          "mae": 34.244807781575396,
+          "rmse": 38.5410193675501,
+          "correlation": 0.25829630142206556,
+          "rank_correlation": 0.19047619047619047
+        },
+        "RB": {
+          "sample_size": 10,
+          "mae": 45.1777688190435,
+          "rmse": 52.95062038464309,
+          "correlation": 0.035174678122749346,
+          "rank_correlation": 0.23636363636363636
+        }
+      }
+    },
+    {
+      "arm": "shuffled_teamstate_control",
+      "description": "Run 1 features plus SHUFFLED Teamstate features (destroyed-signal control), same LOOCV setup.",
+      "feature_columns": [
+        "ppr_2024",
+        "ppr_per_game_2024",
+        "games_2024",
+        "targets_2024",
+        "rush_attempts_2024",
+        "epaPerPlay",
+        "successRate",
+        "redZoneTdRate"
+      ],
+      "teamstate_feature_columns": [
+        "epaPerPlay",
+        "successRate",
+        "redZoneTdRate"
+      ],
+      "overall": {
+        "sample_size": 38,
+        "mae": 38.503507282849874,
+        "rmse": 47.30616044013081,
+        "correlation": 0.6783187841202004,
+        "rank_correlation": 0.6789583105372579
+      },
+      "by_position": {
+        "TE": {
+          "sample_size": 6,
+          "mae": 18.32625499306624,
+          "rmse": 22.018943768019124,
+          "correlation": 0.8333062970160905,
+          "rank_correlation": 0.8857142857142857
+        },
+        "WR": {
+          "sample_size": 14,
+          "mae": 44.885081449956964,
+          "rmse": 54.91211558328111,
+          "correlation": 0.4286982049807116,
+          "rank_correlation": 0.46373626373626375
+        },
+        "QB": {
+          "sample_size": 8,
+          "mae": 34.07573772962533,
+          "rmse": 38.30725604357878,
+          "correlation": 0.2694688662756281,
+          "rank_correlation": 0.19047619047619047
+        },
+        "RB": {
+          "sample_size": 10,
+          "mae": 45.21787046534974,
+          "rmse": 53.08091053289951,
+          "correlation": 0.0361388568904488,
+          "rank_correlation": 0.23636363636363636
+        }
+      }
+    }
+  ],
+  "deltas": [
+    {
+      "comparison": "real_teamstate_run2_minus_run1_baseline",
+      "mae_delta": 3.385228,
+      "rmse_delta": 3.675288,
+      "correlation_delta": -0.050578,
+      "rank_correlation_delta": -0.026699,
+      "improved": false,
+      "mae_direction": "worse"
+    },
+    {
+      "comparison": "shuffled_teamstate_control_minus_run1_baseline",
+      "mae_delta": 3.355853,
+      "rmse_delta": 3.665742,
+      "correlation_delta": -0.050287,
+      "rank_correlation_delta": -0.026699,
+      "improved": false,
+      "mae_direction": "worse"
+    },
+    {
+      "comparison": "real_teamstate_run2_minus_shuffled_teamstate_control",
+      "mae_delta": 0.029375,
+      "rmse_delta": 0.009546,
+      "correlation_delta": -0.000291,
+      "rank_correlation_delta": 0,
+      "improved": false,
+      "mae_direction": "worse"
+    }
+  ],
+  "tts_impact": {
+    "teamstate_feature_columns": [
+      "epaPerPlay",
+      "successRate",
+      "redZoneTdRate"
+    ],
+    "observation_count": 39,
+    "matched_rows": 8,
+    "unmatched_rows": 31,
+    "scored_row_count": 38,
+    "null_handling_method": "train_fold_mean_imputation",
+    "real_vs_run1_mae_direction": "worse",
+    "shuffled_vs_run1_mae_direction": "worse",
+    "real_vs_shuffled_mae_direction": "worse",
+    "signal_interpretation": "failed_sanity_control",
+    "summary": [
+      "Added Teamstate/TTS feature columns: epaPerPlay, successRate, redZoneTdRate.",
+      "Of 39 observations, 8 had matched governed Teamstate values and 31 were unmatched and kept null (null-preserved); 38 rows had a usable 2025 actual and formed the scored metric population.",
+      "Null/partial-null Teamstate values were handled by train_fold_mean_imputation (non-leaky; never silent raw zero-fill).",
+      "Under the primary MAE metric, real governed Teamstate raised error (worsened) vs Run 1; the shuffled control raised error (worsened) vs Run 1.",
+      "Conservative reading: failed_sanity_control. This is one controlled experiment on the current (fixture/scaffold-scale) coverage and is NOT evidence of general predictive value."
+    ]
+  },
+  "interpretation": {
+    "primary_metric": "mae",
+    "real_teamstate_improved_vs_run1": false,
+    "shuffled_improved_vs_run1": false,
+    "real_improved_vs_shuffled": false,
+    "signal_interpretation": "failed_sanity_control",
+    "recommendation_for_next_step": "The shuffled control beat the real arm: do NOT attribute any improvement to Teamstate. Investigate join/leakage/variance before any further Run 2 work.",
+    "failure_reason_if_any": null,
+    "caveats": [
+      "One controlled experiment on a small fixture-scale population; NOT proof of general predictive value.",
+      "MAE is the primary metric; correlation/rank-correlation are secondary and reported for transparency.",
+      "Real and shuffled arms differ only in Teamstate values; identical population, target, folds, model family, and Run 1 features."
+    ]
+  },
+  "operator_decision": {
+    "status": "inspect_join_or_leakage_before_next_run",
+    "rationale": "The shuffled control beat the real arm: the sanity control failed. Do not attribute anything to Teamstate; investigate join/leakage/variance before any follow-up.",
+    "no_metric_claim": false,
+    "allowed_statuses": [
+      "replicate_with_more_coverage_or_seasons",
+      "expand_teamstate_feature_coverage",
+      "inspect_join_or_leakage_before_next_run",
+      "record_null_result_and_pause",
+      "ready_for_next_controlled_experiment",
+      "no_metric_claim_comparison_failed_closed"
+    ]
+  },
+  "notes": [
+    "Durable checkpoint/decision record for the Run 2 three-arm comparison (#86); it records an outcome and does NOT tune the model, add features, or change data/folds/target/eval/null-handling.",
+    "No fantasy advice, player rankings, start/sit, trade, draft, or product claims; no claim that Teamstate is proven predictive in general.",
+    "If comparison_status is fail_closed, no metric claim can be made."
+  ]
+}

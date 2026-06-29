@@ -220,6 +220,23 @@ export {
   interpretRun2Comparison,
   runRun2TeamstateComparison,
 } from '../rehearsal/runRun2TeamstateComparison.js';
+export type {
+  Run2MaeDirection,
+  Run2OperatorDecision,
+  Run2OperatorDecisionStatus,
+  Run2OutcomeDelta,
+  Run2OutcomeExperimentIdentity,
+  Run2OutcomeRecord,
+  Run2OutcomeTtsImpact,
+} from '../reports/run2TeamstateComparisonOutcome.js';
+export {
+  RUN2_OPERATOR_DECISION_STATUSES,
+  RUN2_OUTCOME_RECORD_VERSION,
+  RUN2_OUTCOME_REPO,
+  buildRun2TeamstateComparisonOutcome,
+  operatorDecisionForComparison,
+  renderRun2TeamstateComparisonOutcomeMarkdown,
+} from '../reports/run2TeamstateComparisonOutcome.js';
 
 export {
   PROJECTION_INPUT_COVERAGE_ARTIFACT_VERSION,
