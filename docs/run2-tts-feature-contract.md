@@ -566,3 +566,15 @@ behavior, and feature shape, ranks likely causes, and recommends the next narrow
 diagnostic — **without** changing model/data/feature/null-handling logic or making any
 Teamstate signal claim. A failed sanity control blocks signal claims until coverage is
 real and real beats both Run 1 and the shuffled control beyond fixture-scale variance.
+
+### Coverage gate before any rerun (#92)
+
+Before the (unchanged) #86 three-arm comparison may be rerun with Teamstate, the
+governed Teamstate coverage must pass the Run 2 coverage gate —
+`docs/benchmarks/run2-teamstate-coverage-gate.md`, evaluator
+`evaluateRun2TeamstateCoverageGate(...)` (`src/reports/run2TeamstateCoverageGate.ts`).
+It fails closed on missing governance/cutoff/join evidence and blocks a rerun unless
+team coverage (≥ 28/32), scored-row coverage (≥ 80%), and non-null cell coverage
+(≥ 75%) all pass. The previous 3/32-team, 8/38-row, ~82%-imputed state fails the gate
+(`teamstate_coverage_gate_failed_team_coverage` → `must_not_rerun`). A pass authorizes
+only an unchanged rerun and makes no claim that Teamstate works.
