@@ -1,0 +1,120 @@
+{
+  "design_id": "player-history-forecast-design-2026-07-01",
+  "status": "design_only_no_run_no_feature_binding",
+  "issue": "TIBER-Forecast#101",
+  "date": "2026-07-01",
+  "predecessors": ["TIBER-Forecast#99", "TIBER-Forecast#100"],
+  "gate_relationship": {
+    "gate_decision": "may_design_experiment",
+    "gate_ceiling_note": "may_design_experiment is the strongest decision the gate can ever return; there is no may_run_model value in its type",
+    "gate_bypassed": false,
+    "gate_rerun_required_if_mirror_changes": true,
+    "pinned_artifact_sha256": "39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b",
+    "passing_gate_is_not_a_signal_claim": true
+  },
+  "experiment_question": "Does pre-target player-season history from player_season_coverage_v0 improve Forecast's ability to predict the target season, without target-season leakage?",
+  "claim_distinctions": {
+    "structural_readiness": "established (TIBER-Data #184-#191)",
+    "controlled_experiment_eligibility": "established (Forecast #99/#100, may_design_experiment)",
+    "empirical_model_signal": "not established; requires a future controlled run",
+    "production_readiness": "not established; out of scope entirely"
+  },
+  "target_input_split": {
+    "target_season": 2025,
+    "input_seasons": [2022, 2023, 2024],
+    "excluded_as_input": [2025],
+    "season_type": "REG",
+    "positions": ["QB", "RB", "WR", "TE"],
+    "rule": "any row with season >= target_season must be excluded from feature construction; future rolling-window designs must enforce the same rule for any target season"
+  },
+  "candidate_feature_families": [
+    {
+      "family": "availability_coverage_proxies",
+      "candidates": ["prior_seasons_observed_count", "prior_weeks_observed", "coverage_status_counts", "missingness_null_rate_indicators"],
+      "boundary": "coverage proxies only; never interpreted as active/inactive status"
+    },
+    {
+      "family": "production_history",
+      "candidates": ["prior_season_ppr_totals", "prior_season_ppg", "trailing_2yr_3yr_summaries", "production_trend", "position_specific_aggregates"],
+      "boundary": "a missing prior season must never be treated as zero"
+    },
+    {
+      "family": "usage_history",
+      "candidates": ["targets", "receptions", "rushing_attempts", "receiving_air_yards", "target_share", "air_yards_share", "wopr", "racr"],
+      "boundary": "snap_share/routes_run/route_participation/red_zone_* are unavailable in the source artifact and must stay null, never coerced to zero"
+    },
+    {
+      "family": "age_career_context",
+      "candidates": ["season_age", "career_year", "draft_year", "rookie_year", "undrafted_indicator"],
+      "boundary": "never fabricated; null birth_date/rookie_year must keep season_age/career_year null for that row"
+    },
+    {
+      "family": "team_context",
+      "candidates": ["teams_list", "primary_team", "multi_team_season_indicator"],
+      "boundary": "team-of-record in weekly production rows only; not roster membership; not availability"
+    }
+  ],
+  "baseline": {
+    "model": "seasonal-ppr-ridge-v1",
+    "source_report": "data/backtests/seasonal-ppr/seasonal_ppr_backtest_report.json",
+    "population": "bundled scaffold (governance_status=fixture)",
+    "sample_size": 38,
+    "metrics": {
+      "seasonal_ppr_ridge_v1": {"n": 38, "mae": 35.1476538355775, "rmse": 43.64041863230445, "pearson": 0.728605421870201, "rank_correlation": 0.7056570740781267},
+      "baseline_position_mean": {"n": 38, "mae": 41.73},
+      "baseline_prev_year_ppr": {"n": 38, "mae": 43.58684210526316, "rmse": 59.67891940252129, "pearson": 0.6541039863919881, "rank_correlation": 0.6877120035014772}
+    },
+    "teamstate_run2_excluded_as_positive_baseline": true,
+    "teamstate_run2_reason": "failed sanity control; real and shuffled Teamstate arms both worsened MAE vs run1_baseline (docs/reports/run2-teamstate-comparison-outcome-2026-06-29.md)",
+    "open_item": "prefer evaluating against the real mounted TIBER-Data 2025 outcome population rather than the n=38 scaffold if available; implementation issue must state which population was used"
+  },
+  "required_sanity_controls": [
+    "shuffled_player_history_control",
+    "target_season_leakage_guard",
+    "missing_feature_null_handling_control",
+    "feature_family_ablation_plan",
+    "baseline_vs_player_history_three_arm_comparison",
+    "per_position_breakdown",
+    "minimum_sample_size_reporting",
+    "deterministic_seed_reproducibility"
+  ],
+  "three_arm_design": ["run1_baseline", "real_player_history", "shuffled_player_history_control"],
+  "metrics_to_report": ["mae", "rmse", "pearson_correlation", "rank_correlation", "sample_size_overall", "sample_size_by_position", "coverage_missingness_by_feature_family"],
+  "acceptance_interpretation_rule": {
+    "must_improve_over_baseline_on_primary_metric": true,
+    "must_beat_shuffled_control_on_primary_and_one_secondary_metric": true,
+    "no_major_position_may_degrade_catastrophically_without_documented_explanation": true,
+    "must_be_repeatable_with_deterministic_seed": true,
+    "thresholds_conservative_not_tuned_post_hoc": true
+  },
+  "next_implementation_issue_sketch": {
+    "proposed_title": "Forecast: implement player-history feature experiment scaffold",
+    "proposed_scope": "scaffold_only_or_feature_extraction_only",
+    "explicitly_not_a_full_run": true,
+    "requirements": [
+      "compact sha256-pinned mirror of 2022-2024 input-window rows, not the full artifact",
+      "one feature-extraction function per candidate family, independently toggleable",
+      "unit tests: 2025 input row rejected, missing seasons produce null not zero, age/career fabrication guards hold, team-context limitation preserved",
+      "no wiring into seasonalPprModel.ts numeric feature list yet",
+      "no training/evaluation/comparison yet",
+      "no shuffled control yet",
+      "re-run the #99/#100 gate first if the TIBER-Data mirror needs updating"
+    ]
+  },
+  "non_goals": [
+    "no Forecast run",
+    "no Run 3",
+    "no feature binding into production features",
+    "no model training/tuning/evaluation",
+    "no Forecast baseline change",
+    "no Teamstate/TTS change",
+    "no TIBER-Data change",
+    "no promotion of the Data artifact",
+    "no 2025 summaries consumed as 2025 input features",
+    "no active/inactive/IR/practice-squad/ownership status inference",
+    "no games-missed inference beyond source-backed",
+    "no null/unavailable coerced to zero",
+    "no player-history signal claim",
+    "no fantasy advice/rankings/start-sit/trade/draft/product output"
+  ]
+}
