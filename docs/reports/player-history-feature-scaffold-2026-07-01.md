@@ -44,13 +44,19 @@ Feature-extraction scaffold only: this extracts candidate player-history feature
 - `red_zone_targets`
 - `red_zone_carries`
 
-## 5. Null-handling policy (designed here; NOT wired into any model)
+## 5. Experiment scope enforcement (fail-closed)
+
+- Approved season_type: `REG`
+- Approved positions: `QB`, `RB`, `WR`, `TE`
+- buildPlayerHistoryFeatures and summarizePlayerHistoryCoverage both throw if any input row has a season_type other than REG or a position outside QB/RB/WR/TE -- the scaffold does not silently exclude out-of-scope rows, since their presence means the mirror/input boundary itself is wrong.
+
+## 6. Null-handling policy (designed here; NOT wired into any model)
 
 Missing prior seasons and missing source fields stay null; a real value of 0 (e.g. a near-zero game) is never confused with an absent observation. A pure, tested train-fold mean imputation helper (computePlayerHistoryTrainFoldMeans / imputePlayerHistoryValue) is provided for later model code to use per LOOCV fold -- this scaffold does not run or fit anything with it.
 
 Adapted from: `src/rehearsal/runRun2TeamstateComparison.ts (Run 2 Teamstate wrapper), not Run 1's seasonalPprModel.ts, which zero-fills missing numeric features by default`.
 
-## 6. Input-window coverage summary
+## 7. Input-window coverage summary
 
 - Target season: 2025
 - Input seasons present: 2022, 2023, 2024
@@ -59,7 +65,7 @@ Adapted from: `src/rehearsal/runRun2TeamstateComparison.ts (Run 2 Teamstate wrap
 - Rows considered: 8
 - Rows rejected for leakage (season >= target): 0
 
-## 7. Feature rows built
+## 8. Feature rows built
 
 Built 4 candidate feature row(s), one per real mirrored player (row_kind: `player_history_feature_candidate_not_model_ready`):
 
@@ -68,7 +74,7 @@ Built 4 candidate feature row(s), one per real mirrored player (row_kind: `playe
 - `00-0027688` (Colt McCoy, QB): input_seasons_considered=[2022]
 - `00-0033118` (Kenyan Drake, RB): input_seasons_considered=[2022, 2023]
 
-## 8. Non-goals confirmed
+## 9. Non-goals confirmed
 
 - No Forecast run occurred.
 - No Run 3 occurred.

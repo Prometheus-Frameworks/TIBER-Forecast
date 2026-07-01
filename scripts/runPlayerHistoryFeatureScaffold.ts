@@ -17,6 +17,8 @@ import { fileURLToPath } from 'node:url';
 import {
   ALL_PLAYER_HISTORY_FEATURE_FAMILIES,
   EXCLUDED_UNAVAILABLE_USAGE_FIELDS,
+  PLAYER_HISTORY_APPROVED_POSITIONS,
+  PLAYER_HISTORY_APPROVED_SEASON_TYPE,
   PLAYER_HISTORY_FEATURE_SCAFFOLD_VERSION,
   buildPlayerHistoryFeatures,
   summarizePlayerHistoryCoverage,
@@ -76,6 +78,12 @@ const report = {
   },
   feature_families_implemented: ALL_PLAYER_HISTORY_FEATURE_FAMILIES,
   unavailable_usage_fields_excluded: EXCLUDED_UNAVAILABLE_USAGE_FIELDS,
+  experiment_scope_enforcement: {
+    approved_season_type: PLAYER_HISTORY_APPROVED_SEASON_TYPE,
+    approved_positions: PLAYER_HISTORY_APPROVED_POSITIONS,
+    enforcement: 'fail_closed_throws_on_any_out_of_scope_row',
+    note: 'buildPlayerHistoryFeatures and summarizePlayerHistoryCoverage both throw if any input row has a season_type other than REG or a position outside QB/RB/WR/TE -- the scaffold does not silently exclude out-of-scope rows, since their presence means the mirror/input boundary itself is wrong.',
+  },
   null_handling_policy: {
     summary:
       'Missing prior seasons and missing source fields stay null; a real value of 0 (e.g. a near-zero game) is never confused with an absent observation. A pure, tested train-fold mean imputation helper (computePlayerHistoryTrainFoldMeans / imputePlayerHistoryValue) is provided for later model code to use per LOOCV fold -- this scaffold does not run or fit anything with it.',
@@ -117,13 +125,19 @@ ${ALL_PLAYER_HISTORY_FEATURE_FAMILIES.map((f) => `- \`${f}\``).join('\n')}
 
 ${EXCLUDED_UNAVAILABLE_USAGE_FIELDS.map((f) => `- \`${f}\``).join('\n')}
 
-## 5. Null-handling policy (designed here; NOT wired into any model)
+## 5. Experiment scope enforcement (fail-closed)
+
+- Approved season_type: \`${report.experiment_scope_enforcement.approved_season_type}\`
+- Approved positions: ${report.experiment_scope_enforcement.approved_positions.map((p) => `\`${p}\``).join(', ')}
+- ${report.experiment_scope_enforcement.note}
+
+## 6. Null-handling policy (designed here; NOT wired into any model)
 
 ${report.null_handling_policy.summary}
 
 Adapted from: \`${report.null_handling_policy.adapted_from}\`.
 
-## 6. Input-window coverage summary
+## 7. Input-window coverage summary
 
 - Target season: ${coverageSummary.target_season}
 - Input seasons present: ${coverageSummary.input_seasons_present.join(', ')}
@@ -132,13 +146,13 @@ Adapted from: \`${report.null_handling_policy.adapted_from}\`.
 - Rows considered: ${coverageSummary.rows_considered}
 - Rows rejected for leakage (season >= target): ${coverageSummary.rows_rejected_for_leakage}
 
-## 7. Feature rows built
+## 8. Feature rows built
 
 Built ${features.length} candidate feature row(s), one per real mirrored player (row_kind: \`player_history_feature_candidate_not_model_ready\`):
 
 ${features.map((f) => `- \`${f.player_id}\` (${f.player_name}, ${f.position}): input_seasons_considered=[${f.input_seasons_considered.join(', ')}]`).join('\n')}
 
-## 8. Non-goals confirmed
+## 9. Non-goals confirmed
 
 - No Forecast run occurred.
 - No Run 3 occurred.

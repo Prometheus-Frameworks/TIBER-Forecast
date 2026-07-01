@@ -7,6 +7,8 @@
  *
  * - pure, deterministic functions; no network access; no file I/O inside the core functions,
  * - structurally enforces `row.season < targetSeason` (never relies on caller discipline),
+ * - structurally enforces the #101/#103 experiment scope (season_type === 'REG', position in
+ *   QB/RB/WR/TE), failing closed on any other row rather than trusting the mirror/caller,
  * - each candidate feature family (coverage, production, usage, age/career, team context) is
  *   independently toggleable so a later ablation run can turn families on/off,
  * - never fabricates a null value (missing prior season / null birth_date / null rookie_year all stay
@@ -38,6 +40,12 @@ export const EXCLUDED_UNAVAILABLE_USAGE_FIELDS: readonly string[] = [
   'red_zone_targets',
   'red_zone_carries',
 ];
+
+/** The only season_type the #101/#103 experiment scope covers. */
+export const PLAYER_HISTORY_APPROVED_SEASON_TYPE = 'REG' as const;
+
+/** The only positions the #101/#103 experiment scope covers. */
+export const PLAYER_HISTORY_APPROVED_POSITIONS: readonly string[] = ['QB', 'RB', 'WR', 'TE'];
 
 export type PlayerHistoryFeatureFamily = 'coverage' | 'production' | 'usage' | 'age_career' | 'team_context';
 
@@ -209,6 +217,27 @@ export const assertNoForbiddenAvailabilityFields = (rows: readonly PlayerHistory
 };
 
 /**
+ * Fails closed (throws) if any row falls outside the #101/#103 experiment scope: `season_type` must be
+ * `PLAYER_HISTORY_APPROVED_SEASON_TYPE` ('REG') and `position` must be one of
+ * `PLAYER_HISTORY_APPROVED_POSITIONS` (QB/RB/WR/TE). A POST row or a K/DST/defensive-player row reaching
+ * this module means the mirror/input boundary is wrong, not something to silently drop.
+ */
+export const assertPlayerHistoryScopeInBounds = (rows: readonly PlayerHistoryInputRow[]): void => {
+  for (const row of rows) {
+    if (row.season_type !== PLAYER_HISTORY_APPROVED_SEASON_TYPE) {
+      throw new Error(
+        `player-history scaffold: row for player_id=${row.player_id} season=${row.season} has season_type=${row.season_type}, outside the approved experiment scope (${PLAYER_HISTORY_APPROVED_SEASON_TYPE} only).`,
+      );
+    }
+    if (!PLAYER_HISTORY_APPROVED_POSITIONS.includes(row.position)) {
+      throw new Error(
+        `player-history scaffold: row for player_id=${row.player_id} season=${row.season} has position=${row.position}, outside the approved experiment scope (${PLAYER_HISTORY_APPROVED_POSITIONS.join(', ')} only).`,
+      );
+    }
+  }
+};
+
+/**
  * Structural leakage guard: `row.season < targetSeason`. Never relies on caller discipline -- every
  * entry point in this module calls this before building any feature.
  */
@@ -340,6 +369,7 @@ export const buildPlayerHistoryFeatures = (
   options: PlayerHistoryFeatureOptions,
 ): PlayerHistoryFeatureRow[] => {
   assertNoForbiddenAvailabilityFields(rows);
+  assertPlayerHistoryScopeInBounds(rows);
   const filtered = filterPlayerHistoryInputRows(rows, options.targetSeason);
   const families = options.families ?? ALL_PLAYER_HISTORY_FEATURE_FAMILIES;
   const familySet = new Set(families);
@@ -374,6 +404,7 @@ export const summarizePlayerHistoryCoverage = (
   rows: readonly PlayerHistoryInputRow[],
   targetSeason: number,
 ): PlayerHistoryCoverageSummary => {
+  assertPlayerHistoryScopeInBounds(rows);
   const filtered = filterPlayerHistoryInputRows(rows, targetSeason);
   const grouped = groupByPlayer(filtered);
   const playersBySeasonsObservedCount: Record<number, number> = {};

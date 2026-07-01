@@ -3,6 +3,7 @@ import {
   ALL_PLAYER_HISTORY_FEATURE_FAMILIES,
   EXCLUDED_UNAVAILABLE_USAGE_FIELDS,
   assertNoForbiddenAvailabilityFields,
+  assertPlayerHistoryScopeInBounds,
   buildPlayerHistoryFeatures,
   computePlayerHistoryTrainFoldMeans,
   filterPlayerHistoryInputRows,
@@ -274,6 +275,32 @@ describe('forbidden availability/status fields fail closed', () => {
     const serialized = JSON.stringify(feature).toLowerCase();
     for (const forbidden of ['active_status', 'ownership_status', 'roster_status', 'active_roster_status']) {
       expect(serialized).not.toContain(forbidden);
+    }
+  });
+});
+
+describe('experiment scope enforcement (REG season_type, QB/RB/WR/TE positions only, fails closed)', () => {
+  it('throws if any input row has a non-REG season_type (e.g. POST)', () => {
+    const rows = [row({ season: 2024, season_type: 'POST' })];
+    expect(() => buildPlayerHistoryFeatures(rows, { targetSeason: 2025 })).toThrow(/season_type/);
+    expect(() => assertPlayerHistoryScopeInBounds(rows)).toThrow(/outside the approved experiment scope/);
+  });
+
+  it('throws if any input row has an out-of-scope position (e.g. K or DST)', () => {
+    const rows = [row({ season: 2024, position: 'K' })];
+    expect(() => buildPlayerHistoryFeatures(rows, { targetSeason: 2025 })).toThrow(/position/);
+    expect(() => assertPlayerHistoryScopeInBounds(rows)).toThrow(/outside the approved experiment scope/);
+  });
+
+  it('summarizePlayerHistoryCoverage also fails closed on an out-of-scope row', () => {
+    const rows = [row({ season: 2024, season_type: 'POST' })];
+    expect(() => summarizePlayerHistoryCoverage(rows, 2025)).toThrow(/season_type/);
+  });
+
+  it('accepts every approved position (QB, RB, WR, TE) without throwing', () => {
+    for (const position of ['QB', 'RB', 'WR', 'TE']) {
+      const rows = [row({ season: 2024, position })];
+      expect(() => buildPlayerHistoryFeatures(rows, { targetSeason: 2025 })).not.toThrow();
     }
   });
 });

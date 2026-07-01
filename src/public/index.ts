@@ -331,8 +331,11 @@ export type {
 export {
   ALL_PLAYER_HISTORY_FEATURE_FAMILIES,
   EXCLUDED_UNAVAILABLE_USAGE_FIELDS,
+  PLAYER_HISTORY_APPROVED_POSITIONS,
+  PLAYER_HISTORY_APPROVED_SEASON_TYPE,
   PLAYER_HISTORY_FEATURE_SCAFFOLD_VERSION,
   assertNoForbiddenAvailabilityFields,
+  assertPlayerHistoryScopeInBounds,
   buildPlayerHistoryFeatures,
   computePlayerHistoryTrainFoldMeans,
   filterPlayerHistoryInputRows,

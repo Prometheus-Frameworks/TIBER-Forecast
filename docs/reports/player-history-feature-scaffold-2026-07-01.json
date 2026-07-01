@@ -77,6 +77,17 @@
     "red_zone_targets",
     "red_zone_carries"
   ],
+  "experiment_scope_enforcement": {
+    "approved_season_type": "REG",
+    "approved_positions": [
+      "QB",
+      "RB",
+      "WR",
+      "TE"
+    ],
+    "enforcement": "fail_closed_throws_on_any_out_of_scope_row",
+    "note": "buildPlayerHistoryFeatures and summarizePlayerHistoryCoverage both throw if any input row has a season_type other than REG or a position outside QB/RB/WR/TE -- the scaffold does not silently exclude out-of-scope rows, since their presence means the mirror/input boundary itself is wrong."
+  },
   "null_handling_policy": {
     "summary": "Missing prior seasons and missing source fields stay null; a real value of 0 (e.g. a near-zero game) is never confused with an absent observation. A pure, tested train-fold mean imputation helper (computePlayerHistoryTrainFoldMeans / imputePlayerHistoryValue) is provided for later model code to use per LOOCV fold -- this scaffold does not run or fit anything with it.",
     "adapted_from": "src/rehearsal/runRun2TeamstateComparison.ts (Run 2 Teamstate wrapper), not Run 1's seasonalPprModel.ts, which zero-fills missing numeric features by default",
