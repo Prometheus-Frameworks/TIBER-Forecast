@@ -280,6 +280,38 @@ export {
   scoredForecastPopulation,
 } from '../rehearsal/runRun2CoverageGateEvaluation.js';
 
+export type {
+  PlayerSeasonCoverageEvidence,
+  PlayerSeasonCoverageGateCheck,
+  PlayerSeasonCoverageGateDecision,
+  PlayerSeasonCoverageGateResult,
+  PlayerSeasonCoverageGateStatus,
+  PlayerSeasonCoverageGrainEvidence,
+  PlayerSeasonCoverageIdentityEvidence,
+  PlayerSeasonCoverageProposedCutoffDesign,
+  PlayerSeasonCoverageProvenanceEvidence,
+  PlayerSeasonCoverageRowSample,
+  PlayerSeasonCoverageScopeEvidence,
+} from '../reports/playerSeasonCoverageGate.js';
+export {
+  APPROVED_SOURCE_NAME_SUBSTRINGS,
+  EXPECTED_ARTIFACT_STATUS,
+  EXPECTED_POSITIONS,
+  EXPECTED_ROW_GRAIN,
+  EXPECTED_SEASONS,
+  EXPECTED_SEASON_TYPE_SCOPE,
+  PLAYER_SEASON_COVERAGE_GATE_VERSION,
+  evaluatePlayerSeasonCoverageGate,
+} from '../reports/playerSeasonCoverageGate.js';
+export type {
+  MirroredPlayerSeasonCoverageEvidence,
+  PlayerSeasonCoverageGateEvaluation,
+} from '../rehearsal/runPlayerSeasonCoverageGateEvaluation.js';
+export {
+  buildPlayerSeasonCoverageEvidenceFromMirror,
+  evaluatePlayerSeasonCoverageGateFromMirror,
+} from '../rehearsal/runPlayerSeasonCoverageGateEvaluation.js';
+
 export {
   PROJECTION_INPUT_COVERAGE_ARTIFACT_VERSION,
   PROJECTION_RUN_MANIFEST_ARTIFACT_VERSION,

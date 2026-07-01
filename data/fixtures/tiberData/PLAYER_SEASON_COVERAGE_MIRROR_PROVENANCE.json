@@ -1,0 +1,32 @@
+{
+  "kind": "player_season_coverage_v0_candidate_evidence_mirror",
+  "issue": "TIBER-Forecast#99",
+  "note": "Read-only mirror of a compact summary of the TIBER-Data player_season_coverage_v0 candidate artifact, used to evaluate Forecast's coverage/provenance gate for that artifact before any Forecast run, feature binding, or experiment design. The full 2,383-row / ~8.8MB artifact is NOT vendored here; the mirror carries artifact-level identity/status/provenance/scope/grain summaries plus a small representative row sample (4 rows, chosen to exercise single-team, multi-team, single_week, partial_season, full_season, drafted, and undrafted cases) sufficient for the gate to evaluate without network access. Forecast does not modify, re-govern, re-derive, or promote this data.",
+  "mirrored_file": {
+    "path": "player_season_coverage_v0_2022_2025.mirror.json",
+    "derivedFrom": "TIBER-Data: data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (as merged to main in PR #191)",
+    "derivation_method": "Computed directly from the real, committed TIBER-Data artifact: sha256 of the full file, exact aggregate counts (rows by season/position, multi-team count, duplicate-grain check, draft_year/season_age null counts, fixture/scaffold marker scan), and a small set of representative rows copied verbatim (trimmed to the fields the gate needs). No values in this mirror are fabricated or estimated."
+  },
+  "governed_source": {
+    "repo": "Prometheus-Frameworks/TIBER-Data",
+    "sourceArtifactPath": "data/processed/evidence/player_season_coverage_2022_2025.source_backed.json",
+    "sha256": "39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b",
+    "artifactStatus": "candidate_evidence_artifact_not_promoted",
+    "schemaPath": "schemas/player_season_coverage_v0.schema.json",
+    "validatorPath": "scripts/validate_player_season_coverage_v0.py",
+    "coverageReportPathMd": "docs/reports/player-season-coverage-v0-2022-2025.md",
+    "coverageReportPathJson": "docs/reports/player-season-coverage-v0-2022-2025.json"
+  },
+  "refs": [
+    "TIBER-Data#184", "TIBER-Data#185",
+    "TIBER-Data#186", "TIBER-Data#187",
+    "TIBER-Data#188", "TIBER-Data#189",
+    "TIBER-Data#190", "TIBER-Data#191"
+  ],
+  "boundary": {
+    "not_promoted": true,
+    "not_a_forecast_input_today": true,
+    "no_forecast_run_authorized_by_this_mirror": true,
+    "no_feature_binding_authorized_by_this_mirror": true
+  }
+}

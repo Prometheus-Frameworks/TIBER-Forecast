@@ -1,0 +1,175 @@
+{
+  "report_version": "player-season-coverage-gate-v1",
+  "repo": "Prometheus-Frameworks/TIBER-Forecast",
+  "issue": "TIBER-Forecast#99",
+  "generated_at": "2026-07-01T00:00:00.000Z",
+  "evaluation_kind": "gate_evaluation_only_no_run_no_feature_binding",
+  "artifact_inspected": {
+    "repo": "Prometheus-Frameworks/TIBER-Data",
+    "path": "data/processed/evidence/player_season_coverage_2022_2025.source_backed.json",
+    "sha256": "39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b",
+    "schema_path": "schemas/player_season_coverage_v0.schema.json",
+    "validator_path": "scripts/validate_player_season_coverage_v0.py",
+    "coverage_report_path_md": "docs/reports/player-season-coverage-v0-2022-2025.md",
+    "coverage_report_path_json": "docs/reports/player-season-coverage-v0-2022-2025.json",
+    "refs": [
+      "TIBER-Data#184",
+      "TIBER-Data#185",
+      "TIBER-Data#186",
+      "TIBER-Data#187",
+      "TIBER-Data#188",
+      "TIBER-Data#189",
+      "TIBER-Data#190",
+      "TIBER-Data#191"
+    ]
+  },
+  "status_statements": {
+    "is_candidate_not_promoted": true,
+    "forecast_did_not_run": true,
+    "no_forecast_feature_binding_occurred": true,
+    "no_model_signal_claimed": true
+  },
+  "expected_scope": {
+    "seasons": [
+      2022,
+      2023,
+      2024,
+      2025
+    ],
+    "season_type_scope": [
+      "REG"
+    ],
+    "positions": [
+      "QB",
+      "RB",
+      "WR",
+      "TE"
+    ],
+    "row_grain": "player_id + season + season_type",
+    "artifact_status": "candidate_evidence_artifact_not_promoted"
+  },
+  "evidence_summary": {
+    "identity": {
+      "artifact_id": "player_season_coverage_2022_2025.source_backed",
+      "status": "candidate_evidence_artifact_not_promoted",
+      "generated_at": "2026-06-30T19:36:52.260432+00:00",
+      "row_grain": "player_id + season + season_type"
+    },
+    "provenance": {
+      "source_refs_present": true,
+      "source_names": [
+        "nflreadpy.load_player_stats(summary_level='reg')",
+        "nflreadpy.load_player_stats(summary_level='week')",
+        "nflreadpy.load_players()"
+      ],
+      "fixture_or_scaffold_marker_hits": 0,
+      "season_2024_row_count": 588,
+      "season_2024_source_backed": true
+    },
+    "scope": {
+      "seasons_present": [
+        2022,
+        2023,
+        2024,
+        2025
+      ],
+      "season_type_values": [
+        "REG"
+      ],
+      "positions_present": [
+        "QB",
+        "RB",
+        "TE",
+        "WR"
+      ],
+      "full_career_coverage_claimed": false
+    },
+    "grain": {
+      "total_rows": 2383,
+      "duplicate_grain_count": 0,
+      "reg_post_overlap_violations": 0,
+      "required_row_fields_missing_count": 0
+    },
+    "aggregate_stats": {
+      "rows_by_season": {
+        "2022": 609,
+        "2023": 576,
+        "2024": 588,
+        "2025": 610
+      },
+      "rows_by_position": {
+        "QB": 323,
+        "RB": 606,
+        "TE": 519,
+        "WR": 935
+      },
+      "multi_team_row_count": 84,
+      "draft_year_null_count": 653,
+      "season_age_null_count": 0
+    },
+    "row_sample_count": 4,
+    "proposed_cutoff_design": null
+  },
+  "gate_result": {
+    "gate_version": "player-season-coverage-gate-v1",
+    "status": "player_season_coverage_gate_passed",
+    "decision": "may_design_experiment",
+    "checks": [
+      {
+        "dimension": "identity_status",
+        "passed": true,
+        "observed": "artifact_id=player_season_coverage_2022_2025.source_backed, status=candidate_evidence_artifact_not_promoted, row_grain=player_id + season + season_type",
+        "expected": "status=\"candidate_evidence_artifact_not_promoted\", row_grain=\"player_id + season + season_type\", non-empty artifact_id and generated_at",
+        "detail": "The artifact must explicitly identify itself as candidate/evidence, not governed/promoted, with the documented row grain."
+      },
+      {
+        "dimension": "provenance",
+        "passed": true,
+        "observed": "source_refs_present=true, sources=[nflreadpy.load_player_stats(summary_level='reg'), nflreadpy.load_player_stats(summary_level='week'), nflreadpy.load_players()], fixture_hits=0, 2024_rows=588, 2024_source_backed=true",
+        "expected": "source_refs present, an approved nflreadpy source name, 0 fixture/scaffold markers, 2024 rows > 0 and source-backed",
+        "detail": "Source refs must be present and machine-readable, drawn from approved nflverse sources, with zero fixture/scaffold contamination, and 2024 must be source-backed (not the prior fixture-only state)."
+      },
+      {
+        "dimension": "scope_window",
+        "passed": true,
+        "observed": "seasons=[2022, 2023, 2024, 2025], season_type_values=[REG], positions=[QB, RB, TE, WR], full_career_claimed=false",
+        "expected": "seasons include all of [2022, 2023, 2024, 2025], season_type_values subset of [REG], positions subset of [QB, RB, WR, TE], no full-career claim",
+        "detail": "Current accepted slice is 2022-2025, REG only, QB/RB/WR/TE only. The evidence must not claim full-career coverage."
+      },
+      {
+        "dimension": "grain_shape",
+        "passed": true,
+        "observed": "duplicate_grain_count=0, reg_post_overlap_violations=0, required_row_fields_missing_count=0, sample_duplicates=false, sample_missing_required_fields=0",
+        "expected": "zero duplicate grain rows, zero REG+POST overlap violations, zero missing required fields, one logical row per player_id + season + season_type",
+        "detail": "One logical row per (player_id, season, season_type); a REG+POST row may never coexist with a separate REG/POST row for the same player-season."
+      },
+      {
+        "dimension": "semantic_boundary",
+        "passed": true,
+        "observed": "forbidden_fields=0, zero_instead_of_null_rows=0, fabricated_age_rows=0, fabricated_career_year_rows=0, multi_team_missing_rule_rows=0",
+        "expected": "no active/ownership/roster status fields present; unavailable usage fields stay null; age/career fields never fabricated; every multi-team row carries an explicit primary_team_rule",
+        "detail": "Roster/team production context must never be treated as availability; zero and null/unavailable must remain distinct."
+      },
+      {
+        "dimension": "cutoff_discipline",
+        "passed": true,
+        "observed": "no experiment design proposed yet",
+        "expected": "no proposed design leaks target-season summaries into the input row for a prior season",
+        "detail": "2025 target-season summaries must never be fed into a 2024-input row (or equivalent). Any future design is a separate, later issue."
+      }
+    ],
+    "blocking_reasons": [],
+    "warnings": [
+      "No Forecast run is authorized by this gate. A separate experiment-design issue is required before any model/feature work, and that design must explicitly separate input seasons from the target season with a defensible cutoff."
+    ],
+    "notes": [
+      "Gate evaluation only: this evaluates whether the TIBER-Data player_season_coverage_v0 candidate artifact is structurally serviceable enough to justify DESIGNING a future controlled Forecast player-history experiment. It performs NO Forecast run, no Run 3, no feature binding, no baseline change, no model tuning, and no TIBER-Data/Teamstate change.",
+      "This artifact is candidate/evidence, not promoted/governed data. This gate does not require or infer promoted/governed status, and a passing result never claims the artifact is promoted.",
+      "Forecast did not run. No Forecast feature binding occurred. No model signal is claimed by this gate or its report.",
+      "The strongest decision this gate can return is `may_design_experiment`. Any later Forecast run requires a SEPARATE experiment-design issue that explicitly separates input seasons from the target season and enforces the target-season cutoff; this gate does not authorize that design, only that it may be attempted."
+    ]
+  },
+  "final_status": "player_season_coverage_gate_passed",
+  "final_decision": "may_design_experiment",
+  "next_step": "Open a SEPARATE experiment-design issue for a future controlled player-history Forecast experiment. That issue must define input seasons vs. the target season, the cutoff, and pass its own review before any run. Do not run or bind features here."
+}
