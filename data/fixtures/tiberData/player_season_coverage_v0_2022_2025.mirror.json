@@ -1,0 +1,167 @@
+{
+  "kind": "player_season_coverage_v0_candidate_evidence_mirror",
+  "issue": "TIBER-Forecast#99",
+  "note": "Compact, read-only evidence mirror of the TIBER-Data player_season_coverage_v0 candidate artifact, used to evaluate Forecast's coverage/provenance gate for that artifact. This is NOT the full artifact (2,383 rows / ~8.8MB) — it is a small, provenance-pinned summary plus a representative row sample sufficient for the gate to evaluate identity/status, provenance, scope/window, grain, and semantic-boundary checks without network access. Forecast does not modify, re-govern, re-derive, or promote this data.",
+  "governed_source": {
+    "repo": "Prometheus-Frameworks/TIBER-Data",
+    "sourceArtifactPath": "data/processed/evidence/player_season_coverage_2022_2025.source_backed.json",
+    "sha256": "39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b",
+    "schemaPath": "schemas/player_season_coverage_v0.schema.json",
+    "validatorPath": "scripts/validate_player_season_coverage_v0.py",
+    "coverageReportPathMd": "docs/reports/player-season-coverage-v0-2022-2025.md",
+    "coverageReportPathJson": "docs/reports/player-season-coverage-v0-2022-2025.json"
+  },
+  "refs": [
+    "TIBER-Data#184", "TIBER-Data#185",
+    "TIBER-Data#186", "TIBER-Data#187",
+    "TIBER-Data#188", "TIBER-Data#189",
+    "TIBER-Data#190", "TIBER-Data#191"
+  ],
+  "identity": {
+    "artifact_id": "player_season_coverage_2022_2025.source_backed",
+    "status": "candidate_evidence_artifact_not_promoted",
+    "generated_at": "2026-06-30T19:36:52.260432+00:00",
+    "row_grain": "player_id + season + season_type"
+  },
+  "provenance": {
+    "source_refs_present": true,
+    "source_names": [
+      "nflreadpy.load_player_stats(summary_level='reg')",
+      "nflreadpy.load_player_stats(summary_level='week')",
+      "nflreadpy.load_players()"
+    ],
+    "fixture_or_scaffold_marker_hits": 0,
+    "season_2024_row_count": 588,
+    "season_2024_source_backed": true
+  },
+  "scope": {
+    "seasons_present": [2022, 2023, 2024, 2025],
+    "season_type_values": ["REG"],
+    "positions_present": ["QB", "RB", "TE", "WR"],
+    "full_career_coverage_claimed": false
+  },
+  "grain": {
+    "total_rows": 2383,
+    "duplicate_grain_count": 0,
+    "reg_post_overlap_violations": 0,
+    "required_row_fields_missing_count": 0
+  },
+  "semantic": {
+    "_note": "Artifact-wide scan across all 2,383 rows (not just the 4-row sample below), recomputed directly from the real TIBER-Data artifact and consistent with its own validator (scripts/validate_player_season_coverage_v0.py) passing on the full record set.",
+    "forbidden_availability_field_count": 0,
+    "zero_instead_of_null_violation_count": 0,
+    "fabricated_age_violation_count": 0,
+    "fabricated_career_year_violation_count": 0,
+    "multi_team_missing_rule_violation_count": 0
+  },
+  "aggregate_stats": {
+    "rows_by_season": { "2022": 609, "2023": 576, "2024": 588, "2025": 610 },
+    "rows_by_position": { "QB": 323, "RB": 606, "TE": 519, "WR": 935 },
+    "multi_team_row_count": 84,
+    "draft_year_null_count": 653,
+    "season_age_null_count": 0
+  },
+  "row_sample": [
+    {
+      "_sample_reason": "drafted, single-team, single_week coverage (2023 injury-shortened season); season_ppr=0 is a real zero, not a missing value",
+      "player_id": "00-0023459",
+      "player_name": "Aaron Rodgers",
+      "position": "QB",
+      "season": 2023,
+      "season_type": "REG",
+      "source_refs": [
+        { "source_name": "nflreadpy.load_player_stats(summary_level='reg')", "observed_at": "2026-06-30T19:36:52.260432+00:00" },
+        { "source_name": "nflreadpy.load_player_stats(summary_level='week')", "observed_at": "2026-06-30T19:36:52.260432+00:00" },
+        { "source_name": "nflreadpy.load_players()", "observed_at": "2026-06-30T19:36:52.260432+00:00" }
+      ],
+      "teams": ["NYJ"],
+      "primary_team": "NYJ",
+      "primary_team_rule": null,
+      "weeks_observed": 1,
+      "coverage_status": "single_week",
+      "missing_fields": ["games_missed", "red_zone_carries", "red_zone_targets", "route_participation", "routes_run", "snap_share"],
+      "usage_summary": { "targets": 0, "snap_share": null, "routes_run": null, "red_zone_targets": null },
+      "birth_date": "1983-12-02",
+      "season_age": 39.75,
+      "draft_year": 2005,
+      "rookie_year": 2005,
+      "career_year": 19
+    },
+    {
+      "_sample_reason": "drafted, single-team, full_season coverage; ordinary baseline row",
+      "player_id": "00-0030279",
+      "player_name": "Keenan Allen",
+      "position": "WR",
+      "season": 2025,
+      "season_type": "REG",
+      "source_refs": [
+        { "source_name": "nflreadpy.load_player_stats(summary_level='reg')", "observed_at": "2026-06-30T19:36:52.260432+00:00" },
+        { "source_name": "nflreadpy.load_player_stats(summary_level='week')", "observed_at": "2026-06-30T19:36:52.260432+00:00" },
+        { "source_name": "nflreadpy.load_players()", "observed_at": "2026-06-30T19:36:52.260432+00:00" }
+      ],
+      "teams": ["LAC"],
+      "primary_team": "LAC",
+      "primary_team_rule": null,
+      "weeks_observed": 17,
+      "coverage_status": "full_season",
+      "missing_fields": ["games_missed", "red_zone_carries", "red_zone_targets", "route_participation", "routes_run", "snap_share"],
+      "usage_summary": { "targets": 122, "snap_share": null, "routes_run": null, "red_zone_targets": null },
+      "birth_date": "1992-04-27",
+      "season_age": 33.35,
+      "draft_year": 2013,
+      "rookie_year": 2013,
+      "career_year": 13
+    },
+    {
+      "_sample_reason": "undrafted, multi-team (traded, non-overlapping bye weeks -> 18 distinct REG weeks observed), full_season; exercises primary_team_rule and the corrected up-to-18-week denominator",
+      "player_id": "00-0037545",
+      "player_name": "Rashid Shaheed",
+      "position": "WR",
+      "season": 2025,
+      "season_type": "REG",
+      "source_refs": [
+        { "source_name": "nflreadpy.load_player_stats(summary_level='reg')", "observed_at": "2026-06-30T19:36:52.260432+00:00" },
+        { "source_name": "nflreadpy.load_player_stats(summary_level='week')", "observed_at": "2026-06-30T19:36:52.260432+00:00" },
+        { "source_name": "nflreadpy.load_players()", "observed_at": "2026-06-30T19:36:52.260432+00:00" }
+      ],
+      "teams": ["NO", "SEA"],
+      "primary_team": "NO",
+      "primary_team_rule": "most weeks_observed in REG week-level production rows for the season; ties broken by earliest week of first appearance, then alphabetical team code",
+      "weeks_observed": 18,
+      "coverage_status": "full_season",
+      "missing_fields": ["draft_year", "games_missed", "red_zone_carries", "red_zone_targets", "route_participation", "routes_run", "snap_share"],
+      "usage_summary": { "targets": 92, "snap_share": null, "routes_run": null, "red_zone_targets": null },
+      "birth_date": "1998-08-31",
+      "season_age": 27.0,
+      "draft_year": null,
+      "rookie_year": 2022,
+      "career_year": 4
+    },
+    {
+      "_sample_reason": "undrafted, multi-team, partial_season; second multi-team example with a different coverage_status",
+      "player_id": "00-0030035",
+      "player_name": "Adam Thielen",
+      "position": "WR",
+      "season": 2025,
+      "season_type": "REG",
+      "source_refs": [
+        { "source_name": "nflreadpy.load_player_stats(summary_level='reg')", "observed_at": "2026-06-30T19:36:52.260432+00:00" },
+        { "source_name": "nflreadpy.load_player_stats(summary_level='week')", "observed_at": "2026-06-30T19:36:52.260432+00:00" },
+        { "source_name": "nflreadpy.load_players()", "observed_at": "2026-06-30T19:36:52.260432+00:00" }
+      ],
+      "teams": ["MIN", "PIT"],
+      "primary_team": "MIN",
+      "primary_team_rule": "most weeks_observed in REG week-level production rows for the season; ties broken by earliest week of first appearance, then alphabetical team code",
+      "weeks_observed": 14,
+      "coverage_status": "partial_season",
+      "missing_fields": ["draft_year", "games_missed", "red_zone_carries", "red_zone_targets", "route_participation", "routes_run", "snap_share"],
+      "usage_summary": { "targets": 35, "snap_share": null, "routes_run": null, "red_zone_targets": null },
+      "birth_date": "1990-08-22",
+      "season_age": 35.03,
+      "draft_year": null,
+      "rookie_year": 2013,
+      "career_year": 13
+    }
+  ],
+  "proposed_cutoff_design": null
+}
