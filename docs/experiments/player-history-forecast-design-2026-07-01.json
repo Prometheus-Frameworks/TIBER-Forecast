@@ -69,15 +69,19 @@
     "open_item": "prefer evaluating against the real mounted TIBER-Data 2025 outcome population rather than the n=38 scaffold if available; implementation issue must state which population was used"
   },
   "required_sanity_controls": [
-    "shuffled_player_history_control",
+    "shuffled_player_history_control_stratified_by_position",
     "target_season_leakage_guard",
-    "missing_feature_null_handling_control",
+    "missing_feature_null_handling_control_purpose_built",
     "feature_family_ablation_plan",
     "baseline_vs_player_history_three_arm_comparison",
     "per_position_breakdown",
     "minimum_sample_size_reporting",
     "deterministic_seed_reproducibility"
   ],
+  "sanity_control_notes": {
+    "shuffled_player_history_control_stratified_by_position": "must shuffle player-history feature values WITHIN position (and preferably within coverage strata), never across positions; an unrestricted cross-position shuffle artificially degrades the shuffled arm since production/usage history is position-dependent, letting the real arm appear to beat it without genuine signal",
+    "missing_feature_null_handling_control_purpose_built": "requires a purpose-built null-handling policy for this experiment, not an inherited one -- Run 1's own model (seasonalPprModel.ts) defaults missing numeric features to 0 (zero-fill), which this design forbids for player-history nulls; train-fold mean imputation exists only in src/rehearsal/runRun2TeamstateComparison.ts (the Run 2 Teamstate wrapper), not the core Run 1 path, and must be explicitly adapted/ported"
+  },
   "three_arm_design": ["run1_baseline", "real_player_history", "shuffled_player_history_control"],
   "metrics_to_report": ["mae", "rmse", "pearson_correlation", "rank_correlation", "sample_size_overall", "sample_size_by_position", "coverage_missingness_by_feature_family"],
   "acceptance_interpretation_rule": {
@@ -95,9 +99,10 @@
       "compact sha256-pinned mirror of 2022-2024 input-window rows, not the full artifact",
       "one feature-extraction function per candidate family, independently toggleable",
       "unit tests: 2025 input row rejected, missing seasons produce null not zero, age/career fabrication guards hold, team-context limitation preserved",
+      "design (not wire in) an explicit null-handling policy for player-history features, e.g. adapting src/rehearsal/runRun2TeamstateComparison.ts's train-fold mean imputation, since Run 1's model zero-fills missing numeric features and must not be relied on",
       "no wiring into seasonalPprModel.ts numeric feature list yet",
       "no training/evaluation/comparison yet",
-      "no shuffled control yet",
+      "no shuffled control yet; when built later it must shuffle within position/coverage strata, not across positions",
       "re-run the #99/#100 gate first if the TIBER-Data mirror needs updating"
     ]
   },

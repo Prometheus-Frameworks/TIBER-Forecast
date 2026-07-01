@@ -111,8 +111,8 @@ Only fields already source-backed in `player_season_coverage_v0.usage_summary` m
 `red_zone_carries` are **unavailable** in the source artifact (100% null by design, per the TIBER-Data
 coverage report) and **must remain excluded or explicitly null/unavailable** in any feature built from
 them. **Do not coerce to zero** — a null usage feature must propagate as a genuine missing value into
-whatever null-handling policy Run 1 already uses (train-fold mean imputation, never silent zero-fill),
-exactly as the existing Teamstate feature contract already requires for its own deferred fields.
+an explicit, purpose-built null-handling policy for this experiment (see §6.3 — Run 1's own model does
+**not** already provide one; do not assume it does).
 
 ### 4.4 Age / career context
 
@@ -172,18 +172,33 @@ accepted), all of the following are required. This list is deliberately modeled 
 Teamstate Run 2 lacked structurally clean logic for but whose *result* still failed once evaluated —
 the point is to run the same discipline from the start, not retrofit it after a bad result:
 
-1. **Shuffled player-history control.** A control arm where player-history feature values are permuted
-   across players (row-shuffled) before joining to the target population — analogous to the existing
-   shuffled-Teamstate control (`docs/run2-tts-feature-contract.md`). If the shuffled arm performs
-   comparably to the real arm, the real arm's apparent improvement is not trustworthy signal.
+1. **Shuffled player-history control, stratified by position (and preferably coverage strata).** A
+   control arm where player-history feature values are permuted **within position** — a QB's history
+   must only ever be reassigned to another QB row, never to an RB/WR/TE row — analogous to the existing
+   shuffled-Teamstate control (`docs/run2-tts-feature-contract.md`), which shuffles team context, a
+   fundamentally different, position-agnostic structure. Because production/usage history is strongly
+   position-dependent (a QB's PPR/target history is on a completely different scale than a TE's), an
+   **unrestricted cross-position shuffle would artificially degrade the shuffled arm** and let the real
+   arm "beat" it without proving any genuine player-specific signal — the shuffle must preserve the
+   correct null distribution, not manufacture an easy one. A within-position-and-coverage-stratum
+   shuffle (e.g. also matching roughly on `coverage_status`/seasons-observed) is preferred over
+   within-position alone if sample size allows. If the shuffled arm still performs comparably to the
+   real arm after stratification, the real arm's apparent improvement is not trustworthy signal.
 2. **Target-season leakage guard.** An explicit, automated check (not just a code-review note) that no
    row with `season = 2025` (or the active target season) ever enters the input feature matrix. This
    should be a boundary the feature builder enforces structurally (filter before load), with a test
    proving a 2025 row is rejected/excluded if accidentally present.
 3. **Missing-feature / null-handling control.** Document and test how each candidate family behaves
-   when a player has 0, 1, 2, or 3 of the input seasons present. Null propagation must match Run 1's
-   existing policy (train-fold mean imputation at model-fit time; never silent zero-fill at the
-   feature-construction stage).
+   when a player has 0, 1, 2, or 3 of the input seasons present. **This requires a purpose-built policy,
+   not an inherited one:** Run 1's own model (`seasonalPprModel.ts`) does **not** already handle missing
+   numeric features safely — it defaults a missing numeric feature to `0` (see its own
+   `seasonalPprNumericFeatureNames` comment, "a row can be missing (defaulted to 0)"), which is exactly
+   the zero-coercion this design forbids for player-history nulls (§4.3). The train-fold mean imputation
+   used elsewhere in this repo lives only in the Run 2 Teamstate comparison wrapper
+   (`src/rehearsal/runRun2TeamstateComparison.ts`), not in the core Run 1 path. The implementation issue
+   must therefore explicitly build (or port) a null-safe handling policy for player-history features —
+   e.g. adapting the Run 2 wrapper's train-fold mean imputation — rather than assuming Run 1's model
+   already provides one.
 4. **Feature-family ablation plan.** Each family in §4 (availability/coverage, production, usage,
    age/career, team context) must be independently toggleable, so a later run can attribute any
    observed change to a specific family rather than an undifferentiated bundle — this is what would let
@@ -241,9 +256,14 @@ here.
   - missing prior seasons produce null features, never zero-filled (§6.3),
   - age/career fabrication guards hold (mirrors the TIBER-Data/Forecast gate's own checks),
   - the team-context limitation (§4.5) is preserved in the extracted feature's documentation/typing.
+- Design (not yet wire in) an explicit null-handling policy for the extracted player-history features
+  — e.g. adapting the train-fold mean imputation already proven in
+  `src/rehearsal/runRun2TeamstateComparison.ts` — since Run 1's own model defaults missing numeric
+  features to zero and must not be relied on for this (§6.3).
 - **Do not** wire these features into `seasonalPprModel.ts`'s numeric feature list yet.
 - **Do not** train, evaluate, or compare against baseline yet.
-- **Do not** run the shuffled control yet (that belongs to the controlled-run issue after this one).
+- **Do not** run the shuffled control yet (that belongs to the controlled-run issue after this one; when
+  it is built, it must shuffle within position/coverage strata, per §6.1).
 - Re-run the Forecast gate (`npm run evaluate:player-season-coverage-gate`) if the TIBER-Data mirror
   needs updating for this slice, before any of the above.
 
