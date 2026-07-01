@@ -87,4 +87,18 @@ describe('player-history feature scaffold against the real mirrored 2022-2024 in
     expect(summary.rows_considered).toBe(mirror.rows.length);
     expect(summary.input_seasons_present).toEqual([2022, 2023, 2024]);
   });
+
+  it('the real mirror passes the approved input-window guard configured exactly as the CLI report does', () => {
+    expect(() =>
+      buildPlayerHistoryFeatures(mirror.rows, { targetSeason: 2025, inputSeasons: mirror.input_window.seasons }),
+    ).not.toThrow();
+    expect(() => summarizePlayerHistoryCoverage(mirror.rows, 2025, mirror.input_window.seasons)).not.toThrow();
+  });
+
+  it('injecting a 2021 row alongside the real mirror rows is rejected by the input-window guard', () => {
+    const rowsWithLeakage = [{ ...mirror.rows[0]!, season: 2021 }, ...mirror.rows];
+    expect(() =>
+      buildPlayerHistoryFeatures(rowsWithLeakage, { targetSeason: 2025, inputSeasons: mirror.input_window.seasons }),
+    ).toThrow(/outside the approved input window/);
+  });
 });

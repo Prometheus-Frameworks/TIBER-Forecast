@@ -44,8 +44,11 @@ interface InputWindowMirror {
 const readJson = <T>(rel: string): T => JSON.parse(readFileSync(path.join(REPO_ROOT, rel), 'utf-8')) as T;
 
 const mirror = readJson<InputWindowMirror>(MIRROR_REL);
-const features = buildPlayerHistoryFeatures(mirror.rows, { targetSeason: TARGET_SEASON });
-const coverageSummary = summarizePlayerHistoryCoverage(mirror.rows, TARGET_SEASON);
+const features = buildPlayerHistoryFeatures(mirror.rows, {
+  targetSeason: TARGET_SEASON,
+  inputSeasons: mirror.input_window.seasons,
+});
+const coverageSummary = summarizePlayerHistoryCoverage(mirror.rows, TARGET_SEASON, mirror.input_window.seasons);
 
 const report = {
   report_version: 'player-history-feature-scaffold-v1',
@@ -83,6 +86,12 @@ const report = {
     approved_positions: PLAYER_HISTORY_APPROVED_POSITIONS,
     enforcement: 'fail_closed_throws_on_any_out_of_scope_row',
     note: 'buildPlayerHistoryFeatures and summarizePlayerHistoryCoverage both throw if any input row has a season_type other than REG or a position outside QB/RB/WR/TE -- the scaffold does not silently exclude out-of-scope rows, since their presence means the mirror/input boundary itself is wrong.',
+  },
+  approved_input_window_enforcement: {
+    approved_input_seasons: mirror.input_window.seasons,
+    target_season: TARGET_SEASON,
+    enforcement: 'fail_closed_throws_on_any_pre_target_row_outside_the_approved_input_seasons',
+    note: 'season < targetSeason alone does not bound the approved 2022-2024 input window (a 2021 row would otherwise pass); both entry points throw if a pre-target row falls outside options.inputSeasons / the inputSeasons argument, which this report sets from the mirror\'s own documented input_window.seasons.',
   },
   null_handling_policy: {
     summary:
@@ -131,13 +140,19 @@ ${EXCLUDED_UNAVAILABLE_USAGE_FIELDS.map((f) => `- \`${f}\``).join('\n')}
 - Approved positions: ${report.experiment_scope_enforcement.approved_positions.map((p) => `\`${p}\``).join(', ')}
 - ${report.experiment_scope_enforcement.note}
 
-## 6. Null-handling policy (designed here; NOT wired into any model)
+## 6. Approved input window enforcement (fail-closed)
+
+- Approved input seasons: ${report.approved_input_window_enforcement.approved_input_seasons.join(', ')}
+- Target season: ${report.approved_input_window_enforcement.target_season}
+- ${report.approved_input_window_enforcement.note}
+
+## 7. Null-handling policy (designed here; NOT wired into any model)
 
 ${report.null_handling_policy.summary}
 
 Adapted from: \`${report.null_handling_policy.adapted_from}\`.
 
-## 7. Input-window coverage summary
+## 8. Input-window coverage summary
 
 - Target season: ${coverageSummary.target_season}
 - Input seasons present: ${coverageSummary.input_seasons_present.join(', ')}
@@ -146,13 +161,13 @@ Adapted from: \`${report.null_handling_policy.adapted_from}\`.
 - Rows considered: ${coverageSummary.rows_considered}
 - Rows rejected for leakage (season >= target): ${coverageSummary.rows_rejected_for_leakage}
 
-## 8. Feature rows built
+## 9. Feature rows built
 
 Built ${features.length} candidate feature row(s), one per real mirrored player (row_kind: \`player_history_feature_candidate_not_model_ready\`):
 
 ${features.map((f) => `- \`${f.player_id}\` (${f.player_name}, ${f.position}): input_seasons_considered=[${f.input_seasons_considered.join(', ')}]`).join('\n')}
 
-## 9. Non-goals confirmed
+## 10. Non-goals confirmed
 
 - No Forecast run occurred.
 - No Run 3 occurred.

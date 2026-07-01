@@ -117,6 +117,14 @@ export interface PlayerHistoryFeatureOptions {
   targetSeason: number;
   /** Defaults to all families. Pass a subset for a later ablation arm. */
   families?: readonly PlayerHistoryFeatureFamily[];
+  /**
+   * The approved input seasons for this experiment window (e.g. [2022, 2023, 2024] for a 2025 target).
+   * When provided, any pre-target row (season < targetSeason) whose season is outside this set fails
+   * closed -- its presence means the mirror/input boundary is broader than the approved experiment
+   * design, not something to silently include. When omitted, only the targetSeason leakage guard
+   * applies (no lower bound).
+   */
+  inputSeasons?: readonly number[];
 }
 
 export interface PlayerHistoryCoverageFeatures {
@@ -232,6 +240,29 @@ export const assertPlayerHistoryScopeInBounds = (rows: readonly PlayerHistoryInp
     if (!PLAYER_HISTORY_APPROVED_POSITIONS.includes(row.position)) {
       throw new Error(
         `player-history scaffold: row for player_id=${row.player_id} season=${row.season} has position=${row.position}, outside the approved experiment scope (${PLAYER_HISTORY_APPROVED_POSITIONS.join(', ')} only).`,
+      );
+    }
+  }
+};
+
+/**
+ * Fails closed (throws) if any pre-target row (`season < targetSeason`) falls outside the approved
+ * `inputSeasons` set for this experiment window (e.g. [2022, 2023, 2024] for a 2025 target). A row with
+ * `season >= targetSeason` is left to the existing leakage filter (silently excluded, not thrown) --
+ * this guard only protects the LOWER bound of the approved input window, which `season < targetSeason`
+ * alone does not: a 2021 row would otherwise pass a 2025-target leakage filter even though it falls
+ * outside the approved 2022-2024 experiment design.
+ */
+export const assertPlayerHistoryInputSeasonsInBounds = (
+  rows: readonly PlayerHistoryInputRow[],
+  targetSeason: number,
+  inputSeasons: readonly number[],
+): void => {
+  const allowed = new Set(inputSeasons);
+  for (const row of rows) {
+    if (row.season < targetSeason && !allowed.has(row.season)) {
+      throw new Error(
+        `player-history scaffold: row for player_id=${row.player_id} has season=${row.season}, outside the approved input window (${inputSeasons.join(', ')}) for targetSeason=${targetSeason}. The mirror/input boundary is broader than the approved experiment design.`,
       );
     }
   }
@@ -370,6 +401,7 @@ export const buildPlayerHistoryFeatures = (
 ): PlayerHistoryFeatureRow[] => {
   assertNoForbiddenAvailabilityFields(rows);
   assertPlayerHistoryScopeInBounds(rows);
+  if (options.inputSeasons) assertPlayerHistoryInputSeasonsInBounds(rows, options.targetSeason, options.inputSeasons);
   const filtered = filterPlayerHistoryInputRows(rows, options.targetSeason);
   const families = options.families ?? ALL_PLAYER_HISTORY_FEATURE_FAMILIES;
   const familySet = new Set(families);
@@ -399,12 +431,18 @@ export const buildPlayerHistoryFeatures = (
   return result;
 };
 
-/** Read-only coverage summary over the input rows for a given target season. Pure, no I/O. */
+/**
+ * Read-only coverage summary over the input rows for a given target season. Pure, no I/O. When
+ * `inputSeasons` is provided, fails closed on any pre-target row outside that approved input window
+ * (see {@link assertPlayerHistoryInputSeasonsInBounds}).
+ */
 export const summarizePlayerHistoryCoverage = (
   rows: readonly PlayerHistoryInputRow[],
   targetSeason: number,
+  inputSeasons?: readonly number[],
 ): PlayerHistoryCoverageSummary => {
   assertPlayerHistoryScopeInBounds(rows);
+  if (inputSeasons) assertPlayerHistoryInputSeasonsInBounds(rows, targetSeason, inputSeasons);
   const filtered = filterPlayerHistoryInputRows(rows, targetSeason);
   const grouped = groupByPlayer(filtered);
   const playersBySeasonsObservedCount: Record<number, number> = {};

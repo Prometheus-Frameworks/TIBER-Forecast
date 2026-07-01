@@ -335,6 +335,7 @@ export {
   PLAYER_HISTORY_APPROVED_SEASON_TYPE,
   PLAYER_HISTORY_FEATURE_SCAFFOLD_VERSION,
   assertNoForbiddenAvailabilityFields,
+  assertPlayerHistoryInputSeasonsInBounds,
   assertPlayerHistoryScopeInBounds,
   buildPlayerHistoryFeatures,
   computePlayerHistoryTrainFoldMeans,

@@ -3,6 +3,7 @@ import {
   ALL_PLAYER_HISTORY_FEATURE_FAMILIES,
   EXCLUDED_UNAVAILABLE_USAGE_FIELDS,
   assertNoForbiddenAvailabilityFields,
+  assertPlayerHistoryInputSeasonsInBounds,
   assertPlayerHistoryScopeInBounds,
   buildPlayerHistoryFeatures,
   computePlayerHistoryTrainFoldMeans,
@@ -302,6 +303,39 @@ describe('experiment scope enforcement (REG season_type, QB/RB/WR/TE positions o
       const rows = [row({ season: 2024, position })];
       expect(() => buildPlayerHistoryFeatures(rows, { targetSeason: 2025 })).not.toThrow();
     }
+  });
+});
+
+describe('approved input-window enforcement (season < targetSeason alone is not a lower bound)', () => {
+  const INPUT_SEASONS = [2022, 2023, 2024];
+
+  it('throws if a 2021 row is present for a 2025-target / 2022-2024 scaffold, even though 2021 < 2025', () => {
+    const rows = [row({ season: 2021 }), row({ season: 2024 })];
+    expect(() =>
+      buildPlayerHistoryFeatures(rows, { targetSeason: 2025, inputSeasons: INPUT_SEASONS }),
+    ).toThrow(/outside the approved input window/);
+    expect(() => assertPlayerHistoryInputSeasonsInBounds(rows, 2025, INPUT_SEASONS)).toThrow(/season=2021/);
+  });
+
+  it('summarizePlayerHistoryCoverage also fails closed on a 2021 row when inputSeasons is provided', () => {
+    const rows = [row({ season: 2021 }), row({ season: 2024 })];
+    expect(() => summarizePlayerHistoryCoverage(rows, 2025, INPUT_SEASONS)).toThrow(/outside the approved input window/);
+  });
+
+  it('accepts rows that are exactly 2022, 2023, 2024 and considers all of them', () => {
+    const rows = [row({ season: 2022 }), row({ season: 2023 }), row({ season: 2024 })];
+    const [feature] = buildPlayerHistoryFeatures(rows, { targetSeason: 2025, inputSeasons: INPUT_SEASONS });
+    expect(feature!.input_seasons_considered).toEqual([2022, 2023, 2024]);
+  });
+
+  it('does not throw for a >= targetSeason row -- that is left to the existing leakage filter, not this guard', () => {
+    const rows = [row({ season: 2024 }), row({ season: 2025 })];
+    expect(() => buildPlayerHistoryFeatures(rows, { targetSeason: 2025, inputSeasons: INPUT_SEASONS })).not.toThrow();
+  });
+
+  it('does not enforce a lower bound at all when inputSeasons is omitted (backward compatible)', () => {
+    const rows = [row({ season: 2021 }), row({ season: 2024 })];
+    expect(() => buildPlayerHistoryFeatures(rows, { targetSeason: 2025 })).not.toThrow();
   });
 });
 
