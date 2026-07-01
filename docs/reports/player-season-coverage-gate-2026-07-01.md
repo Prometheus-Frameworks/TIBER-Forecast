@@ -28,8 +28,8 @@ Gate-evaluation only: this evaluates whether the TIBER-Data `player_season_cover
 
 ## 4. Source / provenance
 
-- source_refs_present=true, sources=[nflreadpy.load_player_stats(summary_level='reg'), nflreadpy.load_player_stats(summary_level='week'), nflreadpy.load_players()], fixture_hits=0, 2024_rows=588, 2024_source_backed=true → **pass**
-- Expected: source_refs present, an approved nflreadpy source name, 0 fixture/scaffold markers, 2024 rows > 0 and source-backed
+- source_refs_present=true, sources=[nflreadpy.load_player_stats(summary_level='reg'), nflreadpy.load_player_stats(summary_level='week'), nflreadpy.load_players()], unapproved_sources=[], fixture_hits=0, 2024_rows=588, 2024_source_backed=true → **pass**
+- Expected: source_refs present, every reported source name on the approved allow-list (no unapproved sources), 0 fixture/scaffold markers, 2024 rows > 0 and source-backed
 
 ## 5. Scope / window
 

@@ -148,6 +148,18 @@ describe('player_season_coverage_v0 candidate gate', () => {
     expect(result.decision).toBe('needs_provenance_fix');
   });
 
+  it('fails when an unapproved source name is reported alongside an approved one', () => {
+    // Regression test (repo-owner review, PR #100): at-least-one-approved-source is not sufficient --
+    // every reported source must be on the allow-list. A manual-override/unknown source slipped in
+    // alongside a real nflreadpy source, with zero fixture markers, must still fail provenance.
+    const evidence = fullPassEvidence();
+    evidence.provenance.source_names = [...evidence.provenance.source_names, 'manual_override_or_unknown_source'];
+    const result = evaluatePlayerSeasonCoverageGate(evidence);
+    expect(result.status).toBe('player_season_coverage_gate_failed_provenance');
+    expect(result.decision).toBe('needs_provenance_fix');
+    expect(result.blocking_reasons.join(' ')).toContain('manual_override_or_unknown_source');
+  });
+
   it('fails when season_type is implicit/missing at the scope level', () => {
     const evidence = fullPassEvidence();
     evidence.scope.season_type_values = [];

@@ -239,17 +239,24 @@ export const evaluatePlayerSeasonCoverageGate = (
 
   // 2. Source / provenance.
   const approvedSourcePresent = includesApprovedSource(evidence.provenance.source_names);
+  // Every reported source name must be on the approved allow-list, not merely at-least-one: a mirror
+  // reporting one approved nflreadpy source alongside an unrelated/unknown source (e.g. a manual
+  // override) must not pass provenance just because it lacks a fixture/scaffold marker.
+  const unapprovedSourceNames = evidence.provenance.source_names.filter(
+    (name) => !APPROVED_SOURCE_NAME_SUBSTRINGS.some((approved) => name.includes(approved)),
+  );
   const provenanceOk =
     evidence.provenance.source_refs_present &&
     approvedSourcePresent &&
+    unapprovedSourceNames.length === 0 &&
     evidence.provenance.fixture_or_scaffold_marker_hits === 0 &&
     evidence.provenance.season_2024_row_count > 0 &&
     evidence.provenance.season_2024_source_backed;
   checks.push({
     dimension: 'provenance',
     passed: provenanceOk,
-    observed: `source_refs_present=${evidence.provenance.source_refs_present}, sources=[${evidence.provenance.source_names.join(', ')}], fixture_hits=${evidence.provenance.fixture_or_scaffold_marker_hits}, 2024_rows=${evidence.provenance.season_2024_row_count}, 2024_source_backed=${evidence.provenance.season_2024_source_backed}`,
-    expected: `source_refs present, an approved nflreadpy source name, 0 fixture/scaffold markers, 2024 rows > 0 and source-backed`,
+    observed: `source_refs_present=${evidence.provenance.source_refs_present}, sources=[${evidence.provenance.source_names.join(', ')}], unapproved_sources=[${unapprovedSourceNames.join(', ')}], fixture_hits=${evidence.provenance.fixture_or_scaffold_marker_hits}, 2024_rows=${evidence.provenance.season_2024_row_count}, 2024_source_backed=${evidence.provenance.season_2024_source_backed}`,
+    expected: `source_refs present, every reported source name on the approved allow-list (no unapproved sources), 0 fixture/scaffold markers, 2024 rows > 0 and source-backed`,
     detail: 'Source refs must be present and machine-readable, drawn from approved nflverse sources, with zero fixture/scaffold contamination, and 2024 must be source-backed (not the prior fixture-only state).',
   });
 
@@ -367,6 +374,9 @@ export const evaluatePlayerSeasonCoverageGate = (
     status = 'player_season_coverage_gate_failed_provenance';
     decision = 'needs_provenance_fix';
     blocking_reasons.push('Source/provenance evidence is incomplete: missing source refs, a disallowed/unapproved source, fixture/scaffold contamination, or 2024 not source-backed.');
+    if (unapprovedSourceNames.length > 0) {
+      blocking_reasons.push(`Unapproved source name(s) reported: ${unapprovedSourceNames.join(', ')}. Every reported source must be on the approved allow-list.`);
+    }
   } else if (!scopeOk) {
     status = 'player_season_coverage_gate_failed_scope_window';
     decision = 'needs_scope_fix';
