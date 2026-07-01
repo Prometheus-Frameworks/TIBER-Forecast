@@ -46,6 +46,14 @@
     "reg_post_overlap_violations": 0,
     "required_row_fields_missing_count": 0
   },
+  "semantic": {
+    "_note": "Artifact-wide scan across all 2,383 rows (not just the 4-row sample below), recomputed directly from the real TIBER-Data artifact and consistent with its own validator (scripts/validate_player_season_coverage_v0.py) passing on the full record set.",
+    "forbidden_availability_field_count": 0,
+    "zero_instead_of_null_violation_count": 0,
+    "fabricated_age_violation_count": 0,
+    "fabricated_career_year_violation_count": 0,
+    "multi_team_missing_rule_violation_count": 0
+  },
   "aggregate_stats": {
     "rows_by_season": { "2022": 609, "2023": 576, "2024": 588, "2025": 610 },
     "rows_by_position": { "QB": 323, "RB": 606, "TE": 519, "WR": 935 },

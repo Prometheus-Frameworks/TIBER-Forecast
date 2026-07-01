@@ -61,6 +61,14 @@ export interface MirroredPlayerSeasonCoverageEvidence {
     reg_post_overlap_violations: number;
     required_row_fields_missing_count: number;
   };
+  /** Artifact-wide (all rows) semantic violation counts -- see {@link PlayerSeasonCoverageSemanticEvidence}. */
+  semantic: {
+    forbidden_availability_field_count: number;
+    zero_instead_of_null_violation_count: number;
+    fabricated_age_violation_count: number;
+    fabricated_career_year_violation_count: number;
+    multi_team_missing_rule_violation_count: number;
+  };
   aggregate_stats: {
     rows_by_season: Record<string, number>;
     rows_by_position: Record<string, number>;
@@ -140,6 +148,13 @@ export const buildPlayerSeasonCoverageEvidenceFromMirror = (
     duplicate_grain_count: mirror.grain.duplicate_grain_count,
     reg_post_overlap_violations: mirror.grain.reg_post_overlap_violations,
     required_row_fields_missing_count: mirror.grain.required_row_fields_missing_count,
+  },
+  semantic: {
+    forbidden_availability_field_count: mirror.semantic.forbidden_availability_field_count,
+    zero_instead_of_null_violation_count: mirror.semantic.zero_instead_of_null_violation_count,
+    fabricated_age_violation_count: mirror.semantic.fabricated_age_violation_count,
+    fabricated_career_year_violation_count: mirror.semantic.fabricated_career_year_violation_count,
+    multi_team_missing_rule_violation_count: mirror.semantic.multi_team_missing_rule_violation_count,
   },
   row_sample: mirror.row_sample.map(toRowSample),
   proposed_cutoff_design: mirror.proposed_cutoff_design,

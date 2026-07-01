@@ -43,13 +43,13 @@ Gate-evaluation only: this evaluates whether the TIBER-Data `player_season_cover
 
 ## 7. Semantic boundary
 
-- forbidden_fields=0, zero_instead_of_null_rows=0, fabricated_age_rows=0, fabricated_career_year_rows=0, multi_team_missing_rule_rows=0 → **pass**
+- aggregate(forbidden=0, zero_instead_of_null=0, fabricated_age=0, fabricated_career_year=0, multi_team_missing_rule=0) sample(forbidden_fields=0, zero_instead_of_null_rows=0, fabricated_age_rows=0, fabricated_career_year_rows=0, multi_team_missing_rule_rows=0) → **pass**
 - Expected: no active/ownership/roster status fields present; unavailable usage fields stay null; age/career fields never fabricated; every multi-team row carries an explicit primary_team_rule
 
 ## 8. Cutoff-risk notes
 
 - no experiment design proposed yet → **pass**
-- Expected: no proposed design leaks target-season summaries into the input row for a prior season
+- Expected: no proposed design leaks target-season summaries into the input row for a prior season, and target_season must not appear in input_seasons
 - No proposed input/target cutoff design exists yet in this evidence; a future design is a **separate, later issue**.
 
 ## 9. Aggregate evidence summary

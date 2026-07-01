@@ -87,6 +87,13 @@ const fullPassEvidence = (): PlayerSeasonCoverageEvidence => ({
     reg_post_overlap_violations: 0,
     required_row_fields_missing_count: 0,
   },
+  semantic: {
+    forbidden_availability_field_count: 0,
+    zero_instead_of_null_violation_count: 0,
+    fabricated_age_violation_count: 0,
+    fabricated_career_year_violation_count: 0,
+    multi_team_missing_rule_violation_count: 0,
+  },
   row_sample: [rodgers2023(), shaheed2025MultiTeam()],
   proposed_cutoff_design: null,
 });
@@ -221,6 +228,26 @@ describe('player_season_coverage_v0 candidate gate', () => {
     expect(result.decision).toBe('must_not_consume');
   });
 
+  it('fails hard (must_not_consume) on an artifact-wide forbidden-field count even when the row_sample itself is clean', () => {
+    // Regression test (Codex review, PR #100): a 4-row sample out of 2,383 rows cannot prove a
+    // violation doesn't exist elsewhere in the artifact. The aggregate count must be authoritative.
+    const evidence = fullPassEvidence();
+    evidence.semantic.forbidden_availability_field_count = 1;
+    const result = evaluatePlayerSeasonCoverageGate(evidence);
+    expect(result.status).toBe('player_season_coverage_gate_failed_semantic_boundary');
+    expect(result.decision).toBe('must_not_consume');
+    expect(result.blocking_reasons.join(' ')).toContain('Artifact-wide scan');
+  });
+
+  it('fails on an artifact-wide zero-vs-null / fabricated-age / missing-primary_team_rule count beyond the sample', () => {
+    const evidence = fullPassEvidence();
+    evidence.semantic.zero_instead_of_null_violation_count = 2;
+    const result = evaluatePlayerSeasonCoverageGate(evidence);
+    expect(result.status).toBe('player_season_coverage_gate_failed_semantic_boundary');
+    expect(result.decision).toBe('needs_grain_fix');
+    expect(result.blocking_reasons.join(' ')).toContain('Artifact-wide scan reports 2');
+  });
+
   it('fails on a zero-vs-null violation (an always-unavailable usage field coerced to zero)', () => {
     const evidence = fullPassEvidence();
     evidence.row_sample[0].usage_summary = { ...evidence.row_sample[0].usage_summary, snap_share: 0 };
@@ -260,6 +287,25 @@ describe('player_season_coverage_v0 candidate gate', () => {
     const result = evaluatePlayerSeasonCoverageGate(evidence);
     expect(result.status).toBe('player_season_coverage_gate_failed_cutoff_design');
     expect(result.decision).toBe('needs_cutoff_design');
+  });
+
+  it('fails on target-season overlap even when the leakage boolean is left false', () => {
+    // Regression test (Codex review, PR #100): target_season appearing in input_seasons is leakage
+    // regardless of what uses_target_season_summary_as_input claims -- the boolean alone must not be
+    // trusted, since a design could set it false (by mistake or omission) while still overlapping.
+    const evidence = fullPassEvidence();
+    evidence.proposed_cutoff_design = { input_seasons: [2024, 2025], target_season: 2025, uses_target_season_summary_as_input: false };
+    const result = evaluatePlayerSeasonCoverageGate(evidence);
+    expect(result.status).toBe('player_season_coverage_gate_failed_cutoff_design');
+    expect(result.decision).toBe('needs_cutoff_design');
+  });
+
+  it('passes cutoff discipline for a design whose input seasons genuinely exclude the target season', () => {
+    const evidence = fullPassEvidence();
+    evidence.proposed_cutoff_design = { input_seasons: [2022, 2023, 2024], target_season: 2025, uses_target_season_summary_as_input: false };
+    const result = evaluatePlayerSeasonCoverageGate(evidence);
+    expect(result.status).toBe('player_season_coverage_gate_passed');
+    expect(result.decision).toBe('may_design_experiment');
   });
 
   it('always carries a target-cutoff warning that run authorization remains blocked, even on a full pass', () => {

@@ -118,11 +118,27 @@ export interface PlayerSeasonCoverageProposedCutoffDesign {
   uses_target_season_summary_as_input: boolean;
 }
 
+/**
+ * Artifact-wide (all rows, not just the row_sample) semantic violation counts. These must come from
+ * a full scan of the source artifact (e.g. TIBER-Data's own validator, which already checks every one
+ * of these across all 2,383 rows), not be inferred from the compact row_sample alone -- a sample of 4
+ * rows out of 2,383 cannot prove the absence of a violation elsewhere in the artifact.
+ */
+export interface PlayerSeasonCoverageSemanticEvidence {
+  forbidden_availability_field_count: number;
+  zero_instead_of_null_violation_count: number;
+  fabricated_age_violation_count: number;
+  fabricated_career_year_violation_count: number;
+  multi_team_missing_rule_violation_count: number;
+}
+
 export interface PlayerSeasonCoverageEvidence {
   identity: PlayerSeasonCoverageIdentityEvidence;
   provenance: PlayerSeasonCoverageProvenanceEvidence;
   scope: PlayerSeasonCoverageScopeEvidence;
   grain: PlayerSeasonCoverageGrainEvidence;
+  /** Artifact-wide semantic violation counts (all rows), not just the sample. See {@link PlayerSeasonCoverageSemanticEvidence}. */
+  semantic: PlayerSeasonCoverageSemanticEvidence;
   row_sample: PlayerSeasonCoverageRowSample[];
   /** null = no experiment design has been proposed yet (the expected, current real state). */
   proposed_cutoff_design: PlayerSeasonCoverageProposedCutoffDesign | null;
@@ -275,22 +291,32 @@ export const evaluatePlayerSeasonCoverageGate = (
     detail: 'One logical row per (player_id, season, season_type); a REG+POST row may never coexist with a separate REG/POST row for the same player-season.',
   });
 
-  // 5. Semantics.
+  // 5. Semantics. Two independent signals must BOTH be clean: (a) artifact-wide aggregate violation
+  // counts covering all rows (authoritative -- a 4-row sample out of 2,383 total rows cannot prove a
+  // violation doesn't exist elsewhere), and (b) the row_sample itself (defense-in-depth: catches a
+  // sample/aggregate mismatch, e.g. if the aggregate counts were not updated to reflect the sample).
   const forbiddenFieldRows = evidence.row_sample.flatMap((row) => hasForbiddenAvailabilityField(row));
   const zeroInsteadOfNullRows = evidence.row_sample.filter((row) => rowHasZeroInsteadOfNull(row).length > 0);
   const fabricatedAgeRows = evidence.row_sample.filter(rowFabricatesAge);
   const fabricatedCareerYearRows = evidence.row_sample.filter(rowFabricatesCareerYear);
   const multiTeamMissingRuleRows = evidence.row_sample.filter(rowMultiTeamMissingRule);
-  const semanticOk =
+  const aggregateSemanticClean =
+    evidence.semantic.forbidden_availability_field_count === 0 &&
+    evidence.semantic.zero_instead_of_null_violation_count === 0 &&
+    evidence.semantic.fabricated_age_violation_count === 0 &&
+    evidence.semantic.fabricated_career_year_violation_count === 0 &&
+    evidence.semantic.multi_team_missing_rule_violation_count === 0;
+  const sampleSemanticClean =
     forbiddenFieldRows.length === 0 &&
     zeroInsteadOfNullRows.length === 0 &&
     fabricatedAgeRows.length === 0 &&
     fabricatedCareerYearRows.length === 0 &&
     multiTeamMissingRuleRows.length === 0;
+  const semanticOk = aggregateSemanticClean && sampleSemanticClean;
   checks.push({
     dimension: 'semantic_boundary',
     passed: semanticOk,
-    observed: `forbidden_fields=${forbiddenFieldRows.length}, zero_instead_of_null_rows=${zeroInsteadOfNullRows.length}, fabricated_age_rows=${fabricatedAgeRows.length}, fabricated_career_year_rows=${fabricatedCareerYearRows.length}, multi_team_missing_rule_rows=${multiTeamMissingRuleRows.length}`,
+    observed: `aggregate(forbidden=${evidence.semantic.forbidden_availability_field_count}, zero_instead_of_null=${evidence.semantic.zero_instead_of_null_violation_count}, fabricated_age=${evidence.semantic.fabricated_age_violation_count}, fabricated_career_year=${evidence.semantic.fabricated_career_year_violation_count}, multi_team_missing_rule=${evidence.semantic.multi_team_missing_rule_violation_count}) sample(forbidden_fields=${forbiddenFieldRows.length}, zero_instead_of_null_rows=${zeroInsteadOfNullRows.length}, fabricated_age_rows=${fabricatedAgeRows.length}, fabricated_career_year_rows=${fabricatedCareerYearRows.length}, multi_team_missing_rule_rows=${multiTeamMissingRuleRows.length})`,
     expected: 'no active/ownership/roster status fields present; unavailable usage fields stay null; age/career fields never fabricated; every multi-team row carries an explicit primary_team_rule',
     detail: 'Roster/team production context must never be treated as availability; zero and null/unavailable must remain distinct.',
   });
@@ -299,14 +325,25 @@ export const evaluatePlayerSeasonCoverageGate = (
   // but always carries an explicit warning that no run is authorized and a separate design issue is
   // required. A design that IS proposed and leaks target-season data into the input row fails closed.
   const proposedDesign = evidence.proposed_cutoff_design;
-  const cutoffDesignLeaks = proposedDesign !== null && proposedDesign.uses_target_season_summary_as_input === true;
+  // Leakage is derived two ways, not trusted from the boolean alone: (a) the design explicitly says so,
+  // or (b) the target season literally appears in input_seasons -- an overlapping season is leakage
+  // regardless of what the boolean claims (a false/omitted boolean does not make an overlap safe).
+  const cutoffDesignSeasonOverlap =
+    proposedDesign !== null &&
+    proposedDesign.target_season !== null &&
+    proposedDesign.input_seasons.includes(proposedDesign.target_season);
+  const cutoffDesignLeaks =
+    proposedDesign !== null && (proposedDesign.uses_target_season_summary_as_input === true || cutoffDesignSeasonOverlap);
   const cutoffOk = !cutoffDesignLeaks;
   checks.push({
     dimension: 'cutoff_discipline',
     passed: cutoffOk,
-    observed: proposedDesign === null ? 'no experiment design proposed yet' : `proposed design uses_target_season_summary_as_input=${proposedDesign.uses_target_season_summary_as_input}`,
-    expected: 'no proposed design leaks target-season summaries into the input row for a prior season',
-    detail: '2025 target-season summaries must never be fed into a 2024-input row (or equivalent). Any future design is a separate, later issue.',
+    observed:
+      proposedDesign === null
+        ? 'no experiment design proposed yet'
+        : `proposed design uses_target_season_summary_as_input=${proposedDesign.uses_target_season_summary_as_input}, input_seasons=[${proposedDesign.input_seasons.join(', ')}], target_season=${proposedDesign.target_season}, season_overlap=${cutoffDesignSeasonOverlap}`,
+    expected: 'no proposed design leaks target-season summaries into the input row for a prior season, and target_season must not appear in input_seasons',
+    detail: '2025 target-season summaries must never be fed into a 2024-input row (or equivalent); a design whose target season overlaps its own input seasons is invalid regardless of the leakage flag. Any future design is a separate, later issue.',
   });
   warnings.push(
     'No Forecast run is authorized by this gate. A separate experiment-design issue is required before any model/feature work, and that design must explicitly separate input seasons from the target season with a defensible cutoff.',
@@ -340,14 +377,22 @@ export const evaluatePlayerSeasonCoverageGate = (
     blocking_reasons.push('Row grain/shape evidence failed: duplicate grain, REG+POST overlap, or missing required row fields.');
   } else if (!semanticOk) {
     status = 'player_season_coverage_gate_failed_semantic_boundary';
-    decision = forbiddenFieldRows.length > 0 ? 'must_not_consume' : 'needs_grain_fix';
+    const forbiddenAnywhere = forbiddenFieldRows.length > 0 || evidence.semantic.forbidden_availability_field_count > 0;
+    decision = forbiddenAnywhere ? 'must_not_consume' : 'needs_grain_fix';
     if (forbiddenRowNames.length > 0) {
-      blocking_reasons.push(`Forbidden availability/ownership field(s) present in row evidence: ${forbiddenRowNames.join(', ')}. This artifact must not be consumed if it asserts availability status.`);
+      blocking_reasons.push(`Forbidden availability/ownership field(s) present in sampled row evidence: ${forbiddenRowNames.join(', ')}. This artifact must not be consumed if it asserts availability status.`);
     }
-    if (zeroInsteadOfNullRows.length > 0) blocking_reasons.push(`${zeroInsteadOfNullRows.length} row(s) coerce an always-unavailable usage field to zero instead of null.`);
-    if (fabricatedAgeRows.length > 0) blocking_reasons.push(`${fabricatedAgeRows.length} row(s) carry a season_age with no birth_date (fabrication).`);
-    if (fabricatedCareerYearRows.length > 0) blocking_reasons.push(`${fabricatedCareerYearRows.length} row(s) carry a career_year with no rookie_year (fabrication).`);
-    if (multiTeamMissingRuleRows.length > 0) blocking_reasons.push(`${multiTeamMissingRuleRows.length} multi-team row(s) missing an explicit primary_team_rule.`);
+    if (evidence.semantic.forbidden_availability_field_count > 0) {
+      blocking_reasons.push(`Artifact-wide scan reports ${evidence.semantic.forbidden_availability_field_count} row(s) with a forbidden availability/ownership field beyond the sample. This artifact must not be consumed if it asserts availability status.`);
+    }
+    if (zeroInsteadOfNullRows.length > 0) blocking_reasons.push(`${zeroInsteadOfNullRows.length} sampled row(s) coerce an always-unavailable usage field to zero instead of null.`);
+    if (evidence.semantic.zero_instead_of_null_violation_count > 0) blocking_reasons.push(`Artifact-wide scan reports ${evidence.semantic.zero_instead_of_null_violation_count} row(s) coercing an always-unavailable usage field to zero instead of null.`);
+    if (fabricatedAgeRows.length > 0) blocking_reasons.push(`${fabricatedAgeRows.length} sampled row(s) carry a season_age with no birth_date (fabrication).`);
+    if (evidence.semantic.fabricated_age_violation_count > 0) blocking_reasons.push(`Artifact-wide scan reports ${evidence.semantic.fabricated_age_violation_count} row(s) with a fabricated season_age (fabrication).`);
+    if (fabricatedCareerYearRows.length > 0) blocking_reasons.push(`${fabricatedCareerYearRows.length} sampled row(s) carry a career_year with no rookie_year (fabrication).`);
+    if (evidence.semantic.fabricated_career_year_violation_count > 0) blocking_reasons.push(`Artifact-wide scan reports ${evidence.semantic.fabricated_career_year_violation_count} row(s) with a fabricated career_year (fabrication).`);
+    if (multiTeamMissingRuleRows.length > 0) blocking_reasons.push(`${multiTeamMissingRuleRows.length} sampled multi-team row(s) missing an explicit primary_team_rule.`);
+    if (evidence.semantic.multi_team_missing_rule_violation_count > 0) blocking_reasons.push(`Artifact-wide scan reports ${evidence.semantic.multi_team_missing_rule_violation_count} multi-team row(s) missing an explicit primary_team_rule.`);
   } else if (!cutoffOk) {
     status = 'player_season_coverage_gate_failed_cutoff_design';
     decision = 'needs_cutoff_design';
