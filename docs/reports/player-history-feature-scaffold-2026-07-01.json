@@ -1,0 +1,480 @@
+{
+  "report_version": "player-history-feature-scaffold-v1",
+  "repo": "Prometheus-Frameworks/TIBER-Forecast",
+  "issue": "TIBER-Forecast#103",
+  "generated_at": "2026-07-01T00:00:00.000Z",
+  "scaffold_version": "player-history-feature-scaffold-v1",
+  "evaluation_kind": "feature_extraction_scaffold_only_no_run_no_binding",
+  "mirror_inspected": {
+    "path": "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.input_mirror.json",
+    "issue": "TIBER-Forecast#103",
+    "governed_source": {
+      "repo": "Prometheus-Frameworks/TIBER-Data",
+      "sourceArtifactPath": "data/processed/evidence/player_season_coverage_2022_2025.source_backed.json",
+      "sha256": "39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b",
+      "schemaPath": "schemas/player_season_coverage_v0.schema.json",
+      "validatorPath": "scripts/validate_player_season_coverage_v0.py"
+    },
+    "refs": [
+      "TIBER-Data#184",
+      "TIBER-Data#185",
+      "TIBER-Data#186",
+      "TIBER-Data#187",
+      "TIBER-Data#188",
+      "TIBER-Data#189",
+      "TIBER-Data#190",
+      "TIBER-Data#191",
+      "TIBER-Forecast#99",
+      "TIBER-Forecast#100",
+      "TIBER-Forecast#101",
+      "TIBER-Forecast#102"
+    ],
+    "input_window": {
+      "seasons": [
+        2022,
+        2023,
+        2024
+      ],
+      "season_type": "REG",
+      "positions_present_in_sample": [
+        "QB",
+        "RB"
+      ],
+      "target_season_excluded": 2025
+    },
+    "row_sample_selection_rationale": {
+      "00-0023459": "Aaron Rodgers -- present in all 3 input seasons (2022 GB full_season, 2023 NYJ single_week with a real season_ppr=0.0, 2024 NYJ full_season); exercises trailing 2yr/3yr aggregation, trend features, and the zero-is-not-null distinction",
+      "00-0027688": "Colt McCoy -- present in only 1 of the 3 input seasons (2022 only); exercises missing-season tolerance (trend/trailing features must stay null, never fabricated)",
+      "00-0026625": "Brian Hoyer -- undrafted (draft_year null), present in 2 of 3 seasons; exercises the undrafted-indicator and partial-coverage paths without fabricating career_year (rookie_year is source-backed even though draft_year is null)",
+      "00-0033118": "Kenyan Drake -- single-team in 2022, multi-team in 2023 (BAL, GB) with an explicit primary_team_rule, missing 2024; exercises the team-context multi-team boundary across a multi-season history"
+    }
+  },
+  "status_statements": {
+    "forecast_did_not_run": true,
+    "no_run3_occurred": true,
+    "no_model_training_tuning_evaluation_occurred": true,
+    "no_baseline_change_occurred": true,
+    "no_feature_binding_into_seasonal_ppr_model_occurred": true,
+    "no_shuffled_control_or_three_arm_comparison_occurred": true,
+    "no_tiber_data_or_teamstate_change_occurred": true,
+    "no_data_artifact_promotion_occurred": true,
+    "no_2025_summaries_consumed_as_2025_input": true,
+    "no_active_or_ownership_status_inferred": true,
+    "no_null_to_zero_coercion_performed": true,
+    "no_player_history_signal_claimed": true
+  },
+  "feature_families_implemented": [
+    "coverage",
+    "production",
+    "usage",
+    "age_career",
+    "team_context"
+  ],
+  "unavailable_usage_fields_excluded": [
+    "snap_share",
+    "routes_run",
+    "route_participation",
+    "red_zone_targets",
+    "red_zone_carries"
+  ],
+  "experiment_scope_enforcement": {
+    "approved_season_type": "REG",
+    "approved_positions": [
+      "QB",
+      "RB",
+      "WR",
+      "TE"
+    ],
+    "enforcement": "fail_closed_throws_on_any_out_of_scope_row",
+    "note": "buildPlayerHistoryFeatures and summarizePlayerHistoryCoverage both throw if any input row has a season_type other than REG or a position outside QB/RB/WR/TE -- the scaffold does not silently exclude out-of-scope rows, since their presence means the mirror/input boundary itself is wrong."
+  },
+  "approved_input_window_enforcement": {
+    "approved_input_seasons": [
+      2022,
+      2023,
+      2024
+    ],
+    "target_season": 2025,
+    "enforcement": "fail_closed_throws_on_any_pre_target_row_outside_the_approved_input_seasons",
+    "note": "season < targetSeason alone does not bound the approved 2022-2024 input window (a 2021 row would otherwise pass); both entry points throw if a pre-target row falls outside options.inputSeasons / the inputSeasons argument, which this report sets from the mirror's own documented input_window.seasons."
+  },
+  "null_handling_policy": {
+    "summary": "Missing prior seasons and missing source fields stay null; a real value of 0 (e.g. a near-zero game) is never confused with an absent observation. A pure, tested train-fold mean imputation helper (computePlayerHistoryTrainFoldMeans / imputePlayerHistoryValue) is provided for later model code to use per LOOCV fold -- this scaffold does not run or fit anything with it.",
+    "adapted_from": "src/rehearsal/runRun2TeamstateComparison.ts (Run 2 Teamstate wrapper), not Run 1's seasonalPprModel.ts, which zero-fills missing numeric features by default",
+    "wired_into_model": false
+  },
+  "target_season": 2025,
+  "input_window_coverage_summary": {
+    "target_season": 2025,
+    "input_seasons_present": [
+      2022,
+      2023,
+      2024
+    ],
+    "total_players": 4,
+    "players_by_seasons_observed_count": {
+      "1": 1,
+      "2": 2,
+      "3": 1
+    },
+    "rows_considered": 8,
+    "rows_rejected_for_leakage": 0
+  },
+  "feature_rows_built": 4,
+  "feature_rows": [
+    {
+      "row_kind": "player_history_feature_candidate_not_model_ready",
+      "player_id": "00-0023459",
+      "player_name": "Aaron Rodgers",
+      "position": "QB",
+      "target_season": 2025,
+      "input_seasons_considered": [
+        2022,
+        2023,
+        2024
+      ],
+      "coverage": {
+        "prior_seasons_observed_count": 3,
+        "prior_weeks_observed_total": 35,
+        "prior_weeks_observed_mean": 11.666666666666666,
+        "coverage_status_counts": {
+          "full_season": 2,
+          "single_week": 1
+        },
+        "missingness_rate": 6
+      },
+      "production": {
+        "season_ppr_by_season": {
+          "2022": 239.20000000000002,
+          "2023": 0,
+          "2024": 256.58
+        },
+        "season_ppg_by_season": {
+          "2022": 14.07,
+          "2023": 0,
+          "2024": 15.09
+        },
+        "trailing_2yr_ppr_total": 256.58,
+        "trailing_3yr_ppr_total": 495.78,
+        "trailing_2yr_ppr_mean": 128.29,
+        "trailing_3yr_ppr_mean": 165.26,
+        "year_over_year_ppr_trend": 256.58
+      },
+      "usage": {
+        "targets_by_season": {
+          "2022": 0,
+          "2023": 0,
+          "2024": 0
+        },
+        "receptions_by_season": {
+          "2022": 0,
+          "2023": 0,
+          "2024": 0
+        },
+        "rushing_attempts_by_season": {
+          "2022": 34,
+          "2023": 0,
+          "2024": 22
+        },
+        "receiving_air_yards_by_season": {
+          "2022": 0,
+          "2023": 0,
+          "2024": 0
+        },
+        "target_share_by_season": {
+          "2022": 0,
+          "2023": 0,
+          "2024": 0
+        },
+        "air_yards_share_by_season": {
+          "2022": 0,
+          "2023": 0,
+          "2024": 0
+        },
+        "wopr_by_season": {
+          "2022": 0,
+          "2023": 0,
+          "2024": 0
+        },
+        "racr_by_season": {
+          "2022": null,
+          "2023": null,
+          "2024": null
+        },
+        "unavailable_fields_excluded": [
+          "snap_share",
+          "routes_run",
+          "route_participation",
+          "red_zone_targets",
+          "red_zone_carries"
+        ]
+      },
+      "age_career": {
+        "latest_pre_target_season_age": 40.75,
+        "latest_pre_target_career_year": 20,
+        "draft_year": 2005,
+        "rookie_year": 2005,
+        "undrafted_indicator": false
+      },
+      "team_context": {
+        "multi_team_prior_season_indicator": false,
+        "multi_team_season_count": 0,
+        "latest_primary_team": "NYJ"
+      }
+    },
+    {
+      "row_kind": "player_history_feature_candidate_not_model_ready",
+      "player_id": "00-0026625",
+      "player_name": "Brian Hoyer",
+      "position": "QB",
+      "target_season": 2025,
+      "input_seasons_considered": [
+        2022,
+        2023
+      ],
+      "coverage": {
+        "prior_seasons_observed_count": 2,
+        "prior_weeks_observed_total": 3,
+        "prior_weeks_observed_mean": 1.5,
+        "coverage_status_counts": {
+          "single_week": 1,
+          "partial_season": 1
+        },
+        "missingness_rate": 7
+      },
+      "production": {
+        "season_ppr_by_season": {
+          "2022": 1.48,
+          "2023": 4.94
+        },
+        "season_ppg_by_season": {
+          "2022": 1.48,
+          "2023": 2.47
+        },
+        "trailing_2yr_ppr_total": null,
+        "trailing_3yr_ppr_total": null,
+        "trailing_2yr_ppr_mean": null,
+        "trailing_3yr_ppr_mean": null,
+        "year_over_year_ppr_trend": null
+      },
+      "usage": {
+        "targets_by_season": {
+          "2022": 0,
+          "2023": 0
+        },
+        "receptions_by_season": {
+          "2022": 0,
+          "2023": 0
+        },
+        "rushing_attempts_by_season": {
+          "2022": 0,
+          "2023": 3
+        },
+        "receiving_air_yards_by_season": {
+          "2022": 0,
+          "2023": 0
+        },
+        "target_share_by_season": {
+          "2022": 0,
+          "2023": 0
+        },
+        "air_yards_share_by_season": {
+          "2022": 0,
+          "2023": 0
+        },
+        "wopr_by_season": {
+          "2022": 0,
+          "2023": 0
+        },
+        "racr_by_season": {
+          "2022": null,
+          "2023": null
+        },
+        "unavailable_fields_excluded": [
+          "snap_share",
+          "routes_run",
+          "route_participation",
+          "red_zone_targets",
+          "red_zone_carries"
+        ]
+      },
+      "age_career": {
+        "latest_pre_target_season_age": 37.88,
+        "latest_pre_target_career_year": 15,
+        "draft_year": null,
+        "rookie_year": 2009,
+        "undrafted_indicator": true
+      },
+      "team_context": {
+        "multi_team_prior_season_indicator": false,
+        "multi_team_season_count": 0,
+        "latest_primary_team": "LV"
+      }
+    },
+    {
+      "row_kind": "player_history_feature_candidate_not_model_ready",
+      "player_id": "00-0027688",
+      "player_name": "Colt McCoy",
+      "position": "QB",
+      "target_season": 2025,
+      "input_seasons_considered": [
+        2022
+      ],
+      "coverage": {
+        "prior_seasons_observed_count": 1,
+        "prior_weeks_observed_total": 4,
+        "prior_weeks_observed_mean": 4,
+        "coverage_status_counts": {
+          "partial_season": 1
+        },
+        "missingness_rate": 6
+      },
+      "production": {
+        "season_ppr_by_season": {
+          "2022": 32.800000000000004
+        },
+        "season_ppg_by_season": {
+          "2022": 8.2
+        },
+        "trailing_2yr_ppr_total": null,
+        "trailing_3yr_ppr_total": null,
+        "trailing_2yr_ppr_mean": null,
+        "trailing_3yr_ppr_mean": null,
+        "year_over_year_ppr_trend": null
+      },
+      "usage": {
+        "targets_by_season": {
+          "2022": 0
+        },
+        "receptions_by_season": {
+          "2022": 0
+        },
+        "rushing_attempts_by_season": {
+          "2022": 14
+        },
+        "receiving_air_yards_by_season": {
+          "2022": 0
+        },
+        "target_share_by_season": {
+          "2022": 0
+        },
+        "air_yards_share_by_season": {
+          "2022": 0
+        },
+        "wopr_by_season": {
+          "2022": 0
+        },
+        "racr_by_season": {
+          "2022": null
+        },
+        "unavailable_fields_excluded": [
+          "snap_share",
+          "routes_run",
+          "route_participation",
+          "red_zone_targets",
+          "red_zone_carries"
+        ]
+      },
+      "age_career": {
+        "latest_pre_target_season_age": 35.99,
+        "latest_pre_target_career_year": 13,
+        "draft_year": 2010,
+        "rookie_year": 2010,
+        "undrafted_indicator": false
+      },
+      "team_context": {
+        "multi_team_prior_season_indicator": false,
+        "multi_team_season_count": 0,
+        "latest_primary_team": "ARI"
+      }
+    },
+    {
+      "row_kind": "player_history_feature_candidate_not_model_ready",
+      "player_id": "00-0033118",
+      "player_name": "Kenyan Drake",
+      "position": "RB",
+      "target_season": 2025,
+      "input_seasons_considered": [
+        2022,
+        2023
+      ],
+      "coverage": {
+        "prior_seasons_observed_count": 2,
+        "prior_weeks_observed_total": 14,
+        "prior_weeks_observed_mean": 7,
+        "coverage_status_counts": {
+          "partial_season": 2
+        },
+        "missingness_rate": 6
+      },
+      "production": {
+        "season_ppr_by_season": {
+          "2022": 104.1,
+          "2023": 3.1
+        },
+        "season_ppg_by_season": {
+          "2022": 8.67,
+          "2023": 1.55
+        },
+        "trailing_2yr_ppr_total": null,
+        "trailing_3yr_ppr_total": null,
+        "trailing_2yr_ppr_mean": null,
+        "trailing_3yr_ppr_mean": null,
+        "year_over_year_ppr_trend": null
+      },
+      "usage": {
+        "targets_by_season": {
+          "2022": 26,
+          "2023": 3
+        },
+        "receptions_by_season": {
+          "2022": 17,
+          "2023": 2
+        },
+        "rushing_attempts_by_season": {
+          "2022": 109,
+          "2023": 2
+        },
+        "receiving_air_yards_by_season": {
+          "2022": -16,
+          "2023": -4
+        },
+        "target_share_by_season": {
+          "2022": 0.0559,
+          "2023": 0.0063
+        },
+        "air_yards_share_by_season": {
+          "2022": -0.004,
+          "2023": -0.001
+        },
+        "wopr_by_season": {
+          "2022": 0.0811,
+          "2023": 0.0088
+        },
+        "racr_by_season": {
+          "2022": -5.5625,
+          "2023": -7.75
+        },
+        "unavailable_fields_excluded": [
+          "snap_share",
+          "routes_run",
+          "route_participation",
+          "red_zone_targets",
+          "red_zone_carries"
+        ]
+      },
+      "age_career": {
+        "latest_pre_target_season_age": 29.6,
+        "latest_pre_target_career_year": 8,
+        "draft_year": 2016,
+        "rookie_year": 2016,
+        "undrafted_indicator": false
+      },
+      "team_context": {
+        "multi_team_prior_season_indicator": true,
+        "multi_team_season_count": 1,
+        "latest_primary_team": "BAL"
+      }
+    }
+  ]
+}

@@ -1,0 +1,546 @@
+{
+  "kind": "player_season_coverage_v0_input_window_mirror",
+  "issue": "TIBER-Forecast#103",
+  "note": "Compact, read-only evidence mirror of TIBER-Data player_season_coverage_v0 rows for the 2022-2024 input window (target season 2025 excluded by construction -- no 2025 row exists in this file at all). This is a SEPARATE, purpose-built mirror from the PR #100 gate mirror (data/fixtures/tiberData/player_season_coverage_v0_2022_2025.mirror.json): that mirror has 4 rows, at most 1 per player, insufficient to exercise multi-season aggregation (trailing 2yr/3yr totals, trend features, coverage-count-across-seasons). This mirror instead selects 4 real players with 1-3 rows each across 2022-2024 specifically to cover: a player present in all 3 input seasons (multi-season aggregation + trend), a player present in only 1 season (missing-season tolerance), an undrafted player with 2 seasons (age/career null handling), and a player with a multi-team season inside the window (team-context boundary). All rows are copied verbatim (trimmed to fields the scaffold needs) from the real, committed TIBER-Data artifact -- nothing is fabricated. Forecast does not modify, re-govern, re-derive, or promote this data.",
+  "governed_source": {
+    "repo": "Prometheus-Frameworks/TIBER-Data",
+    "sourceArtifactPath": "data/processed/evidence/player_season_coverage_2022_2025.source_backed.json",
+    "sha256": "39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b",
+    "schemaPath": "schemas/player_season_coverage_v0.schema.json",
+    "validatorPath": "scripts/validate_player_season_coverage_v0.py"
+  },
+  "refs": [
+    "TIBER-Data#184",
+    "TIBER-Data#185",
+    "TIBER-Data#186",
+    "TIBER-Data#187",
+    "TIBER-Data#188",
+    "TIBER-Data#189",
+    "TIBER-Data#190",
+    "TIBER-Data#191",
+    "TIBER-Forecast#99",
+    "TIBER-Forecast#100",
+    "TIBER-Forecast#101",
+    "TIBER-Forecast#102"
+  ],
+  "input_window": {
+    "seasons": [
+      2022,
+      2023,
+      2024
+    ],
+    "season_type": "REG",
+    "positions_present_in_sample": [
+      "QB",
+      "RB"
+    ],
+    "target_season_excluded": 2025
+  },
+  "row_sample_selection_rationale": {
+    "00-0023459": "Aaron Rodgers -- present in all 3 input seasons (2022 GB full_season, 2023 NYJ single_week with a real season_ppr=0.0, 2024 NYJ full_season); exercises trailing 2yr/3yr aggregation, trend features, and the zero-is-not-null distinction",
+    "00-0027688": "Colt McCoy -- present in only 1 of the 3 input seasons (2022 only); exercises missing-season tolerance (trend/trailing features must stay null, never fabricated)",
+    "00-0026625": "Brian Hoyer -- undrafted (draft_year null), present in 2 of 3 seasons; exercises the undrafted-indicator and partial-coverage paths without fabricating career_year (rookie_year is source-backed even though draft_year is null)",
+    "00-0033118": "Kenyan Drake -- single-team in 2022, multi-team in 2023 (BAL, GB) with an explicit primary_team_rule, missing 2024; exercises the team-context multi-team boundary across a multi-season history"
+  },
+  "rows": [
+    {
+      "player_id": "00-0023459",
+      "player_name": "Aaron Rodgers",
+      "position": "QB",
+      "season": 2022,
+      "season_type": "REG",
+      "identity_confidence": "source_verified",
+      "source_refs": [
+        {
+          "source_name": "nflreadpy.load_player_stats(summary_level='reg')",
+          "observed_at": "2026-06-30T19:36:52.260432+00:00"
+        },
+        {
+          "source_name": "nflreadpy.load_player_stats(summary_level='week')",
+          "observed_at": "2026-06-30T19:36:52.260432+00:00"
+        },
+        {
+          "source_name": "nflreadpy.load_players()",
+          "observed_at": "2026-06-30T19:36:52.260432+00:00"
+        }
+      ],
+      "teams": [
+        "GB"
+      ],
+      "primary_team": "GB",
+      "primary_team_rule": null,
+      "weeks_observed": 17,
+      "coverage_status": "full_season",
+      "missing_fields": [
+        "games_missed",
+        "red_zone_carries",
+        "red_zone_targets",
+        "route_participation",
+        "routes_run",
+        "snap_share"
+      ],
+      "production_summary": {
+        "season_ppr": 239.20000000000002,
+        "season_ppg": 14.07,
+        "games_for_ppg": 17
+      },
+      "usage_summary": {
+        "targets": 0,
+        "receptions": 0,
+        "rushing_attempts": 34,
+        "receiving_air_yards": 0,
+        "target_share": 0.0,
+        "air_yards_share": 0.0,
+        "wopr": 0.0,
+        "racr": null,
+        "snap_share": null,
+        "routes_run": null,
+        "route_participation": null,
+        "red_zone_targets": null,
+        "red_zone_carries": null
+      },
+      "birth_date": "1983-12-02",
+      "season_age": 38.75,
+      "draft_year": 2005,
+      "rookie_year": 2005,
+      "career_year": 18
+    },
+    {
+      "player_id": "00-0023459",
+      "player_name": "Aaron Rodgers",
+      "position": "QB",
+      "season": 2023,
+      "season_type": "REG",
+      "identity_confidence": "source_verified",
+      "source_refs": [
+        {
+          "source_name": "nflreadpy.load_player_stats(summary_level='reg')",
+          "observed_at": "2026-06-30T19:36:52.260432+00:00"
+        },
+        {
+          "source_name": "nflreadpy.load_player_stats(summary_level='week')",
+          "observed_at": "2026-06-30T19:36:52.260432+00:00"
+        },
+        {
+          "source_name": "nflreadpy.load_players()",
+          "observed_at": "2026-06-30T19:36:52.260432+00:00"
+        }
+      ],
+      "teams": [
+        "NYJ"
+      ],
+      "primary_team": "NYJ",
+      "primary_team_rule": null,
+      "weeks_observed": 1,
+      "coverage_status": "single_week",
+      "missing_fields": [
+        "games_missed",
+        "red_zone_carries",
+        "red_zone_targets",
+        "route_participation",
+        "routes_run",
+        "snap_share"
+      ],
+      "production_summary": {
+        "season_ppr": 0.0,
+        "season_ppg": 0.0,
+        "games_for_ppg": 1
+      },
+      "usage_summary": {
+        "targets": 0,
+        "receptions": 0,
+        "rushing_attempts": 0,
+        "receiving_air_yards": 0,
+        "target_share": 0.0,
+        "air_yards_share": 0.0,
+        "wopr": 0.0,
+        "racr": null,
+        "snap_share": null,
+        "routes_run": null,
+        "route_participation": null,
+        "red_zone_targets": null,
+        "red_zone_carries": null
+      },
+      "birth_date": "1983-12-02",
+      "season_age": 39.75,
+      "draft_year": 2005,
+      "rookie_year": 2005,
+      "career_year": 19
+    },
+    {
+      "player_id": "00-0023459",
+      "player_name": "Aaron Rodgers",
+      "position": "QB",
+      "season": 2024,
+      "season_type": "REG",
+      "identity_confidence": "source_verified",
+      "source_refs": [
+        {
+          "source_name": "nflreadpy.load_player_stats(summary_level='reg')",
+          "observed_at": "2026-06-30T19:36:52.260432+00:00"
+        },
+        {
+          "source_name": "nflreadpy.load_player_stats(summary_level='week')",
+          "observed_at": "2026-06-30T19:36:52.260432+00:00"
+        },
+        {
+          "source_name": "nflreadpy.load_players()",
+          "observed_at": "2026-06-30T19:36:52.260432+00:00"
+        }
+      ],
+      "teams": [
+        "NYJ"
+      ],
+      "primary_team": "NYJ",
+      "primary_team_rule": null,
+      "weeks_observed": 17,
+      "coverage_status": "full_season",
+      "missing_fields": [
+        "games_missed",
+        "red_zone_carries",
+        "red_zone_targets",
+        "route_participation",
+        "routes_run",
+        "snap_share"
+      ],
+      "production_summary": {
+        "season_ppr": 256.58,
+        "season_ppg": 15.09,
+        "games_for_ppg": 17
+      },
+      "usage_summary": {
+        "targets": 0,
+        "receptions": 0,
+        "rushing_attempts": 22,
+        "receiving_air_yards": 0,
+        "target_share": 0.0,
+        "air_yards_share": 0.0,
+        "wopr": 0.0,
+        "racr": null,
+        "snap_share": null,
+        "routes_run": null,
+        "route_participation": null,
+        "red_zone_targets": null,
+        "red_zone_carries": null
+      },
+      "birth_date": "1983-12-02",
+      "season_age": 40.75,
+      "draft_year": 2005,
+      "rookie_year": 2005,
+      "career_year": 20
+    },
+    {
+      "player_id": "00-0026625",
+      "player_name": "Brian Hoyer",
+      "position": "QB",
+      "season": 2022,
+      "season_type": "REG",
+      "identity_confidence": "source_verified",
+      "source_refs": [
+        {
+          "source_name": "nflreadpy.load_player_stats(summary_level='reg')",
+          "observed_at": "2026-06-30T19:36:52.260432+00:00"
+        },
+        {
+          "source_name": "nflreadpy.load_player_stats(summary_level='week')",
+          "observed_at": "2026-06-30T19:36:52.260432+00:00"
+        },
+        {
+          "source_name": "nflreadpy.load_players()",
+          "observed_at": "2026-06-30T19:36:52.260432+00:00"
+        }
+      ],
+      "teams": [
+        "NE"
+      ],
+      "primary_team": "NE",
+      "primary_team_rule": null,
+      "weeks_observed": 1,
+      "coverage_status": "single_week",
+      "missing_fields": [
+        "draft_year",
+        "games_missed",
+        "red_zone_carries",
+        "red_zone_targets",
+        "route_participation",
+        "routes_run",
+        "snap_share"
+      ],
+      "production_summary": {
+        "season_ppr": 1.48,
+        "season_ppg": 1.48,
+        "games_for_ppg": 1
+      },
+      "usage_summary": {
+        "targets": 0,
+        "receptions": 0,
+        "rushing_attempts": 0,
+        "receiving_air_yards": 0,
+        "target_share": 0.0,
+        "air_yards_share": 0.0,
+        "wopr": 0.0,
+        "racr": null,
+        "snap_share": null,
+        "routes_run": null,
+        "route_participation": null,
+        "red_zone_targets": null,
+        "red_zone_carries": null
+      },
+      "birth_date": "1985-10-13",
+      "season_age": 36.88,
+      "draft_year": null,
+      "rookie_year": 2009,
+      "career_year": 14
+    },
+    {
+      "player_id": "00-0026625",
+      "player_name": "Brian Hoyer",
+      "position": "QB",
+      "season": 2023,
+      "season_type": "REG",
+      "identity_confidence": "source_verified",
+      "source_refs": [
+        {
+          "source_name": "nflreadpy.load_player_stats(summary_level='reg')",
+          "observed_at": "2026-06-30T19:36:52.260432+00:00"
+        },
+        {
+          "source_name": "nflreadpy.load_player_stats(summary_level='week')",
+          "observed_at": "2026-06-30T19:36:52.260432+00:00"
+        },
+        {
+          "source_name": "nflreadpy.load_players()",
+          "observed_at": "2026-06-30T19:36:52.260432+00:00"
+        }
+      ],
+      "teams": [
+        "LV"
+      ],
+      "primary_team": "LV",
+      "primary_team_rule": null,
+      "weeks_observed": 2,
+      "coverage_status": "partial_season",
+      "missing_fields": [
+        "draft_year",
+        "games_missed",
+        "red_zone_carries",
+        "red_zone_targets",
+        "route_participation",
+        "routes_run",
+        "snap_share"
+      ],
+      "production_summary": {
+        "season_ppr": 4.94,
+        "season_ppg": 2.47,
+        "games_for_ppg": 2
+      },
+      "usage_summary": {
+        "targets": 0,
+        "receptions": 0,
+        "rushing_attempts": 3,
+        "receiving_air_yards": 0,
+        "target_share": 0.0,
+        "air_yards_share": 0.0,
+        "wopr": 0.0,
+        "racr": null,
+        "snap_share": null,
+        "routes_run": null,
+        "route_participation": null,
+        "red_zone_targets": null,
+        "red_zone_carries": null
+      },
+      "birth_date": "1985-10-13",
+      "season_age": 37.88,
+      "draft_year": null,
+      "rookie_year": 2009,
+      "career_year": 15
+    },
+    {
+      "player_id": "00-0027688",
+      "player_name": "Colt McCoy",
+      "position": "QB",
+      "season": 2022,
+      "season_type": "REG",
+      "identity_confidence": "source_verified",
+      "source_refs": [
+        {
+          "source_name": "nflreadpy.load_player_stats(summary_level='reg')",
+          "observed_at": "2026-06-30T19:36:52.260432+00:00"
+        },
+        {
+          "source_name": "nflreadpy.load_player_stats(summary_level='week')",
+          "observed_at": "2026-06-30T19:36:52.260432+00:00"
+        },
+        {
+          "source_name": "nflreadpy.load_players()",
+          "observed_at": "2026-06-30T19:36:52.260432+00:00"
+        }
+      ],
+      "teams": [
+        "ARI"
+      ],
+      "primary_team": "ARI",
+      "primary_team_rule": null,
+      "weeks_observed": 4,
+      "coverage_status": "partial_season",
+      "missing_fields": [
+        "games_missed",
+        "red_zone_carries",
+        "red_zone_targets",
+        "route_participation",
+        "routes_run",
+        "snap_share"
+      ],
+      "production_summary": {
+        "season_ppr": 32.800000000000004,
+        "season_ppg": 8.2,
+        "games_for_ppg": 4
+      },
+      "usage_summary": {
+        "targets": 0,
+        "receptions": 0,
+        "rushing_attempts": 14,
+        "receiving_air_yards": 0,
+        "target_share": 0.0,
+        "air_yards_share": 0.0,
+        "wopr": 0.0,
+        "racr": null,
+        "snap_share": null,
+        "routes_run": null,
+        "route_participation": null,
+        "red_zone_targets": null,
+        "red_zone_carries": null
+      },
+      "birth_date": "1986-09-05",
+      "season_age": 35.99,
+      "draft_year": 2010,
+      "rookie_year": 2010,
+      "career_year": 13
+    },
+    {
+      "player_id": "00-0033118",
+      "player_name": "Kenyan Drake",
+      "position": "RB",
+      "season": 2022,
+      "season_type": "REG",
+      "identity_confidence": "source_verified",
+      "source_refs": [
+        {
+          "source_name": "nflreadpy.load_player_stats(summary_level='reg')",
+          "observed_at": "2026-06-30T19:36:52.260432+00:00"
+        },
+        {
+          "source_name": "nflreadpy.load_player_stats(summary_level='week')",
+          "observed_at": "2026-06-30T19:36:52.260432+00:00"
+        },
+        {
+          "source_name": "nflreadpy.load_players()",
+          "observed_at": "2026-06-30T19:36:52.260432+00:00"
+        }
+      ],
+      "teams": [
+        "BAL"
+      ],
+      "primary_team": "BAL",
+      "primary_team_rule": null,
+      "weeks_observed": 12,
+      "coverage_status": "partial_season",
+      "missing_fields": [
+        "games_missed",
+        "red_zone_carries",
+        "red_zone_targets",
+        "route_participation",
+        "routes_run",
+        "snap_share"
+      ],
+      "production_summary": {
+        "season_ppr": 104.1,
+        "season_ppg": 8.67,
+        "games_for_ppg": 12
+      },
+      "usage_summary": {
+        "targets": 26,
+        "receptions": 17,
+        "rushing_attempts": 109,
+        "receiving_air_yards": -16,
+        "target_share": 0.0559,
+        "air_yards_share": -0.004,
+        "wopr": 0.0811,
+        "racr": -5.5625,
+        "snap_share": null,
+        "routes_run": null,
+        "route_participation": null,
+        "red_zone_targets": null,
+        "red_zone_carries": null
+      },
+      "birth_date": "1994-01-26",
+      "season_age": 28.6,
+      "draft_year": 2016,
+      "rookie_year": 2016,
+      "career_year": 7
+    },
+    {
+      "player_id": "00-0033118",
+      "player_name": "Kenyan Drake",
+      "position": "RB",
+      "season": 2023,
+      "season_type": "REG",
+      "identity_confidence": "source_verified",
+      "source_refs": [
+        {
+          "source_name": "nflreadpy.load_player_stats(summary_level='reg')",
+          "observed_at": "2026-06-30T19:36:52.260432+00:00"
+        },
+        {
+          "source_name": "nflreadpy.load_player_stats(summary_level='week')",
+          "observed_at": "2026-06-30T19:36:52.260432+00:00"
+        },
+        {
+          "source_name": "nflreadpy.load_players()",
+          "observed_at": "2026-06-30T19:36:52.260432+00:00"
+        }
+      ],
+      "teams": [
+        "BAL",
+        "GB"
+      ],
+      "primary_team": "BAL",
+      "primary_team_rule": "most weeks_observed in REG week-level production rows for the season; ties broken by earliest week of first appearance, then alphabetical team code",
+      "weeks_observed": 2,
+      "coverage_status": "partial_season",
+      "missing_fields": [
+        "games_missed",
+        "red_zone_carries",
+        "red_zone_targets",
+        "route_participation",
+        "routes_run",
+        "snap_share"
+      ],
+      "production_summary": {
+        "season_ppr": 3.1,
+        "season_ppg": 1.55,
+        "games_for_ppg": 2
+      },
+      "usage_summary": {
+        "targets": 3,
+        "receptions": 2,
+        "rushing_attempts": 2,
+        "receiving_air_yards": -4,
+        "target_share": 0.0063,
+        "air_yards_share": -0.001,
+        "wopr": 0.0088,
+        "racr": -7.75,
+        "snap_share": null,
+        "routes_run": null,
+        "route_participation": null,
+        "red_zone_targets": null,
+        "red_zone_carries": null
+      },
+      "birth_date": "1994-01-26",
+      "season_age": 29.6,
+      "draft_year": 2016,
+      "rookie_year": 2016,
+      "career_year": 8
+    }
+  ]
+}

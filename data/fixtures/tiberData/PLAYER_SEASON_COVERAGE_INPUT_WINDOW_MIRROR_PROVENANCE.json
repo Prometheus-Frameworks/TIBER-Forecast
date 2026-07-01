@@ -1,0 +1,33 @@
+{
+  "kind": "player_season_coverage_v0_input_window_mirror",
+  "issue": "TIBER-Forecast#103",
+  "note": "Read-only mirror of 8 real TIBER-Data player_season_coverage_v0 rows (2022-2024, 4 players) used by the player-history feature extraction scaffold (#103), following the controlled experiment design in #101/PR #102. This is a separate, purpose-built mirror from the PR #100 gate mirror -- that one has 4 rows, at most 1 per player, which cannot exercise multi-season aggregation. This mirror's 4 players were selected specifically to cover: full 3-season presence, single-season presence, an undrafted player, and a within-window multi-team season. Forecast does not modify, re-govern, re-derive, or promote this data. No 2025 row exists in this file.",
+  "mirrored_file": {
+    "path": "player_season_coverage_v0_2022_2024.input_mirror.json",
+    "derivedFrom": "TIBER-Data: data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (as merged to main in PR #191)",
+    "derivation_method": "8 rows (4 players x up to 3 seasons each) copied verbatim from the real, committed TIBER-Data artifact, trimmed to the fields the feature-extraction scaffold needs. No values are fabricated or estimated."
+  },
+  "governed_source": {
+    "repo": "Prometheus-Frameworks/TIBER-Data",
+    "sourceArtifactPath": "data/processed/evidence/player_season_coverage_2022_2025.source_backed.json",
+    "sha256": "39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b",
+    "artifactStatus": "candidate_evidence_artifact_not_promoted",
+    "schemaPath": "schemas/player_season_coverage_v0.schema.json",
+    "validatorPath": "scripts/validate_player_season_coverage_v0.py"
+  },
+  "refs": [
+    "TIBER-Data#184", "TIBER-Data#185",
+    "TIBER-Data#186", "TIBER-Data#187",
+    "TIBER-Data#188", "TIBER-Data#189",
+    "TIBER-Data#190", "TIBER-Data#191",
+    "TIBER-Forecast#99", "TIBER-Forecast#100",
+    "TIBER-Forecast#101", "TIBER-Forecast#102"
+  ],
+  "boundary": {
+    "not_promoted": true,
+    "not_a_forecast_input_today": true,
+    "no_forecast_run_authorized_by_this_mirror": true,
+    "no_feature_binding_authorized_by_this_mirror": true,
+    "no_model_training_authorized_by_this_mirror": true
+  }
+}
