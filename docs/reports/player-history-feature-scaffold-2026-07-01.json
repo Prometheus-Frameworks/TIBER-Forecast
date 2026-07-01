@@ -230,11 +230,11 @@
           "2022": 1.48,
           "2023": 2.47
         },
-        "trailing_2yr_ppr_total": 6.42,
+        "trailing_2yr_ppr_total": null,
         "trailing_3yr_ppr_total": null,
-        "trailing_2yr_ppr_mean": 3.21,
+        "trailing_2yr_ppr_mean": null,
         "trailing_3yr_ppr_mean": null,
-        "year_over_year_ppr_trend": 3.4600000000000004
+        "year_over_year_ppr_trend": null
       },
       "usage": {
         "targets_by_season": {
@@ -395,11 +395,11 @@
           "2022": 8.67,
           "2023": 1.55
         },
-        "trailing_2yr_ppr_total": 107.19999999999999,
+        "trailing_2yr_ppr_total": null,
         "trailing_3yr_ppr_total": null,
-        "trailing_2yr_ppr_mean": 53.599999999999994,
+        "trailing_2yr_ppr_mean": null,
         "trailing_3yr_ppr_mean": null,
-        "year_over_year_ppr_trend": -101
+        "year_over_year_ppr_trend": null
       },
       "usage": {
         "targets_by_season": {

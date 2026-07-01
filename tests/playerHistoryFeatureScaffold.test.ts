@@ -108,6 +108,22 @@ describe('missing-season / null handling (never zero-filled, never fabricated)',
     expect(feature!.production!.trailing_3yr_ppr_total).toBeNull();
     expect(feature!.production!.trailing_2yr_ppr_total).toBeNull(); // 2023 missing too
   });
+
+  it('trailing windows are anchored to the target season, not to the player\'s last-observed season: a missing immediate pre-target season nulls the window rather than substituting older seasons', () => {
+    // Player observed in 2022 and 2023 only; 2024 (the immediate pre-target season for a 2025 target) is
+    // missing entirely. The trailing-2yr window must be [2024, 2023], not silently fall back to [2023, 2022].
+    const rows = [
+      row({ season: 2022, production_summary: { season_ppr: 1.48, season_ppg: 1.48, games_for_ppg: 1 } }),
+      row({ season: 2023, production_summary: { season_ppr: 4.94, season_ppg: 2.47, games_for_ppg: 2 } }),
+    ];
+    const [feature] = buildPlayerHistoryFeatures(rows, { targetSeason: 2025 });
+    expect(feature!.production!.trailing_2yr_ppr_total).toBeNull();
+    expect(feature!.production!.trailing_3yr_ppr_total).toBeNull();
+    expect(feature!.production!.year_over_year_ppr_trend).toBeNull();
+    // The by-season maps still record the real, present data -- only the target-anchored aggregates null.
+    expect(feature!.production!.season_ppr_by_season[2022]).toBe(1.48);
+    expect(feature!.production!.season_ppr_by_season[2023]).toBe(4.94);
+  });
 });
 
 describe('usage history: unavailable fields stay excluded/null, source-backed fields pass through', () => {
@@ -144,6 +160,18 @@ describe('age/career fabrication guards', () => {
 
   it('does not fabricate career_year when rookie_year is null', () => {
     const rows = [row({ season: 2024, rookie_year: null, career_year: null })];
+    const [feature] = buildPlayerHistoryFeatures(rows, { targetSeason: 2025 });
+    expect(feature!.age_career!.latest_pre_target_career_year).toBeNull();
+  });
+
+  it('forces season_age null even if a malformed row carries a non-null season_age alongside a null birth_date', () => {
+    const rows = [row({ season: 2024, birth_date: null, season_age: 26.5 })];
+    const [feature] = buildPlayerHistoryFeatures(rows, { targetSeason: 2025 });
+    expect(feature!.age_career!.latest_pre_target_season_age).toBeNull();
+  });
+
+  it('forces career_year null even if a malformed row carries a non-null career_year alongside a null rookie_year', () => {
+    const rows = [row({ season: 2024, rookie_year: null, career_year: 4 })];
     const [feature] = buildPlayerHistoryFeatures(rows, { targetSeason: 2025 });
     expect(feature!.age_career!.latest_pre_target_career_year).toBeNull();
   });

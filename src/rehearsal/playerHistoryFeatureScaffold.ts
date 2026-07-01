@@ -242,7 +242,10 @@ const buildCoverageFeatures = (playerRows: readonly PlayerHistoryInputRow[]): Pl
   };
 };
 
-const buildProductionFeatures = (playerRows: readonly PlayerHistoryInputRow[]): PlayerHistoryProductionFeatures => {
+const buildProductionFeatures = (
+  playerRows: readonly PlayerHistoryInputRow[],
+  targetSeason: number,
+): PlayerHistoryProductionFeatures => {
   const byPpr: Record<number, number | null> = {};
   const byPpg: Record<number, number | null> = {};
   for (const row of playerRows) {
@@ -250,22 +253,21 @@ const buildProductionFeatures = (playerRows: readonly PlayerHistoryInputRow[]): 
     byPpg[row.season] = row.production_summary.season_ppg;
   }
 
-  const seasonsPresent = playerRows.map((row) => row.season);
-  const maxSeason = seasonsPresent.length > 0 ? Math.max(...seasonsPresent) : null;
-
-  // "Both seasons present" means the two/three most recent CONSECUTIVE seasons, not any two observed.
-  const twoMostRecent = maxSeason !== null ? [maxSeason, maxSeason - 1] : [];
-  const threeMostRecent = maxSeason !== null ? [maxSeason, maxSeason - 1, maxSeason - 2] : [];
+  // Anchored to targetSeason, NOT to whichever season the player happened to last appear in -- if the
+  // immediate pre-target season is missing entirely (e.g. a player observed in 2022-2023 but not 2024,
+  // for a 2025 target), the trailing window must null out rather than silently substitute older seasons.
+  const twoMostRecent = [targetSeason - 1, targetSeason - 2];
+  const threeMostRecent = [targetSeason - 1, targetSeason - 2, targetSeason - 3];
   const pprFor = (season: number): number | null => byPpr[season] ?? null;
   const allPresent = (seasons: number[]): boolean => seasons.every((season) => Object.prototype.hasOwnProperty.call(byPpr, season) && byPpr[season] !== null);
 
-  const trailing2yrTotal = twoMostRecent.length === 2 && allPresent(twoMostRecent)
+  const trailing2yrTotal = allPresent(twoMostRecent)
     ? twoMostRecent.reduce((sum, season) => sum + (pprFor(season) ?? 0), 0)
     : null;
-  const trailing3yrTotal = threeMostRecent.length === 3 && allPresent(threeMostRecent)
+  const trailing3yrTotal = allPresent(threeMostRecent)
     ? threeMostRecent.reduce((sum, season) => sum + (pprFor(season) ?? 0), 0)
     : null;
-  const yoyTrend = twoMostRecent.length === 2 && allPresent(twoMostRecent)
+  const yoyTrend = allPresent(twoMostRecent)
     ? (pprFor(twoMostRecent[0]!) ?? 0) - (pprFor(twoMostRecent[1]!) ?? 0)
     : null;
 
@@ -307,8 +309,10 @@ const buildAgeCareerFeatures = (playerRows: readonly PlayerHistoryInputRow[]): P
   }
   const latest = playerRows[playerRows.length - 1]!;
   return {
-    latest_pre_target_season_age: latest.season_age,
-    latest_pre_target_career_year: latest.career_year,
+    // Never trust a row's season_age/career_year at face value -- force null whenever the field they are
+    // derived from is null, even if a malformed/inconsistent input row carries a stale or fabricated value.
+    latest_pre_target_season_age: latest.birth_date !== null ? latest.season_age : null,
+    latest_pre_target_career_year: latest.rookie_year !== null ? latest.career_year : null,
     draft_year: latest.draft_year,
     rookie_year: latest.rookie_year,
     undrafted_indicator: latest.identity_confidence === 'source_verified' ? latest.draft_year === null : null,
@@ -356,7 +360,7 @@ export const buildPlayerHistoryFeatures = (
       input_seasons_considered: playerRows.map((r) => r.season),
     };
     if (familySet.has('coverage')) row.coverage = buildCoverageFeatures(playerRows);
-    if (familySet.has('production')) row.production = buildProductionFeatures(playerRows);
+    if (familySet.has('production')) row.production = buildProductionFeatures(playerRows, options.targetSeason);
     if (familySet.has('usage')) row.usage = buildUsageFeatures(playerRows);
     if (familySet.has('age_career')) row.age_career = buildAgeCareerFeatures(playerRows);
     if (familySet.has('team_context')) row.team_context = buildTeamContextFeatures(playerRows);
