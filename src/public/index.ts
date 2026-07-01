@@ -312,6 +312,34 @@ export {
   evaluatePlayerSeasonCoverageGateFromMirror,
 } from '../rehearsal/runPlayerSeasonCoverageGateEvaluation.js';
 
+export type {
+  PlayerHistoryAgeCareerFeatures,
+  PlayerHistoryCoverageFeatures,
+  PlayerHistoryCoverageSummary,
+  PlayerHistoryFeatureFamily,
+  PlayerHistoryFeatureOptions,
+  PlayerHistoryFeatureRow,
+  PlayerHistoryImputationRow,
+  PlayerHistoryInputRow,
+  PlayerHistoryProductionFeatures,
+  PlayerHistoryProductionSummary,
+  PlayerHistorySourceRef,
+  PlayerHistoryTeamContextFeatures,
+  PlayerHistoryUsageFeatures,
+  PlayerHistoryUsageSummary,
+} from '../rehearsal/playerHistoryFeatureScaffold.js';
+export {
+  ALL_PLAYER_HISTORY_FEATURE_FAMILIES,
+  EXCLUDED_UNAVAILABLE_USAGE_FIELDS,
+  PLAYER_HISTORY_FEATURE_SCAFFOLD_VERSION,
+  assertNoForbiddenAvailabilityFields,
+  buildPlayerHistoryFeatures,
+  computePlayerHistoryTrainFoldMeans,
+  filterPlayerHistoryInputRows,
+  imputePlayerHistoryValue,
+  summarizePlayerHistoryCoverage,
+} from '../rehearsal/playerHistoryFeatureScaffold.js';
+
 export {
   PROJECTION_INPUT_COVERAGE_ARTIFACT_VERSION,
   PROJECTION_RUN_MANIFEST_ARTIFACT_VERSION,
