@@ -101,6 +101,13 @@ describe('target-population gate: fail-closed paths', () => {
     expectBlocked(mirror([row({ player_id: 'a1', source_refs: [] })]), 'row_level_source_refs_present');
   });
 
+  it('blocks rows whose source is non-fixture but not on the approved allow-list (e.g. manual_spreadsheet)', () => {
+    expectBlocked(
+      mirror([row({ player_id: 'a1', source_refs: [{ source_name: 'manual_spreadsheet:2025_outcomes.xlsx', observed_at: null }] })]),
+      'source_refs_on_approved_allow_list',
+    );
+  });
+
   it('blocks rows whose identity is not source-backed', () => {
     expectBlocked(mirror([row({ player_id: 'a1', identity_confidence: 'provisional' })]), 'identity_confidence_source_backed');
   });

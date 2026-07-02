@@ -20,6 +20,7 @@ Evaluates the generated 2025 outcome mirror (`data/fixtures/tiberData/player_sea
 | row_level_source_refs_present | `every row carries >= 1 source_ref` | `0 rows without` | pass |
 | identity_confidence_source_backed | `every row in [source_verified]` | `0 rows outside` | pass |
 | no_fixture_source_markers | `no source_name containing offline_fixture/scaffold/fixture` | `0 rows with fixture-like markers` | pass |
+| source_refs_on_approved_allow_list | `every row carries >= 1 source_name containing one of: nflreadpy.load_player_stats, nflreadpy.load_players` | `0 rows without an approved source` | pass |
 | no_forbidden_availability_fields | `no row carries active_status/ownership_status/roster_status/active_roster_status` | `0 rows with forbidden fields` | pass |
 | no_input_feature_payloads_on_outcome_rows | `outcome rows carry outcome + identity + provenance only` | `0 rows carrying input-feature payload keys` | pass |
 

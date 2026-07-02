@@ -10,6 +10,7 @@
  * never a run, never feature binding, never promotion of the candidate artifact.
  */
 
+import { APPROVED_SOURCE_NAME_SUBSTRINGS } from '../reports/playerSeasonCoverageGate.js';
 import {
   PLAYER_HISTORY_APPROVED_POSITIONS,
   PLAYER_HISTORY_APPROVED_SEASON_TYPE,
@@ -146,6 +147,19 @@ export const evaluatePlayerHistoryTargetPopulationGate = (
     `no source_name containing ${FORBIDDEN_SOURCE_MARKERS.join('/')}`,
     `${fixtureMarked.length} rows with fixture-like markers`,
     fixtureMarked.length === 0,
+  );
+
+  // Forbidden-substring screening alone would let an arbitrary provenance string (e.g. a manual
+  // spreadsheet) pass as source-backed; every row must ALSO carry at least one approved source.
+  const unapprovedSource = rows.filter(
+    (row) =>
+      !row.source_refs.some((ref) => APPROVED_SOURCE_NAME_SUBSTRINGS.some((approved) => ref.source_name.includes(approved))),
+  );
+  check(
+    'source_refs_on_approved_allow_list',
+    `every row carries >= 1 source_name containing one of: ${APPROVED_SOURCE_NAME_SUBSTRINGS.join(', ')}`,
+    `${unapprovedSource.length} rows without an approved source`,
+    unapprovedSource.length === 0,
   );
 
   const forbiddenFieldRows = rows.filter((row) =>

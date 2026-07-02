@@ -103,6 +103,12 @@
         "passed": true
       },
       {
+        "dimension": "source_refs_on_approved_allow_list",
+        "expected": "every row carries >= 1 source_name containing one of: nflreadpy.load_player_stats, nflreadpy.load_players",
+        "observed": "0 rows without an approved source",
+        "passed": true
+      },
+      {
         "dimension": "no_forbidden_availability_fields",
         "expected": "no row carries active_status/ownership_status/roster_status/active_roster_status",
         "observed": "0 rows with forbidden fields",
