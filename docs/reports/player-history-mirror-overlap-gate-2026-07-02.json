@@ -1,0 +1,113 @@
+{
+  "report_version": "player-history-mirror-overlap-gate-report-v1",
+  "repo": "Prometheus-Frameworks/TIBER-Forecast",
+  "issue": "TIBER-Forecast#109",
+  "generated_at": "2026-07-02T00:00:00.000Z",
+  "evidence_sources": {
+    "source_gate_reverification": "docs/reports/player-history-source-gate-reverification-2026-07-02.json",
+    "target_population_gate": "docs/reports/player-history-target-population-gate-2026-07-02.json",
+    "dry_run_matrix": "docs/reports/player-history-real-population-dry-run-matrix-2026-07-02.json"
+  },
+  "gate_result": {
+    "gate_version": "player-history-mirror-overlap-gate-v1",
+    "status": "player_history_mirror_overlap_gate_passed",
+    "decision": "may_authorize_run_issue",
+    "decision_ceiling_note": "may_authorize_run_issue is the strongest decision this gate can return; it has no may_run value",
+    "thresholds": {
+      "min_joined_rows_overall": 200,
+      "min_joined_rows_per_position": 30,
+      "min_joined_share": 0.6,
+      "required_positions": [
+        "QB",
+        "RB",
+        "WR",
+        "TE"
+      ]
+    },
+    "observed": {
+      "scored_target_rows": 610,
+      "joined_rows": 485,
+      "joined_share": 0.7950819672131147,
+      "joined_rows_by_position": {
+        "QB": 66,
+        "TE": 115,
+        "WR": 189,
+        "RB": 115
+      }
+    },
+    "checks": [
+      {
+        "dimension": "source_gate_reverified",
+        "expected": "may_continue_mirror_build",
+        "observed": "may_continue_mirror_build",
+        "passed": true
+      },
+      {
+        "dimension": "target_population_gate_passed",
+        "expected": "may_continue_to_overlap_gate",
+        "observed": "may_continue_to_overlap_gate",
+        "passed": true
+      },
+      {
+        "dimension": "evidence_counts_sane",
+        "expected": "0 <= joined_rows <= scored_target_rows, both finite",
+        "observed": "scored=610, joined=485",
+        "passed": true
+      },
+      {
+        "dimension": "nonzero_overlap",
+        "expected": "> 0 joined rows",
+        "observed": "485",
+        "passed": true
+      },
+      {
+        "dimension": "min_joined_rows_overall",
+        "expected": ">= 200",
+        "observed": "485",
+        "passed": true
+      },
+      {
+        "dimension": "min_joined_rows_position_QB",
+        "expected": ">= 30",
+        "observed": "66",
+        "passed": true
+      },
+      {
+        "dimension": "min_joined_rows_position_RB",
+        "expected": ">= 30",
+        "observed": "115",
+        "passed": true
+      },
+      {
+        "dimension": "min_joined_rows_position_WR",
+        "expected": ">= 30",
+        "observed": "189",
+        "passed": true
+      },
+      {
+        "dimension": "min_joined_rows_position_TE",
+        "expected": ">= 30",
+        "observed": "115",
+        "passed": true
+      },
+      {
+        "dimension": "min_joined_share",
+        "expected": ">= 0.6",
+        "observed": "0.7951",
+        "passed": true
+      },
+      {
+        "dimension": "derangement_feasible_for_included_groups",
+        "expected": "every position group with feature-bearing rows supports a derangement",
+        "observed": "QB:66, RB:115, TE:115, WR:189",
+        "passed": true
+      }
+    ],
+    "blocking_reasons": [],
+    "notes": [
+      "Gate evaluation only: passing authorizes opening a SEPARATE run-authorizing issue and nothing else. No Forecast run, no Run 3, no model training/tuning/evaluation, no MAE/RMSE/Pearson/rank-correlation, no feature binding, no promotion, no signal claim.",
+      "Thresholds are the pre-registered #107/PR #108 floors; lowering any requires explicit review in the run-authorizing issue before any metric is computed."
+    ]
+  },
+  "next_allowed_step": "Open a SEPARATE issue -- Forecast: authorize controlled player-history run after population gate -- which must pass its own review before any arm is run or any metric is computed. This gate result authorizes opening that issue and nothing else."
+}

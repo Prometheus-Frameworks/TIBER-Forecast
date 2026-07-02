@@ -23,7 +23,6 @@
  * cannot be silently reused as a training/evaluation table.
  */
 
-import type { SeasonalPlayerObservation } from '../contracts/seasonalPprBacktest.js';
 import {
   ALL_PLAYER_HISTORY_FEATURE_FAMILIES,
   buildPlayerHistoryFeatures,
@@ -143,9 +142,21 @@ export interface PlayerHistoryDryRunMissingnessSummary {
   zero_value_paths_observed: string[];
 }
 
+/**
+ * Minimal structural target-population row. `SeasonalPlayerObservation` (the fixture snapshot)
+ * satisfies it as-is; the real #109 outcome mirror maps `season_ppr` -> `ppr_2025_actual`. Only the
+ * outcome's PRESENCE is ever read for matrix construction -- its value is never copied into rows.
+ */
+export interface PlayerHistoryDryRunTargetRow {
+  player_id: string;
+  player_name: string;
+  position: string;
+  ppr_2025_actual: number | null;
+}
+
 export interface BuildPlayerHistoryDryRunMatrixInput {
-  /** The accepted Forecast baseline/target population (today: the seasonal PPR seed snapshot). */
-  targetPopulation: readonly SeasonalPlayerObservation[];
+  /** The accepted target population (fixture snapshot, or the #109 real outcome-mirror population). */
+  targetPopulation: readonly PlayerHistoryDryRunTargetRow[];
   /** Raw pre-target player-history rows (e.g. the #104 input mirror's rows). */
   playerHistoryRows: readonly PlayerHistoryInputRow[];
   targetSeason: number;
@@ -225,7 +236,8 @@ const inspectPayloadMissingness = (
 /**
  * Build the dry-run experiment matrix. Deterministic: same inputs + seed -> byte-identical report.
  * Pure, no I/O. All #104 fail-closed guards apply via the delegated feature build; the target
- * population is additionally required to be QB/RB/WR/TE by its own `ScoringPosition` type.
+ * population's own gate (fixture snapshot typing, or the #109 target-population gate) is responsible
+ * for its QB/RB/WR/TE scope.
  */
 export const buildPlayerHistoryExperimentDryRunMatrix = (
   input: BuildPlayerHistoryDryRunMatrixInput,

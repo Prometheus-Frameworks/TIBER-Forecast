@@ -1,0 +1,135 @@
+{
+  "report_version": "player-history-target-population-gate-report-v1",
+  "repo": "Prometheus-Frameworks/TIBER-Forecast",
+  "issue": "TIBER-Forecast#109",
+  "generated_at": "2026-07-02T00:00:00.000Z",
+  "outcome_mirror_inspected": {
+    "path": "data/fixtures/tiberData/player_season_coverage_v0_2025.outcome_mirror.json",
+    "governed_source": {
+      "repo": "Prometheus-Frameworks/TIBER-Data",
+      "sourceArtifactPath": "data/processed/evidence/player_season_coverage_2022_2025.source_backed.json",
+      "sha256": "39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b",
+      "artifactStatus": "candidate_evidence_artifact_not_promoted"
+    }
+  },
+  "gate_result": {
+    "gate_version": "player-history-target-population-gate-v1",
+    "status": "player_history_target_population_gate_passed",
+    "decision": "may_continue_to_overlap_gate",
+    "decision_ceiling_note": "may_continue_to_overlap_gate is the strongest decision this gate can return; it has no may_run value",
+    "checks": [
+      {
+        "dimension": "mirror_kind",
+        "expected": "player_history_run_population_outcome_mirror",
+        "observed": "player_history_run_population_outcome_mirror",
+        "passed": true
+      },
+      {
+        "dimension": "source_sha256_pin",
+        "expected": "39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b",
+        "observed": "39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b",
+        "passed": true
+      },
+      {
+        "dimension": "candidate_status_acknowledged",
+        "expected": "candidate_evidence_artifact_not_promoted",
+        "observed": "candidate_evidence_artifact_not_promoted",
+        "passed": true
+      },
+      {
+        "dimension": "outcome_layer_only_boundary_stated",
+        "expected": "boundary.outcome_layer_only === true && boundary.rows_carry_no_input_features === true",
+        "observed": "outcome_layer_only=true, rows_carry_no_input_features=true",
+        "passed": true
+      },
+      {
+        "dimension": "population_nonempty",
+        "expected": "> 0 rows",
+        "observed": "610 rows",
+        "passed": true
+      },
+      {
+        "dimension": "season_scope",
+        "expected": "all rows season === 2025",
+        "observed": "0 rows outside",
+        "passed": true
+      },
+      {
+        "dimension": "season_type_scope",
+        "expected": "all rows season_type === REG",
+        "observed": "0 rows outside",
+        "passed": true
+      },
+      {
+        "dimension": "position_scope",
+        "expected": "all rows in QB/RB/WR/TE",
+        "observed": "0 rows outside",
+        "passed": true
+      },
+      {
+        "dimension": "row_grain_unique",
+        "expected": "one row per player_id + season + season_type",
+        "observed": "0 duplicates",
+        "passed": true
+      },
+      {
+        "dimension": "target_outcome_present_and_numeric_or_null",
+        "expected": "season_ppr present on every row, number where observed, null only for genuinely unobserved",
+        "observed": "0 rows with missing/non-numeric outcome field",
+        "passed": true
+      },
+      {
+        "dimension": "at_least_one_numeric_outcome",
+        "expected": ">= 1 numeric outcome value",
+        "observed": "610 numeric",
+        "passed": true
+      },
+      {
+        "dimension": "row_level_source_refs_present",
+        "expected": "every row carries >= 1 source_ref",
+        "observed": "0 rows without",
+        "passed": true
+      },
+      {
+        "dimension": "identity_confidence_source_backed",
+        "expected": "every row in [source_verified]",
+        "observed": "0 rows outside",
+        "passed": true
+      },
+      {
+        "dimension": "no_fixture_source_markers",
+        "expected": "no source_name containing offline_fixture/scaffold/fixture",
+        "observed": "0 rows with fixture-like markers",
+        "passed": true
+      },
+      {
+        "dimension": "no_forbidden_availability_fields",
+        "expected": "no row carries active_status/ownership_status/roster_status/active_roster_status",
+        "observed": "0 rows with forbidden fields",
+        "passed": true
+      },
+      {
+        "dimension": "no_input_feature_payloads_on_outcome_rows",
+        "expected": "outcome rows carry outcome + identity + provenance only",
+        "observed": "0 rows carrying input-feature payload keys",
+        "passed": true
+      }
+    ],
+    "blocking_reasons": [],
+    "population_counts": {
+      "rows": 610,
+      "players": 610,
+      "by_position": {
+        "QB": 81,
+        "TE": 138,
+        "WR": 240,
+        "RB": 151
+      },
+      "null_outcome_rows": 0
+    },
+    "notes": [
+      "Gate evaluation only: no Forecast run, no Run 3, no model training/tuning/evaluation, no metric computation, no feature binding, no promotion of the candidate artifact, no signal claim.",
+      "The 2025 outcome values gated here are the experiment TARGET layer; they are never consumed as input features (structural #104 guards + the input mirror carries no 2025 rows)."
+    ]
+  }
+}

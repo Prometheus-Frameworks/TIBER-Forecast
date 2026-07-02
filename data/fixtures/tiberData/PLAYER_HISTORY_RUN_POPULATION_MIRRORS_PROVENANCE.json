@@ -1,0 +1,94 @@
+{
+  "kind": "player_history_run_population_mirrors_provenance",
+  "version": "player-history-run-population-mirrors-v1",
+  "issue": "TIBER-Forecast#109",
+  "generated_at": "2026-07-02T00:00:00.000Z",
+  "generator_script": "scripts/buildPlayerHistoryRunPopulationMirrors.ts",
+  "governed_source": {
+    "repo": "Prometheus-Frameworks/TIBER-Data",
+    "sourceArtifactPath": "data/processed/evidence/player_season_coverage_2022_2025.source_backed.json",
+    "sha256": "39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b",
+    "artifactStatus": "candidate_evidence_artifact_not_promoted",
+    "sha256_verified_fail_closed_by_generator": true
+  },
+  "refs": [
+    "TIBER-Data#184",
+    "TIBER-Data#185",
+    "TIBER-Data#186",
+    "TIBER-Data#187",
+    "TIBER-Data#188",
+    "TIBER-Data#189",
+    "TIBER-Data#190",
+    "TIBER-Data#191",
+    "TIBER-Forecast#99",
+    "TIBER-Forecast#100",
+    "TIBER-Forecast#101",
+    "TIBER-Forecast#102",
+    "TIBER-Forecast#103",
+    "TIBER-Forecast#104",
+    "TIBER-Forecast#105",
+    "TIBER-Forecast#106",
+    "TIBER-Forecast#107",
+    "TIBER-Forecast#108",
+    "TIBER-Forecast#109"
+  ],
+  "mirrors": {
+    "outcome_mirror": {
+      "path": "data/fixtures/tiberData/player_season_coverage_v0_2025.outcome_mirror.json",
+      "scope": "season 2025, REG, QB/RB/WR/TE, outcome layer only",
+      "counts": {
+        "rows": 610,
+        "players": 610,
+        "by_position": {
+          "QB": 81,
+          "TE": 138,
+          "WR": 240,
+          "RB": 151
+        }
+      },
+      "trimming_rationale": "Rows carry the target outcome (season_ppr), identity/position, and row-level provenance (source_refs, identity_confidence) required by the target-population gate -- and nothing else. No input-feature payloads (production/usage/coverage/team fields) are copied, so this mirror cannot be consumed as features."
+    },
+    "input_mirror": {
+      "path": "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.real_population_input_mirror.json",
+      "scope": "seasons 2022/2023/2024, REG, QB/RB/WR/TE, players limited to the outcome-mirror population",
+      "counts": {
+        "rows": 1145,
+        "players_with_history": 485,
+        "outcome_players_without_history": 125,
+        "by_season": {
+          "2022": 315,
+          "2023": 378,
+          "2024": 452
+        },
+        "by_position": {
+          "QB": 165,
+          "TE": 273,
+          "WR": 436,
+          "RB": 271
+        }
+      },
+      "trimming_rationale": "Rows are trimmed to exactly the fields the #104 feature-extraction scaffold consumes (identity, provenance, team-of-record context, coverage, production_summary, usage_summary, age/career fields). Unavailable usage fields stay null exactly as in the source; nulls are preserved verbatim and never coerced to zero."
+    }
+  },
+  "season_scope": {
+    "input_seasons": [
+      2022,
+      2023,
+      2024
+    ],
+    "target_season": 2025,
+    "season_type": "REG"
+  },
+  "exclusion_reasons": {
+    "outcome_players_without_history": "125 outcome players have no 2022-2024 source rows (e.g. rookies); this is documented absence (no-history subgroup), not a mirror failure. They are listed per player in the input mirror's no_history_players."
+  },
+  "boundary_statements": {
+    "input_mirror_contains_no_2025_rows": true,
+    "outcome_mirror_is_outcome_layer_only": true,
+    "source_artifact_is_candidate_not_promoted": true,
+    "generating_these_mirrors_promotes_nothing": true,
+    "no_production_consumer_may_treat_this_as_promoted_truth": true,
+    "no_forecast_run_authorized": true,
+    "nulls_preserved_never_zero_coerced": true
+  }
+}

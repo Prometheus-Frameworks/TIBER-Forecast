@@ -365,6 +365,55 @@ export {
   PLAYER_HISTORY_EXPERIMENT_ARMS,
   buildPlayerHistoryExperimentDryRunMatrix,
 } from '../rehearsal/playerHistoryExperimentDryRunMatrix.js';
+export type { PlayerHistoryDryRunTargetRow } from '../rehearsal/playerHistoryExperimentDryRunMatrix.js';
+export type {
+  PlayerHistoryNoHistoryPlayer,
+  PlayerHistoryOutcomeMirror,
+  PlayerHistoryOutcomeMirrorRow,
+  PlayerHistoryRunPopulationInputMirror,
+  SourceCoverageArtifact,
+  SourceCoverageRecord,
+} from '../rehearsal/playerHistoryRunPopulationMirrors.js';
+export {
+  EXPECTED_SOURCE_ARTIFACT_STATUS,
+  PINNED_SOURCE_ARTIFACT_PATH,
+  PINNED_SOURCE_ARTIFACT_REPO,
+  PINNED_SOURCE_ARTIFACT_SHA256,
+  PLAYER_HISTORY_RUN_POPULATION_MIRRORS_VERSION,
+  RUN_POPULATION_INPUT_SEASONS,
+  RUN_POPULATION_TARGET_SEASON,
+  assertPinnedSourceArtifactSha256,
+  buildPlayerHistoryOutcomeMirror,
+  buildPlayerHistoryRunPopulationInputMirror,
+} from '../rehearsal/playerHistoryRunPopulationMirrors.js';
+export type {
+  PlayerHistoryTargetPopulationGateCheck,
+  PlayerHistoryTargetPopulationGateDecision,
+  PlayerHistoryTargetPopulationGateResult,
+  PlayerHistoryTargetPopulationGateStatus,
+} from '../rehearsal/playerHistoryTargetPopulationGate.js';
+export {
+  ACCEPTED_IDENTITY_CONFIDENCES,
+  FORBIDDEN_SOURCE_MARKERS,
+  PLAYER_HISTORY_TARGET_POPULATION_GATE_VERSION,
+  evaluatePlayerHistoryTargetPopulationGate,
+} from '../rehearsal/playerHistoryTargetPopulationGate.js';
+export type {
+  PlayerHistoryMirrorOverlapEvidence,
+  PlayerHistoryMirrorOverlapGateCheck,
+  PlayerHistoryMirrorOverlapGateDecision,
+  PlayerHistoryMirrorOverlapGateResult,
+  PlayerHistoryMirrorOverlapGateStatus,
+  PlayerHistoryShuffleGroupEvidence,
+} from '../rehearsal/playerHistoryMirrorOverlapGate.js';
+export {
+  OVERLAP_MIN_JOINED_ROWS_OVERALL,
+  OVERLAP_MIN_JOINED_ROWS_PER_POSITION,
+  OVERLAP_MIN_JOINED_SHARE,
+  OVERLAP_REQUIRED_POSITIONS,
+  PLAYER_HISTORY_MIRROR_OVERLAP_GATE_VERSION,
+  evaluatePlayerHistoryMirrorOverlapGate,
+} from '../rehearsal/playerHistoryMirrorOverlapGate.js';
 
 export {
   PROJECTION_INPUT_COVERAGE_ARTIFACT_VERSION,
