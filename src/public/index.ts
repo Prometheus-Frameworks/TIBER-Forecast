@@ -343,6 +343,28 @@ export {
   imputePlayerHistoryValue,
   summarizePlayerHistoryCoverage,
 } from '../rehearsal/playerHistoryFeatureScaffold.js';
+export type {
+  BuildPlayerHistoryDryRunMatrixInput,
+  PlayerHistoryDryRunExclusion,
+  PlayerHistoryDryRunExclusionReason,
+  PlayerHistoryDryRunFamilyCoverage,
+  PlayerHistoryDryRunJoinSummary,
+  PlayerHistoryDryRunMatrixReport,
+  PlayerHistoryDryRunMatrixRow,
+  PlayerHistoryDryRunMissingnessSummary,
+  PlayerHistoryDryRunShuffleGroupReport,
+  PlayerHistoryDryRunShuffledControl,
+  PlayerHistoryExperimentArm,
+} from '../rehearsal/playerHistoryExperimentDryRunMatrix.js';
+export {
+  PLAYER_HISTORY_DRY_RUN_MATRIX_VERSION,
+  PLAYER_HISTORY_DRY_RUN_NULL_POSTURE,
+  PLAYER_HISTORY_DRY_RUN_ROW_KIND,
+  PLAYER_HISTORY_DRY_RUN_SHUFFLE_METHOD,
+  PLAYER_HISTORY_DRY_RUN_SHUFFLE_SEED,
+  PLAYER_HISTORY_EXPERIMENT_ARMS,
+  buildPlayerHistoryExperimentDryRunMatrix,
+} from '../rehearsal/playerHistoryExperimentDryRunMatrix.js';
 
 export {
   PROJECTION_INPUT_COVERAGE_ARTIFACT_VERSION,

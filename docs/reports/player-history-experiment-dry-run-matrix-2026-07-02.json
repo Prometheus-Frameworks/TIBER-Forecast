@@ -1,0 +1,1588 @@
+{
+  "report_version": "player-history-experiment-dry-run-matrix-report-v1",
+  "repo": "Prometheus-Frameworks/TIBER-Forecast",
+  "issue": "TIBER-Forecast#105",
+  "generated_at": "2026-07-02T00:00:00.000Z",
+  "predecessor_refs": [
+    "TIBER-Data#184",
+    "TIBER-Data#185",
+    "TIBER-Data#186",
+    "TIBER-Data#187",
+    "TIBER-Data#188",
+    "TIBER-Data#189",
+    "TIBER-Data#190",
+    "TIBER-Data#191",
+    "TIBER-Forecast#99",
+    "TIBER-Forecast#100",
+    "TIBER-Forecast#101",
+    "TIBER-Forecast#102",
+    "TIBER-Forecast#103",
+    "TIBER-Forecast#104"
+  ],
+  "evaluation_kind": "dry_run_matrix_assembly_only_no_run_no_training_no_metrics",
+  "mirror_inspected": {
+    "path": "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.input_mirror.json",
+    "issue": "TIBER-Forecast#103",
+    "governed_source": {
+      "repo": "Prometheus-Frameworks/TIBER-Data",
+      "sourceArtifactPath": "data/processed/evidence/player_season_coverage_2022_2025.source_backed.json",
+      "sha256": "39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b",
+      "schemaPath": "schemas/player_season_coverage_v0.schema.json",
+      "validatorPath": "scripts/validate_player_season_coverage_v0.py"
+    },
+    "input_window": {
+      "seasons": [
+        2022,
+        2023,
+        2024
+      ],
+      "season_type": "REG",
+      "positions_present_in_sample": [
+        "QB",
+        "RB"
+      ],
+      "target_season_excluded": 2025
+    },
+    "refs": [
+      "TIBER-Data#184",
+      "TIBER-Data#185",
+      "TIBER-Data#186",
+      "TIBER-Data#187",
+      "TIBER-Data#188",
+      "TIBER-Data#189",
+      "TIBER-Data#190",
+      "TIBER-Data#191",
+      "TIBER-Forecast#99",
+      "TIBER-Forecast#100",
+      "TIBER-Forecast#101",
+      "TIBER-Forecast#102"
+    ]
+  },
+  "baseline_inspected": {
+    "path": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+    "governance_status": "fixture",
+    "data_source": "bundled-scaffold"
+  },
+  "next_allowed_step": "Open a SEPARATE issue to authorize the controlled three-arm run (baseline_only vs real_player_history_features vs shuffled_player_history_control). That issue must state which target population is used (prefer a real mounted TIBER-Data 2025 outcome population over the n=38 fixture scaffold), re-verify the #99/#100 gate if the mirror changes, and pass its own review before any metric is computed.",
+  "matrix": {
+    "version": "player-history-experiment-dry-run-matrix-v1",
+    "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+    "status": "dry_run_only_not_model_ready",
+    "target_season": 2025,
+    "input_seasons": [
+      2022,
+      2023,
+      2024
+    ],
+    "arms": [
+      "baseline_only",
+      "real_player_history_features",
+      "shuffled_player_history_control"
+    ],
+    "baseline_source": {
+      "path": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+      "governance_status": "fixture",
+      "data_source": "bundled-scaffold"
+    },
+    "baseline_population_is_fixture_scaffold_warning": "The current target population (src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts) is still the fixture/scaffold population (governance_status=fixture, n=38 scored). A later controlled run should prefer a real mounted TIBER-Data 2025 outcome population; the run-authorizing issue must state which population is used.",
+    "matrix_rows": [
+      {
+        "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+        "status": "dry_run_only_not_model_ready",
+        "player_id": "00-0030506",
+        "player_name": "Travis Kelce",
+        "position": "TE",
+        "target_season": 2025,
+        "target_row_ref": {
+          "source": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+          "governance_status": "fixture",
+          "target_outcome_present": true,
+          "outcome_value_deliberately_omitted": true
+        },
+        "baseline_row_ref": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts#player_id=00-0030506",
+        "input_seasons_considered": [],
+        "feature_family_availability": {
+          "coverage": false,
+          "production": false,
+          "usage": false,
+          "age_career": false,
+          "team_context": false
+        },
+        "real_feature_join_status": "no_player_history_features_for_player",
+        "real_player_history": null,
+        "shuffled_control": {
+          "posture": "row_has_no_real_features",
+          "donor_player_id": null,
+          "payload": null
+        },
+        "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+        "source_refs": [
+          "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.input_mirror.json",
+          "Prometheus-Frameworks/TIBER-Data:data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (sha256 39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b)",
+          "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts"
+        ]
+      },
+      {
+        "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+        "status": "dry_run_only_not_model_ready",
+        "player_id": "00-0033040",
+        "player_name": "Tyreek Hill",
+        "position": "WR",
+        "target_season": 2025,
+        "target_row_ref": {
+          "source": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+          "governance_status": "fixture",
+          "target_outcome_present": true,
+          "outcome_value_deliberately_omitted": true
+        },
+        "baseline_row_ref": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts#player_id=00-0033040",
+        "input_seasons_considered": [],
+        "feature_family_availability": {
+          "coverage": false,
+          "production": false,
+          "usage": false,
+          "age_career": false,
+          "team_context": false
+        },
+        "real_feature_join_status": "no_player_history_features_for_player",
+        "real_player_history": null,
+        "shuffled_control": {
+          "posture": "row_has_no_real_features",
+          "donor_player_id": null,
+          "payload": null
+        },
+        "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+        "source_refs": [
+          "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.input_mirror.json",
+          "Prometheus-Frameworks/TIBER-Data:data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (sha256 39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b)",
+          "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts"
+        ]
+      },
+      {
+        "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+        "status": "dry_run_only_not_model_ready",
+        "player_id": "00-0033857",
+        "player_name": "George Kittle",
+        "position": "TE",
+        "target_season": 2025,
+        "target_row_ref": {
+          "source": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+          "governance_status": "fixture",
+          "target_outcome_present": true,
+          "outcome_value_deliberately_omitted": true
+        },
+        "baseline_row_ref": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts#player_id=00-0033857",
+        "input_seasons_considered": [],
+        "feature_family_availability": {
+          "coverage": false,
+          "production": false,
+          "usage": false,
+          "age_career": false,
+          "team_context": false
+        },
+        "real_feature_join_status": "no_player_history_features_for_player",
+        "real_player_history": null,
+        "shuffled_control": {
+          "posture": "row_has_no_real_features",
+          "donor_player_id": null,
+          "payload": null
+        },
+        "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+        "source_refs": [
+          "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.input_mirror.json",
+          "Prometheus-Frameworks/TIBER-Data:data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (sha256 39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b)",
+          "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts"
+        ]
+      },
+      {
+        "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+        "status": "dry_run_only_not_model_ready",
+        "player_id": "00-0033873",
+        "player_name": "Patrick Mahomes",
+        "position": "QB",
+        "target_season": 2025,
+        "target_row_ref": {
+          "source": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+          "governance_status": "fixture",
+          "target_outcome_present": true,
+          "outcome_value_deliberately_omitted": true
+        },
+        "baseline_row_ref": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts#player_id=00-0033873",
+        "input_seasons_considered": [],
+        "feature_family_availability": {
+          "coverage": false,
+          "production": false,
+          "usage": false,
+          "age_career": false,
+          "team_context": false
+        },
+        "real_feature_join_status": "no_player_history_features_for_player",
+        "real_player_history": null,
+        "shuffled_control": {
+          "posture": "row_has_no_real_features",
+          "donor_player_id": null,
+          "payload": null
+        },
+        "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+        "source_refs": [
+          "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.input_mirror.json",
+          "Prometheus-Frameworks/TIBER-Data:data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (sha256 39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b)",
+          "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts"
+        ]
+      },
+      {
+        "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+        "status": "dry_run_only_not_model_ready",
+        "player_id": "00-0033921",
+        "player_name": "Mike Evans",
+        "position": "WR",
+        "target_season": 2025,
+        "target_row_ref": {
+          "source": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+          "governance_status": "fixture",
+          "target_outcome_present": true,
+          "outcome_value_deliberately_omitted": true
+        },
+        "baseline_row_ref": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts#player_id=00-0033921",
+        "input_seasons_considered": [],
+        "feature_family_availability": {
+          "coverage": false,
+          "production": false,
+          "usage": false,
+          "age_career": false,
+          "team_context": false
+        },
+        "real_feature_join_status": "no_player_history_features_for_player",
+        "real_player_history": null,
+        "shuffled_control": {
+          "posture": "row_has_no_real_features",
+          "donor_player_id": null,
+          "payload": null
+        },
+        "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+        "source_refs": [
+          "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.input_mirror.json",
+          "Prometheus-Frameworks/TIBER-Data:data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (sha256 39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b)",
+          "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts"
+        ]
+      },
+      {
+        "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+        "status": "dry_run_only_not_model_ready",
+        "player_id": "00-0034348",
+        "player_name": "CeeDee Lamb",
+        "position": "WR",
+        "target_season": 2025,
+        "target_row_ref": {
+          "source": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+          "governance_status": "fixture",
+          "target_outcome_present": true,
+          "outcome_value_deliberately_omitted": true
+        },
+        "baseline_row_ref": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts#player_id=00-0034348",
+        "input_seasons_considered": [],
+        "feature_family_availability": {
+          "coverage": false,
+          "production": false,
+          "usage": false,
+          "age_career": false,
+          "team_context": false
+        },
+        "real_feature_join_status": "no_player_history_features_for_player",
+        "real_player_history": null,
+        "shuffled_control": {
+          "posture": "row_has_no_real_features",
+          "donor_player_id": null,
+          "payload": null
+        },
+        "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+        "source_refs": [
+          "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.input_mirror.json",
+          "Prometheus-Frameworks/TIBER-Data:data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (sha256 39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b)",
+          "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts"
+        ]
+      },
+      {
+        "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+        "status": "dry_run_only_not_model_ready",
+        "player_id": "00-0034791",
+        "player_name": "Christian McCaffrey",
+        "position": "RB",
+        "target_season": 2025,
+        "target_row_ref": {
+          "source": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+          "governance_status": "fixture",
+          "target_outcome_present": true,
+          "outcome_value_deliberately_omitted": true
+        },
+        "baseline_row_ref": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts#player_id=00-0034791",
+        "input_seasons_considered": [],
+        "feature_family_availability": {
+          "coverage": false,
+          "production": false,
+          "usage": false,
+          "age_career": false,
+          "team_context": false
+        },
+        "real_feature_join_status": "no_player_history_features_for_player",
+        "real_player_history": null,
+        "shuffled_control": {
+          "posture": "row_has_no_real_features",
+          "donor_player_id": null,
+          "payload": null
+        },
+        "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+        "source_refs": [
+          "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.input_mirror.json",
+          "Prometheus-Frameworks/TIBER-Data:data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (sha256 39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b)",
+          "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts"
+        ]
+      },
+      {
+        "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+        "status": "dry_run_only_not_model_ready",
+        "player_id": "00-0034796",
+        "player_name": "Lamar Jackson",
+        "position": "QB",
+        "target_season": 2025,
+        "target_row_ref": {
+          "source": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+          "governance_status": "fixture",
+          "target_outcome_present": true,
+          "outcome_value_deliberately_omitted": true
+        },
+        "baseline_row_ref": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts#player_id=00-0034796",
+        "input_seasons_considered": [],
+        "feature_family_availability": {
+          "coverage": false,
+          "production": false,
+          "usage": false,
+          "age_career": false,
+          "team_context": false
+        },
+        "real_feature_join_status": "no_player_history_features_for_player",
+        "real_player_history": null,
+        "shuffled_control": {
+          "posture": "row_has_no_real_features",
+          "donor_player_id": null,
+          "payload": null
+        },
+        "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+        "source_refs": [
+          "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.input_mirror.json",
+          "Prometheus-Frameworks/TIBER-Data:data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (sha256 39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b)",
+          "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts"
+        ]
+      },
+      {
+        "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+        "status": "dry_run_only_not_model_ready",
+        "player_id": "00-0034844",
+        "player_name": "Derrick Henry",
+        "position": "RB",
+        "target_season": 2025,
+        "target_row_ref": {
+          "source": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+          "governance_status": "fixture",
+          "target_outcome_present": true,
+          "outcome_value_deliberately_omitted": true
+        },
+        "baseline_row_ref": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts#player_id=00-0034844",
+        "input_seasons_considered": [],
+        "feature_family_availability": {
+          "coverage": false,
+          "production": false,
+          "usage": false,
+          "age_career": false,
+          "team_context": false
+        },
+        "real_feature_join_status": "no_player_history_features_for_player",
+        "real_player_history": null,
+        "shuffled_control": {
+          "posture": "row_has_no_real_features",
+          "donor_player_id": null,
+          "payload": null
+        },
+        "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+        "source_refs": [
+          "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.input_mirror.json",
+          "Prometheus-Frameworks/TIBER-Data:data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (sha256 39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b)",
+          "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts"
+        ]
+      },
+      {
+        "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+        "status": "dry_run_only_not_model_ready",
+        "player_id": "00-0034857",
+        "player_name": "Baker Mayfield",
+        "position": "QB",
+        "target_season": 2025,
+        "target_row_ref": {
+          "source": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+          "governance_status": "fixture",
+          "target_outcome_present": true,
+          "outcome_value_deliberately_omitted": true
+        },
+        "baseline_row_ref": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts#player_id=00-0034857",
+        "input_seasons_considered": [],
+        "feature_family_availability": {
+          "coverage": false,
+          "production": false,
+          "usage": false,
+          "age_career": false,
+          "team_context": false
+        },
+        "real_feature_join_status": "no_player_history_features_for_player",
+        "real_player_history": null,
+        "shuffled_control": {
+          "posture": "row_has_no_real_features",
+          "donor_player_id": null,
+          "payload": null
+        },
+        "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+        "source_refs": [
+          "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.input_mirror.json",
+          "Prometheus-Frameworks/TIBER-Data:data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (sha256 39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b)",
+          "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts"
+        ]
+      },
+      {
+        "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+        "status": "dry_run_only_not_model_ready",
+        "player_id": "00-0035229",
+        "player_name": "Trey McBride",
+        "position": "TE",
+        "target_season": 2025,
+        "target_row_ref": {
+          "source": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+          "governance_status": "fixture",
+          "target_outcome_present": true,
+          "outcome_value_deliberately_omitted": true
+        },
+        "baseline_row_ref": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts#player_id=00-0035229",
+        "input_seasons_considered": [],
+        "feature_family_availability": {
+          "coverage": false,
+          "production": false,
+          "usage": false,
+          "age_career": false,
+          "team_context": false
+        },
+        "real_feature_join_status": "no_player_history_features_for_player",
+        "real_player_history": null,
+        "shuffled_control": {
+          "posture": "row_has_no_real_features",
+          "donor_player_id": null,
+          "payload": null
+        },
+        "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+        "source_refs": [
+          "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.input_mirror.json",
+          "Prometheus-Frameworks/TIBER-Data:data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (sha256 39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b)",
+          "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts"
+        ]
+      },
+      {
+        "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+        "status": "dry_run_only_not_model_ready",
+        "player_id": "00-0035659",
+        "player_name": "A.J. Brown",
+        "position": "WR",
+        "target_season": 2025,
+        "target_row_ref": {
+          "source": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+          "governance_status": "fixture",
+          "target_outcome_present": true,
+          "outcome_value_deliberately_omitted": true
+        },
+        "baseline_row_ref": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts#player_id=00-0035659",
+        "input_seasons_considered": [],
+        "feature_family_availability": {
+          "coverage": false,
+          "production": false,
+          "usage": false,
+          "age_career": false,
+          "team_context": false
+        },
+        "real_feature_join_status": "no_player_history_features_for_player",
+        "real_player_history": null,
+        "shuffled_control": {
+          "posture": "row_has_no_real_features",
+          "donor_player_id": null,
+          "payload": null
+        },
+        "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+        "source_refs": [
+          "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.input_mirror.json",
+          "Prometheus-Frameworks/TIBER-Data:data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (sha256 39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b)",
+          "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts"
+        ]
+      },
+      {
+        "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+        "status": "dry_run_only_not_model_ready",
+        "player_id": "00-0035685",
+        "player_name": "Chase Brown",
+        "position": "RB",
+        "target_season": 2025,
+        "target_row_ref": {
+          "source": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+          "governance_status": "fixture",
+          "target_outcome_present": true,
+          "outcome_value_deliberately_omitted": true
+        },
+        "baseline_row_ref": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts#player_id=00-0035685",
+        "input_seasons_considered": [],
+        "feature_family_availability": {
+          "coverage": false,
+          "production": false,
+          "usage": false,
+          "age_career": false,
+          "team_context": false
+        },
+        "real_feature_join_status": "no_player_history_features_for_player",
+        "real_player_history": null,
+        "shuffled_control": {
+          "posture": "row_has_no_real_features",
+          "donor_player_id": null,
+          "payload": null
+        },
+        "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+        "source_refs": [
+          "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.input_mirror.json",
+          "Prometheus-Frameworks/TIBER-Data:data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (sha256 39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b)",
+          "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts"
+        ]
+      },
+      {
+        "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+        "status": "dry_run_only_not_model_ready",
+        "player_id": "00-0035700",
+        "player_name": "Josh Jacobs",
+        "position": "RB",
+        "target_season": 2025,
+        "target_row_ref": {
+          "source": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+          "governance_status": "fixture",
+          "target_outcome_present": true,
+          "outcome_value_deliberately_omitted": true
+        },
+        "baseline_row_ref": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts#player_id=00-0035700",
+        "input_seasons_considered": [],
+        "feature_family_availability": {
+          "coverage": false,
+          "production": false,
+          "usage": false,
+          "age_career": false,
+          "team_context": false
+        },
+        "real_feature_join_status": "no_player_history_features_for_player",
+        "real_player_history": null,
+        "shuffled_control": {
+          "posture": "row_has_no_real_features",
+          "donor_player_id": null,
+          "payload": null
+        },
+        "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+        "source_refs": [
+          "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.input_mirror.json",
+          "Prometheus-Frameworks/TIBER-Data:data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (sha256 39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b)",
+          "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts"
+        ]
+      },
+      {
+        "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+        "status": "dry_run_only_not_model_ready",
+        "player_id": "00-0036223",
+        "player_name": "Bijan Robinson",
+        "position": "RB",
+        "target_season": 2025,
+        "target_row_ref": {
+          "source": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+          "governance_status": "fixture",
+          "target_outcome_present": true,
+          "outcome_value_deliberately_omitted": true
+        },
+        "baseline_row_ref": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts#player_id=00-0036223",
+        "input_seasons_considered": [],
+        "feature_family_availability": {
+          "coverage": false,
+          "production": false,
+          "usage": false,
+          "age_career": false,
+          "team_context": false
+        },
+        "real_feature_join_status": "no_player_history_features_for_player",
+        "real_player_history": null,
+        "shuffled_control": {
+          "posture": "row_has_no_real_features",
+          "donor_player_id": null,
+          "payload": null
+        },
+        "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+        "source_refs": [
+          "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.input_mirror.json",
+          "Prometheus-Frameworks/TIBER-Data:data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (sha256 39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b)",
+          "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts"
+        ]
+      },
+      {
+        "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+        "status": "dry_run_only_not_model_ready",
+        "player_id": "00-0036262",
+        "player_name": "Justin Jefferson",
+        "position": "WR",
+        "target_season": 2025,
+        "target_row_ref": {
+          "source": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+          "governance_status": "fixture",
+          "target_outcome_present": true,
+          "outcome_value_deliberately_omitted": true
+        },
+        "baseline_row_ref": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts#player_id=00-0036262",
+        "input_seasons_considered": [],
+        "feature_family_availability": {
+          "coverage": false,
+          "production": false,
+          "usage": false,
+          "age_career": false,
+          "team_context": false
+        },
+        "real_feature_join_status": "no_player_history_features_for_player",
+        "real_player_history": null,
+        "shuffled_control": {
+          "posture": "row_has_no_real_features",
+          "donor_player_id": null,
+          "payload": null
+        },
+        "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+        "source_refs": [
+          "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.input_mirror.json",
+          "Prometheus-Frameworks/TIBER-Data:data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (sha256 39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b)",
+          "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts"
+        ]
+      },
+      {
+        "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+        "status": "dry_run_only_not_model_ready",
+        "player_id": "00-0036322",
+        "player_name": "Ja'Marr Chase",
+        "position": "WR",
+        "target_season": 2025,
+        "target_row_ref": {
+          "source": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+          "governance_status": "fixture",
+          "target_outcome_present": true,
+          "outcome_value_deliberately_omitted": true
+        },
+        "baseline_row_ref": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts#player_id=00-0036322",
+        "input_seasons_considered": [],
+        "feature_family_availability": {
+          "coverage": false,
+          "production": false,
+          "usage": false,
+          "age_career": false,
+          "team_context": false
+        },
+        "real_feature_join_status": "no_player_history_features_for_player",
+        "real_player_history": null,
+        "shuffled_control": {
+          "posture": "row_has_no_real_features",
+          "donor_player_id": null,
+          "payload": null
+        },
+        "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+        "source_refs": [
+          "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.input_mirror.json",
+          "Prometheus-Frameworks/TIBER-Data:data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (sha256 39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b)",
+          "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts"
+        ]
+      },
+      {
+        "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+        "status": "dry_run_only_not_model_ready",
+        "player_id": "00-0036389",
+        "player_name": "Joe Burrow",
+        "position": "QB",
+        "target_season": 2025,
+        "target_row_ref": {
+          "source": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+          "governance_status": "fixture",
+          "target_outcome_present": true,
+          "outcome_value_deliberately_omitted": true
+        },
+        "baseline_row_ref": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts#player_id=00-0036389",
+        "input_seasons_considered": [],
+        "feature_family_availability": {
+          "coverage": false,
+          "production": false,
+          "usage": false,
+          "age_career": false,
+          "team_context": false
+        },
+        "real_feature_join_status": "no_player_history_features_for_player",
+        "real_player_history": null,
+        "shuffled_control": {
+          "posture": "row_has_no_real_features",
+          "donor_player_id": null,
+          "payload": null
+        },
+        "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+        "source_refs": [
+          "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.input_mirror.json",
+          "Prometheus-Frameworks/TIBER-Data:data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (sha256 39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b)",
+          "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts"
+        ]
+      },
+      {
+        "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+        "status": "dry_run_only_not_model_ready",
+        "player_id": "00-0036442",
+        "player_name": "Jordan Love",
+        "position": "QB",
+        "target_season": 2025,
+        "target_row_ref": {
+          "source": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+          "governance_status": "fixture",
+          "target_outcome_present": true,
+          "outcome_value_deliberately_omitted": true
+        },
+        "baseline_row_ref": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts#player_id=00-0036442",
+        "input_seasons_considered": [],
+        "feature_family_availability": {
+          "coverage": false,
+          "production": false,
+          "usage": false,
+          "age_career": false,
+          "team_context": false
+        },
+        "real_feature_join_status": "no_player_history_features_for_player",
+        "real_player_history": null,
+        "shuffled_control": {
+          "posture": "row_has_no_real_features",
+          "donor_player_id": null,
+          "payload": null
+        },
+        "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+        "source_refs": [
+          "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.input_mirror.json",
+          "Prometheus-Frameworks/TIBER-Data:data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (sha256 39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b)",
+          "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts"
+        ]
+      },
+      {
+        "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+        "status": "dry_run_only_not_model_ready",
+        "player_id": "00-0036902",
+        "player_name": "Garrett Wilson",
+        "position": "WR",
+        "target_season": 2025,
+        "target_row_ref": {
+          "source": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+          "governance_status": "fixture",
+          "target_outcome_present": true,
+          "outcome_value_deliberately_omitted": true
+        },
+        "baseline_row_ref": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts#player_id=00-0036902",
+        "input_seasons_considered": [],
+        "feature_family_availability": {
+          "coverage": false,
+          "production": false,
+          "usage": false,
+          "age_career": false,
+          "team_context": false
+        },
+        "real_feature_join_status": "no_player_history_features_for_player",
+        "real_player_history": null,
+        "shuffled_control": {
+          "posture": "row_has_no_real_features",
+          "donor_player_id": null,
+          "payload": null
+        },
+        "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+        "source_refs": [
+          "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.input_mirror.json",
+          "Prometheus-Frameworks/TIBER-Data:data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (sha256 39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b)",
+          "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts"
+        ]
+      },
+      {
+        "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+        "status": "dry_run_only_not_model_ready",
+        "player_id": "00-0036924",
+        "player_name": "Kyren Williams",
+        "position": "RB",
+        "target_season": 2025,
+        "target_row_ref": {
+          "source": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+          "governance_status": "fixture",
+          "target_outcome_present": true,
+          "outcome_value_deliberately_omitted": true
+        },
+        "baseline_row_ref": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts#player_id=00-0036924",
+        "input_seasons_considered": [],
+        "feature_family_availability": {
+          "coverage": false,
+          "production": false,
+          "usage": false,
+          "age_career": false,
+          "team_context": false
+        },
+        "real_feature_join_status": "no_player_history_features_for_player",
+        "real_player_history": null,
+        "shuffled_control": {
+          "posture": "row_has_no_real_features",
+          "donor_player_id": null,
+          "payload": null
+        },
+        "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+        "source_refs": [
+          "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.input_mirror.json",
+          "Prometheus-Frameworks/TIBER-Data:data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (sha256 39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b)",
+          "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts"
+        ]
+      },
+      {
+        "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+        "status": "dry_run_only_not_model_ready",
+        "player_id": "00-0036963",
+        "player_name": "Nico Collins",
+        "position": "WR",
+        "target_season": 2025,
+        "target_row_ref": {
+          "source": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+          "governance_status": "fixture",
+          "target_outcome_present": true,
+          "outcome_value_deliberately_omitted": true
+        },
+        "baseline_row_ref": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts#player_id=00-0036963",
+        "input_seasons_considered": [],
+        "feature_family_availability": {
+          "coverage": false,
+          "production": false,
+          "usage": false,
+          "age_career": false,
+          "team_context": false
+        },
+        "real_feature_join_status": "no_player_history_features_for_player",
+        "real_player_history": null,
+        "shuffled_control": {
+          "posture": "row_has_no_real_features",
+          "donor_player_id": null,
+          "payload": null
+        },
+        "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+        "source_refs": [
+          "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.input_mirror.json",
+          "Prometheus-Frameworks/TIBER-Data:data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (sha256 39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b)",
+          "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts"
+        ]
+      },
+      {
+        "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+        "status": "dry_run_only_not_model_ready",
+        "player_id": "00-0036971",
+        "player_name": "Jalen Hurts",
+        "position": "QB",
+        "target_season": 2025,
+        "target_row_ref": {
+          "source": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+          "governance_status": "fixture",
+          "target_outcome_present": true,
+          "outcome_value_deliberately_omitted": true
+        },
+        "baseline_row_ref": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts#player_id=00-0036971",
+        "input_seasons_considered": [],
+        "feature_family_availability": {
+          "coverage": false,
+          "production": false,
+          "usage": false,
+          "age_career": false,
+          "team_context": false
+        },
+        "real_feature_join_status": "no_player_history_features_for_player",
+        "real_player_history": null,
+        "shuffled_control": {
+          "posture": "row_has_no_real_features",
+          "donor_player_id": null,
+          "payload": null
+        },
+        "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+        "source_refs": [
+          "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.input_mirror.json",
+          "Prometheus-Frameworks/TIBER-Data:data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (sha256 39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b)",
+          "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts"
+        ]
+      },
+      {
+        "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+        "status": "dry_run_only_not_model_ready",
+        "player_id": "00-0036971-te",
+        "player_name": "Brock Bowers",
+        "position": "TE",
+        "target_season": 2025,
+        "target_row_ref": {
+          "source": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+          "governance_status": "fixture",
+          "target_outcome_present": true,
+          "outcome_value_deliberately_omitted": true
+        },
+        "baseline_row_ref": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts#player_id=00-0036971-te",
+        "input_seasons_considered": [],
+        "feature_family_availability": {
+          "coverage": false,
+          "production": false,
+          "usage": false,
+          "age_career": false,
+          "team_context": false
+        },
+        "real_feature_join_status": "no_player_history_features_for_player",
+        "real_player_history": null,
+        "shuffled_control": {
+          "posture": "row_has_no_real_features",
+          "donor_player_id": null,
+          "payload": null
+        },
+        "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+        "source_refs": [
+          "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.input_mirror.json",
+          "Prometheus-Frameworks/TIBER-Data:data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (sha256 39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b)",
+          "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts"
+        ]
+      },
+      {
+        "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+        "status": "dry_run_only_not_model_ready",
+        "player_id": "00-0037240",
+        "player_name": "Amon-Ra St. Brown",
+        "position": "WR",
+        "target_season": 2025,
+        "target_row_ref": {
+          "source": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+          "governance_status": "fixture",
+          "target_outcome_present": true,
+          "outcome_value_deliberately_omitted": true
+        },
+        "baseline_row_ref": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts#player_id=00-0037240",
+        "input_seasons_considered": [],
+        "feature_family_availability": {
+          "coverage": false,
+          "production": false,
+          "usage": false,
+          "age_career": false,
+          "team_context": false
+        },
+        "real_feature_join_status": "no_player_history_features_for_player",
+        "real_player_history": null,
+        "shuffled_control": {
+          "posture": "row_has_no_real_features",
+          "donor_player_id": null,
+          "payload": null
+        },
+        "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+        "source_refs": [
+          "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.input_mirror.json",
+          "Prometheus-Frameworks/TIBER-Data:data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (sha256 39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b)",
+          "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts"
+        ]
+      },
+      {
+        "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+        "status": "dry_run_only_not_model_ready",
+        "player_id": "00-0037247",
+        "player_name": "Terry McLaurin",
+        "position": "WR",
+        "target_season": 2025,
+        "target_row_ref": {
+          "source": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+          "governance_status": "fixture",
+          "target_outcome_present": true,
+          "outcome_value_deliberately_omitted": true
+        },
+        "baseline_row_ref": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts#player_id=00-0037247",
+        "input_seasons_considered": [],
+        "feature_family_availability": {
+          "coverage": false,
+          "production": false,
+          "usage": false,
+          "age_career": false,
+          "team_context": false
+        },
+        "real_feature_join_status": "no_player_history_features_for_player",
+        "real_player_history": null,
+        "shuffled_control": {
+          "posture": "row_has_no_real_features",
+          "donor_player_id": null,
+          "payload": null
+        },
+        "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+        "source_refs": [
+          "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.input_mirror.json",
+          "Prometheus-Frameworks/TIBER-Data:data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (sha256 39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b)",
+          "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts"
+        ]
+      },
+      {
+        "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+        "status": "dry_run_only_not_model_ready",
+        "player_id": "00-0037539",
+        "player_name": "Jahmyr Gibbs",
+        "position": "RB",
+        "target_season": 2025,
+        "target_row_ref": {
+          "source": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+          "governance_status": "fixture",
+          "target_outcome_present": true,
+          "outcome_value_deliberately_omitted": true
+        },
+        "baseline_row_ref": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts#player_id=00-0037539",
+        "input_seasons_considered": [],
+        "feature_family_availability": {
+          "coverage": false,
+          "production": false,
+          "usage": false,
+          "age_career": false,
+          "team_context": false
+        },
+        "real_feature_join_status": "no_player_history_features_for_player",
+        "real_player_history": null,
+        "shuffled_control": {
+          "posture": "row_has_no_real_features",
+          "donor_player_id": null,
+          "payload": null
+        },
+        "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+        "source_refs": [
+          "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.input_mirror.json",
+          "Prometheus-Frameworks/TIBER-Data:data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (sha256 39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b)",
+          "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts"
+        ]
+      },
+      {
+        "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+        "status": "dry_run_only_not_model_ready",
+        "player_id": "00-0037744",
+        "player_name": "Sam LaPorta",
+        "position": "TE",
+        "target_season": 2025,
+        "target_row_ref": {
+          "source": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+          "governance_status": "fixture",
+          "target_outcome_present": true,
+          "outcome_value_deliberately_omitted": true
+        },
+        "baseline_row_ref": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts#player_id=00-0037744",
+        "input_seasons_considered": [],
+        "feature_family_availability": {
+          "coverage": false,
+          "production": false,
+          "usage": false,
+          "age_career": false,
+          "team_context": false
+        },
+        "real_feature_join_status": "no_player_history_features_for_player",
+        "real_player_history": null,
+        "shuffled_control": {
+          "posture": "row_has_no_real_features",
+          "donor_player_id": null,
+          "payload": null
+        },
+        "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+        "source_refs": [
+          "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.input_mirror.json",
+          "Prometheus-Frameworks/TIBER-Data:data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (sha256 39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b)",
+          "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts"
+        ]
+      },
+      {
+        "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+        "status": "dry_run_only_not_model_ready",
+        "player_id": "00-0037834",
+        "player_name": "Josh Allen",
+        "position": "QB",
+        "target_season": 2025,
+        "target_row_ref": {
+          "source": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+          "governance_status": "fixture",
+          "target_outcome_present": true,
+          "outcome_value_deliberately_omitted": true
+        },
+        "baseline_row_ref": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts#player_id=00-0037834",
+        "input_seasons_considered": [],
+        "feature_family_availability": {
+          "coverage": false,
+          "production": false,
+          "usage": false,
+          "age_career": false,
+          "team_context": false
+        },
+        "real_feature_join_status": "no_player_history_features_for_player",
+        "real_player_history": null,
+        "shuffled_control": {
+          "posture": "row_has_no_real_features",
+          "donor_player_id": null,
+          "payload": null
+        },
+        "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+        "source_refs": [
+          "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.input_mirror.json",
+          "Prometheus-Frameworks/TIBER-Data:data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (sha256 39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b)",
+          "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts"
+        ]
+      },
+      {
+        "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+        "status": "dry_run_only_not_model_ready",
+        "player_id": "00-0038120",
+        "player_name": "De'Von Achane",
+        "position": "RB",
+        "target_season": 2025,
+        "target_row_ref": {
+          "source": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+          "governance_status": "fixture",
+          "target_outcome_present": true,
+          "outcome_value_deliberately_omitted": true
+        },
+        "baseline_row_ref": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts#player_id=00-0038120",
+        "input_seasons_considered": [],
+        "feature_family_availability": {
+          "coverage": false,
+          "production": false,
+          "usage": false,
+          "age_career": false,
+          "team_context": false
+        },
+        "real_feature_join_status": "no_player_history_features_for_player",
+        "real_player_history": null,
+        "shuffled_control": {
+          "posture": "row_has_no_real_features",
+          "donor_player_id": null,
+          "payload": null
+        },
+        "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+        "source_refs": [
+          "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.input_mirror.json",
+          "Prometheus-Frameworks/TIBER-Data:data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (sha256 39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b)",
+          "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts"
+        ]
+      },
+      {
+        "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+        "status": "dry_run_only_not_model_ready",
+        "player_id": "00-0038542",
+        "player_name": "Saquon Barkley",
+        "position": "RB",
+        "target_season": 2025,
+        "target_row_ref": {
+          "source": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+          "governance_status": "fixture",
+          "target_outcome_present": true,
+          "outcome_value_deliberately_omitted": true
+        },
+        "baseline_row_ref": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts#player_id=00-0038542",
+        "input_seasons_considered": [],
+        "feature_family_availability": {
+          "coverage": false,
+          "production": false,
+          "usage": false,
+          "age_career": false,
+          "team_context": false
+        },
+        "real_feature_join_status": "no_player_history_features_for_player",
+        "real_player_history": null,
+        "shuffled_control": {
+          "posture": "row_has_no_real_features",
+          "donor_player_id": null,
+          "payload": null
+        },
+        "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+        "source_refs": [
+          "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.input_mirror.json",
+          "Prometheus-Frameworks/TIBER-Data:data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (sha256 39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b)",
+          "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts"
+        ]
+      },
+      {
+        "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+        "status": "dry_run_only_not_model_ready",
+        "player_id": "00-0038543",
+        "player_name": "Puka Nacua",
+        "position": "WR",
+        "target_season": 2025,
+        "target_row_ref": {
+          "source": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+          "governance_status": "fixture",
+          "target_outcome_present": true,
+          "outcome_value_deliberately_omitted": true
+        },
+        "baseline_row_ref": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts#player_id=00-0038543",
+        "input_seasons_considered": [],
+        "feature_family_availability": {
+          "coverage": false,
+          "production": false,
+          "usage": false,
+          "age_career": false,
+          "team_context": false
+        },
+        "real_feature_join_status": "no_player_history_features_for_player",
+        "real_player_history": null,
+        "shuffled_control": {
+          "posture": "row_has_no_real_features",
+          "donor_player_id": null,
+          "payload": null
+        },
+        "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+        "source_refs": [
+          "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.input_mirror.json",
+          "Prometheus-Frameworks/TIBER-Data:data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (sha256 39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b)",
+          "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts"
+        ]
+      },
+      {
+        "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+        "status": "dry_run_only_not_model_ready",
+        "player_id": "00-0038977",
+        "player_name": "Bucky Irving",
+        "position": "RB",
+        "target_season": 2025,
+        "target_row_ref": {
+          "source": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+          "governance_status": "fixture",
+          "target_outcome_present": true,
+          "outcome_value_deliberately_omitted": true
+        },
+        "baseline_row_ref": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts#player_id=00-0038977",
+        "input_seasons_considered": [],
+        "feature_family_availability": {
+          "coverage": false,
+          "production": false,
+          "usage": false,
+          "age_career": false,
+          "team_context": false
+        },
+        "real_feature_join_status": "no_player_history_features_for_player",
+        "real_player_history": null,
+        "shuffled_control": {
+          "posture": "row_has_no_real_features",
+          "donor_player_id": null,
+          "payload": null
+        },
+        "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+        "source_refs": [
+          "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.input_mirror.json",
+          "Prometheus-Frameworks/TIBER-Data:data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (sha256 39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b)",
+          "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts"
+        ]
+      },
+      {
+        "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+        "status": "dry_run_only_not_model_ready",
+        "player_id": "00-0038996",
+        "player_name": "Dalton Kincaid",
+        "position": "TE",
+        "target_season": 2025,
+        "target_row_ref": {
+          "source": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+          "governance_status": "fixture",
+          "target_outcome_present": true,
+          "outcome_value_deliberately_omitted": true
+        },
+        "baseline_row_ref": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts#player_id=00-0038996",
+        "input_seasons_considered": [],
+        "feature_family_availability": {
+          "coverage": false,
+          "production": false,
+          "usage": false,
+          "age_career": false,
+          "team_context": false
+        },
+        "real_feature_join_status": "no_player_history_features_for_player",
+        "real_player_history": null,
+        "shuffled_control": {
+          "posture": "row_has_no_real_features",
+          "donor_player_id": null,
+          "payload": null
+        },
+        "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+        "source_refs": [
+          "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.input_mirror.json",
+          "Prometheus-Frameworks/TIBER-Data:data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (sha256 39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b)",
+          "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts"
+        ]
+      },
+      {
+        "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+        "status": "dry_run_only_not_model_ready",
+        "player_id": "00-0039051",
+        "player_name": "Jaxon Smith-Njigba",
+        "position": "WR",
+        "target_season": 2025,
+        "target_row_ref": {
+          "source": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+          "governance_status": "fixture",
+          "target_outcome_present": true,
+          "outcome_value_deliberately_omitted": true
+        },
+        "baseline_row_ref": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts#player_id=00-0039051",
+        "input_seasons_considered": [],
+        "feature_family_availability": {
+          "coverage": false,
+          "production": false,
+          "usage": false,
+          "age_career": false,
+          "team_context": false
+        },
+        "real_feature_join_status": "no_player_history_features_for_player",
+        "real_player_history": null,
+        "shuffled_control": {
+          "posture": "row_has_no_real_features",
+          "donor_player_id": null,
+          "payload": null
+        },
+        "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+        "source_refs": [
+          "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.input_mirror.json",
+          "Prometheus-Frameworks/TIBER-Data:data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (sha256 39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b)",
+          "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts"
+        ]
+      },
+      {
+        "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+        "status": "dry_run_only_not_model_ready",
+        "player_id": "00-0039163",
+        "player_name": "Jayden Daniels",
+        "position": "QB",
+        "target_season": 2025,
+        "target_row_ref": {
+          "source": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+          "governance_status": "fixture",
+          "target_outcome_present": true,
+          "outcome_value_deliberately_omitted": true
+        },
+        "baseline_row_ref": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts#player_id=00-0039163",
+        "input_seasons_considered": [],
+        "feature_family_availability": {
+          "coverage": false,
+          "production": false,
+          "usage": false,
+          "age_career": false,
+          "team_context": false
+        },
+        "real_feature_join_status": "no_player_history_features_for_player",
+        "real_player_history": null,
+        "shuffled_control": {
+          "posture": "row_has_no_real_features",
+          "donor_player_id": null,
+          "payload": null
+        },
+        "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+        "source_refs": [
+          "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.input_mirror.json",
+          "Prometheus-Frameworks/TIBER-Data:data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (sha256 39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b)",
+          "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts"
+        ]
+      },
+      {
+        "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+        "status": "dry_run_only_not_model_ready",
+        "player_id": "00-0039337",
+        "player_name": "Brian Thomas Jr.",
+        "position": "WR",
+        "target_season": 2025,
+        "target_row_ref": {
+          "source": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+          "governance_status": "fixture",
+          "target_outcome_present": true,
+          "outcome_value_deliberately_omitted": true
+        },
+        "baseline_row_ref": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts#player_id=00-0039337",
+        "input_seasons_considered": [],
+        "feature_family_availability": {
+          "coverage": false,
+          "production": false,
+          "usage": false,
+          "age_career": false,
+          "team_context": false
+        },
+        "real_feature_join_status": "no_player_history_features_for_player",
+        "real_player_history": null,
+        "shuffled_control": {
+          "posture": "row_has_no_real_features",
+          "donor_player_id": null,
+          "payload": null
+        },
+        "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+        "source_refs": [
+          "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.input_mirror.json",
+          "Prometheus-Frameworks/TIBER-Data:data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (sha256 39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b)",
+          "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts"
+        ]
+      },
+      {
+        "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+        "status": "dry_run_only_not_model_ready",
+        "player_id": "00-0039910",
+        "player_name": "Malik Nabers",
+        "position": "WR",
+        "target_season": 2025,
+        "target_row_ref": {
+          "source": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+          "governance_status": "fixture",
+          "target_outcome_present": true,
+          "outcome_value_deliberately_omitted": true
+        },
+        "baseline_row_ref": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts#player_id=00-0039910",
+        "input_seasons_considered": [],
+        "feature_family_availability": {
+          "coverage": false,
+          "production": false,
+          "usage": false,
+          "age_career": false,
+          "team_context": false
+        },
+        "real_feature_join_status": "no_player_history_features_for_player",
+        "real_player_history": null,
+        "shuffled_control": {
+          "posture": "row_has_no_real_features",
+          "donor_player_id": null,
+          "payload": null
+        },
+        "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+        "source_refs": [
+          "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.input_mirror.json",
+          "Prometheus-Frameworks/TIBER-Data:data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (sha256 39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b)",
+          "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts"
+        ]
+      }
+    ],
+    "join_summary": {
+      "target_population_size": 39,
+      "scored_target_rows": 38,
+      "unavailable_target_rows": 1,
+      "player_history_feature_players": 4,
+      "joined_rows": 0,
+      "target_rows_without_player_history_features": 38,
+      "feature_players_without_target_row": 4,
+      "exclusions": [
+        {
+          "player_id": "00-0039999",
+          "player_name": "Marvin Harrison Jr.",
+          "position": "WR",
+          "reason": "target_outcome_unavailable",
+          "detail": "ppr_2025_actual is null in the baseline population; a row with no observed target outcome cannot be evaluated by a later run and is excluded from the dry-run matrix."
+        },
+        {
+          "player_id": "00-0023459",
+          "player_name": "Aaron Rodgers",
+          "position": "QB",
+          "reason": "player_history_features_without_target_row",
+          "detail": "Player-history features exist but the player is not in the baseline/target population, so no future arm could score this row."
+        },
+        {
+          "player_id": "00-0026625",
+          "player_name": "Brian Hoyer",
+          "position": "QB",
+          "reason": "player_history_features_without_target_row",
+          "detail": "Player-history features exist but the player is not in the baseline/target population, so no future arm could score this row."
+        },
+        {
+          "player_id": "00-0027688",
+          "player_name": "Colt McCoy",
+          "position": "QB",
+          "reason": "player_history_features_without_target_row",
+          "detail": "Player-history features exist but the player is not in the baseline/target population, so no future arm could score this row."
+        },
+        {
+          "player_id": "00-0033118",
+          "player_name": "Kenyan Drake",
+          "position": "RB",
+          "reason": "player_history_features_without_target_row",
+          "detail": "Player-history features exist but the player is not in the baseline/target population, so no future arm could score this row."
+        }
+      ]
+    },
+    "family_coverage": [
+      {
+        "family": "coverage",
+        "rows_with_family_available": 0,
+        "matrix_rows_total": 38
+      },
+      {
+        "family": "production",
+        "rows_with_family_available": 0,
+        "matrix_rows_total": 38
+      },
+      {
+        "family": "usage",
+        "rows_with_family_available": 0,
+        "matrix_rows_total": 38
+      },
+      {
+        "family": "age_career",
+        "rows_with_family_available": 0,
+        "matrix_rows_total": 38
+      },
+      {
+        "family": "team_context",
+        "rows_with_family_available": 0,
+        "matrix_rows_total": 38
+      }
+    ],
+    "missingness": {
+      "joined_rows_inspected": 0,
+      "null_counts_by_feature_path": {},
+      "zero_value_paths_observed": []
+    },
+    "shuffled_control": {
+      "method": "seeded_derangement_within_position",
+      "seed": 20260702,
+      "stratified_by_position": true,
+      "groups": [
+        {
+          "position": "QB",
+          "feature_bearing_row_count": 0,
+          "derangement_possible": false,
+          "derangement_applied": false,
+          "note": "No feature-bearing rows in this position group; nothing to shuffle."
+        },
+        {
+          "position": "RB",
+          "feature_bearing_row_count": 0,
+          "derangement_possible": false,
+          "derangement_applied": false,
+          "note": "No feature-bearing rows in this position group; nothing to shuffle."
+        },
+        {
+          "position": "TE",
+          "feature_bearing_row_count": 0,
+          "derangement_possible": false,
+          "derangement_applied": false,
+          "note": "No feature-bearing rows in this position group; nothing to shuffle."
+        },
+        {
+          "position": "WR",
+          "feature_bearing_row_count": 0,
+          "derangement_possible": false,
+          "derangement_applied": false,
+          "note": "No feature-bearing rows in this position group; nothing to shuffle."
+        }
+      ],
+      "metrics_computed": false,
+      "note": "Shuffled-control SHAPE only: deterministic within-position donor assignment over feature-bearing rows. No arm was run, no metric was computed, and no comparison is implied. Groups where a derangement is impossible are reported, not repaired."
+    },
+    "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+    "boundary_statements": {
+      "no_forecast_run": true,
+      "no_run3": true,
+      "no_model_training_tuning_evaluation": true,
+      "no_mae_rmse_pearson_rank_correlation_computed": true,
+      "no_baseline_change": true,
+      "no_production_feature_binding": true,
+      "no_seasonal_ppr_model_wiring": true,
+      "no_tiber_data_or_teamstate_change": true,
+      "no_null_to_zero_coercion": true,
+      "no_signal_claim": true,
+      "no_fantasy_advice_or_product_output": true
+    }
+  }
+}
