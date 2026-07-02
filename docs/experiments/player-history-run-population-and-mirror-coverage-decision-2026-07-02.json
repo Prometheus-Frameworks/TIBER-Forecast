@@ -51,7 +51,7 @@
     "promoted_weekly_outcomes_export_check": {
       "path": "TIBER-Data: exports/promoted/nfl/player_weekly_ppr_outcomes_v1.json",
       "checked_at_ref": "TIBER-Data main (7ee43097c44bdd350b11e06cf448a4e559eefe8c)",
-      "finding": "6 rows, 2025 week 1 only, source field says offline_fixture -- scaffold coverage only; NOT viable as a real 2025 outcome population today",
+      "finding": "6 rows across 2025 weeks 1-3 for two players, sourced from offline_fixture -- scaffold coverage only; NOT viable as a real 2025 outcome population today",
       "implication": "the candidate player_season_coverage_v0 artifact is currently the only real, source-backed 2025 outcome data committed anywhere in this chain"
     }
   },
@@ -69,7 +69,7 @@
     },
     "option_b_real_mounted_tiber_data_2025_population": {
       "verdict": "chosen_as_required_destination_with_prerequisite_path",
-      "outcome_layer_source": "the candidate player_season_coverage_v0 artifact's 610 REG 2025 rows (season_ppr as the target outcome; identity/position fields only otherwise)",
+      "outcome_layer_source": "the candidate player_season_coverage_v0 artifact's 610 REG 2025 rows (season_ppr as the target outcome; identity/position plus row-level provenance fields source_refs and identity_confidence -- required so the target-population gate can verify source-backing per row; no input-feature payloads)",
       "outcome_layer_caveats": [
         "the artifact is candidate_evidence_artifact_not_promoted; using its 2025 rows as an EXPERIMENT outcome layer does not promote it and must be stated in every derived report",
         "2025 rows may ONLY supply the outcome column and identity -- never any input feature (existing #104 structural guards already enforce the input side)",
@@ -78,7 +78,7 @@
       "feasibility_evidence": "610-player population; 485 (79.5%) joinable to real 2022-2024 history; every position has >= 66 joinable players"
     },
     "prerequisite_path": [
-      "build a real target-population OUTCOME mirror (2025 REG rows, outcome + identity fields only) from the pinned artifact via a committed deterministic generator script",
+      "build a real target-population OUTCOME mirror (2025 REG rows; outcome, identity, and row-level provenance fields source_refs/identity_confidence; no input-feature payloads) from the pinned artifact via a committed deterministic generator script",
       "regenerate the INPUT mirror as a generated (not hand-picked) subset: all 2022-2024 REG rows for the target population's players (1,145 rows), trimmed to scaffold-needed fields",
       "keep outcome mirror and input mirror as two separate files so the input side structurally cannot carry target-season rows",
       "re-run the #99/#100 gate and the #105 dry-run matrix against the new mirrors before any run authorization"
@@ -122,7 +122,7 @@
   "decision_5_next_issue": {
     "proposed_title": "Forecast: build real target-population mirror for player-history run",
     "proposed_scope": [
-      "committed deterministic generator script producing the 2025 outcome mirror (outcome + identity fields only) and the regenerated 2022-2024 input mirror (all rows for the target population, trimmed) from the sha256-pinned artifact",
+      "committed deterministic generator script producing the 2025 outcome mirror (outcome, identity, and row-level provenance fields; no input-feature payloads) and the regenerated 2022-2024 input mirror (all rows for the target population, trimmed) from the sha256-pinned artifact",
       "provenance companions for both mirrors",
       "re-run the #99/#100 gate against the pins",
       "re-run the #105 dry-run matrix against the new mirrors and regenerate its report (expected: joined rows on the order of 485)",

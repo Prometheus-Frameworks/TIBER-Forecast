@@ -21,7 +21,7 @@ JSON companion: `player-history-run-population-and-mirror-coverage-decision-2026
 | Input-window rows belonging to that population | **1,145** (2022: 315, 2023: 378, 2024: 452) |
 | Fixture n=39 players found in artifact 2025 rows | 33 (34 have ≥1 input-window row) |
 
-**Promoted-outcomes check.** The promoted TIBER-Data export `exports/promoted/nfl/player_weekly_ppr_outcomes_v1.json` was inspected at TIBER-Data `main` (`7ee4309`): it contains **6 rows, 2025 week 1 only, sourced from an `offline_fixture`**. It is scaffold coverage and **cannot serve as a real 2025 outcome population today**. Consequence: the candidate `player_season_coverage_v0` artifact is currently the only real, source-backed 2025 outcome data committed anywhere in this chain.
+**Promoted-outcomes check.** The promoted TIBER-Data export `exports/promoted/nfl/player_weekly_ppr_outcomes_v1.json` was inspected at TIBER-Data `main` (`7ee4309`): it contains **6 rows across 2025 weeks 1–3 for two players, sourced from an `offline_fixture`**. It is scaffold coverage and **cannot serve as a real 2025 outcome population today**. Consequence: the candidate `player_season_coverage_v0` artifact is currently the only real, source-backed 2025 outcome data committed anywhere in this chain.
 
 ## 1. Decision: which target/outcome population?
 
@@ -36,13 +36,13 @@ JSON companion: `player-history-run-population-and-mirror-coverage-decision-2026
 
 The first controlled run must use the real 2025 REG population derived from the pinned candidate artifact:
 
-- **Outcome layer**: the artifact's 610 REG 2025 rows, supplying **only** the target outcome (`season_ppr`) plus identity/position. 2025 rows may never supply any input feature — the #104 structural guards already enforce the input side, and the mirror design below makes it structural on the data side too.
+- **Outcome layer**: the artifact's 610 REG 2025 rows, supplying **only** the target outcome (`season_ppr`), identity/position, and row-level provenance fields (`source_refs`, `identity_confidence`) — the provenance fields are required so the section-4 target-population gate can verify source-backing per row rather than trusting companion metadata alone. 2025 rows may never supply any input feature (no production/usage/coverage payloads) — the #104 structural guards already enforce the input side, and the mirror design below makes it structural on the data side too.
 - **Candidate-status caveat**: the artifact is `candidate_evidence_artifact_not_promoted`. Using its 2025 rows as an *experiment outcome layer* does **not** promote it, and every derived report must say so. If TIBER-Data later promotes a full real 2025 outcome export (the current one is a 6-row fixture), that export becomes the preferred outcome source and the target-population gate must re-run against it.
 - **Feasibility is established, not hoped for**: 485 of 610 players (79.5%) join to real 2022–2024 history, with every position at ≥66 joinable players — comfortably supporting per-position reporting and a position-stratified shuffled control.
 
 **Prerequisite path before any run issue can be opened:**
 
-1. Build a real target-population **outcome mirror** (2025 REG rows; outcome + identity fields only) via a committed, deterministic generator script reading the pinned artifact.
+1. Build a real target-population **outcome mirror** (2025 REG rows; outcome, identity, and row-level provenance fields — `source_refs`, `identity_confidence` — and no input-feature payloads) via a committed, deterministic generator script reading the pinned artifact.
 2. Regenerate the **input mirror** as a *generated* subset (not hand-picked): all 2022–2024 REG rows for the target population's players — 1,145 rows, trimmed to scaffold-needed fields (~2.2MB at the #104 mirror's per-row size).
 3. Keep the two mirrors as **separate files**, so the input side structurally cannot carry target-season rows.
 4. Re-run the #99/#100 gate and the #105 dry-run matrix against the new mirrors before any run authorization.
@@ -81,7 +81,7 @@ Calibration note: these are conservative floors chosen against observed feasibil
 
 **Proposed title:** `Forecast: build real target-population mirror for player-history run`
 
-**Proposed scope:** a committed deterministic generator script producing (a) the 2025 outcome mirror (outcome + identity fields only) and (b) the regenerated 2022–2024 input mirror (all rows for the target population, trimmed), each with a provenance companion; re-run the #99/#100 gate against the pins; re-run the #105 dry-run matrix against the new mirrors and regenerate its report (expected joined rows on the order of 485); implement the mirror-overlap gate evaluating that report against the section-3 thresholds (ceiling: `may_authorize_run_issue`).
+**Proposed scope:** a committed deterministic generator script producing (a) the 2025 outcome mirror (outcome, identity, and row-level provenance fields; no input-feature payloads) and (b) the regenerated 2022–2024 input mirror (all rows for the target population, trimmed), each with a provenance companion; re-run the #99/#100 gate against the pins; re-run the #105 dry-run matrix against the new mirrors and regenerate its report (expected joined rows on the order of 485); implement the mirror-overlap gate evaluating that report against the section-3 thresholds (ceiling: `may_authorize_run_issue`).
 
 **Explicitly not in that issue:** no run, no Run 3, no training/tuning/evaluation/comparison, no metric computation, no baseline change, no production feature binding, no TIBER-Data/Teamstate change, no artifact promotion.
 
