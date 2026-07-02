@@ -1,0 +1,147 @@
+{
+  "decision_id": "player-history-run-population-and-mirror-coverage-decision-2026-07-02",
+  "status": "decision_only_no_run_no_metrics_no_feature_binding",
+  "issue": "TIBER-Forecast#107",
+  "date": "2026-07-02",
+  "predecessors": [
+    "TIBER-Data#184", "TIBER-Data#185", "TIBER-Data#186", "TIBER-Data#187",
+    "TIBER-Data#188", "TIBER-Data#189", "TIBER-Data#190", "TIBER-Data#191",
+    "TIBER-Forecast#99", "TIBER-Forecast#100", "TIBER-Forecast#101", "TIBER-Forecast#102",
+    "TIBER-Forecast#103", "TIBER-Forecast#104", "TIBER-Forecast#105", "TIBER-Forecast#106"
+  ],
+  "starting_evidence": {
+    "dry_run_matrix_structurally_valid": true,
+    "dry_run_matrix_report": "docs/reports/player-history-experiment-dry-run-matrix-2026-07-02.md",
+    "current_real_input_join_count": 0,
+    "zero_join_blocks_meaningful_metric_computation_today": true,
+    "current_target_population": {
+      "path": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+      "governance_status": "fixture",
+      "observations": 39,
+      "scored_rows": 38,
+      "positions": { "QB": 8, "RB": 10, "WR": 15, "TE": 6 }
+    },
+    "current_mirror": {
+      "path": "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.input_mirror.json",
+      "players": 4,
+      "rows": 8,
+      "design_intent": "edge-case-oriented (multi-season aggregation, single-season, undrafted, multi-team), deliberately NOT target-population-oriented"
+    }
+  },
+  "source_artifact_facts": {
+    "artifact": "TIBER-Data: data/processed/evidence/player_season_coverage_2022_2025.source_backed.json",
+    "sha256": "39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b",
+    "artifact_status": "candidate_evidence_artifact_not_promoted",
+    "total_records": 2383,
+    "rows_by_season": { "2022": 609, "2023": 576, "2024": 588, "2025": 610 },
+    "real_2025_reg_population": {
+      "total_players": 610,
+      "by_position": { "QB": 81, "RB": 151, "WR": 240, "TE": 138 },
+      "players_with_at_least_one_input_window_row": 485,
+      "joinable_share": 0.795,
+      "joinable_by_position": { "QB": 66, "RB": 115, "WR": 189, "TE": 115 },
+      "players_with_no_prior_history_e_g_rookies": 125
+    },
+    "input_window_rows_belonging_to_2025_population": { "total": 1145, "2022": 315, "2023": 378, "2024": 452 },
+    "fixture_overlap_check": {
+      "fixture_players_present_in_artifact_2025_reg_rows": 33,
+      "fixture_players_with_at_least_one_input_window_row": 34,
+      "note": "Even Option A would require regenerating the mirror to get overlap; the regeneration effort is symmetric across options."
+    },
+    "promoted_weekly_outcomes_export_check": {
+      "path": "TIBER-Data: exports/promoted/nfl/player_weekly_ppr_outcomes_v1.json",
+      "checked_at_ref": "TIBER-Data main (7ee43097c44bdd350b11e06cf448a4e559eefe8c)",
+      "finding": "6 rows across 2025 weeks 1-3 for two players, sourced from offline_fixture -- scaffold coverage only; NOT viable as a real 2025 outcome population today",
+      "implication": "the candidate player_season_coverage_v0 artifact is currently the only real, source-backed 2025 outcome data committed anywhere in this chain"
+    }
+  },
+  "decision_1_target_population": {
+    "question": "What target/outcome population should the first controlled run use?",
+    "option_a_fixture_n38": {
+      "verdict": "rejected_for_any_signal_bearing_run",
+      "acceptable_residual_use": "none required -- run MECHANICS are already proven by the #105/#106 dry-run matrix, so a fixture-population rehearsal run would add no new information",
+      "reasons": [
+        "governance_status is fixture; outcome values are hand-seeded, not source-backed",
+        "n=38 is too small for the per-position breakdowns the #102 design requires",
+        "zero overlap with the current mirror means a mirror regeneration is needed anyway",
+        "a result on a fixture population cannot ground any empirical player-history claim"
+      ]
+    },
+    "option_b_real_mounted_tiber_data_2025_population": {
+      "verdict": "chosen_as_required_destination_with_prerequisite_path",
+      "outcome_layer_source": "the candidate player_season_coverage_v0 artifact's 610 REG 2025 rows (season_ppr as the target outcome; identity/position plus row-level provenance fields source_refs and identity_confidence -- required so the target-population gate can verify source-backing per row; no input-feature payloads)",
+      "outcome_layer_caveats": [
+        "the artifact is candidate_evidence_artifact_not_promoted; using its 2025 rows as an EXPERIMENT outcome layer does not promote it and must be stated in every derived report",
+        "2025 rows may ONLY supply the outcome column and identity -- never any input feature (existing #104 structural guards already enforce the input side)",
+        "the promoted weekly-outcomes export was checked and is a 6-row week-1 offline fixture; if TIBER-Data later promotes a full real 2025 outcome export, it becomes the PREFERRED outcome source and the target-population gate must re-run against it"
+      ],
+      "feasibility_evidence": "610-player population; 485 (79.5%) joinable to real 2022-2024 history; every position has >= 66 joinable players"
+    },
+    "prerequisite_path": [
+      "build a real target-population OUTCOME mirror (2025 REG rows; outcome, identity, and row-level provenance fields source_refs/identity_confidence; no input-feature payloads) from the pinned artifact via a committed deterministic generator script",
+      "regenerate the INPUT mirror as a generated (not hand-picked) subset: all 2022-2024 REG rows for the target population's players (1,145 rows), trimmed to scaffold-needed fields",
+      "keep outcome mirror and input mirror as two separate files so the input side structurally cannot carry target-season rows",
+      "re-run the #99/#100 gate and the #105 dry-run matrix against the new mirrors before any run authorization"
+    ]
+  },
+  "decision_2_mirror_coverage": {
+    "question": "What mirror coverage is required before a run?",
+    "requirements": [
+      "do NOT vendor the full 8.8MB Data artifact into Forecast",
+      "mirrors must be GENERATED by a committed, deterministic, network-free script that reads the sha256-pinned source artifact -- never hand-picked rows (the #104 4-player mirror was hand-selected for edge cases, which was correct for #103 and is wrong for a run)",
+      "the input mirror must include ALL 2022-2024 REG rows for EVERY player in the chosen target population (estimated 1,145 rows, ~2.2MB trimmed); a player absent from the source for a season is a documented absence, not a mirror gap",
+      "partial coverage of the target population is acceptable ONLY as honest absence (player has no source rows), never as sampling",
+      "players with target outcomes but no player-history rows (125 today, e.g. rookies) STAY in the matrix as feature-less rows with nulls preserved -- they are the no-history subgroup, not exclusions",
+      "player-history rows without target outcomes remain excluded with the existing reason (player_history_features_without_target_row)",
+      "each mirror ships with a provenance companion: source repo/path, sha256 pin, refs, row counts, per-position counts, target-window scope, trimming rationale, exclusion reasons, and an explicit no-2025-rows-as-inputs statement for the input mirror",
+      "re-run or extend the #99/#100 player-season coverage gate whenever the mirror/source scope changes materially (including any upstream artifact regeneration that changes the sha256)"
+    ]
+  },
+  "decision_3_minimum_overlap": {
+    "question": "What minimum overlap is needed before a controlled run is authorized?",
+    "thresholds": {
+      "min_joined_rows_overall": 200,
+      "min_joined_rows_per_position": 30,
+      "min_joined_share_of_scored_target_population": 0.6,
+      "shuffled_control_feasibility": "every included position group must have >= 2 feature-bearing rows so a derangement exists (subsumed by the per-position minimum)",
+      "zero_or_tiny_overlap_blocks_run": true
+    },
+    "calibration_note": "Thresholds are conservative floors chosen against observed feasibility (485 joinable, >= 66 per position, 79.5% share), NOT tuned to the current fixture and NOT tuned post hoc. They exist to make per-position breakdowns and the position-stratified shuffled control meaningful. Lowering any threshold requires explicit review in the run-authorizing issue before any metric is computed."
+  },
+  "decision_4_required_gates": {
+    "question": "What gate or provenance checks are required before a run?",
+    "required": [
+      "re-verify the #99/#100 player-season coverage gate against the current pinned artifact sha256; re-run the gate if the sha changes",
+      "NEW target-population gate: outcome rows are source-backed (source_refs present, identity_confidence checked), season/season_type/position scope correct, row grain correct, candidate status acknowledged with an explicit not-promoted statement, and outcome values are real (not fixture-seeded)",
+      "NEW mirror-overlap gate: machine-checkable evaluation of the regenerated dry-run matrix report against the decision-3 thresholds, fail-closed, with a decision ceiling of may_authorize_run_issue (never may_run) -- consistent with the #100 gate-ceiling pattern",
+      "verify no 2025 player-history summaries are consumed as 2025 inputs (structural: the input mirror contains no 2025 rows; #104 guards enforce it in code)",
+      "verify target outcomes are never copied into feature rows (the dry-run matrix already omits outcome values by construction; keep its test)",
+      "verify null semantics remain intact (existing #104/#106 tests plus the dry-run missingness report)"
+    ]
+  },
+  "decision_5_next_issue": {
+    "proposed_title": "Forecast: build real target-population mirror for player-history run",
+    "proposed_scope": [
+      "committed deterministic generator script producing the 2025 outcome mirror (outcome, identity, and row-level provenance fields; no input-feature payloads) and the regenerated 2022-2024 input mirror (all rows for the target population, trimmed) from the sha256-pinned artifact",
+      "provenance companions for both mirrors",
+      "re-run the #99/#100 gate against the pins",
+      "re-run the #105 dry-run matrix against the new mirrors and regenerate its report (expected: joined rows on the order of 485)",
+      "implement the mirror-overlap gate evaluating that report against the decision-3 thresholds (ceiling: may_authorize_run_issue)"
+    ],
+    "explicitly_not_in_next_issue": [
+      "no run, no Run 3, no training/tuning/evaluation/comparison, no metric computation, no baseline change, no production feature binding, no TIBER-Data/Teamstate change, no artifact promotion"
+    ],
+    "after_that": "a separate issue -- Forecast: authorize controlled player-history run after population gate -- may authorize the three-arm run ONLY once the overlap gate passes"
+  },
+  "non_goals_confirmed": [
+    "no Forecast run", "no Run 3", "no model training/tuning/evaluation/comparison",
+    "no MAE/RMSE/Pearson/rank-correlation computed", "no baseline change",
+    "no wiring into seasonalPprModel.ts", "no production feature binding",
+    "no TIBER-Data change", "no Teamstate/TTS change", "no Data artifact promotion",
+    "no full-artifact vendoring in this PR",
+    "no 2025 summaries consumed as 2025 input features",
+    "no active/inactive/IR/practice-squad/ownership inference",
+    "no null-to-zero coercion", "no player-history signal claim",
+    "no fantasy advice/rankings/start-sit/trade/draft/product output"
+  ]
+}
