@@ -163,6 +163,45 @@ describe('join, exclusion, and family-availability behavior', () => {
     expect(report.matrix_rows.some((row) => row.player_id === 'orphan')).toBe(false);
   });
 
+  it('excludes a position-mismatched feature payload instead of joining it under the target position', () => {
+    const report = build({
+      targetPopulation: [targetRow({ player_id: 'switcher', position: 'RB' })],
+      playerHistoryRows: [historyRow({ player_id: 'switcher', season: 2024, position: 'WR' })],
+    });
+    const [row] = report.matrix_rows;
+    expect(row!.real_feature_join_status).toBe('position_mismatch_features_excluded');
+    expect(row!.real_player_history).toBeNull();
+    expect(Object.values(row!.feature_family_availability).every((flag) => flag === false)).toBe(true);
+    const exclusion = report.join_summary.exclusions.find(
+      (e) => e.reason === 'position_mismatch_between_target_and_player_history',
+    );
+    expect(exclusion?.player_id).toBe('switcher');
+    expect(exclusion?.detail).toContain('position=RB');
+    expect(exclusion?.detail).toContain('position=WR');
+    expect(report.join_summary.joined_rows).toBe(0);
+  });
+
+  it('a position-mismatched payload can never become a shuffled-control donor in the target-position group', () => {
+    const report = build({
+      targetPopulation: [
+        targetRow({ player_id: 'rb1', position: 'RB' }),
+        targetRow({ player_id: 'rb2', position: 'RB' }),
+        targetRow({ player_id: 'switcher', position: 'RB' }),
+      ],
+      playerHistoryRows: [
+        historyRow({ player_id: 'rb1', season: 2024, position: 'RB' }),
+        historyRow({ player_id: 'rb2', season: 2024, position: 'RB' }),
+        historyRow({ player_id: 'switcher', season: 2024, position: 'WR' }),
+      ],
+    });
+    const rbGroup = report.shuffled_control.groups.find((g) => g.position === 'RB');
+    expect(rbGroup?.feature_bearing_row_count).toBe(2); // switcher's WR payload is not feature-bearing here
+    for (const row of report.matrix_rows) {
+      expect(row.shuffled_control.donor_player_id).not.toBe('switcher');
+      if (row.shuffled_control.payload !== null) expect(row.shuffled_control.payload.position).toBe(row.position);
+    }
+  });
+
   it('excludes a target row whose outcome is unavailable, with an explicit reason', () => {
     const report = build({
       targetPopulation: [targetRow({ player_id: 'p1' }), targetRow({ player_id: 'p2', ppr_2025_actual: null })],

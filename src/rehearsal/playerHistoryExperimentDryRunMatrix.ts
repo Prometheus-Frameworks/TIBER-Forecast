@@ -61,7 +61,8 @@ export const PLAYER_HISTORY_DRY_RUN_NULL_POSTURE =
 
 export type PlayerHistoryDryRunExclusionReason =
   | 'target_outcome_unavailable'
-  | 'player_history_features_without_target_row';
+  | 'player_history_features_without_target_row'
+  | 'position_mismatch_between_target_and_player_history';
 
 export interface PlayerHistoryDryRunExclusion {
   player_id: string;
@@ -101,7 +102,7 @@ export interface PlayerHistoryDryRunMatrixRow {
   input_seasons_considered: number[];
   /** Per-family availability for THIS row's real player-history features (all false when no join). */
   feature_family_availability: Record<PlayerHistoryFeatureFamily, boolean>;
-  real_feature_join_status: 'joined' | 'no_player_history_features_for_player';
+  real_feature_join_status: 'joined' | 'no_player_history_features_for_player' | 'position_mismatch_features_excluded';
   /** The #104 scaffold's feature row for this player, verbatim; null when no features joined. */
   real_player_history: PlayerHistoryFeatureRow | null;
   shuffled_control: PlayerHistoryDryRunShuffledControl;
@@ -273,7 +274,23 @@ export const buildPlayerHistoryExperimentDryRunMatrix = (
   // 4. One matrix row per scored target-population player, deterministically ordered by player_id.
   const orderedScored = [...scored].sort((a, b) => (a.player_id < b.player_id ? -1 : a.player_id > b.player_id ? 1 : 0));
   const rows: PlayerHistoryDryRunMatrixRow[] = orderedScored.map((target) => {
-    const features = featuresByPlayer.get(target.player_id) ?? null;
+    const candidate = featuresByPlayer.get(target.player_id) ?? null;
+    // A player_id match is not enough: if the target population and the player-history features
+    // disagree on position (a position-switch player), joining would let a payload from one position
+    // enter -- and be donated within -- another position's shuffle group, breaking the documented
+    // within-position control. The mismatched payload is excluded with a reason; the target row stays
+    // in the matrix as a baseline-eligible, feature-less row.
+    const positionMismatch = candidate !== null && candidate.position !== target.position;
+    if (positionMismatch) {
+      exclusions.push({
+        player_id: target.player_id,
+        player_name: target.player_name,
+        position: target.position,
+        reason: 'position_mismatch_between_target_and_player_history',
+        detail: `Target population lists position=${target.position} but the player-history feature row carries position=${candidate!.position}; the feature payload is excluded so a ${candidate!.position} history can never enter or be donated within the ${target.position} shuffle group.`,
+      });
+    }
+    const features = positionMismatch ? null : candidate;
     const familyAvailability = Object.fromEntries(
       ALL_PLAYER_HISTORY_FEATURE_FAMILIES.map((family) => [family, features !== null && features[family] !== undefined]),
     ) as Record<PlayerHistoryFeatureFamily, boolean>;
@@ -293,7 +310,7 @@ export const buildPlayerHistoryExperimentDryRunMatrix = (
       baseline_row_ref: `${input.baselineSource.path}#player_id=${target.player_id}`,
       input_seasons_considered: features?.input_seasons_considered ?? [],
       feature_family_availability: familyAvailability,
-      real_feature_join_status: features !== null ? 'joined' : 'no_player_history_features_for_player',
+      real_feature_join_status: features !== null ? 'joined' : positionMismatch ? 'position_mismatch_features_excluded' : 'no_player_history_features_for_player',
       real_player_history: features,
       shuffled_control: {
         posture: 'row_has_no_real_features',
