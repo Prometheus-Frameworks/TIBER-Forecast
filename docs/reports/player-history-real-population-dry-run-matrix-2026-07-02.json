@@ -1,0 +1,644 @@
+{
+  "report_version": "player-history-real-population-dry-run-matrix-report-v1",
+  "repo": "Prometheus-Frameworks/TIBER-Forecast",
+  "issue": "TIBER-Forecast#109",
+  "generated_at": "2026-07-02T00:00:00.000Z",
+  "evaluation_kind": "dry_run_matrix_assembly_only_no_run_no_training_no_metrics",
+  "mirrors_inspected": {
+    "outcome_mirror": {
+      "path": "data/fixtures/tiberData/player_season_coverage_v0_2025.outcome_mirror.json",
+      "governed_source": {
+        "repo": "Prometheus-Frameworks/TIBER-Data",
+        "sourceArtifactPath": "data/processed/evidence/player_season_coverage_2022_2025.source_backed.json",
+        "sha256": "39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b",
+        "artifactStatus": "candidate_evidence_artifact_not_promoted"
+      }
+    },
+    "input_mirror": {
+      "path": "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.real_population_input_mirror.json",
+      "governed_source": {
+        "repo": "Prometheus-Frameworks/TIBER-Data",
+        "sourceArtifactPath": "data/processed/evidence/player_season_coverage_2022_2025.source_backed.json",
+        "sha256": "39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b",
+        "artifactStatus": "candidate_evidence_artifact_not_promoted"
+      }
+    }
+  },
+  "matrix_summary": {
+    "version": "player-history-experiment-dry-run-matrix-v1",
+    "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+    "status": "dry_run_only_not_model_ready",
+    "target_season": 2025,
+    "input_seasons": [
+      2022,
+      2023,
+      2024
+    ],
+    "arms": [
+      "baseline_only",
+      "real_player_history_features",
+      "shuffled_player_history_control"
+    ],
+    "matrix_row_count": 610,
+    "join_summary": {
+      "target_population_size": 610,
+      "scored_target_rows": 610,
+      "unavailable_target_rows": 0,
+      "player_history_feature_players": 485,
+      "joined_rows": 485,
+      "target_rows_without_player_history_features": 125,
+      "feature_players_without_target_row": 0,
+      "exclusions": []
+    },
+    "joined_share": 0.7950819672131147,
+    "joined_rows_by_position": {
+      "QB": 66,
+      "TE": 115,
+      "WR": 189,
+      "RB": 115
+    },
+    "no_history_rows_by_position": {
+      "QB": 15,
+      "TE": 23,
+      "RB": 36,
+      "WR": 51
+    },
+    "family_coverage": [
+      {
+        "family": "coverage",
+        "rows_with_family_available": 485,
+        "matrix_rows_total": 610
+      },
+      {
+        "family": "production",
+        "rows_with_family_available": 485,
+        "matrix_rows_total": 610
+      },
+      {
+        "family": "usage",
+        "rows_with_family_available": 485,
+        "matrix_rows_total": 610
+      },
+      {
+        "family": "age_career",
+        "rows_with_family_available": 485,
+        "matrix_rows_total": 610
+      },
+      {
+        "family": "team_context",
+        "rows_with_family_available": 485,
+        "matrix_rows_total": 610
+      }
+    ],
+    "missingness_summary": {
+      "joined_rows_inspected": 485,
+      "distinct_feature_paths_with_nulls": 9,
+      "total_null_cells": 1140,
+      "zero_value_paths_observed_count": 34
+    },
+    "shuffled_control": {
+      "method": "seeded_derangement_within_position",
+      "seed": 20260702,
+      "stratified_by_position": true,
+      "groups": [
+        {
+          "position": "QB",
+          "feature_bearing_row_count": 66,
+          "derangement_possible": true,
+          "derangement_applied": true,
+          "note": "Seeded within-position derangement over 66 feature-bearing rows; deterministic for seed 20260702."
+        },
+        {
+          "position": "RB",
+          "feature_bearing_row_count": 115,
+          "derangement_possible": true,
+          "derangement_applied": true,
+          "note": "Seeded within-position derangement over 115 feature-bearing rows; deterministic for seed 20260702."
+        },
+        {
+          "position": "TE",
+          "feature_bearing_row_count": 115,
+          "derangement_possible": true,
+          "derangement_applied": true,
+          "note": "Seeded within-position derangement over 115 feature-bearing rows; deterministic for seed 20260702."
+        },
+        {
+          "position": "WR",
+          "feature_bearing_row_count": 189,
+          "derangement_possible": true,
+          "derangement_applied": true,
+          "note": "Seeded within-position derangement over 189 feature-bearing rows; deterministic for seed 20260702."
+        }
+      ],
+      "metrics_computed": false,
+      "note": "Shuffled-control SHAPE only: deterministic within-position donor assignment over feature-bearing rows. No arm was run, no metric was computed, and no comparison is implied. Groups where a derangement is impossible are reported, not repaired."
+    },
+    "outcome_values_omitted_from_matrix_rows": true,
+    "baseline_population_is_fixture_scaffold_warning": null
+  },
+  "matrix_row_sample_first_3": [
+    {
+      "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+      "status": "dry_run_only_not_model_ready",
+      "player_id": "00-0022942",
+      "player_name": "Philip Rivers",
+      "position": "QB",
+      "target_season": 2025,
+      "target_row_ref": {
+        "source": "data/fixtures/tiberData/player_season_coverage_v0_2025.outcome_mirror.json",
+        "governance_status": "candidate_evidence_artifact_not_promoted_outcome_layer_only",
+        "target_outcome_present": true,
+        "outcome_value_deliberately_omitted": true
+      },
+      "baseline_row_ref": "data/fixtures/tiberData/player_season_coverage_v0_2025.outcome_mirror.json#player_id=00-0022942",
+      "input_seasons_considered": [],
+      "feature_family_availability": {
+        "coverage": false,
+        "production": false,
+        "usage": false,
+        "age_career": false,
+        "team_context": false
+      },
+      "real_feature_join_status": "no_player_history_features_for_player",
+      "real_player_history": null,
+      "shuffled_control": {
+        "posture": "row_has_no_real_features",
+        "donor_player_id": null,
+        "payload": null
+      },
+      "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+      "source_refs": [
+        "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.real_population_input_mirror.json",
+        "Prometheus-Frameworks/TIBER-Data:data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (sha256 39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b)",
+        "data/fixtures/tiberData/player_season_coverage_v0_2025.outcome_mirror.json"
+      ]
+    },
+    {
+      "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+      "status": "dry_run_only_not_model_ready",
+      "player_id": "00-0023459",
+      "player_name": "Aaron Rodgers",
+      "position": "QB",
+      "target_season": 2025,
+      "target_row_ref": {
+        "source": "data/fixtures/tiberData/player_season_coverage_v0_2025.outcome_mirror.json",
+        "governance_status": "candidate_evidence_artifact_not_promoted_outcome_layer_only",
+        "target_outcome_present": true,
+        "outcome_value_deliberately_omitted": true
+      },
+      "baseline_row_ref": "data/fixtures/tiberData/player_season_coverage_v0_2025.outcome_mirror.json#player_id=00-0023459",
+      "input_seasons_considered": [
+        2022,
+        2023,
+        2024
+      ],
+      "feature_family_availability": {
+        "coverage": true,
+        "production": true,
+        "usage": true,
+        "age_career": true,
+        "team_context": true
+      },
+      "real_feature_join_status": "joined",
+      "real_player_history": {
+        "row_kind": "player_history_feature_candidate_not_model_ready",
+        "player_id": "00-0023459",
+        "player_name": "Aaron Rodgers",
+        "position": "QB",
+        "target_season": 2025,
+        "input_seasons_considered": [
+          2022,
+          2023,
+          2024
+        ],
+        "coverage": {
+          "prior_seasons_observed_count": 3,
+          "prior_weeks_observed_total": 35,
+          "prior_weeks_observed_mean": 11.666666666666666,
+          "coverage_status_counts": {
+            "full_season": 2,
+            "single_week": 1
+          },
+          "missingness_rate": 6
+        },
+        "production": {
+          "season_ppr_by_season": {
+            "2022": 239.20000000000002,
+            "2023": 0,
+            "2024": 256.58
+          },
+          "season_ppg_by_season": {
+            "2022": 14.07,
+            "2023": 0,
+            "2024": 15.09
+          },
+          "trailing_2yr_ppr_total": 256.58,
+          "trailing_3yr_ppr_total": 495.78,
+          "trailing_2yr_ppr_mean": 128.29,
+          "trailing_3yr_ppr_mean": 165.26,
+          "year_over_year_ppr_trend": 256.58
+        },
+        "usage": {
+          "targets_by_season": {
+            "2022": 0,
+            "2023": 0,
+            "2024": 0
+          },
+          "receptions_by_season": {
+            "2022": 0,
+            "2023": 0,
+            "2024": 0
+          },
+          "rushing_attempts_by_season": {
+            "2022": 34,
+            "2023": 0,
+            "2024": 22
+          },
+          "receiving_air_yards_by_season": {
+            "2022": 0,
+            "2023": 0,
+            "2024": 0
+          },
+          "target_share_by_season": {
+            "2022": 0,
+            "2023": 0,
+            "2024": 0
+          },
+          "air_yards_share_by_season": {
+            "2022": 0,
+            "2023": 0,
+            "2024": 0
+          },
+          "wopr_by_season": {
+            "2022": 0,
+            "2023": 0,
+            "2024": 0
+          },
+          "racr_by_season": {
+            "2022": null,
+            "2023": null,
+            "2024": null
+          },
+          "unavailable_fields_excluded": [
+            "snap_share",
+            "routes_run",
+            "route_participation",
+            "red_zone_targets",
+            "red_zone_carries"
+          ]
+        },
+        "age_career": {
+          "latest_pre_target_season_age": 40.75,
+          "latest_pre_target_career_year": 20,
+          "draft_year": 2005,
+          "rookie_year": 2005,
+          "undrafted_indicator": false
+        },
+        "team_context": {
+          "multi_team_prior_season_indicator": false,
+          "multi_team_season_count": 0,
+          "latest_primary_team": "NYJ"
+        }
+      },
+      "shuffled_control": {
+        "posture": "assigned",
+        "donor_player_id": "00-0032434",
+        "payload": {
+          "row_kind": "player_history_feature_candidate_not_model_ready",
+          "player_id": "00-0032434",
+          "player_name": "Brandon Allen",
+          "position": "QB",
+          "target_season": 2025,
+          "input_seasons_considered": [
+            2022,
+            2024
+          ],
+          "coverage": {
+            "prior_seasons_observed_count": 2,
+            "prior_weeks_observed_total": 4,
+            "prior_weeks_observed_mean": 2,
+            "coverage_status_counts": {
+              "single_week": 1,
+              "partial_season": 1
+            },
+            "missingness_rate": 6
+          },
+          "production": {
+            "season_ppr_by_season": {
+              "2022": 0.78,
+              "2024": 6.360000000000001
+            },
+            "season_ppg_by_season": {
+              "2022": 0.78,
+              "2024": 2.12
+            },
+            "trailing_2yr_ppr_total": null,
+            "trailing_3yr_ppr_total": null,
+            "trailing_2yr_ppr_mean": null,
+            "trailing_3yr_ppr_mean": null,
+            "year_over_year_ppr_trend": null
+          },
+          "usage": {
+            "targets_by_season": {
+              "2022": 0,
+              "2024": 0
+            },
+            "receptions_by_season": {
+              "2022": 0,
+              "2024": 0
+            },
+            "rushing_attempts_by_season": {
+              "2022": 3,
+              "2024": 3
+            },
+            "receiving_air_yards_by_season": {
+              "2022": 0,
+              "2024": 0
+            },
+            "target_share_by_season": {
+              "2022": 0,
+              "2024": 0
+            },
+            "air_yards_share_by_season": {
+              "2022": 0,
+              "2024": 0
+            },
+            "wopr_by_season": {
+              "2022": 0,
+              "2024": 0
+            },
+            "racr_by_season": {
+              "2022": null,
+              "2024": null
+            },
+            "unavailable_fields_excluded": [
+              "snap_share",
+              "routes_run",
+              "route_participation",
+              "red_zone_targets",
+              "red_zone_carries"
+            ]
+          },
+          "age_career": {
+            "latest_pre_target_season_age": 31.99,
+            "latest_pre_target_career_year": 9,
+            "draft_year": 2016,
+            "rookie_year": 2016,
+            "undrafted_indicator": false
+          },
+          "team_context": {
+            "multi_team_prior_season_indicator": false,
+            "multi_team_season_count": 0,
+            "latest_primary_team": "SF"
+          }
+        }
+      },
+      "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+      "source_refs": [
+        "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.real_population_input_mirror.json",
+        "Prometheus-Frameworks/TIBER-Data:data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (sha256 39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b)",
+        "data/fixtures/tiberData/player_season_coverage_v0_2025.outcome_mirror.json"
+      ]
+    },
+    {
+      "row_kind": "player_history_experiment_dry_run_matrix_row_not_model_ready",
+      "status": "dry_run_only_not_model_ready",
+      "player_id": "00-0024243",
+      "player_name": "Marcedes Lewis",
+      "position": "TE",
+      "target_season": 2025,
+      "target_row_ref": {
+        "source": "data/fixtures/tiberData/player_season_coverage_v0_2025.outcome_mirror.json",
+        "governance_status": "candidate_evidence_artifact_not_promoted_outcome_layer_only",
+        "target_outcome_present": true,
+        "outcome_value_deliberately_omitted": true
+      },
+      "baseline_row_ref": "data/fixtures/tiberData/player_season_coverage_v0_2025.outcome_mirror.json#player_id=00-0024243",
+      "input_seasons_considered": [
+        2022,
+        2023,
+        2024
+      ],
+      "feature_family_availability": {
+        "coverage": true,
+        "production": true,
+        "usage": true,
+        "age_career": true,
+        "team_context": true
+      },
+      "real_feature_join_status": "joined",
+      "real_player_history": {
+        "row_kind": "player_history_feature_candidate_not_model_ready",
+        "player_id": "00-0024243",
+        "player_name": "Marcedes Lewis",
+        "position": "TE",
+        "target_season": 2025,
+        "input_seasons_considered": [
+          2022,
+          2023,
+          2024
+        ],
+        "coverage": {
+          "prior_seasons_observed_count": 3,
+          "prior_weeks_observed_total": 17,
+          "prior_weeks_observed_mean": 5.666666666666667,
+          "coverage_status_counts": {
+            "partial_season": 3
+          },
+          "missingness_rate": 6
+        },
+        "production": {
+          "season_ppr_by_season": {
+            "2022": 26.6,
+            "2023": 12.9,
+            "2024": 1.2
+          },
+          "season_ppg_by_season": {
+            "2022": 4.43,
+            "2023": 2.15,
+            "2024": 0.24
+          },
+          "trailing_2yr_ppr_total": 14.1,
+          "trailing_3yr_ppr_total": 40.7,
+          "trailing_2yr_ppr_mean": 7.05,
+          "trailing_3yr_ppr_mean": 13.566666666666668,
+          "year_over_year_ppr_trend": -11.700000000000001
+        },
+        "usage": {
+          "targets_by_season": {
+            "2022": 7,
+            "2023": 5,
+            "2024": 1
+          },
+          "receptions_by_season": {
+            "2022": 6,
+            "2023": 4,
+            "2024": 1
+          },
+          "rushing_attempts_by_season": {
+            "2022": 0,
+            "2023": 0,
+            "2024": 0
+          },
+          "receiving_air_yards_by_season": {
+            "2022": 58,
+            "2023": 9,
+            "2024": 1
+          },
+          "target_share_by_season": {
+            "2022": 0.013,
+            "2023": 0.0105,
+            "2024": 0.0019
+          },
+          "air_yards_share_by_season": {
+            "2022": 0.013,
+            "2023": 0.0024,
+            "2024": 0.0002
+          },
+          "wopr_by_season": {
+            "2022": 0.0285,
+            "2023": 0.0174,
+            "2024": 0.003
+          },
+          "racr_by_season": {
+            "2022": 1.1379,
+            "2023": 3.2222,
+            "2024": 2
+          },
+          "unavailable_fields_excluded": [
+            "snap_share",
+            "routes_run",
+            "route_participation",
+            "red_zone_targets",
+            "red_zone_carries"
+          ]
+        },
+        "age_career": {
+          "latest_pre_target_season_age": 40.29,
+          "latest_pre_target_career_year": 19,
+          "draft_year": 2006,
+          "rookie_year": 2006,
+          "undrafted_indicator": false
+        },
+        "team_context": {
+          "multi_team_prior_season_indicator": false,
+          "multi_team_season_count": 0,
+          "latest_primary_team": "CHI"
+        }
+      },
+      "shuffled_control": {
+        "posture": "assigned",
+        "donor_player_id": "00-0033455",
+        "payload": {
+          "row_kind": "player_history_feature_candidate_not_model_ready",
+          "player_id": "00-0033455",
+          "player_name": "Anthony Firkser",
+          "position": "TE",
+          "target_season": 2025,
+          "input_seasons_considered": [
+            2022,
+            2024
+          ],
+          "coverage": {
+            "prior_seasons_observed_count": 2,
+            "prior_weeks_observed_total": 9,
+            "prior_weeks_observed_mean": 4.5,
+            "coverage_status_counts": {
+              "partial_season": 1,
+              "single_week": 1
+            },
+            "missingness_rate": 7
+          },
+          "production": {
+            "season_ppr_by_season": {
+              "2022": 19,
+              "2024": 0
+            },
+            "season_ppg_by_season": {
+              "2022": 2.38,
+              "2024": 0
+            },
+            "trailing_2yr_ppr_total": null,
+            "trailing_3yr_ppr_total": null,
+            "trailing_2yr_ppr_mean": null,
+            "trailing_3yr_ppr_mean": null,
+            "year_over_year_ppr_trend": null
+          },
+          "usage": {
+            "targets_by_season": {
+              "2022": 13,
+              "2024": 0
+            },
+            "receptions_by_season": {
+              "2022": 9,
+              "2024": 0
+            },
+            "rushing_attempts_by_season": {
+              "2022": 0,
+              "2024": 0
+            },
+            "receiving_air_yards_by_season": {
+              "2022": 108,
+              "2024": 0
+            },
+            "target_share_by_season": {
+              "2022": 0.0325,
+              "2024": 0
+            },
+            "air_yards_share_by_season": {
+              "2022": 0.0268,
+              "2024": 0
+            },
+            "wopr_by_season": {
+              "2022": 0.0675,
+              "2024": 0
+            },
+            "racr_by_season": {
+              "2022": 0.9259,
+              "2024": null
+            },
+            "unavailable_fields_excluded": [
+              "snap_share",
+              "routes_run",
+              "route_participation",
+              "red_zone_targets",
+              "red_zone_carries"
+            ]
+          },
+          "age_career": {
+            "latest_pre_target_season_age": 29.53,
+            "latest_pre_target_career_year": 8,
+            "draft_year": null,
+            "rookie_year": 2017,
+            "undrafted_indicator": true
+          },
+          "team_context": {
+            "multi_team_prior_season_indicator": false,
+            "multi_team_season_count": 0,
+            "latest_primary_team": "KC"
+          }
+        }
+      },
+      "null_handling_posture": "nulls_preserved_no_zero_coercion_train_fold_mean_imputation_deferred_to_run_issue",
+      "source_refs": [
+        "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.real_population_input_mirror.json",
+        "Prometheus-Frameworks/TIBER-Data:data/processed/evidence/player_season_coverage_2022_2025.source_backed.json (sha256 39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b)",
+        "data/fixtures/tiberData/player_season_coverage_v0_2025.outcome_mirror.json"
+      ]
+    }
+  ],
+  "full_matrix_reproduction": "Deterministic: regenerate via `npm run gate:player-history-population` (same mirrors + seed -> byte-identical matrix).",
+  "boundary_statements": {
+    "no_forecast_run": true,
+    "no_run3": true,
+    "no_model_training_tuning_evaluation": true,
+    "no_mae_rmse_pearson_rank_correlation_computed": true,
+    "no_baseline_change": true,
+    "no_production_feature_binding": true,
+    "no_seasonal_ppr_model_wiring": true,
+    "no_tiber_data_or_teamstate_change": true,
+    "no_null_to_zero_coercion": true,
+    "no_signal_claim": true,
+    "no_fantasy_advice_or_product_output": true
+  }
+}

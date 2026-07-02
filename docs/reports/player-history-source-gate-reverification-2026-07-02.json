@@ -1,0 +1,59 @@
+{
+  "report_version": "player-history-source-gate-reverification-v1",
+  "repo": "Prometheus-Frameworks/TIBER-Forecast",
+  "issue": "TIBER-Forecast#109",
+  "generated_at": "2026-07-02T00:00:00.000Z",
+  "relationship_to_full_gate": "Short re-verification of the #99/#100 player-season coverage gate against the unchanged sha256 pin. The full gate (PR #100) already returned may_design_experiment for this exact artifact identity; this report re-verifies identity, status, scope, and source-backing rather than duplicating the whole gate.",
+  "checks": [
+    {
+      "dimension": "sha256_pin",
+      "expected": "39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b",
+      "observed": "39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b",
+      "passed": true
+    },
+    {
+      "dimension": "artifact_status",
+      "expected": "candidate_evidence_artifact_not_promoted",
+      "observed": "candidate_evidence_artifact_not_promoted",
+      "passed": true
+    },
+    {
+      "dimension": "seasons_scope",
+      "expected": "2022,2023,2024,2025",
+      "observed": "2022,2023,2024,2025",
+      "passed": true
+    },
+    {
+      "dimension": "season_type_scope",
+      "expected": "REG",
+      "observed": "REG",
+      "passed": true
+    },
+    {
+      "dimension": "included_positions",
+      "expected": "QB,RB,TE,WR",
+      "observed": "QB,RB,TE,WR",
+      "passed": true
+    },
+    {
+      "dimension": "row_grain",
+      "expected": "player_id + season + season_type",
+      "observed": "player_id + season + season_type",
+      "passed": true
+    },
+    {
+      "dimension": "source_refs_approved",
+      "expected": "every record carries >= 1 source_ref, ALL source_refs are on the approved allow-list (nflreadpy.load_player_stats, nflreadpy.load_players), and none carries a fixture marker",
+      "observed": "0 non-conforming records",
+      "passed": true
+    }
+  ],
+  "decision": "may_continue_mirror_build",
+  "decision_ceiling_note": "may_continue_mirror_build is the strongest decision this re-verification can return; it never emits may_run and authorizes no Forecast run.",
+  "status_statements": {
+    "source_artifact_identity_verified": true,
+    "sha256_verified": true,
+    "status_remains_candidate_not_promoted": true,
+    "no_forecast_run_authorized": true
+  }
+}
