@@ -18,6 +18,7 @@
     "evaluate:run2-coverage-gate": "tsx scripts/runRun2CoverageGateEvaluation.ts",
     "evaluate:player-season-coverage-gate": "tsx scripts/runPlayerSeasonCoverageGateEvaluation.ts",
     "scaffold:player-history-features": "tsx scripts/runPlayerHistoryFeatureScaffold.ts",
+    "dryrun:player-history-matrix": "tsx scripts/runPlayerHistoryExperimentDryRunMatrix.ts",
     "rerun:run2-comparison-full-coverage": "tsx scripts/runRun2ComparisonRerun.ts",
     "backtest:seasonal-ppr": "tsx scripts/runSeasonalPprBacktest.ts",
     "forecast:seasonal-ppr": "tsx scripts/runSeasonalPprBacktest.ts",
