@@ -149,17 +149,18 @@ export const evaluatePlayerHistoryTargetPopulationGate = (
     fixtureMarked.length === 0,
   );
 
-  // Forbidden-substring screening alone would let an arbitrary provenance string (e.g. a manual
-  // spreadsheet) pass as source-backed; every row must ALSO carry at least one approved source.
-  const unapprovedSource = rows.filter(
-    (row) =>
-      !row.source_refs.some((ref) => APPROVED_SOURCE_NAME_SUBSTRINGS.some((approved) => ref.source_name.includes(approved))),
+  // Forbidden-substring screening alone would let arbitrary provenance (e.g. a manual spreadsheet)
+  // pass as source-backed, and "at least one approved source" would still pass a row that carries an
+  // approved source PLUS an unapproved extra. Preserve the #100 all-source allow-list standard: every
+  // source_ref on every row must be approved.
+  const rowsWithUnapprovedRef = rows.filter((row) =>
+    row.source_refs.some((ref) => !APPROVED_SOURCE_NAME_SUBSTRINGS.some((approved) => ref.source_name.includes(approved))),
   );
   check(
-    'source_refs_on_approved_allow_list',
-    `every row carries >= 1 source_name containing one of: ${APPROVED_SOURCE_NAME_SUBSTRINGS.join(', ')}`,
-    `${unapprovedSource.length} rows without an approved source`,
-    unapprovedSource.length === 0,
+    'unapproved_source_refs_absent',
+    `all source_refs on every row match the approved allow-list (${APPROVED_SOURCE_NAME_SUBSTRINGS.join(', ')}); no unapproved extra sources`,
+    `${rowsWithUnapprovedRef.length} rows carrying >= 1 unapproved source ref`,
+    rowsWithUnapprovedRef.length === 0,
   );
 
   const forbiddenFieldRows = rows.filter((row) =>

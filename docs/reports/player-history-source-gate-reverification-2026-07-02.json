@@ -43,7 +43,7 @@
     },
     {
       "dimension": "source_refs_approved",
-      "expected": "every record carries >= 1 source_ref with an approved 'nflreadpy' source and no fixture markers",
+      "expected": "every record carries >= 1 source_ref, ALL source_refs are on the approved allow-list (nflreadpy.load_player_stats, nflreadpy.load_players), and none carries a fixture marker",
       "observed": "0 non-conforming records",
       "passed": true
     }

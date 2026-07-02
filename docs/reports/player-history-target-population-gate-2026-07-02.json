@@ -103,9 +103,9 @@
         "passed": true
       },
       {
-        "dimension": "source_refs_on_approved_allow_list",
-        "expected": "every row carries >= 1 source_name containing one of: nflreadpy.load_player_stats, nflreadpy.load_players",
-        "observed": "0 rows without an approved source",
+        "dimension": "unapproved_source_refs_absent",
+        "expected": "all source_refs on every row match the approved allow-list (nflreadpy.load_player_stats, nflreadpy.load_players); no unapproved extra sources",
+        "observed": "0 rows carrying >= 1 unapproved source ref",
         "passed": true
       },
       {

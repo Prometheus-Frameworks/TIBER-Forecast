@@ -21,6 +21,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { APPROVED_SOURCE_NAME_SUBSTRINGS } from '../src/reports/playerSeasonCoverageGate.js';
 import {
   EXPECTED_SOURCE_ARTIFACT_STATUS,
   PINNED_SOURCE_ARTIFACT_PATH,
@@ -75,25 +76,26 @@ const reverifyChecks = [
   { dimension: 'row_grain', expected: 'player_id + season + season_type', observed: artifact.row_grain, passed: artifact.row_grain === 'player_id + season + season_type' },
   {
     dimension: 'source_refs_approved',
-    expected: "every record carries >= 1 source_ref with an approved 'nflreadpy' source and no fixture markers",
+    // "At least one approved source" would still pass a record carrying an approved source plus an
+    // unapproved extra; preserve the stricter #100 all-source allow-list standard.
+    expected: `every record carries >= 1 source_ref, ALL source_refs are on the approved allow-list (${APPROVED_SOURCE_NAME_SUBSTRINGS.join(', ')}), and none carries a fixture marker`,
     observed: (() => {
       const bad = artifact.records.filter(
         (r) =>
           !Array.isArray(r.source_refs) ||
           r.source_refs.length === 0 ||
-          !r.source_refs.some((ref) => ref.source_name.includes('nflreadpy')) ||
+          r.source_refs.some((ref) => !APPROVED_SOURCE_NAME_SUBSTRINGS.some((approved) => ref.source_name.includes(approved))) ||
           r.source_refs.some((ref) => ref.source_name.toLowerCase().includes('fixture')),
       ).length;
       return `${bad} non-conforming records`;
     })(),
-    passed:
-      artifact.records.every(
-        (r) =>
-          Array.isArray(r.source_refs) &&
-          r.source_refs.length > 0 &&
-          r.source_refs.some((ref) => ref.source_name.includes('nflreadpy')) &&
-          !r.source_refs.some((ref) => ref.source_name.toLowerCase().includes('fixture')),
-      ),
+    passed: artifact.records.every(
+      (r) =>
+        Array.isArray(r.source_refs) &&
+        r.source_refs.length > 0 &&
+        r.source_refs.every((ref) => APPROVED_SOURCE_NAME_SUBSTRINGS.some((approved) => ref.source_name.includes(approved))) &&
+        !r.source_refs.some((ref) => ref.source_name.toLowerCase().includes('fixture')),
+    ),
   },
 ];
 const reverifyPassed = reverifyChecks.every((c) => c.passed);

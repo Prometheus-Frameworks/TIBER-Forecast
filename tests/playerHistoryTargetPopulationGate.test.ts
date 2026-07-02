@@ -104,7 +104,22 @@ describe('target-population gate: fail-closed paths', () => {
   it('blocks rows whose source is non-fixture but not on the approved allow-list (e.g. manual_spreadsheet)', () => {
     expectBlocked(
       mirror([row({ player_id: 'a1', source_refs: [{ source_name: 'manual_spreadsheet:2025_outcomes.xlsx', observed_at: null }] })]),
-      'source_refs_on_approved_allow_list',
+      'unapproved_source_refs_absent',
+    );
+  });
+
+  it('blocks a mixed-provenance row: an approved nflreadpy source plus an unapproved extra source', () => {
+    expectBlocked(
+      mirror([
+        row({
+          player_id: 'a1',
+          source_refs: [
+            { source_name: "nflreadpy.load_player_stats(summary_level='reg')", observed_at: '2026-06-30T00:00:00Z' },
+            { source_name: 'manual_override_or_unknown_source', observed_at: null },
+          ],
+        }),
+      ]),
+      'unapproved_source_refs_absent',
     );
   });
 
