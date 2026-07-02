@@ -414,6 +414,34 @@ export {
   PLAYER_HISTORY_MIRROR_OVERLAP_GATE_VERSION,
   evaluatePlayerHistoryMirrorOverlapGate,
 } from '../rehearsal/playerHistoryMirrorOverlapGate.js';
+export type {
+  ControlledRunArm,
+  ControlledRunArmComparison,
+  ControlledRunDecision,
+  ControlledRunDecisionRationale,
+  ControlledRunFeatureColumn,
+  ControlledRunMetrics,
+  ControlledRunPrediction,
+  ControlledRunPriorGateEvidence,
+  ControlledRunReport,
+  ControlledRunRow,
+} from '../rehearsal/playerHistoryControlledRun.js';
+export {
+  CONTROLLED_RUN_ARMS,
+  CONTROLLED_RUN_DECISIONS,
+  CONTROLLED_RUN_HISTORY_COLUMNS,
+  CONTROLLED_RUN_RESULT_MARKING,
+  CONTROLLED_RUN_RIDGE_LAMBDA,
+  CONTROLLED_RUN_SHUFFLE_SEED,
+  PLAYER_HISTORY_CONTROLLED_RUN_VERSION,
+  assertControlledRunPreconditions,
+  buildControlledRunRows,
+  computeControlledRunMetrics,
+  decideControlledRun,
+  executeControlledRun,
+  historyValuesFromFeatureRow,
+  runControlledLoocv,
+} from '../rehearsal/playerHistoryControlledRun.js';
 
 export {
   PROJECTION_INPUT_COVERAGE_ARTIFACT_VERSION,
