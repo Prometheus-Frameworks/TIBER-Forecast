@@ -93,7 +93,6 @@ const fullReport = {
   null_handling_policy:
     'Nulls preserved end-to-end; per-fold imputation uses the #104 train-fold mean primitives fit on training rows only; standardization is train-fold-only z-scoring; real zeros are distinct from nulls in the mirrors and feature rows; no full-population statistics were fit; no null was silently coerced to zero outside the documented ridge-neutral train-fold fallback for fully-null training columns.',
   experiment: report,
-  timing_seconds: Number(elapsedSeconds),
   next_allowed_step:
     'Open a follow-up review issue for this experimental result. No decision from this run authorizes production binding, seasonalPprModel.ts wiring, Data artifact promotion, or product output -- a positive candidate result requires its own review; a negative or inconclusive result stands as recorded.',
 };
@@ -182,7 +181,7 @@ ${fullReport.next_allowed_step}
 ## Reproduce
 
 \`\`\`bash
-npm run experiment:player-history-controlled-run   # deterministic, network-free (~${elapsedSeconds}s)
+npm run experiment:player-history-controlled-run   # deterministic, network-free
 npm run build && npm test
 \`\`\`
 `;

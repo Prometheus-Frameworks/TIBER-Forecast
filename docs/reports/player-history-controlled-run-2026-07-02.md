@@ -130,6 +130,6 @@ Open a follow-up review issue for this experimental result. No decision from thi
 ## Reproduce
 
 ```bash
-npm run experiment:player-history-controlled-run   # deterministic, network-free (~4.2s)
+npm run experiment:player-history-controlled-run   # deterministic, network-free
 npm run build && npm test
 ```

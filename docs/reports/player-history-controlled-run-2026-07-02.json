@@ -419,6 +419,5 @@
       "metrics_exist_only_inside_this_report": true
     }
   },
-  "timing_seconds": 4.2,
   "next_allowed_step": "Open a follow-up review issue for this experimental result. No decision from this run authorizes production binding, seasonalPprModel.ts wiring, Data artifact promotion, or product output -- a positive candidate result requires its own review; a negative or inconclusive result stands as recorded."
 }

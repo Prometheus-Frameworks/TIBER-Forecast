@@ -131,16 +131,14 @@ const passingGates = (overrides: Partial<ControlledRunPriorGateEvidence> = {}): 
   ...overrides,
 });
 
-/** Small two-position population: 6 WRs + 6 RBs with history, outcomes correlated with ppr_2024. */
-const syntheticExperiment = () => {
+const buildSyntheticPopulation = (joinedPerPosition: number, positions: string[], noHistoryCount: number) => {
   const players: Array<{ player_id: string; position: string; season_ppr: number }> = [];
   const inputRows: PlayerHistoryInputRow[] = [];
-  const positions = ['WR', 'RB'];
   for (const position of positions) {
-    for (let i = 0; i < 6; i += 1) {
+    for (let i = 0; i < joinedPerPosition; i += 1) {
       const id = `${position.toLowerCase()}${i}`;
-      const basePpr = 80 + i * 40;
-      players.push({ player_id: id, position, season_ppr: basePpr + 10 });
+      const basePpr = 80 + (i % 8) * 40;
+      players.push({ player_id: id, position, season_ppr: basePpr + 10 + (i % 5) * 3 });
       for (const season of [2022, 2023, 2024]) {
         inputRows.push(
           historyRow({
@@ -153,73 +151,101 @@ const syntheticExperiment = () => {
       }
     }
   }
-  // One rookie with no history rows at all.
-  players.push({ player_id: 'rookie1', position: 'WR', season_ppr: 90 });
-  return { outcomeMirror: outcomeMirrorOf(players), inputMirror: inputMirrorOf(inputRows) };
+  for (let i = 0; i < noHistoryCount; i += 1) {
+    players.push({ player_id: `rookie${i}`, position: positions[i % positions.length]!, season_ppr: 90 + i });
+  }
+  const gates = passingGates({
+    dry_run_joined_rows: joinedPerPosition * positions.length,
+    dry_run_scored_target_rows: joinedPerPosition * positions.length + noHistoryCount,
+    dry_run_joined_rows_by_position: Object.fromEntries(positions.map((position) => [position, joinedPerPosition])),
+  });
+  return { outcomeMirror: outcomeMirrorOf(players), inputMirror: inputMirrorOf(inputRows), gates };
 };
+
+/** Tiny two-position population (13 rows) for fast pure-function tests. Gates match its actual counts. */
+const syntheticExperiment = () => {
+  const { outcomeMirror, inputMirror, gates } = buildSyntheticPopulation(6, ['WR', 'RB'], 1);
+  return { outcomeMirror, inputMirror, gates };
+};
+
+/** Population that satisfies the #107 floors (240 joined across 4 positions, 96% share). */
+const floorSatisfyingExperiment = () => buildSyntheticPopulation(60, ['QB', 'RB', 'WR', 'TE'], 10);
 
 // ---- preflight fail-closed --------------------------------------------------------------------------
 
 describe('controlled run preflight (fail-closed on every prior gate)', () => {
-  const { outcomeMirror, inputMirror } = syntheticExperiment();
+  const { outcomeMirror, inputMirror, gates: tinyGates } = syntheticExperiment();
 
-  it('passes when every gate decision and floor is satisfied', () => {
-    expect(() => assertControlledRunPreconditions(passingGates(), outcomeMirror, inputMirror)).not.toThrow();
+  it('passes when every gate decision, consistency check, and floor is satisfied', () => {
+    const { outcomeMirror: bigOutcome, inputMirror: bigInput, gates } = floorSatisfyingExperiment();
+    expect(() => assertControlledRunPreconditions(gates, bigOutcome, bigInput)).not.toThrow();
   });
 
   it('blocks when the source-gate re-verification is not passing', () => {
     expect(() =>
-      assertControlledRunPreconditions(passingGates({ source_gate_reverification_decision: 'blocked_source_artifact' }), outcomeMirror, inputMirror),
+      assertControlledRunPreconditions({ ...tinyGates, source_gate_reverification_decision: 'blocked_source_artifact' }, outcomeMirror, inputMirror),
     ).toThrow(/source-gate re-verification/);
   });
 
   it('blocks when the target-population gate is not passing', () => {
     expect(() =>
-      assertControlledRunPreconditions(passingGates({ target_population_gate_decision: 'blocked_target_population' }), outcomeMirror, inputMirror),
+      assertControlledRunPreconditions({ ...tinyGates, target_population_gate_decision: 'blocked_target_population' }, outcomeMirror, inputMirror),
     ).toThrow(/target-population gate/);
   });
 
   it('blocks when the mirror-overlap gate is not may_authorize_run_issue', () => {
     expect(() =>
-      assertControlledRunPreconditions(passingGates({ mirror_overlap_gate_decision: 'needs_overlap_fix' }), outcomeMirror, inputMirror),
+      assertControlledRunPreconditions({ ...tinyGates, mirror_overlap_gate_decision: 'needs_overlap_fix' }, outcomeMirror, inputMirror),
     ).toThrow(/mirror-overlap gate/);
   });
 
   it('blocks when the dry-run matrix status is wrong', () => {
     expect(() =>
-      assertControlledRunPreconditions(passingGates({ dry_run_matrix_status: 'model_ready' }), outcomeMirror, inputMirror),
+      assertControlledRunPreconditions({ ...tinyGates, dry_run_matrix_status: 'model_ready' }, outcomeMirror, inputMirror),
     ).toThrow(/dry-run matrix status/);
   });
 
-  it('blocks when joined counts no longer satisfy the #107 floors', () => {
-    expect(() => assertControlledRunPreconditions(passingGates({ dry_run_joined_rows: 150 }), outcomeMirror, inputMirror)).toThrow(/floor/);
-    expect(() =>
-      assertControlledRunPreconditions(
-        passingGates({ dry_run_joined_rows_by_position: { QB: 20, RB: 115, WR: 189, TE: 115 } }),
-        outcomeMirror,
-        inputMirror,
-      ),
-    ).toThrow(/QB/);
+  it('blocks when gate evidence is stale/mismatched with the mirrors actually being run', () => {
+    // Evidence claims the real 485/610 population, but the mirrors passed in are the tiny synthetics.
+    expect(() => assertControlledRunPreconditions(passingGates(), outcomeMirror, inputMirror)).toThrow(/stale\/mismatched/);
+  });
+
+  it('recomputed floors block a consistent-but-small population', () => {
+    // Evidence matches the tiny mirrors exactly, so consistency passes -- and the floors then fail.
+    expect(() => assertControlledRunPreconditions(tinyGates, outcomeMirror, inputMirror)).toThrow(/floor/);
   });
 
   it('blocks if the input mirror contains a 2025 row', () => {
     const tampered = inputMirrorOf([...inputMirror.rows, historyRow({ player_id: 'wr0', season: 2025 })]);
-    expect(() => assertControlledRunPreconditions(passingGates(), outcomeMirror, tampered)).toThrow(/2025 rows must never be input features/);
+    expect(() => assertControlledRunPreconditions(tinyGates, outcomeMirror, tampered)).toThrow(/2025 rows must never be input features/);
   });
 
   it('blocks if outcome-valued fields appear in input rows', () => {
     const tampered = inputMirrorOf([{ ...inputMirror.rows[0]!, ppr_2025_actual: 321.5 } as PlayerHistoryInputRow, ...inputMirror.rows.slice(1)]);
-    expect(() => assertControlledRunPreconditions(passingGates(), outcomeMirror, tampered)).toThrow(/outcome-valued fields/);
+    expect(() => assertControlledRunPreconditions(tinyGates, outcomeMirror, tampered)).toThrow(/outcome-valued fields/);
   });
 
   it('blocks on forbidden availability/status fields', () => {
     const tampered = inputMirrorOf([{ ...inputMirror.rows[0]!, active_status: 'active' } as PlayerHistoryInputRow, ...inputMirror.rows.slice(1)]);
-    expect(() => assertControlledRunPreconditions(passingGates(), outcomeMirror, tampered)).toThrow(/forbidden availability/);
+    expect(() => assertControlledRunPreconditions(tinyGates, outcomeMirror, tampered)).toThrow(/forbidden availability/);
   });
 
-  it('blocks if the source artifact is no longer marked candidate/not-promoted', () => {
+  it('blocks if the outcome mirror source is no longer marked candidate/not-promoted', () => {
     const promoted = outcomeMirrorOf([{ player_id: 'wr0' }], 'promoted');
-    expect(() => assertControlledRunPreconditions(passingGates(), promoted, inputMirror)).toThrow(/candidate_evidence_artifact_not_promoted/);
+    expect(() => assertControlledRunPreconditions(tinyGates, promoted, inputMirror)).toThrow(/outcome mirror artifact status/);
+  });
+
+  it('blocks if the input mirror source is no longer marked candidate/not-promoted', () => {
+    const promotedInput = { ...inputMirror, governed_source: { ...inputMirror.governed_source, artifactStatus: 'promoted' } };
+    expect(() => assertControlledRunPreconditions(tinyGates, outcomeMirror, promotedInput)).toThrow(/input mirror artifact status/);
+  });
+
+  it('blocks if the two mirrors carry different source pins', () => {
+    const repinnedInput = {
+      ...inputMirror,
+      governed_source: { ...inputMirror.governed_source, sha256: 'deadbeef'.repeat(8) },
+    } as unknown as PlayerHistoryRunPopulationInputMirror;
+    expect(() => assertControlledRunPreconditions(tinyGates, outcomeMirror, repinnedInput)).toThrow(/source pins disagree/);
   });
 });
 
@@ -233,7 +259,7 @@ describe('arm construction', () => {
     const wr0 = rows.find((row) => row.player_id === 'wr0')!;
     expect(wr0.has_player_history).toBe(true);
     expect(wr0.real_history_values.ppr_2024).toBe(80); // its own 2024 production
-    const rookie = rows.find((row) => row.player_id === 'rookie1')!;
+    const rookie = rows.find((row) => row.player_id === 'rookie0')!;
     expect(rookie.has_player_history).toBe(false);
     expect(Object.values(rookie.real_history_values).every((value) => value === null)).toBe(true);
   });
@@ -371,8 +397,8 @@ describe('decision rule (pre-registered, ceiling-safe)', () => {
 // ---- full run boundaries ----------------------------------------------------------------------------
 
 describe('full synthetic run: report boundaries', () => {
-  const { outcomeMirror, inputMirror } = syntheticExperiment();
-  const { report } = executeControlledRun(outcomeMirror, inputMirror, passingGates());
+  const { outcomeMirror, inputMirror, gates } = floorSatisfyingExperiment();
+  const { report } = executeControlledRun(outcomeMirror, inputMirror, gates);
 
   it('is marked experimental_candidate_result_not_production_signal with all boundary statements', () => {
     expect(report.marking).toBe(CONTROLLED_RUN_RESULT_MARKING);
@@ -403,7 +429,7 @@ describe('full synthetic run: report boundaries', () => {
   });
 
   it('is deterministic: two executions produce byte-identical reports', () => {
-    const again = executeControlledRun(outcomeMirror, inputMirror, passingGates());
+    const again = executeControlledRun(outcomeMirror, inputMirror, gates);
     expect(JSON.stringify(again.report)).toBe(JSON.stringify(report));
   });
 

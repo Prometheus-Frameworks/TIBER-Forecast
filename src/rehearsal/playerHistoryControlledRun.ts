@@ -103,15 +103,8 @@ export const assertControlledRunPreconditions = (
     fail(`mirror-overlap gate decision is ${gates.mirror_overlap_gate_decision}, expected may_authorize_run_issue`);
   if (gates.dry_run_matrix_status !== 'dry_run_only_not_model_ready')
     fail(`dry-run matrix status is ${gates.dry_run_matrix_status}, expected dry_run_only_not_model_ready`);
-  if (gates.dry_run_joined_rows < OVERLAP_MIN_JOINED_ROWS_OVERALL)
-    fail(`joined rows ${gates.dry_run_joined_rows} below the #107 floor ${OVERLAP_MIN_JOINED_ROWS_OVERALL}`);
-  for (const position of OVERLAP_REQUIRED_POSITIONS) {
-    const joined = gates.dry_run_joined_rows_by_position[position] ?? 0;
-    if (joined < OVERLAP_MIN_JOINED_ROWS_PER_POSITION)
-      fail(`joined rows for ${position} (${joined}) below the #107 floor ${OVERLAP_MIN_JOINED_ROWS_PER_POSITION}`);
-  }
-  if (gates.dry_run_scored_target_rows <= 0 || gates.dry_run_joined_rows / gates.dry_run_scored_target_rows < OVERLAP_MIN_JOINED_SHARE)
-    fail(`joined share below the #107 floor ${OVERLAP_MIN_JOINED_SHARE}`);
+
+  // Structural mirror checks (before floors, so a tampered mirror fails for the right reason).
   const badInputSeason = inputMirror.rows.filter((row) => row.season >= outcomeMirror.target_season);
   if (badInputSeason.length > 0)
     fail(`${badInputSeason.length} input mirror rows at or beyond target season ${outcomeMirror.target_season} (2025 rows must never be input features)`);
@@ -126,6 +119,57 @@ export const assertControlledRunPreconditions = (
   if (outcomeLeak.length > 0) fail(`${outcomeLeak.length} input mirror rows carry outcome-valued fields`);
   if (outcomeMirror.governed_source.artifactStatus !== 'candidate_evidence_artifact_not_promoted')
     fail(`outcome mirror artifact status is ${outcomeMirror.governed_source.artifactStatus}, expected candidate_evidence_artifact_not_promoted`);
+  if (inputMirror.governed_source.artifactStatus !== 'candidate_evidence_artifact_not_promoted')
+    fail(`input mirror artifact status is ${inputMirror.governed_source.artifactStatus}, expected candidate_evidence_artifact_not_promoted`);
+  if (inputMirror.governed_source.sha256 !== outcomeMirror.governed_source.sha256)
+    fail(
+      `mirror source pins disagree (outcome ${outcomeMirror.governed_source.sha256} vs input ${inputMirror.governed_source.sha256}); both mirrors must derive from the same pinned artifact`,
+    );
+
+  // Gate evidence is a CLAIM; recompute the actual scored/joined counts from the mirrors being run
+  // and require exact agreement, so stale gate JSON paired with mismatched mirrors fails closed.
+  const inputPositionsByPlayer = new Map<string, Set<string>>();
+  for (const row of inputMirror.rows) {
+    const positions = inputPositionsByPlayer.get(row.player_id) ?? new Set<string>();
+    positions.add(row.position);
+    inputPositionsByPlayer.set(row.player_id, positions);
+  }
+  let actualScored = 0;
+  let actualJoined = 0;
+  const actualJoinedByPosition: Record<string, number> = {};
+  for (const row of outcomeMirror.rows) {
+    if (typeof row.season_ppr !== 'number') continue;
+    actualScored += 1;
+    if (inputPositionsByPlayer.get(row.player_id)?.has(row.position)) {
+      actualJoined += 1;
+      actualJoinedByPosition[row.position] = (actualJoinedByPosition[row.position] ?? 0) + 1;
+    }
+  }
+  if (actualScored !== gates.dry_run_scored_target_rows)
+    fail(
+      `gate evidence is stale/mismatched with the mirrors being run: evidence claims ${gates.dry_run_scored_target_rows} scored target rows but the outcome mirror yields ${actualScored}`,
+    );
+  if (actualJoined !== gates.dry_run_joined_rows)
+    fail(
+      `gate evidence is stale/mismatched with the mirrors being run: evidence claims ${gates.dry_run_joined_rows} joined rows but the mirrors yield ${actualJoined}`,
+    );
+  for (const position of OVERLAP_REQUIRED_POSITIONS) {
+    if ((actualJoinedByPosition[position] ?? 0) !== (gates.dry_run_joined_rows_by_position[position] ?? 0))
+      fail(
+        `gate evidence is stale/mismatched with the mirrors being run: joined ${position} rows differ (evidence ${gates.dry_run_joined_rows_by_position[position] ?? 0} vs mirrors ${actualJoinedByPosition[position] ?? 0})`,
+      );
+  }
+
+  // Floors enforced on the now-verified actual counts.
+  if (actualJoined < OVERLAP_MIN_JOINED_ROWS_OVERALL)
+    fail(`joined rows ${actualJoined} below the #107 floor ${OVERLAP_MIN_JOINED_ROWS_OVERALL}`);
+  for (const position of OVERLAP_REQUIRED_POSITIONS) {
+    const joined = actualJoinedByPosition[position] ?? 0;
+    if (joined < OVERLAP_MIN_JOINED_ROWS_PER_POSITION)
+      fail(`joined rows for ${position} (${joined}) below the #107 floor ${OVERLAP_MIN_JOINED_ROWS_PER_POSITION}`);
+  }
+  if (actualScored <= 0 || actualJoined / actualScored < OVERLAP_MIN_JOINED_SHARE)
+    fail(`joined share below the #107 floor ${OVERLAP_MIN_JOINED_SHARE}`);
 };
 
 // ---------------------------------------------------------------------------------------------------
