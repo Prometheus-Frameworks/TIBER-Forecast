@@ -240,6 +240,36 @@ describe('controlled run preflight (fail-closed on every prior gate)', () => {
     expect(() => assertControlledRunPreconditions(tinyGates, outcomeMirror, promotedInput)).toThrow(/input mirror artifact status/);
   });
 
+  it('blocks an outcome mirror row with an approved source plus an unapproved extra source', () => {
+    const mixed = outcomeMirrorOf([{ player_id: 'wr0' }]);
+    mixed.rows[0]!.source_refs = [
+      { source_name: "nflreadpy.load_player_stats(summary_level='reg')", observed_at: null },
+      { source_name: 'manual_override_or_unknown_source', observed_at: null },
+    ];
+    expect(() => assertControlledRunPreconditions(tinyGates, mixed, inputMirror)).toThrow(/unapproved source ref/);
+  });
+
+  it('blocks an input mirror row with an approved source plus an unapproved extra source', () => {
+    const mixedRow = {
+      ...inputMirror.rows[0]!,
+      source_refs: [
+        { source_name: "nflreadpy.load_player_stats(summary_level='reg')", observed_at: null },
+        { source_name: 'manual_override_or_unknown_source', observed_at: null },
+      ],
+    };
+    const tampered = inputMirrorOf([mixedRow, ...inputMirror.rows.slice(1)]);
+    expect(() => assertControlledRunPreconditions(tinyGates, outcomeMirror, tampered)).toThrow(/unapproved source ref/);
+  });
+
+  it('blocks a mirror row whose source carries a fixture marker or no source_refs at all', () => {
+    const fixtureMarked = outcomeMirrorOf([{ player_id: 'wr0' }]);
+    fixtureMarked.rows[0]!.source_refs = [{ source_name: 'offline_fixture:data/raw/foo.json', observed_at: null }];
+    expect(() => assertControlledRunPreconditions(tinyGates, fixtureMarked, inputMirror)).toThrow(/fixture-marked source ref/);
+    const refless = outcomeMirrorOf([{ player_id: 'wr0' }]);
+    refless.rows[0]!.source_refs = [];
+    expect(() => assertControlledRunPreconditions(tinyGates, refless, inputMirror)).toThrow(/no source_refs/);
+  });
+
   it('blocks if the two mirrors carry different source pins', () => {
     const repinnedInput = {
       ...inputMirror,

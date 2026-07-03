@@ -32,6 +32,7 @@ import {
   type PlayerHistoryImputationRow,
   type PlayerHistoryInputRow,
 } from './playerHistoryFeatureScaffold.js';
+import { APPROVED_SOURCE_NAME_SUBSTRINGS } from '../reports/playerSeasonCoverageGate.js';
 import type { PlayerHistoryOutcomeMirror, PlayerHistoryRunPopulationInputMirror } from './playerHistoryRunPopulationMirrors.js';
 import {
   OVERLAP_MIN_JOINED_ROWS_OVERALL,
@@ -39,6 +40,7 @@ import {
   OVERLAP_MIN_JOINED_SHARE,
   OVERLAP_REQUIRED_POSITIONS,
 } from './playerHistoryMirrorOverlapGate.js';
+import { FORBIDDEN_SOURCE_MARKERS } from './playerHistoryTargetPopulationGate.js';
 import { seededDerangement } from './util/seededShuffle.js';
 
 export const PLAYER_HISTORY_CONTROLLED_RUN_VERSION = 'player-history-controlled-run-v1' as const;
@@ -125,6 +127,24 @@ export const assertControlledRunPreconditions = (
     fail(
       `mirror source pins disagree (outcome ${outcomeMirror.governed_source.sha256} vs input ${inputMirror.governed_source.sha256}); both mirrors must derive from the same pinned artifact`,
     );
+
+  // Revalidate row-level provenance in the mirrors the run actually consumes (the prior gate reports
+  // are evidence about earlier file states). Same all-source allow-list standard as #110: every row
+  // carries >= 1 source_ref, every ref is approved, and no fixture/scaffold marker appears.
+  const validateSourceRefs = (rows: ReadonlyArray<{ player_id: string; source_refs: Array<{ source_name: string }> }>, mirrorLabel: string): void => {
+    for (const row of rows) {
+      if (!Array.isArray(row.source_refs) || row.source_refs.length === 0)
+        fail(`${mirrorLabel} row for ${row.player_id} carries no source_refs`);
+      for (const ref of row.source_refs) {
+        if (FORBIDDEN_SOURCE_MARKERS.some((marker) => ref.source_name.toLowerCase().includes(marker)))
+          fail(`${mirrorLabel} row for ${row.player_id} carries a fixture-marked source ref (${ref.source_name})`);
+        if (!APPROVED_SOURCE_NAME_SUBSTRINGS.some((approved) => ref.source_name.includes(approved)))
+          fail(`${mirrorLabel} row for ${row.player_id} carries an unapproved source ref (${ref.source_name}); every source ref must be on the approved allow-list`);
+      }
+    }
+  };
+  validateSourceRefs(outcomeMirror.rows, 'outcome mirror');
+  validateSourceRefs(inputMirror.rows, 'input mirror');
 
   // Gate evidence is a CLAIM; recompute the actual scored/joined counts from the mirrors being run
   // and require exact agreement, so stale gate JSON paired with mismatched mirrors fails closed.
