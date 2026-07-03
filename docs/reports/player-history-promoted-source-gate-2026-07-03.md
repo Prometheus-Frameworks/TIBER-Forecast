@@ -44,7 +44,7 @@ Forecast-side gate over the TIBER-Data PROMOTED artifact (`Prometheus-Frameworks
 | consumer_safety_not_allowed_boundary | `consumer_safety.not_allowed present and includes all 6 required boundaries (roster status, availability/injury, depth chart, ownership, advice/rankings, Forecast binding w/o separate gate)` | `all required boundaries present` | pass |
 | forecast_compatibility_note_boundary | `note present and requires: separate Forecast-side gate • re-verifies sha/provenance • leakage splits • production-only feature contract • No product-facing claim is authorized until a Forecast production-binding review passes` | `all required elements present` | pass |
 | no_forbidden_availability_fields | `no record carries active_status/ownership_status/roster_status/active_roster_status` | `0 forbidden-field hits` | pass |
-| unavailable_usage_fields_null_not_zero | `never zero-coerced: snap_share/routes_run/route_participation/red_zone_targets/red_zone_carries stay null when unavailable` | `0 zero-coerced values` | pass |
+| unavailable_usage_fields_remain_null | `snap_share/routes_run/route_participation/red_zone_targets/red_zone_carries are not source-backed in this artifact and must stay null: any non-null value (zero-coerced OR populated) fails` | `0 zero-coerced, 0 populated non-null values` | pass |
 
 ## Decision rule
 

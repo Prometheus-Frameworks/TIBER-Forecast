@@ -188,9 +188,9 @@
         "passed": true
       },
       {
-        "dimension": "unavailable_usage_fields_null_not_zero",
-        "expected": "never zero-coerced: snap_share/routes_run/route_participation/red_zone_targets/red_zone_carries stay null when unavailable",
-        "observed": "0 zero-coerced values",
+        "dimension": "unavailable_usage_fields_remain_null",
+        "expected": "snap_share/routes_run/route_participation/red_zone_targets/red_zone_carries are not source-backed in this artifact and must stay null: any non-null value (zero-coerced OR populated) fails",
+        "observed": "0 zero-coerced, 0 populated non-null values",
         "passed": true
       }
     ],

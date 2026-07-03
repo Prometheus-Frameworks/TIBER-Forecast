@@ -280,12 +280,17 @@ describe('promoted-source gate: artifact identity, grain, ordering, null semanti
     expect(checks.find((c) => c.dimension === 'record_count')?.passed).toBe(false);
   });
 
-  it('artifact/manifest source_candidate disagreement fails', () => {
+  it('artifact/manifest source_candidate disagreement breaks lineage and escalates to blocked', () => {
     const artifact = syntheticArtifact({
       source_candidate: { path: 'data/processed/evidence/candidate.json', sha256: 'e'.repeat(64), status_at_promotion: 'candidate_evidence_artifact_not_promoted' },
     });
     const checks = checkPromotedArtifactIdentity(artifact, syntheticManifest(), syntheticExpectations);
     expect(checks.find((c) => c.dimension === 'artifact_source_candidate_matches_manifest')?.passed).toBe(false);
+    // Even though the MANIFEST still matches the pin, the artifact itself no longer re-affirms the
+    // lineage -- the archived-candidate fallback must not be available.
+    const result = evaluateSynthetic(syntheticManifest(), artifact);
+    expect(result.candidate_lineage_intact).toBe(false);
+    expect(result.decision).toBe('blocked_promoted_artifact_gate_failed');
   });
 
   it('a forbidden availability field on any record fails', () => {
@@ -301,7 +306,23 @@ describe('promoted-source gate: artifact identity, grain, ordering, null semanti
       syntheticManifest(),
       syntheticArtifact({ records: [syntheticRecord({ usage_summary: { targets: 5, snap_share: 0 } }), syntheticRecords()[1]] }),
     );
-    expect(failedDimensions(result)).toContain('unavailable_usage_fields_null_not_zero');
+    expect(failedDimensions(result)).toContain('unavailable_usage_fields_remain_null');
+  });
+
+  it('a POPULATED unavailable usage field fails too: these fields are not source-backed at any value', () => {
+    const populatedVariants: Array<Record<string, number | string | null>> = [
+      { targets: 5, snap_share: 0.5 },
+      { targets: 5, routes_run: 12 },
+    ];
+    for (const usage of populatedVariants) {
+      const result = evaluateSynthetic(
+        syntheticManifest(),
+        syntheticArtifact({ records: [syntheticRecord({ usage_summary: usage }), syntheticRecords()[1]] }),
+      );
+      const failed = result.checks.find((c) => c.dimension === 'unavailable_usage_fields_remain_null');
+      expect(failed?.passed).toBe(false);
+      expect(failed?.observed).toContain('1 populated non-null');
+    }
   });
 });
 

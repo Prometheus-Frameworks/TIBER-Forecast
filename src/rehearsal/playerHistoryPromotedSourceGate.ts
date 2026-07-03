@@ -251,11 +251,17 @@ const check = (dimension: string, expected: string, observed: string, passed: bo
   passed,
 });
 
-/** Dimensions that establish the candidate lineage (used to pick the fallback decision on failure). */
+/**
+ * Dimensions that establish the candidate lineage (used to pick the fallback decision on failure).
+ * Lineage must be re-affirmed by BOTH sides: the manifest's source_candidate must equal the prior
+ * Forecast pin, AND the artifact's own source_candidate must agree with the manifest -- a promoted
+ * artifact that disagrees with its manifest does not re-affirm the pinned lineage.
+ */
 export const CANDIDATE_LINEAGE_DIMENSIONS = [
   'candidate_lineage_path',
   'candidate_lineage_sha256',
   'candidate_lineage_status_at_promotion',
+  'artifact_source_candidate_matches_manifest',
 ] as const;
 
 /** Gate check 1: manifest identity, promoted status, promotion decision, sha, candidate lineage. */
@@ -456,13 +462,20 @@ export const checkConsumerSafetyBoundary = (manifest: PromotedManifest): Promote
 export const checkLeakageDataBoundaries = (records: PromotedCoverageRecord[]): PromotedSourceGateCheck[] => {
   let forbiddenFieldHits = 0;
   let zeroCoercedUsage = 0;
+  let populatedUnavailableUsage = 0;
   for (const row of records) {
     for (const key of PROMOTED_FORBIDDEN_AVAILABILITY_KEYS) {
       if (key in row) forbiddenFieldHits += 1;
     }
     const usage = row.usage_summary ?? {};
     for (const field of PROMOTED_ALWAYS_UNAVAILABLE_USAGE_FIELDS) {
-      if (usage !== null && field in usage && usage[field] === 0) zeroCoercedUsage += 1;
+      // These fields are never source-backed in this artifact: ANY non-null value is a violation.
+      // A zero is the coercion failure mode; any other value is fabricated/unsourced data that a
+      // later mirror refresh could silently consume -- both fail.
+      if (usage !== null && field in usage && usage[field] !== null && usage[field] !== undefined) {
+        if (usage[field] === 0) zeroCoercedUsage += 1;
+        else populatedUnavailableUsage += 1;
+      }
     }
   }
   return [
@@ -473,10 +486,10 @@ export const checkLeakageDataBoundaries = (records: PromotedCoverageRecord[]): P
       forbiddenFieldHits === 0,
     ),
     check(
-      'unavailable_usage_fields_null_not_zero',
-      `never zero-coerced: ${PROMOTED_ALWAYS_UNAVAILABLE_USAGE_FIELDS.join('/')} stay null when unavailable`,
-      `${zeroCoercedUsage} zero-coerced values`,
-      zeroCoercedUsage === 0,
+      'unavailable_usage_fields_remain_null',
+      `${PROMOTED_ALWAYS_UNAVAILABLE_USAGE_FIELDS.join('/')} are not source-backed in this artifact and must stay null: any non-null value (zero-coerced OR populated) fails`,
+      `${zeroCoercedUsage} zero-coerced, ${populatedUnavailableUsage} populated non-null values`,
+      zeroCoercedUsage === 0 && populatedUnavailableUsage === 0,
     ),
   ];
 };
