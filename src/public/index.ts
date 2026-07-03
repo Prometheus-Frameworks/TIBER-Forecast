@@ -442,6 +442,19 @@ export {
   historyValuesFromFeatureRow,
   runControlledLoocv,
 } from '../rehearsal/playerHistoryControlledRun.js';
+export type { RobustnessChecksReport, RobustnessDecision, RobustnessArmView } from '../rehearsal/playerHistoryRobustnessChecks.js';
+export {
+  ABLATION_VARIANTS,
+  PLAYER_HISTORY_ROBUSTNESS_CHECKS_VERSION,
+  ROBUSTNESS_DECISIONS,
+  ROBUSTNESS_LAMBDAS,
+  ROBUSTNESS_SHUFFLE_SEEDS,
+  ROBUSTNESS_TOP_K_EXCLUDED,
+  ROBUSTNESS_WEAKENED_RELATIVE_MARGIN,
+  ablationColumnsFor,
+  runPlayerHistoryRobustnessChecks,
+  runPriorYearPositionBaselineLoocv,
+} from '../rehearsal/playerHistoryRobustnessChecks.js';
 
 export {
   PROJECTION_INPUT_COVERAGE_ARTIFACT_VERSION,

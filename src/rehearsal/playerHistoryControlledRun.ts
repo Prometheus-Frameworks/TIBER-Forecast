@@ -373,8 +373,9 @@ const buildFoldVectors = (
   trainRows: readonly ControlledRunRow[],
   heldOut: ControlledRunRow,
   valuesOf: (row: ControlledRunRow) => Record<string, number | null>,
+  historyColumns: readonly ControlledRunFeatureColumn[] = CONTROLLED_RUN_HISTORY_COLUMNS,
 ): FoldModelInputs => {
-  const historyNames = CONTROLLED_RUN_HISTORY_COLUMNS.map((column) => column.name);
+  const historyNames = historyColumns.map((column) => column.name);
   // Train-fold-only imputation means (the #104 primitives). The held-out row never contributes.
   const trainImputation = trainRows.map((row) => historyImputationRow(row, valuesOf(row)));
   const means = computePlayerHistoryTrainFoldMeans(trainImputation, historyNames);
@@ -442,8 +443,16 @@ export interface ControlledRunPrediction {
   predictions: Record<ControlledRunArm, number>;
 }
 
-/** LOOCV over the run rows. Deterministic: fold order is the (sorted) row order. */
-export const runControlledLoocv = (rows: readonly ControlledRunRow[], lambda: number = CONTROLLED_RUN_RIDGE_LAMBDA): ControlledRunPrediction[] => {
+/**
+ * LOOCV over the run rows. Deterministic: fold order is the (sorted) row order. `historyColumns`
+ * (default: the full #112 set) restricts the player-history feature block for ablation variants
+ * while keeping the identical fold, imputation, and standardization discipline.
+ */
+export const runControlledLoocv = (
+  rows: readonly ControlledRunRow[],
+  lambda: number = CONTROLLED_RUN_RIDGE_LAMBDA,
+  historyColumns: readonly ControlledRunFeatureColumn[] = CONTROLLED_RUN_HISTORY_COLUMNS,
+): ControlledRunPrediction[] => {
   const predictions: ControlledRunPrediction[] = [];
   for (let i = 0; i < rows.length; i += 1) {
     const heldOut = rows[i]!;
@@ -452,8 +461,8 @@ export const runControlledLoocv = (rows: readonly ControlledRunRow[], lambda: nu
     const samePosition = trainRows.filter((row) => row.position === heldOut.position);
     const baselinePool = samePosition.length > 0 ? samePosition : trainRows;
     const baseline = baselinePool.reduce((sum, row) => sum + row.outcome, 0) / baselinePool.length;
-    const real = ridgePredict(buildFoldVectors(trainRows, heldOut, (row) => row.real_history_values), lambda);
-    const shuffled = ridgePredict(buildFoldVectors(trainRows, heldOut, (row) => row.shuffled_history_values), lambda);
+    const real = ridgePredict(buildFoldVectors(trainRows, heldOut, (row) => row.real_history_values, historyColumns), lambda);
+    const shuffled = ridgePredict(buildFoldVectors(trainRows, heldOut, (row) => row.shuffled_history_values, historyColumns), lambda);
     predictions.push({
       player_id: heldOut.player_id,
       position: heldOut.position,

@@ -22,6 +22,7 @@
     "generate:player-history-run-mirrors": "tsx scripts/buildPlayerHistoryRunPopulationMirrors.ts",
     "gate:player-history-population": "tsx scripts/runPlayerHistoryPopulationGates.ts",
     "experiment:player-history-controlled-run": "tsx scripts/runPlayerHistoryControlledRun.ts",
+    "experiment:player-history-robustness": "tsx scripts/runPlayerHistoryRobustnessChecks.ts",
     "rerun:run2-comparison-full-coverage": "tsx scripts/runRun2ComparisonRerun.ts",
     "backtest:seasonal-ppr": "tsx scripts/runSeasonalPprBacktest.ts",
     "forecast:seasonal-ppr": "tsx scripts/runSeasonalPprBacktest.ts",

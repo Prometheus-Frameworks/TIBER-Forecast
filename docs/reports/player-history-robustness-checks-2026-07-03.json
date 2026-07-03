@@ -1,0 +1,617 @@
+{
+  "report_version": "player-history-robustness-checks-report-v1",
+  "repo": "Prometheus-Frameworks/TIBER-Forecast",
+  "issue": "TIBER-Forecast#115",
+  "generated_at": "2026-07-03T00:00:00.000Z",
+  "marking": "experimental_candidate_result_not_production_signal",
+  "predecessor_refs": [
+    "TIBER-Data#184-191",
+    "TIBER-Forecast#99/#100",
+    "TIBER-Forecast#101/#102",
+    "TIBER-Forecast#103/#104",
+    "TIBER-Forecast#105/#106",
+    "TIBER-Forecast#107/#108",
+    "TIBER-Forecast#109/#110",
+    "TIBER-Forecast#111/#112",
+    "TIBER-Forecast#113/#114"
+  ],
+  "inputs": {
+    "outcome_mirror": {
+      "path": "data/fixtures/tiberData/player_season_coverage_v0_2025.outcome_mirror.json",
+      "governed_source": {
+        "repo": "Prometheus-Frameworks/TIBER-Data",
+        "sourceArtifactPath": "data/processed/evidence/player_season_coverage_2022_2025.source_backed.json",
+        "sha256": "39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b",
+        "artifactStatus": "candidate_evidence_artifact_not_promoted"
+      }
+    },
+    "input_mirror": {
+      "path": "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.real_population_input_mirror.json",
+      "governed_source": {
+        "repo": "Prometheus-Frameworks/TIBER-Data",
+        "sourceArtifactPath": "data/processed/evidence/player_season_coverage_2022_2025.source_backed.json",
+        "sha256": "39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b",
+        "artifactStatus": "candidate_evidence_artifact_not_promoted"
+      }
+    },
+    "prior_gates": {
+      "source_gate_reverification": {
+        "path": "docs/reports/player-history-source-gate-reverification-2026-07-02.json",
+        "decision": "may_continue_mirror_build"
+      },
+      "target_population_gate": {
+        "path": "docs/reports/player-history-target-population-gate-2026-07-02.json",
+        "decision": "may_continue_to_overlap_gate"
+      },
+      "dry_run_matrix": {
+        "path": "docs/reports/player-history-real-population-dry-run-matrix-2026-07-02.json",
+        "status": "dry_run_only_not_model_ready"
+      },
+      "mirror_overlap_gate": {
+        "path": "docs/reports/player-history-mirror-overlap-gate-2026-07-02.json",
+        "decision": "may_authorize_run_issue"
+      }
+    },
+    "preflight": "assertControlledRunPreconditions reused verbatim from #112; the run refuses to execute on any violation"
+  },
+  "robustness": {
+    "version": "player-history-robustness-checks-v1",
+    "marking": "experimental_candidate_result_not_production_signal",
+    "primary_run_note": "#112 remains the primary recorded controlled run; these are review-only robustness diagnostics",
+    "population": {
+      "evaluated_rows": 610,
+      "joined_rows": 485,
+      "no_history_rows": 125
+    },
+    "p1_feature_family_ablation": [
+      {
+        "variant": "full_feature_set",
+        "history_columns_used": [
+          "prior_seasons_observed_count",
+          "prior_weeks_observed_total",
+          "prior_weeks_observed_mean",
+          "missingness_rate",
+          "ppr_2024",
+          "ppr_2023",
+          "ppr_2022",
+          "ppg_2024",
+          "trailing_2yr_ppr_total",
+          "trailing_3yr_ppr_total",
+          "trailing_2yr_ppr_mean",
+          "trailing_3yr_ppr_mean",
+          "year_over_year_ppr_trend",
+          "targets_2024",
+          "receptions_2024",
+          "rushing_attempts_2024",
+          "receiving_air_yards_2024",
+          "target_share_2024",
+          "air_yards_share_2024",
+          "wopr_2024",
+          "racr_2024",
+          "latest_pre_target_season_age",
+          "latest_pre_target_career_year",
+          "undrafted_indicator",
+          "multi_team_prior_season_indicator",
+          "multi_team_season_count"
+        ],
+        "real_arm": {
+          "joined": {
+            "n": 485,
+            "mae": 40.03420951963204,
+            "rmse": 57.28707506805985,
+            "pearson": 0.7705798065926959,
+            "spearman": 0.7514351701400404
+          },
+          "overall": {
+            "n": 610,
+            "mae": 42.18196044742731,
+            "rmse": 58.603175955154555,
+            "pearson": 0.7311533276126413,
+            "spearman": 0.6475519971358724
+          },
+          "no_history": {
+            "n": 125,
+            "mae": 50.5152340472728,
+            "rmse": 63.451733540374214,
+            "pearson": -0.09222873719669311,
+            "spearman": -0.2756513859450367
+          },
+          "per_position_joined_mae": {
+            "QB": 65.96916374989144,
+            "RB": 46.92508101890952,
+            "TE": 25.80873557776531,
+            "WR": 35.44041217413287
+          }
+        },
+        "joined_mae_vs_baseline_delta": 28.892214044198894,
+        "joined_mae_vs_shuffled_delta": 31.996615239246182
+      },
+      {
+        "variant": "production_only",
+        "history_columns_used": [
+          "ppr_2024",
+          "ppr_2023",
+          "ppr_2022",
+          "ppg_2024",
+          "trailing_2yr_ppr_total",
+          "trailing_3yr_ppr_total",
+          "trailing_2yr_ppr_mean",
+          "trailing_3yr_ppr_mean",
+          "year_over_year_ppr_trend"
+        ],
+        "real_arm": {
+          "joined": {
+            "n": 485,
+            "mae": 40.172545912447845,
+            "rmse": 57.30238444165308,
+            "pearson": 0.7700219132413475,
+            "spearman": 0.7357230124038328
+          },
+          "overall": {
+            "n": 610,
+            "mae": 42.25316473975801,
+            "rmse": 58.55002254000009,
+            "pearson": 0.7313097136897359,
+            "spearman": 0.6355502491128547
+          },
+          "no_history": {
+            "n": 125,
+            "mae": 50.325965789721565,
+            "rmse": 63.15795770263888,
+            "pearson": -0.05445085801806909,
+            "spearman": -0.27636247945034
+          },
+          "per_position_joined_mae": {
+            "QB": 62.35765664291856,
+            "RB": 46.38862689728739,
+            "TE": 27.62574199441716,
+            "WR": 36.27739156909287
+          }
+        },
+        "joined_mae_vs_baseline_delta": 28.753877651383092,
+        "joined_mae_vs_shuffled_delta": 30.55470152523732
+      },
+      {
+        "variant": "usage_only",
+        "history_columns_used": [
+          "targets_2024",
+          "receptions_2024",
+          "rushing_attempts_2024",
+          "receiving_air_yards_2024",
+          "target_share_2024",
+          "air_yards_share_2024",
+          "wopr_2024",
+          "racr_2024"
+        ],
+        "real_arm": {
+          "joined": {
+            "n": 485,
+            "mae": 46.84511737836455,
+            "rmse": 66.9314391214528,
+            "pearson": 0.6666670233508984,
+            "spearman": 0.6532437802706441
+          },
+          "overall": {
+            "n": 610,
+            "mae": 47.767640053836544,
+            "rmse": 66.81040940994806,
+            "pearson": 0.6279323106801359,
+            "spearman": 0.5556914896425648
+          },
+          "no_history": {
+            "n": 125,
+            "mae": 51.34702803466795,
+            "rmse": 66.33872371873531,
+            "pearson": 0.055439544378667736,
+            "spearman": -0.3151026569986904
+          },
+          "per_position_joined_mae": {
+            "QB": 96.0456448651515,
+            "RB": 47.41324691477703,
+            "TE": 28.958327936313434,
+            "WR": 40.20178973297052
+          }
+        },
+        "joined_mae_vs_baseline_delta": 22.08130618546639,
+        "joined_mae_vs_shuffled_delta": 23.839739196721055
+      },
+      {
+        "variant": "coverage_only",
+        "history_columns_used": [
+          "prior_seasons_observed_count",
+          "prior_weeks_observed_total",
+          "prior_weeks_observed_mean",
+          "missingness_rate"
+        ],
+        "real_arm": {
+          "joined": {
+            "n": 485,
+            "mae": 55.65300511332937,
+            "rmse": 73.30337926465893,
+            "pearson": 0.5775343967008665,
+            "spearman": 0.6036632669075505
+          },
+          "overall": {
+            "n": 610,
+            "mae": 54.649454476687005,
+            "rmse": 71.52722866000155,
+            "pearson": 0.5528844496321136,
+            "spearman": 0.5353899652321136
+          },
+          "no_history": {
+            "n": 125,
+            "mae": 50.755678006514714,
+            "rmse": 64.17203027057525,
+            "pearson": 0.07443387487897292,
+            "spearman": -0.1846259402142662
+          },
+          "per_position_joined_mae": {
+            "QB": 70.8313137366889,
+            "RB": 68.49997084847857,
+            "TE": 38.15998157376991,
+            "WR": 53.179609760765615
+          }
+        },
+        "joined_mae_vs_baseline_delta": 13.273418450501566,
+        "joined_mae_vs_shuffled_delta": 15.385460444858865
+      },
+      {
+        "variant": "age_career_team_context_only",
+        "history_columns_used": [
+          "latest_pre_target_season_age",
+          "latest_pre_target_career_year",
+          "undrafted_indicator",
+          "multi_team_prior_season_indicator",
+          "multi_team_season_count"
+        ],
+        "real_arm": {
+          "joined": {
+            "n": 485,
+            "mae": 63.37149499501697,
+            "rmse": 82.05524800775618,
+            "pearson": 0.4067304496808724,
+            "spearman": 0.40858519538634175
+          },
+          "overall": {
+            "n": 610,
+            "mae": 60.73099156796228,
+            "rmse": 78.60424216913816,
+            "pearson": 0.40253933506302275,
+            "spearman": 0.3794497245612951
+          },
+          "no_history": {
+            "n": 125,
+            "mae": 50.48583827099028,
+            "rmse": 63.461893708749734,
+            "pearson": 0.0514858470046523,
+            "spearman": -0.18462991096346743
+          },
+          "per_position_joined_mae": {
+            "QB": 96.30491665347739,
+            "RB": 73.84846916457435,
+            "TE": 44.05804490911545,
+            "WR": 57.24762674592264
+          }
+        },
+        "joined_mae_vs_baseline_delta": 5.5549285688139705,
+        "joined_mae_vs_shuffled_delta": 7.097886782859938
+      },
+      {
+        "variant": "ppr_2024_alone",
+        "history_columns_used": [
+          "ppr_2024"
+        ],
+        "real_arm": {
+          "joined": {
+            "n": 485,
+            "mae": 42.99721776647115,
+            "rmse": 61.09993002942749,
+            "pearson": 0.732816016736452,
+            "spearman": 0.6831783329737104
+          },
+          "overall": {
+            "n": 610,
+            "mae": 44.49036858608724,
+            "rmse": 61.5072608604556,
+            "pearson": 0.6974802211744994,
+            "spearman": 0.5823962366938371
+          },
+          "no_history": {
+            "n": 125,
+            "mae": 50.28379376619786,
+            "rmse": 63.06280117234159,
+            "pearson": -0.014775058636402407,
+            "spearman": -0.25892170380913326
+          },
+          "per_position_joined_mae": {
+            "QB": 65.86012436871724,
+            "RB": 47.7466839557652,
+            "TE": 30.587908317562974,
+            "WR": 39.67409680936731
+          }
+        },
+        "joined_mae_vs_baseline_delta": 25.929205797359785,
+        "joined_mae_vs_shuffled_delta": 27.352095750567017
+      }
+    ],
+    "p1_attribution_note": "Attribution: production_only (joined MAE 40.173) is within 0.138 of the full set (40.034), so the production family (prior-year/trailing PPR totals, means, trend) carries essentially all of the candidate signal; usage, coverage, and age/team-context add ~no marginal joined-population MAE beyond it. ppr_2024 alone reaches 42.997, so the production family's aggregates add the remaining margin over bare prior-year continuity. Any future feature-contract work should weigh the non-production families accordingly.",
+    "p2_prior_year_position_baseline": {
+      "method": "per_position_train_fold_ols_on_ppr_2024_else_position_mean",
+      "view": {
+        "joined": {
+          "n": 485,
+          "mae": 43.4684024212042,
+          "rmse": 61.03841832176617,
+          "pearson": 0.7347952284390036,
+          "spearman": 0.6961570126984918
+        },
+        "overall": {
+          "n": 610,
+          "mae": 46.77898454106899,
+          "rmse": 62.54955532454727,
+          "pearson": 0.6914636226386153,
+          "spearman": 0.5760191731554447
+        },
+        "no_history": {
+          "n": 125,
+          "mae": 59.624043166144446,
+          "rmse": 68.09603004869105,
+          "pearson": 0.08607479527215142,
+          "spearman": -0.18465374084000055
+        },
+        "per_position_joined_mae": {
+          "QB": 68.82688112904293,
+          "RB": 47.0610307053552,
+          "TE": 30.404295809616016,
+          "WR": 40.376129473785724
+        }
+      },
+      "joined_mae_vs_position_mean_baseline": 25.458021142626734,
+      "joined_mae_vs_full_real": 3.4341929015721604,
+      "joined_mae_vs_ppr_2024_alone": 0.47118465473305093
+    },
+    "p3_lambda_sensitivity": [
+      {
+        "lambda": 0.1,
+        "real_joined": {
+          "n": 485,
+          "mae": 40.11355629713402,
+          "rmse": 57.39962496212511,
+          "pearson": 0.7696551626439141,
+          "spearman": 0.7509175799178556
+        },
+        "real_beats_baseline_on_joined_mae": true
+      },
+      {
+        "lambda": 1,
+        "real_joined": {
+          "n": 485,
+          "mae": 40.03420951963204,
+          "rmse": 57.28707506805985,
+          "pearson": 0.7705798065926959,
+          "spearman": 0.7514351701400404
+        },
+        "real_beats_baseline_on_joined_mae": true
+      },
+      {
+        "lambda": 10,
+        "real_joined": {
+          "n": 485,
+          "mae": 40.04573636759809,
+          "rmse": 57.095857807311596,
+          "pearson": 0.7719705282072654,
+          "spearman": 0.7497629960380837
+        },
+        "real_beats_baseline_on_joined_mae": true
+      },
+      {
+        "lambda": 100,
+        "real_joined": {
+          "n": 485,
+          "mae": 40.94718213550287,
+          "rmse": 57.68736911972858,
+          "pearson": 0.7664889095151698,
+          "spearman": 0.7389626660024603
+        },
+        "real_beats_baseline_on_joined_mae": true
+      }
+    ],
+    "p4_shuffled_seeds": [
+      {
+        "seed": 20260702,
+        "is_original_112_seed": true,
+        "shuffled_joined": {
+          "n": 485,
+          "mae": 72.03082475887823,
+          "rmse": 90.40857906441782,
+          "pearson": 0.11703039757307648,
+          "spearman": 0.06815442891503357
+        },
+        "per_position_joined_mae": {
+          "QB": 110.45068737635624,
+          "RB": 81.08577187164616,
+          "TE": 53.011571053029584,
+          "WR": 64.67730267131583
+        },
+        "donors_assigned": 485,
+        "self_donations": 0,
+        "cross_position_donations": 0
+      },
+      {
+        "seed": 20260703,
+        "is_original_112_seed": false,
+        "shuffled_joined": {
+          "n": 485,
+          "mae": 70.74161743128904,
+          "rmse": 90.78752393932427,
+          "pearson": 0.10220818530396883,
+          "spearman": 0.03307869665388531
+        },
+        "per_position_joined_mae": {
+          "QB": 103.81173757572422,
+          "RB": 80.82002844516623,
+          "TE": 48.58774015747915,
+          "WR": 66.54082743319132
+        },
+        "donors_assigned": 485,
+        "self_donations": 0,
+        "cross_position_donations": 0
+      },
+      {
+        "seed": 20260704,
+        "is_original_112_seed": false,
+        "shuffled_joined": {
+          "n": 485,
+          "mae": 72.30046003370869,
+          "rmse": 91.39755727667577,
+          "pearson": 0.036232167550408215,
+          "spearman": -0.022059495387112434
+        },
+        "per_position_joined_mae": {
+          "QB": 109.79189633929099,
+          "RB": 80.53334107921494,
+          "TE": 49.581159358484264,
+          "WR": 68.02270056941879
+        },
+        "donors_assigned": 485,
+        "self_donations": 0,
+        "cross_position_donations": 0
+      },
+      {
+        "seed": 20260705,
+        "is_original_112_seed": false,
+        "shuffled_joined": {
+          "n": 485,
+          "mae": 69.11574529424414,
+          "rmse": 87.3758793781184,
+          "pearson": 0.2532180874817537,
+          "spearman": 0.1554377089865876
+        },
+        "per_position_joined_mae": {
+          "QB": 101.08126280538261,
+          "RB": 76.32134269799957,
+          "TE": 48.90497144256568,
+          "WR": 65.866386224276
+        },
+        "donors_assigned": 485,
+        "self_donations": 0,
+        "cross_position_donations": 0
+      },
+      {
+        "seed": 20260706,
+        "is_original_112_seed": false,
+        "shuffled_joined": {
+          "n": 485,
+          "mae": 71.80036188899528,
+          "rmse": 90.54805998008715,
+          "pearson": 0.10858349320183837,
+          "spearman": 0.015473685816134472
+        },
+        "per_position_joined_mae": {
+          "QB": 102.03283960596013,
+          "RB": 82.96728352776286,
+          "TE": 49.53061922460406,
+          "WR": 67.99867346903244
+        },
+        "donors_assigned": 485,
+        "self_donations": 0,
+        "cross_position_donations": 0
+      }
+    ],
+    "p5_leverage_sensitivity": {
+      "top_k_excluded": 10,
+      "method": "per_arm_top_k_absolute_error_rows_excluded_joined_population_only",
+      "primary_metrics_untouched": true,
+      "trimmed_joined": {
+        "baseline_only": {
+          "n": 475,
+          "mae": 64.42149343611473,
+          "rmse": 79.41574516950264,
+          "pearson": 0.18316307594086417,
+          "spearman": -0.17066843285656547
+        },
+        "real_player_history_features": {
+          "n": 475,
+          "mae": 36.825176331985695,
+          "rmse": 50.435699147659776,
+          "pearson": 0.8062154080352645,
+          "spearman": 0.7586383734350957
+        },
+        "shuffled_player_history_control": {
+          "n": 475,
+          "mae": 67.63128953543715,
+          "rmse": 81.69400055126462,
+          "pearson": 0.12944602088287752,
+          "spearman": 0.06957687319882318
+        }
+      },
+      "real_still_beats_baseline_after_trim": true,
+      "partial_season_sensitivity": {
+        "computed": false,
+        "reason": "the #109 outcome mirror is deliberately outcome+identity+provenance only and carries no coverage_status/games_for_ppg, so partial-season 2025 outcome rows are not identifiable from the artifacts this run may consume",
+        "minimal_source_change_recommendation": "a future #109-mirror regeneration may add coverage_status and games_for_ppg to outcome mirror rows (outcome-layer metadata, not input features); the target-population gate would gain matching scope checks"
+      }
+    },
+    "reference_joined_mae": {
+      "baseline_only": 68.92642356383094,
+      "full_real": 40.03420951963204,
+      "shuffled_by_seed": {
+        "20260702": 72.03082475887823,
+        "20260703": 70.74161743128904,
+        "20260704": 72.30046003370869,
+        "20260705": 69.11574529424414,
+        "20260706": 71.80036188899528
+      },
+      "ppr_2024_alone": 42.99721776647115,
+      "prior_year_position_baseline": 43.4684024212042
+    },
+    "decision": {
+      "decision": "candidate_signal_survives_initial_robustness_checks",
+      "weakened_margin": 0.05,
+      "checks": [
+        {
+          "criterion": "all_required_metrics_defined",
+          "passed": true,
+          "detail": "all joined-population metrics defined"
+        },
+        {
+          "criterion": "full_real_beats_position_mean_baseline",
+          "passed": true,
+          "detail": "full 40.034 vs baseline 68.926"
+        },
+        {
+          "criterion": "full_real_beats_every_shuffled_seed",
+          "passed": true,
+          "detail": "full 40.034 vs seeds [72.03, 70.74, 72.30, 69.12, 71.80]"
+        },
+        {
+          "criterion": "full_real_beats_baseline_at_every_lambda",
+          "passed": true,
+          "detail": "λ=0.1: 40.11; λ=1: 40.03; λ=10: 40.05; λ=100: 40.95"
+        },
+        {
+          "criterion": "real_still_beats_baseline_after_top_k_trim",
+          "passed": true,
+          "detail": "trimmed real 36.825 vs trimmed baseline 64.421"
+        },
+        {
+          "criterion": "full_set_beats_stronger_simple_comparators_by_margin",
+          "passed": true,
+          "detail": "full 40.034 vs min(ppr_2024-alone 42.997, prior-year baseline 43.468) with 5% margin"
+        }
+      ],
+      "rationale": "The candidate signal remains directionally strong across ablation, the stronger prior-year baseline, the lambda sweep, five shuffled seeds, and the leverage trim. This remains an experimental candidate result -- not production evidence and not a promotion/binding authorization."
+    },
+    "boundary_statements": {
+      "robustness_diagnostics_only": true,
+      "primary_112_run_unmodified": true,
+      "no_production_forecast_behavior_changed": true,
+      "no_feature_binding_occurred": true,
+      "no_source_artifact_promoted": true,
+      "source_remains_candidate_not_promoted": true,
+      "no_production_signal_claimed": true,
+      "no_fantasy_advice_or_product_output": true
+    }
+  },
+  "next_recommended_issue": "TIBER-Data: promote player_season_coverage_v0 after source-backed governance review (per the #114 section-4 sketch) -- the signal survived the bounded checks, so upstream governance is now the blocking prerequisite for any binding path."
+}
