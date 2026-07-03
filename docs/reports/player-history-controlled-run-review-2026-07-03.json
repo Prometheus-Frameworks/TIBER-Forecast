@@ -51,9 +51,9 @@
     "overall_n610_mae_baseline_real_shuffled": [67.02, 42.18, 67.72],
     "assessment": [
       "41.9% joined-population MAE reduction vs baseline; rank correlation moved from -0.16 to 0.75",
-      "shuffled control landed at/below baseline in every view: the sanity arm worked, attributing the improvement to actual history values rather than model structure",
-      "every position improved 34-40% while its shuffled arm sat at baseline; no position carried or degraded the result",
-      "no-history subgroup shows the expected null: real ~= shuffled, both slightly better than raw position mean for structural (imputation-centering) reasons only",
+      "shuffled control tracked baseline closely and never approached the real arm: slightly worse than baseline in the primary joined view (72.03 vs 68.93), overall, and for QB/RB/TE; marginally better for WR (59.31 vs 60.88, ~2.6%) -- small enough to be shuffle-draw noise plus structural has-history/imputation effects, and one reason the repeated-seeds check (P4) is required rather than optional; correlations stayed near zero throughout",
+      "every position improved 34-40% while its shuffled arm stayed within +/-3% of baseline; no position carried or degraded the result",
+      "no-history subgroup shows the expected null: real ~= shuffled (their feature blocks are identical all-null there, so the shuffle is irrelevant to this slice), both slightly better than raw position mean for structural (imputation-centering) reasons only",
       "explicitly a candidate signal, not production evidence"
     ],
     "limits": [
