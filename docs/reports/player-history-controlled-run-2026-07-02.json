@@ -1,0 +1,423 @@
+{
+  "report_version": "player-history-controlled-run-report-v1",
+  "repo": "Prometheus-Frameworks/TIBER-Forecast",
+  "issue": "TIBER-Forecast#111",
+  "generated_at": "2026-07-02T00:00:00.000Z",
+  "marking": "experimental_candidate_result_not_production_signal",
+  "predecessor_refs": [
+    "TIBER-Data#184-191",
+    "TIBER-Forecast#99/#100",
+    "TIBER-Forecast#101/#102",
+    "TIBER-Forecast#103/#104",
+    "TIBER-Forecast#105/#106",
+    "TIBER-Forecast#107/#108",
+    "TIBER-Forecast#109/#110"
+  ],
+  "inputs": {
+    "outcome_mirror": {
+      "path": "data/fixtures/tiberData/player_season_coverage_v0_2025.outcome_mirror.json",
+      "governed_source": {
+        "repo": "Prometheus-Frameworks/TIBER-Data",
+        "sourceArtifactPath": "data/processed/evidence/player_season_coverage_2022_2025.source_backed.json",
+        "sha256": "39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b",
+        "artifactStatus": "candidate_evidence_artifact_not_promoted"
+      }
+    },
+    "input_mirror": {
+      "path": "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.real_population_input_mirror.json",
+      "governed_source": {
+        "repo": "Prometheus-Frameworks/TIBER-Data",
+        "sourceArtifactPath": "data/processed/evidence/player_season_coverage_2022_2025.source_backed.json",
+        "sha256": "39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b",
+        "artifactStatus": "candidate_evidence_artifact_not_promoted"
+      }
+    },
+    "prior_gates": {
+      "source_gate_reverification": {
+        "path": "docs/reports/player-history-source-gate-reverification-2026-07-02.json",
+        "decision": "may_continue_mirror_build"
+      },
+      "target_population_gate": {
+        "path": "docs/reports/player-history-target-population-gate-2026-07-02.json",
+        "decision": "may_continue_to_overlap_gate"
+      },
+      "dry_run_matrix": {
+        "path": "docs/reports/player-history-real-population-dry-run-matrix-2026-07-02.json",
+        "status": "dry_run_only_not_model_ready"
+      },
+      "mirror_overlap_gate": {
+        "path": "docs/reports/player-history-mirror-overlap-gate-2026-07-02.json",
+        "decision": "may_authorize_run_issue"
+      }
+    }
+  },
+  "baseline_choice_rationale": "baseline_only is the train-fold position mean of the 2025 outcome: reproducible on the real 610-player population without production rewiring, structurally unable to leak the held-out outcome, and consuming no player-history payloads. The old n=38 fixture backtest baseline was NOT reused as empirical truth for this population (per #107/#108 and the issue requirement).",
+  "null_handling_policy": "Nulls preserved end-to-end; per-fold imputation uses the #104 train-fold mean primitives fit on training rows only; standardization is train-fold-only z-scoring; real zeros are distinct from nulls in the mirrors and feature rows; no full-population statistics were fit; no null was silently coerced to zero outside the documented ridge-neutral train-fold fallback for fully-null training columns.",
+  "experiment": {
+    "version": "player-history-controlled-run-v1",
+    "marking": "experimental_candidate_result_not_production_signal",
+    "arms": [
+      "baseline_only",
+      "real_player_history_features",
+      "shuffled_player_history_control"
+    ],
+    "fold_design": {
+      "method": "leave_one_out_cross_validation",
+      "folds": 610,
+      "imputation": "train_fold_mean_via_104_primitives",
+      "standardization": "train_fold_only_z_score",
+      "ridge_lambda": 1,
+      "shuffle_seed": 20260702,
+      "shuffle_method": "seeded_derangement_within_position_pre_outcome_independent"
+    },
+    "population": {
+      "evaluated_rows": 610,
+      "joined_rows": 485,
+      "no_history_rows": 125,
+      "by_position": {
+        "QB": 81,
+        "TE": 138,
+        "WR": 240,
+        "RB": 151
+      },
+      "shuffled_control_integrity": {
+        "donors_assigned": 485,
+        "self_donations": 0,
+        "cross_position_donations": 0
+      }
+    },
+    "metrics_by_arm": {
+      "overall": {
+        "baseline_only": {
+          "n": 610,
+          "mae": 67.02019807250174,
+          "rmse": 84.76423432073774,
+          "pearson": 0.16097758438558538,
+          "spearman": -0.17449326108275823
+        },
+        "real_player_history_features": {
+          "n": 610,
+          "mae": 42.18196044742731,
+          "rmse": 58.603175955154555,
+          "pearson": 0.7311533276126413,
+          "spearman": 0.6475519971358724
+        },
+        "shuffled_player_history_control": {
+          "n": 610,
+          "mae": 67.71971384230147,
+          "rmse": 85.71826614165887,
+          "pearson": 0.16152127387208112,
+          "spearman": 0.10989474435038411
+        }
+      },
+      "joined_only": {
+        "baseline_only": {
+          "n": 485,
+          "mae": 68.92642356383094,
+          "rmse": 88.55310414019723,
+          "pearson": 0.18047118567059178,
+          "spearman": -0.158062020571096
+        },
+        "real_player_history_features": {
+          "n": 485,
+          "mae": 40.03420951963204,
+          "rmse": 57.28707506805985,
+          "pearson": 0.7705798065926959,
+          "spearman": 0.7514351701400404
+        },
+        "shuffled_player_history_control": {
+          "n": 485,
+          "mae": 72.03082475887823,
+          "rmse": 90.40857906441782,
+          "pearson": 0.11703039757307648,
+          "spearman": 0.06815442891503357
+        }
+      },
+      "no_history_only": {
+        "baseline_only": {
+          "n": 125,
+          "mae": 59.624043166144446,
+          "rmse": 68.09603004869105,
+          "pearson": 0.08607479527215142,
+          "spearman": -0.18465374084000055
+        },
+        "real_player_history_features": {
+          "n": 125,
+          "mae": 50.5152340472728,
+          "rmse": 63.451733540374214,
+          "pearson": -0.09222873719669311,
+          "spearman": -0.2756513859450367
+        },
+        "shuffled_player_history_control": {
+          "n": 125,
+          "mae": 50.992603485983864,
+          "rmse": 64.36141608173934,
+          "pearson": 0.058424579665006145,
+          "spearman": -0.18462650744846695
+        }
+      },
+      "per_position": {
+        "QB": {
+          "baseline_only": {
+            "n": 81,
+            "mae": 99.81445061728397,
+            "rmse": 115.04897303865864,
+            "pearson": -1,
+            "spearman": -1
+          },
+          "real_player_history_features": {
+            "n": 81,
+            "mae": 65.46780380746513,
+            "rmse": 83.80628286946178,
+            "pearson": 0.6781832020513828,
+            "spearman": 0.5786392199686847
+          },
+          "shuffled_player_history_control": {
+            "n": 81,
+            "mae": 102.67923041796806,
+            "rmse": 118.13256345737287,
+            "pearson": -0.07561175009512702,
+            "spearman": -0.11632857005927309
+          }
+        },
+        "RB": {
+          "baseline_only": {
+            "n": 151,
+            "mae": 75.88121147902872,
+            "rmse": 94.98665348699143,
+            "pearson": -0.9999999999999996,
+            "spearman": -0.9999973845051985
+          },
+          "real_player_history_features": {
+            "n": 151,
+            "mae": 49.63822817943897,
+            "rmse": 67.02249263437614,
+            "pearson": 0.7039028079188266,
+            "spearman": 0.539402895311163
+          },
+          "shuffled_player_history_control": {
+            "n": 151,
+            "mae": 76.57966225493111,
+            "rmse": 95.62470714971141,
+            "pearson": 0.07054668565562046,
+            "spearman": 0.0415043306686299
+          }
+        },
+        "TE": {
+          "baseline_only": {
+            "n": 138,
+            "mae": 48.752884798476664,
+            "rmse": 61.303631793513226,
+            "pearson": -1.0000000000000004,
+            "spearman": -0.9999954288848764
+          },
+          "real_player_history_features": {
+            "n": 138,
+            "mae": 30.431091937087185,
+            "rmse": 42.507970618199145,
+            "pearson": 0.7156637791109776,
+            "spearman": 0.617386691326238
+          },
+          "shuffled_player_history_control": {
+            "n": 138,
+            "mae": 52.135428960743596,
+            "rmse": 65.57263630945485,
+            "pearson": -0.1073823639495243,
+            "spearman": -0.11487881847958611
+          }
+        },
+        "WR": {
+          "baseline_only": {
+            "n": 240,
+            "mae": 60.88078870292888,
+            "rmse": 77.18167586295695,
+            "pearson": -0.9999999999999987,
+            "spearman": -0.9999995656687182
+          },
+          "real_player_history_features": {
+            "n": 240,
+            "mae": 36.388502592136085,
+            "rmse": 49.932851917279116,
+            "pearson": 0.7614607940614804,
+            "spearman": 0.6890897096549595
+          },
+          "shuffled_player_history_control": {
+            "n": 240,
+            "mae": 59.30745659529694,
+            "rmse": 75.76125523369005,
+            "pearson": 0.18264388494245665,
+            "spearman": 0.12605070648746264
+          }
+        }
+      }
+    },
+    "comparisons": [
+      {
+        "comparison": "baseline_only_vs_real_player_history_features",
+        "subgroup": "overall",
+        "mae_delta": -24.838237625074434,
+        "rmse_delta": -26.161058365583187,
+        "better_on_mae": "real_player_history_features"
+      },
+      {
+        "comparison": "baseline_only_vs_shuffled_player_history_control",
+        "subgroup": "overall",
+        "mae_delta": 0.6995157697997314,
+        "rmse_delta": 0.9540318209211307,
+        "better_on_mae": "baseline_only"
+      },
+      {
+        "comparison": "real_player_history_features_vs_shuffled_player_history_control",
+        "subgroup": "overall",
+        "mae_delta": 25.537753394874166,
+        "rmse_delta": 27.115090186504318,
+        "better_on_mae": "real_player_history_features"
+      },
+      {
+        "comparison": "baseline_only_vs_real_player_history_features",
+        "subgroup": "joined_only",
+        "mae_delta": -28.892214044198894,
+        "rmse_delta": -31.266029072137385,
+        "better_on_mae": "real_player_history_features"
+      },
+      {
+        "comparison": "baseline_only_vs_shuffled_player_history_control",
+        "subgroup": "joined_only",
+        "mae_delta": 3.104401195047288,
+        "rmse_delta": 1.8554749242205872,
+        "better_on_mae": "baseline_only"
+      },
+      {
+        "comparison": "real_player_history_features_vs_shuffled_player_history_control",
+        "subgroup": "joined_only",
+        "mae_delta": 31.996615239246182,
+        "rmse_delta": 33.12150399635797,
+        "better_on_mae": "real_player_history_features"
+      },
+      {
+        "comparison": "baseline_only_vs_real_player_history_features",
+        "subgroup": "no_history_only",
+        "mae_delta": -9.108809118871648,
+        "rmse_delta": -4.644296508316835,
+        "better_on_mae": "real_player_history_features"
+      },
+      {
+        "comparison": "baseline_only_vs_shuffled_player_history_control",
+        "subgroup": "no_history_only",
+        "mae_delta": -8.631439680160582,
+        "rmse_delta": -3.734613966951713,
+        "better_on_mae": "shuffled_player_history_control"
+      },
+      {
+        "comparison": "real_player_history_features_vs_shuffled_player_history_control",
+        "subgroup": "no_history_only",
+        "mae_delta": 0.4773694387110652,
+        "rmse_delta": 0.9096825413651217,
+        "better_on_mae": "real_player_history_features"
+      },
+      {
+        "comparison": "baseline_only_vs_real_player_history_features",
+        "subgroup": "position_QB",
+        "mae_delta": -34.346646809818836,
+        "rmse_delta": -31.242690169196862,
+        "better_on_mae": "real_player_history_features"
+      },
+      {
+        "comparison": "baseline_only_vs_shuffled_player_history_control",
+        "subgroup": "position_QB",
+        "mae_delta": 2.86477980068409,
+        "rmse_delta": 3.0835904187142233,
+        "better_on_mae": "baseline_only"
+      },
+      {
+        "comparison": "real_player_history_features_vs_shuffled_player_history_control",
+        "subgroup": "position_QB",
+        "mae_delta": 37.211426610502926,
+        "rmse_delta": 34.326280587911086,
+        "better_on_mae": "real_player_history_features"
+      },
+      {
+        "comparison": "baseline_only_vs_real_player_history_features",
+        "subgroup": "position_RB",
+        "mae_delta": -26.242983299589753,
+        "rmse_delta": -27.964160852615294,
+        "better_on_mae": "real_player_history_features"
+      },
+      {
+        "comparison": "baseline_only_vs_shuffled_player_history_control",
+        "subgroup": "position_RB",
+        "mae_delta": 0.698450775902387,
+        "rmse_delta": 0.6380536627199831,
+        "better_on_mae": "baseline_only"
+      },
+      {
+        "comparison": "real_player_history_features_vs_shuffled_player_history_control",
+        "subgroup": "position_RB",
+        "mae_delta": 26.94143407549214,
+        "rmse_delta": 28.602214515335277,
+        "better_on_mae": "real_player_history_features"
+      },
+      {
+        "comparison": "baseline_only_vs_real_player_history_features",
+        "subgroup": "position_TE",
+        "mae_delta": -18.32179286138948,
+        "rmse_delta": -18.79566117531408,
+        "better_on_mae": "real_player_history_features"
+      },
+      {
+        "comparison": "baseline_only_vs_shuffled_player_history_control",
+        "subgroup": "position_TE",
+        "mae_delta": 3.3825441622669317,
+        "rmse_delta": 4.269004515941624,
+        "better_on_mae": "baseline_only"
+      },
+      {
+        "comparison": "real_player_history_features_vs_shuffled_player_history_control",
+        "subgroup": "position_TE",
+        "mae_delta": 21.70433702365641,
+        "rmse_delta": 23.064665691255705,
+        "better_on_mae": "real_player_history_features"
+      },
+      {
+        "comparison": "baseline_only_vs_real_player_history_features",
+        "subgroup": "position_WR",
+        "mae_delta": -24.492286110792797,
+        "rmse_delta": -27.248823945677835,
+        "better_on_mae": "real_player_history_features"
+      },
+      {
+        "comparison": "baseline_only_vs_shuffled_player_history_control",
+        "subgroup": "position_WR",
+        "mae_delta": -1.5733321076319413,
+        "rmse_delta": -1.4204206292669,
+        "better_on_mae": "shuffled_player_history_control"
+      },
+      {
+        "comparison": "real_player_history_features_vs_shuffled_player_history_control",
+        "subgroup": "position_WR",
+        "mae_delta": 22.918954003160856,
+        "rmse_delta": 25.828403316410935,
+        "better_on_mae": "real_player_history_features"
+      }
+    ],
+    "decision": {
+      "decision": "candidate_player_history_signal_observed_requires_followup",
+      "primary_metric": "joined_population_mae",
+      "real_beats_baseline_on_primary": true,
+      "real_beats_shuffled_on_primary": true,
+      "real_beats_shuffled_on_secondary": true,
+      "secondary_metric": "joined_population_rmse",
+      "rationale": "The real player-history arm beat both the baseline and the position-stratified shuffled control on joined-population MAE, and beat the shuffled control on RMSE. This is an experimental candidate result only -- not a production signal; a follow-up review issue is required before anything further."
+    },
+    "boundary_statements": {
+      "isolated_controlled_experiment_only": true,
+      "source_artifact_remains_candidate_not_promoted": true,
+      "no_production_forecast_behavior_changed": true,
+      "no_feature_binding_occurred": true,
+      "no_product_facing_signal_claimed": true,
+      "no_fantasy_advice_or_rankings_output": true,
+      "metrics_exist_only_inside_this_report": true
+    }
+  },
+  "next_allowed_step": "Open a follow-up review issue for this experimental result. No decision from this run authorizes production binding, seasonalPprModel.ts wiring, Data artifact promotion, or product output -- a positive candidate result requires its own review; a negative or inconclusive result stands as recorded."
+}
