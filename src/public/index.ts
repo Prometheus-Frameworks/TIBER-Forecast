@@ -455,6 +455,39 @@ export {
   runPlayerHistoryRobustnessChecks,
   runPriorYearPositionBaselineLoocv,
 } from '../rehearsal/playerHistoryRobustnessChecks.js';
+export type {
+  PromotedArtifact,
+  PromotedCoverageRecord,
+  PromotedManifest,
+  PromotedSourceGateCheck,
+  PromotedSourceGateDecision,
+  PromotedSourceGateExpectations,
+  PromotedSourceGateInput,
+  PromotedSourceGateResult,
+  PromotedSourceRef,
+} from '../rehearsal/playerHistoryPromotedSourceGate.js';
+export {
+  CANDIDATE_LINEAGE_DIMENSIONS,
+  EXPECTED_APPROVED_SOURCE_PREFIXES,
+  EXPECTED_PROMOTED_STATUS,
+  EXPECTED_PROMOTION_DECISION,
+  EXPECTED_PROMOTION_REVIEW,
+  PINNED_PROMOTED_ARTIFACT_SHA256,
+  PROMOTED_ARTIFACT_PATH,
+  PROMOTED_MANIFEST_PATH,
+  PROMOTED_SOURCE_GATE_DECISIONS,
+  PROMOTED_SOURCE_GATE_EXPECTATIONS,
+  PROMOTED_SOURCE_LEAKAGE_DISCIPLINE,
+  PROMOTION_MERGE_COMMIT,
+  REQUIRED_COMPATIBILITY_NOTE_PHRASES,
+  REQUIRED_NOT_ALLOWED_ENTRIES,
+  checkConsumerSafetyBoundary,
+  checkLeakageDataBoundaries,
+  checkManifestIdentity,
+  checkPromotedArtifactIdentity,
+  checkPromotedProvenance,
+  evaluatePlayerHistoryPromotedSourceGate,
+} from '../rehearsal/playerHistoryPromotedSourceGate.js';
 
 export {
   PROJECTION_INPUT_COVERAGE_ARTIFACT_VERSION,
