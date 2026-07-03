@@ -1,0 +1,107 @@
+{
+  "review_id": "player-history-controlled-run-review-2026-07-03",
+  "status": "review_decision_only_no_binding_no_new_run_no_production_change",
+  "issue": "TIBER-Forecast#113",
+  "date": "2026-07-03",
+  "subject": {
+    "reviewed_run": "TIBER-Forecast#111 / PR #112",
+    "run_report": "docs/reports/player-history-controlled-run-2026-07-02.json",
+    "run_marking": "experimental_candidate_result_not_production_signal",
+    "run_decision": "candidate_player_history_signal_observed_requires_followup",
+    "source_artifact_status": "candidate_evidence_artifact_not_promoted"
+  },
+  "q1_run_validity": {
+    "verdict": "valid_no_blocking_concerns",
+    "guards_verified": [
+      "prior_gate_preflight_fail_closed",
+      "gate_evidence_vs_actual_mirror_consistency",
+      "candidate_status_and_same_sha_pin_both_mirrors",
+      "no_2025_input_rows",
+      "no_outcome_valued_input_fields",
+      "approved_source_provenance_revalidated_at_run_boundary",
+      "train_fold_only_imputation_and_standardization",
+      "deterministic_loocv_byte_identical_reports",
+      "position_stratified_shuffled_control_zero_self_zero_cross",
+      "no_production_behavior_change_no_signal_claim"
+    ],
+    "non_blocking_observations": [
+      "within-position baseline Pearson/Spearman of -1 is the documented LOOCV group-mean artifact",
+      "shared-source dependency: the candidate artifact supplies both input features (2022-2024) and the outcome layer (2025); disjoint windows, not leakage, but a systematic upstream error would touch both sides -- mitigated by the section-4 promotion path"
+    ],
+    "follow_up_items": [
+      "single untested ridge lambda (1.0)",
+      "single shuffled-control seed",
+      "2025 outcomes include partial-season players (legitimate but high-variance targets)"
+    ]
+  },
+  "q2_result_strength": {
+    "joined_population_n485": {
+      "mae": { "baseline_only": 68.926, "real_player_history_features": 40.034, "shuffled_player_history_control": 72.031 },
+      "rmse": { "baseline_only": 88.553, "real_player_history_features": 57.287, "shuffled_player_history_control": 90.409 },
+      "pearson": { "baseline_only": 0.18, "real_player_history_features": 0.771, "shuffled_player_history_control": 0.117 },
+      "spearman": { "baseline_only": -0.158, "real_player_history_features": 0.751, "shuffled_player_history_control": 0.068 }
+    },
+    "per_position_mae_baseline_real_shuffled": {
+      "QB": [99.81, 65.47, 102.68],
+      "RB": [75.88, 49.64, 76.58],
+      "TE": [48.75, 30.43, 52.14],
+      "WR": [60.88, 36.39, 59.31]
+    },
+    "no_history_subgroup_n125_mae_baseline_real_shuffled": [59.62, 50.52, 50.99],
+    "overall_n610_mae_baseline_real_shuffled": [67.02, 42.18, 67.72],
+    "assessment": [
+      "41.9% joined-population MAE reduction vs baseline; rank correlation moved from -0.16 to 0.75",
+      "shuffled control tracked baseline closely and never approached the real arm: slightly worse than baseline in the primary joined view (72.03 vs 68.93), overall, and for QB/RB/TE; marginally better for WR (59.31 vs 60.88, ~2.6%) -- small enough to be shuffle-draw noise plus structural has-history/imputation effects, and one reason the repeated-seeds check (P4) is required rather than optional; correlations stayed near zero throughout",
+      "every position improved 34-40% while its shuffled arm stayed within +/-3% of baseline; no position carried or degraded the result",
+      "no-history subgroup shows the expected null: real ~= shuffled (their feature blocks are identical all-null there, so the shuffle is irrelevant to this slice), both slightly better than raw position mean for structural (imputation-centering) reasons only",
+      "explicitly a candidate signal, not production evidence"
+    ],
+    "limits": [
+      "candidate (not promoted) source for both inputs and outcomes",
+      "one fold design, one lambda, one shuffle seed, one baseline definition",
+      "attribution unknown within the 26-column set; prior-year PPR plausibly carries much of the lift (ablation required)",
+      "partial-season outcome rows leave an outlier/leverage question open",
+      "single season pair; no cross-season stability evidence"
+    ]
+  },
+  "q3_required_robustness_checks_prioritized": [
+    { "priority": 1, "check": "feature_family_ablation_including_ppr_2024_alone", "reason": "attribution is the central open question; reuses the toggleable #104 families" },
+    { "priority": 2, "check": "alternate_baseline_position_plus_prior_year_ppr", "reason": "stronger simple comparator; calibrates the honest size of the marginal gain" },
+    { "priority": 3, "check": "ridge_lambda_sensitivity_0p1_1_10_100", "reason": "confirms the result is not an artifact of one regularization choice" },
+    { "priority": 4, "check": "repeated_shuffled_control_seeds_x5_deterministic", "reason": "bounds the variance of the null arm" },
+    { "priority": 5, "check": "outlier_and_partial_season_leverage_sensitivity", "reason": "partial-season outcomes are legitimate but high-variance targets" }
+  ],
+  "q3_deferred": ["deterministic_k_fold", "position_specific_models", "bootstrap_confidence_intervals", "reproduction_on_regenerated_artifact_subsumed_by_promotion_path"],
+  "q4_upstream_tiber_data": {
+    "stance": "production binding must not occur from a candidate/not-promoted source; any binding path requires TIBER-Data to promote or replace player_season_coverage_v0 with a governed promoted artifact (own gates: schema, provenance allow-list, reproducibility, coverage acceptance, owner review); Forecast continues treating the current mirrors as experiment inputs only",
+    "issue_sketch": {
+      "title": "TIBER-Data: promote player_season_coverage_v0 after source-backed governance review",
+      "scope": "define promotion criteria (schema, provenance allow-list, reproducibility from the committed builder, per-season/position coverage acceptance, non-goals), run the review, and either promote with a promotion record or state precisely what blocks promotion",
+      "blocks": ["any Forecast change", "any signal claim", "any product output"]
+    }
+  },
+  "q5_production_binding_prerequisites_not_authorized_here": [
+    "governed (promoted) source status",
+    "section-3 robustness checks completed and reviewed with the signal surviving ablation and the stronger baseline",
+    "explicit versioned feature contract",
+    "structural leakage gate in the production path",
+    "sha-pinned allow-listed source/provenance gate in the production path",
+    "formalized train-fold null-handling policy with documented fully-null fallback",
+    "monitoring and regression tests (golden values, drift checks)",
+    "defined reviewed fallback behavior for no-history players",
+    "strict separation from product advice/rankings surfaces",
+    "owner review of the binding proposal itself before any seasonalPprModel.ts or route change"
+  ],
+  "q6_recommended_next_issue": {
+    "title": "Forecast: run robustness checks for candidate player-history signal",
+    "scope": "implement the P1-P5 checks inside the existing isolated experiment path (same fail-closed preflight, same experimental marking, same decision-enum ceiling), producing one durable comparison report",
+    "rationale": "robustness is cheaper than promotion, stays within Forecast, and its outcome determines whether upstream promotion is worth requesting at all; the TIBER-Data promotion issue follows only if the signal survives"
+  },
+  "non_goals_confirmed": [
+    "no production binding", "no seasonalPprModel.ts change", "no production baseline change",
+    "no product routes/UI", "no TIBER-Data artifact promotion", "no TIBER-Data or Teamstate change",
+    "no new model run computed for this review", "no production signal claim",
+    "no fantasy advice/rankings/start-sit/trade/draft output",
+    "candidate/not-promoted status preserved", "experimental-only marking preserved"
+  ]
+}
