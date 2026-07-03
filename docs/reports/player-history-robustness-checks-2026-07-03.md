@@ -19,7 +19,7 @@ Population: 610 evaluated rows (485 joined, 125 no-history). Reference joined-po
 | age_career_team_context_only | 5 | 485 | 63.371 | 82.055 | 0.407 | 0.409 | 5.555 | 7.098 |
 | ppr_2024_alone | 1 | 485 | 42.997 | 61.100 | 0.733 | 0.683 | 25.929 | 27.352 |
 
-Per-position MAE (real arm): full_feature_set: {QB 65.5, RB 49.6, TE 30.4, WR 36.4} • production_only: {QB 62.2, RB 49.4, TE 31.9, WR 37.0} • usage_only: {QB 93.9, RB 49.4, TE 32.7, WR 39.8} • coverage_only: {QB 71.7, RB 66.1, TE 40.0, WR 50.1} • age_career_team_context_only: {QB 91.0, RB 70.3, TE 44.9, WR 53.6} • ppr_2024_alone: {QB 65.2, RB 50.4, TE 34.2, WR 39.7}
+Per-position joined MAE (real arm): full_feature_set: {QB 66.0, RB 46.9, TE 25.8, WR 35.4} • production_only: {QB 62.4, RB 46.4, TE 27.6, WR 36.3} • usage_only: {QB 96.0, RB 47.4, TE 29.0, WR 40.2} • coverage_only: {QB 70.8, RB 68.5, TE 38.2, WR 53.2} • age_career_team_context_only: {QB 96.3, RB 73.8, TE 44.1, WR 57.2} • ppr_2024_alone: {QB 65.9, RB 47.7, TE 30.6, WR 39.7}
 
 No-history subgroup MAE (real arm): full_feature_set 50.5 • production_only 50.3 • usage_only 51.3 • coverage_only 50.8 • age_career_team_context_only 50.5 • ppr_2024_alone 50.3
 
@@ -58,7 +58,7 @@ Overall MAE/RMSE (real arm): full_feature_set 42.2/58.6 • production_only 42.3
 | 20260705 | false | 485 | 69.116 | 87.376 | 0.253 | 0.155 | 485 | 0 | 0 |
 | 20260706 | false | 485 | 71.800 | 90.548 | 0.109 | 0.015 | 485 | 0 | 0 |
 
-Per-position shuffled MAE by seed: 20260702: {QB 102.7, RB 76.6, TE 52.1, WR 59.3} • 20260703: {QB 96.6, RB 76.1, TE 48.7, WR 60.8} • 20260704: {QB 102.9, RB 75.5, TE 49.4, WR 62.0} • 20260705: {QB 94.5, RB 72.7, TE 48.8, WR 60.5} • 20260706: {QB 95.8, RB 77.2, TE 49.5, WR 62.2}
+Per-position joined shuffled MAE by seed: 20260702: {QB 110.5, RB 81.1, TE 53.0, WR 64.7} • 20260703: {QB 103.8, RB 80.8, TE 48.6, WR 66.5} • 20260704: {QB 109.8, RB 80.5, TE 49.6, WR 68.0} • 20260705: {QB 101.1, RB 76.3, TE 48.9, WR 65.9} • 20260706: {QB 102.0, RB 83.0, TE 49.5, WR 68.0}
 
 ## P5 — Outlier / partial-season leverage sensitivity
 

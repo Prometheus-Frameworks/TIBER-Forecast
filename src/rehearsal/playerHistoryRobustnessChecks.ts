@@ -128,19 +128,23 @@ export interface RobustnessArmView {
   joined: ControlledRunMetrics;
   overall: ControlledRunMetrics;
   no_history: ControlledRunMetrics;
-  per_position_mae: Record<string, number | null>;
+  /** Per-position MAE over JOINED rows only, so it measures the same population as `joined`. */
+  per_position_joined_mae: Record<string, number | null>;
 }
 
 const viewOf = (
   pairs: ReadonlyArray<{ position: string; has_player_history: boolean; actual: number; predicted: number }>,
 ): RobustnessArmView => {
+  const joinedPairs = pairs.filter((pair) => pair.has_player_history);
   const positions = [...new Set(pairs.map((pair) => pair.position))].sort();
   return {
-    joined: computeControlledRunMetrics(pairs.filter((pair) => pair.has_player_history)),
+    joined: computeControlledRunMetrics(joinedPairs),
     overall: computeControlledRunMetrics(pairs),
     no_history: computeControlledRunMetrics(pairs.filter((pair) => !pair.has_player_history)),
-    per_position_mae: Object.fromEntries(
-      positions.map((position) => [position, computeControlledRunMetrics(pairs.filter((pair) => pair.position === position)).mae]),
+    // Joined rows only: these values sit alongside joined-population ablation/shuffle diagnostics, and
+    // no-history rows have no shuffled donor, so mixing them in would measure a different population.
+    per_position_joined_mae: Object.fromEntries(
+      positions.map((position) => [position, computeControlledRunMetrics(joinedPairs.filter((pair) => pair.position === position)).mae]),
     ),
   };
 };
@@ -185,7 +189,7 @@ export interface RobustnessChecksReport {
     seed: number;
     is_original_112_seed: boolean;
     shuffled_joined: ControlledRunMetrics;
-    per_position_mae: Record<string, number | null>;
+    per_position_joined_mae: Record<string, number | null>;
     donors_assigned: number;
     self_donations: number;
     cross_position_donations: number;
@@ -322,7 +326,7 @@ export const runPlayerHistoryRobustnessChecks = (
       seed,
       is_original_112_seed: seed === CONTROLLED_RUN_SHUFFLE_SEED,
       shuffled_joined: shuffledView.joined,
-      per_position_mae: shuffledView.per_position_mae,
+      per_position_joined_mae: shuffledView.per_position_joined_mae,
       donors_assigned: donors,
       self_donations: self,
       cross_position_donations: cross,

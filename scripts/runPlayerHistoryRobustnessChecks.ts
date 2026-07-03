@@ -115,7 +115,7 @@ Population: ${r.population.evaluated_rows} evaluated rows (${r.population.joined
 |---|---|---|---|---|---|---|---|---|
 ${r.p1_feature_family_ablation.map((entry) => `| ${entry.variant} | ${entry.history_columns_used.length} | ${metricsCells(entry.real_arm.joined)} | ${fmt(entry.joined_mae_vs_baseline_delta)} | ${fmt(entry.joined_mae_vs_shuffled_delta)} |`).join('\n')}
 
-Per-position MAE (real arm): ${r.p1_feature_family_ablation.map((entry) => `${entry.variant}: {${Object.entries(entry.real_arm.per_position_mae).map(([position, mae]) => `${position} ${fmt(mae, 1)}`).join(', ')}}`).join(' • ')}
+Per-position joined MAE (real arm): ${r.p1_feature_family_ablation.map((entry) => `${entry.variant}: {${Object.entries(entry.real_arm.per_position_joined_mae).map(([position, mae]) => `${position} ${fmt(mae, 1)}`).join(', ')}}`).join(' • ')}
 
 No-history subgroup MAE (real arm): ${r.p1_feature_family_ablation.map((entry) => `${entry.variant} ${fmt(entry.real_arm.no_history.mae, 1)}`).join(' • ')}
 
@@ -147,7 +147,7 @@ ${r.p3_lambda_sensitivity.map((entry) => `| ${entry.lambda} | ${metricsCells(ent
 |---|---|---|---|---|---|---|---|---|---|
 ${r.p4_shuffled_seeds.map((entry) => `| ${entry.seed} | ${entry.is_original_112_seed} | ${metricsCells(entry.shuffled_joined)} | ${entry.donors_assigned} | ${entry.self_donations} | ${entry.cross_position_donations} |`).join('\n')}
 
-Per-position shuffled MAE by seed: ${r.p4_shuffled_seeds.map((entry) => `${entry.seed}: {${Object.entries(entry.per_position_mae).map(([position, mae]) => `${position} ${fmt(mae, 1)}`).join(', ')}}`).join(' • ')}
+Per-position joined shuffled MAE by seed: ${r.p4_shuffled_seeds.map((entry) => `${entry.seed}: {${Object.entries(entry.per_position_joined_mae).map(([position, mae]) => `${position} ${fmt(mae, 1)}`).join(', ')}}`).join(' • ')}
 
 ## P5 — Outlier / partial-season leverage sensitivity
 
