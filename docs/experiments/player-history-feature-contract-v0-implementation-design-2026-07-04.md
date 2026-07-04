@@ -160,7 +160,8 @@ something this design document or the next implementation issue performs.
 
 ### 2.6 Deterministic implementation replay command
 
-**Decision: specify what it must prove; do not implement it in this issue or the next one.**
+**Decision: specify what it must prove here; the next implementation issue is where it gets built
+(per §4's allowed scope) — this design document itself does not implement it.**
 
 A future deterministic replay command (analogous to `npm run
 experiment:player-history-promoted-controlled-rerun`, but for contract-instance generation rather
@@ -181,8 +182,8 @@ than the LOOCV experiment) must:
   `68.926`, real `40.034`, shuffled `72.031`, joined RMSE `88.553` / `57.287` / `90.409`). A mismatch
   means the implementation diverged from the validated experimental design and must not proceed.
 
-Writing this command is future implementation-issue work; this document defines its required
-contract, not its code.
+Writing this command is in-scope for the future implementation issue (§4); this document defines its
+required contract, not its code.
 
 ### 2.7 Missing-history subgroup reporting
 

@@ -54,7 +54,7 @@
     {
       "item": "deterministic_implementation_replay_command",
       "resolution_kind": "requirements_specified_not_implemented",
-      "decision": "Must take a locked source_dataset_refs + contract_version as input; produce a conforming contract instance with a recomputable run_id as output; fail closed on source-identity mismatch, forbidden fields, and null-semantics violations; and reproduce the committed #122 joined MAE/RMSE (baseline 68.926, real 40.034, shuffled 72.031; RMSE 88.553/57.287/90.409) as a smoke test when pointed at the same identity. Not implemented in this document or the next issue."
+      "decision": "Must take a locked source_dataset_refs + contract_version as input; produce a conforming contract instance with a recomputable run_id as output; fail closed on source-identity mismatch, forbidden fields, and null-semantics violations; and reproduce the committed #122 joined MAE/RMSE (baseline 68.926, real 40.034, shuffled 72.031; RMSE 88.553/57.287/90.409) as a smoke test when pointed at the same identity. Not implemented in this document; building it is in-scope for the future implementation issue (see future_implementation_issue_boundary.allowed)."
     },
     {
       "item": "missing_history_subgroup_reporting",
