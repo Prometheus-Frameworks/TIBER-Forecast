@@ -1,0 +1,138 @@
+{
+  "design_id": "player-history-feature-contract-v0-review-2026-07-04",
+  "status": "contract_review_only_no_production_binding_no_feature_wiring",
+  "issue": "TIBER-Forecast#125",
+  "date": "2026-07-04",
+  "reviews": {
+    "source_pr": "TIBER-Forecast#124",
+    "source_issue": "TIBER-Forecast#123",
+    "source_merge_commit": "b2edd63a99dbabf2e10ba3fa27af4be088858562",
+    "source_documents": [
+      "docs/experiments/player-history-production-binding-prerequisites-2026-07-04.md",
+      "docs/experiments/player-history-production-binding-prerequisites-2026-07-04.json"
+    ]
+  },
+  "purpose": "Review the player_history_production_feature_v0 contract shape proposed in PR #124 and decide whether to accept, amend, or reject it as a formal contract proposal for a later implementation slice. Governance/contract-review only; does not authorize production binding.",
+  "contract_acceptance_status": "accepted_with_amendments_for_future_implementation_design",
+  "next_step_decision": "may_open_player_history_contract_implementation_design_issue",
+  "decision_rationale": "The core shape from PR #124 is structurally sound (temporal-cutoff, null/missing-history, and non-advice statements are correct and non-negotiable as originally written). Four fields were underspecified enough to invite drift: contract_version had no bump policy, provenance_state and validation_status were free text instead of closed enums, and run_id described what it should tie together but not how. These amendments are incorporated directly into this artifact, so no further amendment pass is required before a future implementation-design issue may be opened. Unresolved items (see unresolved_items) are legitimate scope decisions for that future issue, not contract defects.",
+  "allowed_decision_enum": [
+    "may_open_player_history_contract_implementation_design_issue",
+    "player_history_contract_requires_amendment_before_implementation_design",
+    "player_history_contract_rejected_requires_redesign"
+  ],
+  "field_classification": [
+    { "field": "contract_id", "classification": "required", "amended": false, "note": "Accepted as-is: player_history_production_feature_v0. Fixed identifier; a new feature gets a new contract_id, not a version bump." },
+    { "field": "contract_version", "classification": "required", "amended": true, "note": "Amended to a strict semver bump policy (see version_bump_policy). Pre-1.0 until an implementation-design issue proposes 1.0.0." },
+    { "field": "source_dataset_refs", "classification": "required_partially_deferred", "amended": false, "note": "Shape accepted as-is; artifact_sha256 value stays a placeholder, locked only at implementation-design time (unresolved item 1)." },
+    { "field": "player_identity_join_keys", "classification": "required", "amended": false, "note": "Accepted as-is: player_id, season, season_type, position. Changing these is a MAJOR bump." },
+    { "field": "temporal_cutoff_semantics", "classification": "required_non_negotiable", "amended": false, "note": "Accepted as-is and locked. Target season S uses only seasons < S; no partial-season substitution." },
+    { "field": "feature_availability_rules", "classification": "required_partially_deferred", "amended": false, "note": "requires and no_partial_season_substitution accepted and locked; family_scope (production-only vs full set) deferred to implementation design (unresolved item 2)." },
+    { "field": "null_missing_history_rules", "classification": "required_non_negotiable", "amended": false, "note": "Accepted as-is and locked. No-history players get an entirely null feature block; never zero-coerced." },
+    { "field": "provenance_state", "classification": "required", "amended": true, "note": "Amended from free text to a closed enum (see provenance_state_enum)." },
+    { "field": "generated_at", "classification": "required", "amended": false, "note": "Accepted as-is: ISO-8601 timestamp of generation, not consumption." },
+    { "field": "run_id", "classification": "required", "amended": true, "note": "Amended to a specified composition rule (see run_id_composition_rule)." },
+    { "field": "validation_status", "classification": "required", "amended": true, "note": "Amended from free text to a closed enum (see validation_status_enum)." },
+    { "field": "non_advice_non_ranking_statement", "classification": "required_non_negotiable_verbatim", "amended": false, "note": "Accepted as-is and locked; must be preserved verbatim by every consumer." }
+  ],
+  "optional_fields": [],
+  "forbidden_fields": [
+    "any active-roster, availability, injury, depth-chart, or ownership-status field",
+    "any advice, ranking, score, recommendation, start/sit, trade, or draft-output field",
+    "any Fantasy consumer/route/UI/export identifier or reference",
+    "a production acceptance threshold value embedded in the contract schema itself",
+    "a literal 0 (or any other sentinel) standing in for missing in any numeric field -- missing is null, always"
+  ],
+  "amendments": {
+    "version_bump_policy": {
+      "major": "remove a field, change a field's type, or change a field's semantic meaning",
+      "minor": "add a new optional field",
+      "patch": "documentation/description change only, no behavioral change",
+      "pre_acceptance_note": "any bump stays pre-1.0 until a future implementation-design issue proposes 1.0.0 acceptance"
+    },
+    "provenance_state_enum": [
+      "experimental_replicated_not_production_bound",
+      "contract_reviewed_not_production_bound",
+      "implementation_designed_not_production_bound",
+      "production_bound"
+    ],
+    "validation_status_enum": [
+      "design_proposed_not_reviewed",
+      "accepted_with_amendments_for_future_implementation_design",
+      "implementation_design_in_progress",
+      "implementation_design_accepted",
+      "rejected_requires_redesign"
+    ],
+    "run_id_composition_rule": "deterministic_hash(source_dataset_refs.artifact_sha256, contract_version, generator_script_version, generated_at)"
+  },
+  "amended_contract_shape_reference": {
+    "note": "Shape reference only, not implemented as code or a runtime-validated schema in this PR.",
+    "contract_id": "player_history_production_feature_v0",
+    "contract_version": "0.2.0-reviewed",
+    "source_dataset_refs": {
+      "repo": "Prometheus-Frameworks/TIBER-Data",
+      "artifact_path": "exports/promoted/nfl/player_season_coverage_v0.json",
+      "artifact_sha256": "<locked by the implementation-design issue that instantiates this contract>",
+      "promotion_review": "<TIBER-Data promotion PR reference, locked at the same time>"
+    },
+    "player_identity_join_keys": ["player_id", "season", "season_type", "position"],
+    "temporal_cutoff_semantics": {
+      "rule": "feature values for target season S are built ONLY from seasons < S",
+      "input_window": "rolling N prior seasons (N deferred to the implementation-design issue; 3 in the #112/#122 experiments)",
+      "excluded": "target season S in any form, including partial-season in-progress data"
+    },
+    "feature_availability_rules": {
+      "requires": "at least one prior-season REG record for this player_id in the input window",
+      "family_scope": "DEFERRED to the implementation-design issue: production-only vs full feature set",
+      "no_partial_season_substitution": true
+    },
+    "null_missing_history_rules": {
+      "no_history_player": "entire feature block is null, never zero-filled, never imputed at serve time using post-hoc population statistics",
+      "unavailable_usage_fields": "remain null even when history exists, exactly as in the source artifact"
+    },
+    "provenance_state": "contract_reviewed_not_production_bound",
+    "generated_at": "ISO-8601 timestamp of generation, not of consumption",
+    "run_id": "deterministic_hash(artifact_sha256, contract_version, generator_script_version, generated_at)",
+    "validation_status": "accepted_with_amendments_for_future_implementation_design",
+    "non_advice_non_ranking_statement": "This contract describes a candidate MODEL FEATURE only. It is not fantasy advice, not a ranking, not a start/sit recommendation, and not a product-facing claim. No consumer of this contract may present its values, or any derivative of them, as advice or ranking output without a separate, explicitly-approved product-integration review."
+  },
+  "non_negotiables_locked": [
+    "target season S may only use seasons < S -- no exceptions",
+    "no target-season or partial-target-season substitution, under any feature-availability fallback",
+    "missing-history players must not be silently zero-filled -- the entire feature block stays null",
+    "source artifact identity must be path + sha256 + promotion review, never sha256 alone",
+    "a source-identity mismatch at generation time must fail closed, not degrade silently",
+    "the real-vs-baseline-vs-shuffled validation framing remains required for any future acceptance-threshold proposal",
+    "this review does not authorize seasonalPprModel.ts wiring, in whole or in part",
+    "any Fantasy/product consumer requires its own separate, explicitly-approved review"
+  ],
+  "unresolved_items": [
+    "exact artifact sha lock for the specific promoted-artifact snapshot an implementation would use",
+    "exact feature-family scope: production-only (#116 attribution: joined MAE 40.173) vs full feature set (40.034)",
+    "final rolling-window length (N prior seasons; 3 in the #112/#122 experiments)",
+    "production acceptance threshold (not set by this review or PR #124)",
+    "leakage audit for the specific production inference path (broader than experimental leakage discipline)",
+    "deterministic implementation replay command (distinct from the experimental replay commands in PR #124 section 8)",
+    "missing-history subgroup reporting requirement at serve time",
+    "human sign-off authority for future model wiring (who, specifically, has authority over seasonalPprModel.ts)"
+  ],
+  "non_goals": [
+    "does not accept the contract for production implementation -- only for a future implementation-design issue to be opened against it",
+    "does not lock source_dataset_refs.artifact_sha256 or promotion_review to concrete values",
+    "does not resolve the production-only-vs-full-feature-family-scope question",
+    "does not set a production acceptance threshold",
+    "does not create, modify, or reference any TypeScript type, runtime schema, or validation code",
+    "does not approve a Fantasy consumer, UI surface, ranking, or advice behavior",
+    "does not promote or demote any TIBER-Data artifact",
+    "does not modify seasonalPprModel.ts or any other production Forecast file"
+  ],
+  "failure_modes_prevented": [
+    { "failure_mode": "a future implementation issue invents its own provenance_state/validation_status values ad hoc", "prevention": "amendments.provenance_state_enum and amendments.validation_status_enum close both fields to fixed enums" },
+    { "failure_mode": "a future implementation issue bumps contract_version inconsistently", "prevention": "amendments.version_bump_policy defines the bump policy explicitly" },
+    { "failure_mode": "a future implementation issue treats run_id as any unique string", "prevention": "amendments.run_id_composition_rule specifies the exact composition" },
+    { "failure_mode": "a future implementation issue silently decides the feature-family scope without review", "prevention": "unresolved_items keeps this an open, named decision" },
+    { "failure_mode": "a future implementation issue treats this review as production-bound authorization", "prevention": "provenance_state_enum makes production_bound unreachable by this review or the next issue alone" },
+    { "failure_mode": "a future implementation issue bundles a Fantasy consumer with contract implementation", "prevention": "non_negotiables_locked restates that consumer approval is never the same decision as contract acceptance" }
+  ],
+  "next_step": "The next_step_decision permits opening a SEPARATE implementation-design issue scoped to unresolved_items. That issue must still clear every gate in PR #124 section 6 before any code touching a production feature path may be written. This document does not open that issue and does not itself satisfy any gate beyond the contract-shape review captured here."
+}
