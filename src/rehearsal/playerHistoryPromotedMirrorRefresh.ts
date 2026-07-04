@@ -538,8 +538,9 @@ export const PREFLIGHT_DIMENSIONS = [
 
 /**
  * Dimensions that are population/overlap floors (fail -> design-only, not blocked). Deliberately
- * EXCLUDES `overlap_counts_sane`: internally-contradictory overlap evidence is an integrity failure
- * and blocks outright rather than downgrading to design-only.
+ * EXCLUDES `overlap_counts_sane` and `overlap_shuffle_evidence_present_for_joined_positions`:
+ * internally-contradictory or MISSING overlap evidence is an integrity failure and blocks outright
+ * rather than downgrading to design-only.
  */
 export const OVERLAP_FLOOR_DIMENSIONS = [
   'overlap_min_joined_rows_overall',
@@ -806,6 +807,21 @@ export const evaluatePlayerHistoryPromotedMirrorRefreshGate = (
     `>= ${OVERLAP_MIN_JOINED_SHARE}`,
     joinedShare === null ? 'undefined (no scored rows)' : joinedShare.toFixed(4),
     joinedShare !== null && joinedShare >= OVERLAP_MIN_JOINED_SHARE,
+  );
+  // Missing shuffle evidence must never pass silently: a position that has joined rows but no
+  // shuffle-group entry would otherwise make the derangement check below vacuously true. This is an
+  // evidence-integrity failure (blocked), not a floor failure (design-only).
+  const groupPositions = new Set(overlap.shuffle_groups.map((g) => g.position));
+  const joinedPositionsMissingGroups = OVERLAP_REQUIRED_POSITIONS.filter(
+    (position) => (overlap.joined_rows_by_position[position] ?? 0) > 0 && !groupPositions.has(position),
+  );
+  check(
+    'overlap_shuffle_evidence_present_for_joined_positions',
+    'every required position with joined rows carries a shuffle-group evidence entry (missing evidence fails closed)',
+    joinedPositionsMissingGroups.length === 0
+      ? `all joined positions have shuffle evidence (${overlap.shuffle_groups.map((g) => g.position).join(', ') || 'none needed'})`
+      : `missing shuffle evidence for: ${joinedPositionsMissingGroups.join(', ')}`,
+    joinedPositionsMissingGroups.length === 0,
   );
   const infeasibleGroups = overlap.shuffle_groups.filter((g) => g.feature_bearing_row_count > 0 && !g.derangement_possible);
   check(

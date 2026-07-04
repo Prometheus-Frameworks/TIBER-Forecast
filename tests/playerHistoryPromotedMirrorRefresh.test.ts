@@ -430,6 +430,32 @@ describe('refresh gate: leakage, provenance, and null-semantics enforcement on t
     }
   });
 
+  it('empty shuffle evidence blocks outright: the derangement check must never pass vacuously', () => {
+    const result = evaluate((input) => {
+      input.overlap.shuffle_groups = [];
+    });
+    expect(result.decision).toBe('blocked_promoted_mirror_refresh_gate_failed');
+    expect(result.blocking_reasons.join(' ')).toContain('overlap_shuffle_evidence_present_for_joined_positions');
+  });
+
+  it('a joined position missing its shuffle-group entry blocks; a zero-joined position may omit one', () => {
+    const missingJoined = evaluate((input) => {
+      input.overlap.shuffle_groups = input.overlap.shuffle_groups.filter((g) => g.position !== 'QB');
+    });
+    expect(missingJoined.decision).toBe('blocked_promoted_mirror_refresh_gate_failed');
+    expect(missingJoined.blocking_reasons.join(' ')).toContain('missing shuffle evidence for: QB');
+
+    // A required position with ZERO joined rows fails its per-position floor (design-only), but the
+    // absent shuffle evidence for it is not an integrity failure.
+    const zeroJoined = evaluate((input) => {
+      input.overlap.joined_rows -= input.overlap.joined_rows_by_position.QB;
+      input.overlap.joined_rows_by_position = { ...input.overlap.joined_rows_by_position, QB: 0 };
+      input.overlap.shuffle_groups = input.overlap.shuffle_groups.filter((g) => g.position !== 'QB');
+    });
+    expect(zeroJoined.decision).toBe('may_use_promoted_mirrors_for_design_only');
+    expect(zeroJoined.checks.find((c) => c.dimension === 'overlap_shuffle_evidence_present_for_joined_positions')?.passed).toBe(true);
+  });
+
   it('internally-contradictory overlap evidence (joined > scored) blocks outright, never design-only', () => {
     const result = evaluate((input) => {
       input.overlap.joined_rows = input.overlap.scored_target_rows + 1;
@@ -511,6 +537,7 @@ describe('refresh: decision-enum purity and production isolation', () => {
   it('the preflight and floor dimension lists partition as designed (counts_sane is NOT a floor)', () => {
     expect(PREFLIGHT_DIMENSIONS.length).toBe(5);
     expect(OVERLAP_FLOOR_DIMENSIONS).not.toContain('overlap_counts_sane');
+    expect(OVERLAP_FLOOR_DIMENSIONS).not.toContain('overlap_shuffle_evidence_present_for_joined_positions');
     expect(OVERLAP_FLOOR_DIMENSIONS).toContain('overlap_min_joined_share');
     expect(OVERLAP_FLOOR_DIMENSIONS).toContain('overlap_derangement_feasible_by_position');
   });

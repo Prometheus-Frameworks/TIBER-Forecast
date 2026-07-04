@@ -188,6 +188,12 @@
         "passed": true
       },
       {
+        "dimension": "overlap_shuffle_evidence_present_for_joined_positions",
+        "expected": "every required position with joined rows carries a shuffle-group evidence entry (missing evidence fails closed)",
+        "observed": "all joined positions have shuffle evidence (QB, RB, TE, WR)",
+        "passed": true
+      },
+      {
         "dimension": "overlap_derangement_feasible_by_position",
         "expected": "every position group with feature-bearing rows supports a derangement (required if later control runs are considered)",
         "observed": "QB:66, RB:115, TE:115, WR:189",

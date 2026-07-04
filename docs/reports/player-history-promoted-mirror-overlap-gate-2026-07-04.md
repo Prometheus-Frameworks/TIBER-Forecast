@@ -5,7 +5,7 @@ _Generated 2026-07-04 • player-history-promoted-mirror-refresh-v1 • status: 
 Re-runs the population/overlap gate stack against the REFRESHED promoted-source mirrors, using the pre-registered
 #107/PR #108 floors as the minimum baseline (joined >= 200 overall, >= 30 per position, share >= 0.6, derangement feasible per position). may_open_promoted_controlled_rerun_issue is the strongest decision this refresh can emit. It authorizes only OPENING a separate, later issue to consider rerunning the controlled experiment against the promoted-source mirrors. It does not itself authorize the rerun, runs no model here, computes no MAE/RMSE/Pearson/Spearman or other metric, binds nothing into production Forecast, and makes no product or signal claim.
 
-## Checks (26/26 passed)
+## Checks (27/27 passed)
 
 | Check | Expected | Observed | Result |
 |---|---|---|---|
@@ -34,6 +34,7 @@ Re-runs the population/overlap gate stack against the REFRESHED promoted-source 
 | overlap_min_joined_rows_position_WR | `>= 30` | `189` | pass |
 | overlap_min_joined_rows_position_TE | `>= 30` | `115` | pass |
 | overlap_min_joined_share | `>= 0.6` | `0.7951` | pass |
+| overlap_shuffle_evidence_present_for_joined_positions | `every required position with joined rows carries a shuffle-group evidence entry (missing evidence fails closed)` | `all joined positions have shuffle evidence (QB, RB, TE, WR)` | pass |
 | overlap_derangement_feasible_by_position | `every position group with feature-bearing rows supports a derangement (required if later control runs are considered)` | `QB:66, RB:115, TE:115, WR:189` | pass |
 
 ## Decision rule

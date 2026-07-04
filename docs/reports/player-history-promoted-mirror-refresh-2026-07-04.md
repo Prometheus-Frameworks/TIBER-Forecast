@@ -39,7 +39,7 @@ The archived candidate mirrors (#110) are preserved unchanged at:
 
 ## Result
 
-- **Refresh gate decision:** `may_open_promoted_controlled_rerun_issue` (26/26 checks passed; details in `docs/reports/player-history-promoted-mirror-overlap-gate-2026-07-04.md`)
+- **Refresh gate decision:** `may_open_promoted_controlled_rerun_issue` (27/27 checks passed; details in `docs/reports/player-history-promoted-mirror-overlap-gate-2026-07-04.md`)
 - **Next step:** a SEPARATE issue may be opened to consider rerunning the controlled experiment against these promoted-source mirrors. Opening that issue authorizes nothing by itself; the rerun would need its own review.
 
 ## Non-goals confirmed
