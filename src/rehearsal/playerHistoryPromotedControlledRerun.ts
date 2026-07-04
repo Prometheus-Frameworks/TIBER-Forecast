@@ -28,6 +28,8 @@
  */
 
 import {
+  PLAYER_HISTORY_APPROVED_POSITIONS,
+  PLAYER_HISTORY_APPROVED_SEASON_TYPE,
   buildPlayerHistoryFeatures,
   type PlayerHistoryFeatureRow,
   type PlayerHistoryInputRow,
@@ -157,6 +159,19 @@ export const assertPromotedControlledRerunPreconditions = (
   const badInputSeason = inputMirror.rows.filter((row) => row.season >= outcomeMirror.target_season);
   if (badInputSeason.length > 0)
     fail(`${badInputSeason.length} input mirror rows at or beyond target season ${outcomeMirror.target_season} (2025 rows must never be input features)`);
+  // A stale/malformed outcome mirror could carry an off-scope row (wrong season, wrong season_type,
+  // or an out-of-scope position); admitting it into LOOCV would corrupt every reported metric, so
+  // scope is re-verified here rather than trusted from the mirror's own labeling.
+  const badOutcomeScope = outcomeMirror.rows.filter(
+    (row) =>
+      row.season !== outcomeMirror.target_season ||
+      row.season_type !== PLAYER_HISTORY_APPROVED_SEASON_TYPE ||
+      !PLAYER_HISTORY_APPROVED_POSITIONS.includes(row.position),
+  );
+  if (badOutcomeScope.length > 0)
+    fail(
+      `${badOutcomeScope.length} outcome mirror rows are off-scope (expected season=${outcomeMirror.target_season}, season_type=${PLAYER_HISTORY_APPROVED_SEASON_TYPE}, position in ${PLAYER_HISTORY_APPROVED_POSITIONS.join('/')})`,
+    );
   const TARGET_OUTCOME_KEYS = ['ppr_2025_actual', 'season_ppr_2025', 'target_outcome', 'target_season_ppr'];
   const outcomeLeak = inputMirror.rows.filter((row) => TARGET_OUTCOME_KEYS.some((key) => Object.prototype.hasOwnProperty.call(row, key)));
   if (outcomeLeak.length > 0) fail(`${outcomeLeak.length} input mirror rows carry outcome-valued fields`);

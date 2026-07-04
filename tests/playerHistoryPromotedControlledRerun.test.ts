@@ -295,6 +295,18 @@ describe('promoted controlled rerun preflight (fail-closed on the #119 gate and 
     expect(() => assertPromotedControlledRerunPreconditions(gates, outcomeMirror, tampered)).toThrow(/2025 rows must never be input features/);
   });
 
+  it('blocks a stale/malformed outcome mirror carrying an off-scope row (wrong season, wrong season_type, or out-of-scope position)', () => {
+    const { outcomeMirror, inputMirror, gates } = floorSatisfyingExperiment();
+    const wrongSeason = { ...outcomeMirror, rows: [...outcomeMirror.rows, { ...outcomeMirror.rows[0]!, player_id: 'extra1', season: 2026 }] };
+    expect(() => assertPromotedControlledRerunPreconditions(gates, wrongSeason as PromotedOutcomeMirror, inputMirror)).toThrow(/outcome mirror rows are off-scope/);
+
+    const wrongSeasonType = { ...outcomeMirror, rows: [...outcomeMirror.rows, { ...outcomeMirror.rows[0]!, player_id: 'extra2', season_type: 'POST' }] };
+    expect(() => assertPromotedControlledRerunPreconditions(gates, wrongSeasonType as PromotedOutcomeMirror, inputMirror)).toThrow(/outcome mirror rows are off-scope/);
+
+    const wrongPosition = { ...outcomeMirror, rows: [...outcomeMirror.rows, { ...outcomeMirror.rows[0]!, player_id: 'extra3', position: 'K' }] };
+    expect(() => assertPromotedControlledRerunPreconditions(gates, wrongPosition as PromotedOutcomeMirror, inputMirror)).toThrow(/outcome mirror rows are off-scope/);
+  });
+
   it('blocks if outcome-valued fields appear on input rows', () => {
     const { outcomeMirror, inputMirror, gates } = floorSatisfyingExperiment();
     const tampered = inputMirrorOf([{ ...inputMirror.rows[0]!, ppr_2025_actual: 321.5 } as PlayerHistoryInputRow, ...inputMirror.rows.slice(1)]);
