@@ -53,6 +53,7 @@ import {
   compareSmokeMetrics,
   decideContractV0Replay,
   lockSourceDatasetRefsOrFailClosed,
+  verifyMirrorSourceIdentityOrFailClosed,
   type ContractV0ReplayDecisionRationale,
   type SmokeMetricComparison,
   type SourceIdentityLockResult,
@@ -160,11 +161,25 @@ if (!lockResult.locked) {
 }
 
 // ---------------------------------------------------------------------------------------------
-// Step 2/3: build the contract instance TWICE independently; require identical run_id.
+// Step 1b: verify the COMMITTED promoted mirrors correspond to the just-locked source identity
+// before building anything from them (locking only re-verified the LOCAL artifact bytes; the
+// instance is actually built from the separately-committed mirror fixtures).
 // ---------------------------------------------------------------------------------------------
 
 const outcomeMirror = readJson<PromotedOutcomeMirror>(OUTCOME_MIRROR_REL);
 const inputMirror = readJson<PromotedInputMirror>(INPUT_MIRROR_REL);
+
+const mirrorSourceVerification = verifyMirrorSourceIdentityOrFailClosed(lockResult.source_dataset_refs, outcomeMirror, inputMirror);
+if (!mirrorSourceVerification.verified) {
+  writeBlockedReportAndExit(mirrorSourceVerification.reason, {
+    source_gate_result: sourceGateResult,
+    locked_source_dataset_refs: lockResult.source_dataset_refs,
+  });
+}
+
+// ---------------------------------------------------------------------------------------------
+// Step 2/3: build the contract instance TWICE independently; require identical run_id.
+// ---------------------------------------------------------------------------------------------
 
 const instanceA: PlayerHistoryFeatureContractV0Instance = buildPlayerHistoryFeatureContractV0Instance(
   lockResult.source_dataset_refs,
@@ -223,6 +238,7 @@ const smokeComparison: SmokeMetricComparison = compareSmokeMetrics(rerunReport.m
 
 const decision: ContractV0ReplayDecisionRationale = decideContractV0Replay({
   sourceIdentityLocked: lockResult.locked,
+  mirrorSourceVerified: mirrorSourceVerification.verified,
   schemaValidationPassed: validationResult.status === 'passed',
   smokeMetricsMatch: smokeComparison.matches,
   runIdDeterministic,
@@ -261,6 +277,7 @@ const report = {
     gate_status: sourceGateResult.status,
     gate_decision: sourceGateResult.decision,
     locked_source_dataset_refs: lockResult.source_dataset_refs,
+    committed_mirror_source_verification: mirrorSourceVerification,
   },
   run_id_recomputation: {
     deterministic: runIdDeterministic,
@@ -305,6 +322,7 @@ Non-production, non-binding: not_production_bound, not_consumed_by_seasonalPprMo
 
 - Gate status: \`${sourceGateResult.status}\` • decision: \`${sourceGateResult.decision}\`
 - Locked \`source_dataset_refs\`: \`${JSON.stringify(lockResult.source_dataset_refs)}\`
+- Committed promoted mirrors verified against the locked identity: **${mirrorSourceVerification.verified}**
 
 ## 2. run_id determinism
 

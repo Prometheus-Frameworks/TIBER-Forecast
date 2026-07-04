@@ -43,10 +43,12 @@ import {
 import { buildPlayerHistoryFeatures, type PlayerHistoryInputRow, type PlayerHistoryProductionFeatures } from './playerHistoryFeatureScaffold.js';
 import type { PromotedInputMirror, PromotedOutcomeMirror } from './playerHistoryPromotedMirrorRefresh.js';
 import {
-  PROMOTED_ARTIFACT_PATH,
-  PROMOTED_ARTIFACT_REPO,
+  EXPECTED_PROMOTED_STATUS,
   EXPECTED_PROMOTION_REVIEW,
   PINNED_PROMOTED_ARTIFACT_SHA256,
+  PROMOTED_ARTIFACT_PATH,
+  PROMOTED_ARTIFACT_REPO,
+  PROMOTION_MERGE_COMMIT,
   type PromotedSourceGateResult,
 } from './playerHistoryPromotedSourceGate.js';
 import type { ControlledRunArm, ControlledRunMetrics } from './playerHistoryControlledRun.js';
@@ -102,6 +104,65 @@ export const lockSourceDatasetRefsOrFailClosed = (
       promotion_review: EXPECTED_PROMOTION_REVIEW,
     },
   };
+};
+
+// ---------------------------------------------------------------------------------------------
+// Step 1b: verify the COMMITTED promoted mirrors correspond to the just-locked source identity
+// before building anything from them. Locking `source_dataset_refs` re-verifies the LOCAL artifact
+// bytes (step 1), but a contract instance is actually built from the separately-committed mirror
+// fixtures (#119/#120) -- without this check, a stale or mismatched committed mirror could pass a
+// freshly re-verified source artifact and still produce a contract instance from a different source.
+// Source identity is path + sha256 + promotion review, never sha256 alone, so every one of those is
+// re-checked here against BOTH mirrors' own `governed_source` blocks.
+// ---------------------------------------------------------------------------------------------
+
+export type MirrorSourceIdentityVerificationResult = { verified: true } | { verified: false; reason: string };
+
+export const verifyMirrorSourceIdentityOrFailClosed = (
+  sourceDatasetRefs: SourceDatasetRefs,
+  outcomeMirror: PromotedOutcomeMirror,
+  inputMirror: PromotedInputMirror,
+): MirrorSourceIdentityVerificationResult => {
+  const mismatches: string[] = [];
+
+  const checkMirrorGovernedSource = (
+    label: string,
+    governedSource: { repo: string; promotedArtifactPath: string; promotionMergeCommit: string; sha256: string; artifactStatus: string } | undefined,
+  ): void => {
+    if (!governedSource) {
+      mismatches.push(`${label} is missing a governed_source block`);
+      return;
+    }
+    if (governedSource.repo !== sourceDatasetRefs.repo) {
+      mismatches.push(`${label} governed_source.repo (${governedSource.repo}) does not match the locked source_dataset_refs.repo (${sourceDatasetRefs.repo})`);
+    }
+    if (governedSource.promotedArtifactPath !== sourceDatasetRefs.artifact_path) {
+      mismatches.push(`${label} governed_source.promotedArtifactPath (${governedSource.promotedArtifactPath}) does not match the locked source_dataset_refs.artifact_path (${sourceDatasetRefs.artifact_path})`);
+    }
+    if (governedSource.sha256 !== sourceDatasetRefs.artifact_sha256) {
+      mismatches.push(`${label} governed_source.sha256 (${governedSource.sha256}) does not match the locked source_dataset_refs.artifact_sha256 (${sourceDatasetRefs.artifact_sha256})`);
+    }
+    if (governedSource.promotionMergeCommit !== PROMOTION_MERGE_COMMIT) {
+      mismatches.push(`${label} governed_source.promotionMergeCommit (${governedSource.promotionMergeCommit}) does not match the expected promotion merge commit (${PROMOTION_MERGE_COMMIT})`);
+    }
+    if (governedSource.artifactStatus !== EXPECTED_PROMOTED_STATUS) {
+      mismatches.push(`${label} governed_source.artifactStatus (${governedSource.artifactStatus}) does not match the expected status (${EXPECTED_PROMOTED_STATUS})`);
+    }
+  };
+
+  checkMirrorGovernedSource('outcome mirror', outcomeMirror?.governed_source);
+  checkMirrorGovernedSource('input mirror', inputMirror?.governed_source);
+  if (sourceDatasetRefs.promotion_review !== EXPECTED_PROMOTION_REVIEW) {
+    mismatches.push(`locked source_dataset_refs.promotion_review (${sourceDatasetRefs.promotion_review}) does not match the expected promotion review (${EXPECTED_PROMOTION_REVIEW})`);
+  }
+
+  if (mismatches.length > 0) {
+    return {
+      verified: false,
+      reason: `committed promoted mirrors do not correspond to the locked source identity, fail closed: ${mismatches.join('; ')}`,
+    };
+  }
+  return { verified: true };
 };
 
 // ---------------------------------------------------------------------------------------------
@@ -289,6 +350,7 @@ export type ContractV0ReplayDecision = (typeof PLAYER_HISTORY_CONTRACT_V0_REPLAY
 
 export interface ContractV0ReplayDecisionInputs {
   sourceIdentityLocked: boolean;
+  mirrorSourceVerified: boolean;
   schemaValidationPassed: boolean;
   smokeMetricsMatch: boolean;
   runIdDeterministic: boolean;
@@ -302,6 +364,7 @@ export interface ContractV0ReplayDecisionRationale {
 export const decideContractV0Replay = (inputs: ContractV0ReplayDecisionInputs): ContractV0ReplayDecisionRationale => {
   const blockers: string[] = [];
   if (!inputs.sourceIdentityLocked) blockers.push('source_dataset_refs could not be locked (fail-closed re-verification did not pass)');
+  if (!inputs.mirrorSourceVerified) blockers.push('committed promoted mirrors did not verify against the locked source identity');
   if (!inputs.schemaValidationPassed) blockers.push('generated contract instance failed structural schema validation');
   if (!inputs.smokeMetricsMatch) blockers.push('replay smoke metrics diverged from the pinned #122 joined-population numbers');
   if (!inputs.runIdDeterministic) blockers.push('run_id did not recompute deterministically from the same inputs');
@@ -309,7 +372,7 @@ export const decideContractV0Replay = (inputs: ContractV0ReplayDecisionInputs): 
     return {
       decision: 'player_history_contract_v0_non_production_implementation_ready_for_review',
       rationale:
-        'Source identity was re-verified and locked, the generated non-production contract instance passed structural validation, run_id recomputed deterministically, and the replay reproduced the pinned #122 joined-population smoke metrics exactly. This does not authorize seasonalPprModel.ts wiring, production feature use, or any Fantasy/product consumer change.',
+        'Source identity was re-verified and locked, the committed promoted mirrors verified against that locked identity, the generated non-production contract instance passed structural validation, run_id recomputed deterministically, and the replay reproduced the pinned #122 joined-population smoke metrics exactly. This does not authorize seasonalPprModel.ts wiring, production feature use, or any Fantasy/product consumer change.',
     };
   }
   return {

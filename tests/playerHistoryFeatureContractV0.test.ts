@@ -218,6 +218,74 @@ describe('playerHistoryFeatureContractV0 schema/validator', () => {
     const result = validatePlayerHistoryFeatureContractV0Instance(buildValidInstance());
     expect(result.checks.find((c) => c.dimension === 'no_forbidden_fields_or_language')?.passed).toBe(true);
   });
+
+  it('rejects a has-history row whose production block is missing required fields (e.g. an empty object)', () => {
+    const instance = buildValidInstance([{ ...historyRow, production: {} as never }, noHistoryRow]);
+    const result = validatePlayerHistoryFeatureContractV0Instance(instance);
+    expect(result.status).toBe('failed');
+    expect(result.blocking_reasons.some((r) => r.startsWith('has_history_production_block_shape_valid'))).toBe(true);
+  });
+
+  it('rejects a has-history row whose production block carries an extra/renamed field', () => {
+    const instance = buildValidInstance([
+      { ...historyRow, production: { ...historyRow.production, unexpected_field: 1 } as never },
+      noHistoryRow,
+    ]);
+    const result = validatePlayerHistoryFeatureContractV0Instance(instance);
+    expect(result.status).toBe('failed');
+    expect(result.blocking_reasons.some((r) => r.startsWith('has_history_production_block_shape_valid'))).toBe(true);
+  });
+
+  it('rejects a has-history row whose production block has a wrong-typed value (string instead of number|null)', () => {
+    const instance = buildValidInstance([
+      { ...historyRow, production: { ...historyRow.production, trailing_2yr_ppr_total: '250.5' } as never },
+      noHistoryRow,
+    ]);
+    const result = validatePlayerHistoryFeatureContractV0Instance(instance);
+    expect(result.status).toBe('failed');
+    expect(result.blocking_reasons.some((r) => r.startsWith('has_history_production_block_shape_valid'))).toBe(true);
+  });
+
+  it('accepts a has-history row whose production block has individually-null fields (well-formed, not malformed)', () => {
+    const instance = buildValidInstance([
+      { ...historyRow, production: { trailing_2yr_ppr_total: null, trailing_3yr_ppr_total: null, trailing_2yr_ppr_mean: null, trailing_3yr_ppr_mean: null, year_over_year_ppr_trend: null } },
+      noHistoryRow,
+    ]);
+    const result = validatePlayerHistoryFeatureContractV0Instance(instance);
+    expect(result.checks.find((c) => c.dimension === 'has_history_production_block_shape_valid')?.passed).toBe(true);
+  });
+
+  it('fails closed (never throws) when the instance is missing its envelope entirely', () => {
+    const instance = buildValidInstance();
+    delete (instance as unknown as { envelope?: unknown }).envelope;
+    let result: ReturnType<typeof validatePlayerHistoryFeatureContractV0Instance> | undefined;
+    expect(() => {
+      result = validatePlayerHistoryFeatureContractV0Instance(instance);
+    }).not.toThrow();
+    expect(result?.status).toBe('failed');
+    expect(result?.blocking_reasons.some((r) => r.startsWith('envelope_present'))).toBe(true);
+  });
+
+  it('fails closed (never throws) when the instance is missing missing_history_subgroup_report entirely', () => {
+    const instance = buildValidInstance();
+    delete (instance as unknown as { missing_history_subgroup_report?: unknown }).missing_history_subgroup_report;
+    let result: ReturnType<typeof validatePlayerHistoryFeatureContractV0Instance> | undefined;
+    expect(() => {
+      result = validatePlayerHistoryFeatureContractV0Instance(instance);
+    }).not.toThrow();
+    expect(result?.status).toBe('failed');
+    expect(result?.blocking_reasons.some((r) => r.startsWith('missing_history_subgroup_report_present'))).toBe(true);
+  });
+
+  it('fails closed (never throws) when rows is missing entirely', () => {
+    const instance = buildValidInstance();
+    delete (instance as unknown as { rows?: unknown }).rows;
+    let result: ReturnType<typeof validatePlayerHistoryFeatureContractV0Instance> | undefined;
+    expect(() => {
+      result = validatePlayerHistoryFeatureContractV0Instance(instance);
+    }).not.toThrow();
+    expect(result?.status).toBe('failed');
+  });
 });
 
 describe('composeRunId (PR #126 §3.3: full source identity, never sha256 alone)', () => {

@@ -21,6 +21,7 @@ import {
   computeMissingHistorySubgroupReport,
   decideContractV0Replay,
   lockSourceDatasetRefsOrFailClosed,
+  verifyMirrorSourceIdentityOrFailClosed,
   PINNED_122_JOINED_MAE,
   PINNED_122_JOINED_RMSE,
 } from '../src/rehearsal/playerHistoryContractV0Replay.js';
@@ -166,6 +167,98 @@ const outcomeMirrorOf = (players: Array<{ player_id: string; position?: string; 
       identity_confidence: 'source_verified',
     })),
   }) as PromotedOutcomeMirror;
+
+const SYNTHETIC_GOVERNED_SOURCE = {
+  repo: 'Prometheus-Frameworks/TIBER-Data',
+  promotedArtifactPath: 'exports/promoted/nfl/player_season_coverage_v0.json',
+  promotedManifestPath: 'exports/promoted/nfl/PLAYER_SEASON_COVERAGE_V0_PROMOTION_MANIFEST.json',
+  promotionMergeCommit: '65fb498253b5bdb6a7f6d0598d7235c90a78c729',
+  sha256: PINNED_PROMOTED_ARTIFACT_SHA256,
+  artifactStatus: 'promoted_governed_artifact',
+};
+
+const inputMirrorOf = (governedSourceOverrides: Partial<typeof SYNTHETIC_GOVERNED_SOURCE> = {}): PromotedInputMirror =>
+  ({
+    kind: 'player_history_promoted_input_mirror',
+    version: 'player-history-promoted-mirror-refresh-v1',
+    issue: 'TIBER-Forecast#119',
+    governed_source: { ...SYNTHETIC_GOVERNED_SOURCE, ...governedSourceOverrides },
+    source_lineage: {
+      refreshed_from_source: 'candidate_pin',
+      refreshed_to_source: 'promoted_governed_artifact',
+      prior_candidate_sha256: PINNED_SOURCE_ARTIFACT_SHA256,
+      archived_candidate_mirrors_preserved_at: [],
+      archived_candidate_mirrors_not_overwritten: true,
+    },
+    input_window: { seasons: [2022, 2023, 2024], season_type: 'REG', target_season_excluded: 2025 },
+    boundary: {
+      contains_no_target_season_rows: true,
+      contains_no_2025_outcome_values: true,
+      nulls_preserved_never_zero_coerced: true,
+      no_availability_ownership_depth_injury_fields: true,
+      no_forecast_run_authorized_by_this_mirror: true,
+      no_production_binding_authorized_by_this_mirror: true,
+    },
+    counts: { rows: 0, players_with_history: 0, outcome_players_without_history: 0, by_season: {}, by_position: {} },
+    no_history_players: [],
+    rows: [],
+  }) as PromotedInputMirror;
+
+const outcomeMirrorWithGovernedSource = (governedSourceOverrides: Partial<typeof SYNTHETIC_GOVERNED_SOURCE> = {}): PromotedOutcomeMirror => {
+  const mirror = outcomeMirrorOf([{ player_id: 'p1' }]);
+  return { ...mirror, governed_source: { ...SYNTHETIC_GOVERNED_SOURCE, ...governedSourceOverrides } } as PromotedOutcomeMirror;
+};
+
+const LOCKED_REFS = {
+  repo: SYNTHETIC_GOVERNED_SOURCE.repo,
+  artifact_path: SYNTHETIC_GOVERNED_SOURCE.promotedArtifactPath,
+  artifact_sha256: SYNTHETIC_GOVERNED_SOURCE.sha256,
+  promotion_review: 'TIBER-Data#192',
+};
+
+describe('verifyMirrorSourceIdentityOrFailClosed (required fix: mirrors must correspond to the just-locked source identity)', () => {
+  it('verifies when both mirrors governed_source blocks match the locked identity exactly', () => {
+    const result = verifyMirrorSourceIdentityOrFailClosed(LOCKED_REFS, outcomeMirrorWithGovernedSource(), inputMirrorOf());
+    expect(result.verified).toBe(true);
+  });
+
+  it('fails closed when the outcome mirror sha256 does not match the locked artifact_sha256', () => {
+    const result = verifyMirrorSourceIdentityOrFailClosed(LOCKED_REFS, outcomeMirrorWithGovernedSource({ sha256: 'f'.repeat(64) as never }), inputMirrorOf());
+    expect(result.verified).toBe(false);
+    if (!result.verified) expect(result.reason).toMatch(/outcome mirror governed_source\.sha256/);
+  });
+
+  it('fails closed when the input mirror promotedArtifactPath does not match the locked artifact_path', () => {
+    const result = verifyMirrorSourceIdentityOrFailClosed(LOCKED_REFS, outcomeMirrorWithGovernedSource(), inputMirrorOf({ promotedArtifactPath: 'exports/promoted/nfl/other_path.json' as never }));
+    expect(result.verified).toBe(false);
+    if (!result.verified) expect(result.reason).toMatch(/input mirror governed_source\.promotedArtifactPath/);
+  });
+
+  it('fails closed when a mirror promotionMergeCommit does not match the expected promotion merge commit', () => {
+    const result = verifyMirrorSourceIdentityOrFailClosed(LOCKED_REFS, outcomeMirrorWithGovernedSource({ promotionMergeCommit: 'deadbeef' as never }), inputMirrorOf());
+    expect(result.verified).toBe(false);
+    if (!result.verified) expect(result.reason).toMatch(/promotionMergeCommit/);
+  });
+
+  it('fails closed when a mirror artifactStatus is not the expected promoted status', () => {
+    const result = verifyMirrorSourceIdentityOrFailClosed(LOCKED_REFS, outcomeMirrorWithGovernedSource({ artifactStatus: 'candidate_evidence' as never }), inputMirrorOf());
+    expect(result.verified).toBe(false);
+    if (!result.verified) expect(result.reason).toMatch(/artifactStatus/);
+  });
+
+  it('fails closed when the locked promotion_review does not match the expected promotion review', () => {
+    const result = verifyMirrorSourceIdentityOrFailClosed({ ...LOCKED_REFS, promotion_review: 'TIBER-Data#1' }, outcomeMirrorWithGovernedSource(), inputMirrorOf());
+    expect(result.verified).toBe(false);
+    if (!result.verified) expect(result.reason).toMatch(/promotion_review/);
+  });
+
+  it('verifies against the REAL committed promoted mirrors and the real locked identity (integration check)', () => {
+    const outcomeMirror = readRepoJson<PromotedOutcomeMirror>('data/fixtures/tiberData/player_season_coverage_v0_2025.promoted_outcome_mirror.json');
+    const inputMirror = readRepoJson<PromotedInputMirror>('data/fixtures/tiberData/player_season_coverage_v0_2022_2024.promoted_input_mirror.json');
+    const result = verifyMirrorSourceIdentityOrFailClosed(LOCKED_REFS, outcomeMirror, inputMirror);
+    expect(result.verified).toBe(true);
+  });
+});
 
 describe('buildProductionOnlyContractRows + computeMissingHistorySubgroupReport (synthetic mirrors)', () => {
   const inputRows: PlayerHistoryInputRow[] = [
@@ -322,40 +415,48 @@ describe('replay smoke test end-to-end against the REAL committed promoted mirro
 // Final bounded decision rule.
 // ---------------------------------------------------------------------------------------------
 
+const readyInputs = { sourceIdentityLocked: true, mirrorSourceVerified: true, schemaValidationPassed: true, smokeMetricsMatch: true, runIdDeterministic: true };
+
 describe('decideContractV0Replay', () => {
   it('emits the ready-for-review decision when every input is true', () => {
-    const result = decideContractV0Replay({ sourceIdentityLocked: true, schemaValidationPassed: true, smokeMetricsMatch: true, runIdDeterministic: true });
+    const result = decideContractV0Replay(readyInputs);
     expect(result.decision).toBe('player_history_contract_v0_non_production_implementation_ready_for_review');
   });
 
   it('emits the blocked decision, naming the reason, when the source identity could not be locked', () => {
-    const result = decideContractV0Replay({ sourceIdentityLocked: false, schemaValidationPassed: true, smokeMetricsMatch: true, runIdDeterministic: true });
+    const result = decideContractV0Replay({ ...readyInputs, sourceIdentityLocked: false });
     expect(result.decision).toBe('player_history_contract_v0_implementation_blocked_requires_followup');
     expect(result.rationale).toMatch(/source_dataset_refs could not be locked/);
   });
 
+  it('emits the blocked decision when the committed mirrors did not verify against the locked source identity', () => {
+    const result = decideContractV0Replay({ ...readyInputs, mirrorSourceVerified: false });
+    expect(result.decision).toBe('player_history_contract_v0_implementation_blocked_requires_followup');
+    expect(result.rationale).toMatch(/committed promoted mirrors did not verify/);
+  });
+
   it('emits the blocked decision when schema validation failed', () => {
-    const result = decideContractV0Replay({ sourceIdentityLocked: true, schemaValidationPassed: false, smokeMetricsMatch: true, runIdDeterministic: true });
+    const result = decideContractV0Replay({ ...readyInputs, schemaValidationPassed: false });
     expect(result.decision).toBe('player_history_contract_v0_implementation_blocked_requires_followup');
     expect(result.rationale).toMatch(/structural schema validation/);
   });
 
   it('emits the blocked decision when the replay smoke metrics diverged from #122', () => {
-    const result = decideContractV0Replay({ sourceIdentityLocked: true, schemaValidationPassed: true, smokeMetricsMatch: false, runIdDeterministic: true });
+    const result = decideContractV0Replay({ ...readyInputs, smokeMetricsMatch: false });
     expect(result.decision).toBe('player_history_contract_v0_implementation_blocked_requires_followup');
     expect(result.rationale).toMatch(/replay smoke metrics diverged/);
   });
 
   it('emits the blocked decision when run_id did not recompute deterministically', () => {
-    const result = decideContractV0Replay({ sourceIdentityLocked: true, schemaValidationPassed: true, smokeMetricsMatch: true, runIdDeterministic: false });
+    const result = decideContractV0Replay({ ...readyInputs, runIdDeterministic: false });
     expect(result.decision).toBe('player_history_contract_v0_implementation_blocked_requires_followup');
     expect(result.rationale).toMatch(/run_id did not recompute deterministically/);
   });
 
   it('never emits a decision that authorizes production wiring', () => {
     const decisions = [
-      decideContractV0Replay({ sourceIdentityLocked: true, schemaValidationPassed: true, smokeMetricsMatch: true, runIdDeterministic: true }).decision,
-      decideContractV0Replay({ sourceIdentityLocked: false, schemaValidationPassed: false, smokeMetricsMatch: false, runIdDeterministic: false }).decision,
+      decideContractV0Replay(readyInputs).decision,
+      decideContractV0Replay({ sourceIdentityLocked: false, mirrorSourceVerified: false, schemaValidationPassed: false, smokeMetricsMatch: false, runIdDeterministic: false }).decision,
     ];
     for (const decision of decisions) {
       expect(decision).not.toMatch(/production_bound|wiring|bind|promote/);

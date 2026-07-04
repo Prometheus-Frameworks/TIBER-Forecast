@@ -381,11 +381,32 @@ const checkEnvelope = (envelope: PlayerHistoryFeatureContractV0Envelope): Contra
 
 const isZeroSentinelForNull = (value: number | null): boolean => value === 0;
 
+/** The exact field set a present `production` block must carry -- never a subset, never extra keys. */
+const PRODUCTION_BLOCK_FIELD_NAMES = [
+  'trailing_2yr_ppr_total',
+  'trailing_3yr_ppr_total',
+  'trailing_2yr_ppr_mean',
+  'trailing_3yr_ppr_mean',
+  'year_over_year_ppr_trend',
+] as const;
+
+/** True only if `value` is a plain object with EXACTLY the required keys, each `number | null`. */
+const isWellFormedProductionBlock = (value: unknown): boolean => {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) return false;
+  const keys = Object.keys(value as Record<string, unknown>);
+  if (keys.length !== PRODUCTION_BLOCK_FIELD_NAMES.length || !PRODUCTION_BLOCK_FIELD_NAMES.every((name) => keys.includes(name))) return false;
+  return PRODUCTION_BLOCK_FIELD_NAMES.every((name) => {
+    const fieldValue = (value as Record<string, unknown>)[name];
+    return fieldValue === null || typeof fieldValue === 'number';
+  });
+};
+
 const checkRows = (rows: readonly PlayerHistoryFeatureContractV0Row[]): ContractValidationCheck[] => {
   let badJoinKeys = 0;
   let noHistoryNotNull = 0;
   let noHistoryZeroCoerced = 0;
   let historyMissingBlock = 0;
+  let historyMalformedBlock = 0;
   for (const row of rows) {
     const keys = row.player_identity_join_keys;
     if (
@@ -405,6 +426,8 @@ const checkRows = (rows: readonly PlayerHistoryFeatureContractV0Row[]): Contract
       }
     } else if (row.production === null) {
       historyMissingBlock += 1;
+    } else if (!isWellFormedProductionBlock(row.production)) {
+      historyMalformedBlock += 1;
     }
   }
   return [
@@ -420,6 +443,12 @@ const checkRows = (rows: readonly PlayerHistoryFeatureContractV0Row[]): Contract
       'has_prior_history=true => production block present (object, may contain individually-null fields)',
       `${historyMissingBlock} missing blocks`,
       historyMissingBlock === 0,
+    ),
+    check(
+      'has_history_production_block_shape_valid',
+      `production block has EXACTLY these keys, each number|null: ${PRODUCTION_BLOCK_FIELD_NAMES.join(', ')}`,
+      `${historyMalformedBlock} malformed blocks (missing/renamed/extra fields or wrong-typed values)`,
+      historyMalformedBlock === 0,
     ),
   ];
 };
@@ -456,17 +485,29 @@ const checkMissingHistoryReport = (
  * closed: `contract_instance_invalid_fails_closed` unless every check passes. This is a STRUCTURAL
  * validator only -- it is never a production consumer and confers no production-readiness.
  */
+const isPlainObject = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === 'object' && !Array.isArray(value);
+
 export const validatePlayerHistoryFeatureContractV0Instance = (
   instance: PlayerHistoryFeatureContractV0Instance,
 ): ContractV0ValidationResult => {
+  // Guard the two nested objects every sub-check dereferences without optional chaining. A
+  // malformed/corrupted/parsed-JSON instance missing `envelope` or `missing_history_subgroup_report`
+  // entirely must FAIL CLOSED with a documented blocking reason -- never throw an uncaught exception,
+  // which would prevent a caller from ever seeing a result to act on.
+  const envelopePresent = isPlainObject(instance?.envelope);
+  const reportPresent = isPlainObject(instance?.missing_history_subgroup_report);
+  const rows = Array.isArray(instance?.rows) ? instance.rows : [];
+
   const checks: ContractValidationCheck[] = [
-    check('kind', 'player_history_production_feature_v0_experimental_instance', String(instance.kind), instance.kind === 'player_history_production_feature_v0_experimental_instance'),
-    check('not_production_bound', 'true', String(instance.not_production_bound), instance.not_production_bound === true),
-    check('not_consumed_by_seasonal_ppr_model', 'true', String(instance.not_consumed_by_seasonal_ppr_model), instance.not_consumed_by_seasonal_ppr_model === true),
-    check('not_fantasy_product_output', 'true', String(instance.not_fantasy_product_output), instance.not_fantasy_product_output === true),
-    ...checkEnvelope(instance.envelope),
-    ...checkRows(instance.rows ?? []),
-    ...checkMissingHistoryReport(instance.rows ?? [], instance.missing_history_subgroup_report),
+    check('kind', 'player_history_production_feature_v0_experimental_instance', String(instance?.kind), instance?.kind === 'player_history_production_feature_v0_experimental_instance'),
+    check('not_production_bound', 'true', String(instance?.not_production_bound), instance?.not_production_bound === true),
+    check('not_consumed_by_seasonal_ppr_model', 'true', String(instance?.not_consumed_by_seasonal_ppr_model), instance?.not_consumed_by_seasonal_ppr_model === true),
+    check('not_fantasy_product_output', 'true', String(instance?.not_fantasy_product_output), instance?.not_fantasy_product_output === true),
+    check('envelope_present', 'envelope is a present object', envelopePresent ? 'present' : String(instance?.envelope), envelopePresent),
+    ...(envelopePresent ? checkEnvelope(instance.envelope) : []),
+    ...checkRows(rows),
+    check('missing_history_subgroup_report_present', 'missing_history_subgroup_report is a present object', reportPresent ? 'present' : String(instance?.missing_history_subgroup_report), reportPresent),
+    ...(reportPresent ? checkMissingHistoryReport(rows, instance.missing_history_subgroup_report) : []),
     checkForbiddenFields(instance),
   ];
   const failed = checks.filter((c) => !c.passed);

@@ -21,6 +21,9 @@
       "artifact_path": "exports/promoted/nfl/player_season_coverage_v0.json",
       "artifact_sha256": "29f8e378127fa5426e5897ac4522b6187941312edabab357d8a427fb20511035",
       "promotion_review": "TIBER-Data#192"
+    },
+    "committed_mirror_source_verification": {
+      "verified": true
     }
   },
   "run_id_recomputation": {
@@ -55,6 +58,12 @@
         "dimension": "not_fantasy_product_output",
         "expected": "true",
         "observed": "true",
+        "passed": true
+      },
+      {
+        "dimension": "envelope_present",
+        "expected": "envelope is a present object",
+        "observed": "present",
         "passed": true
       },
       {
@@ -154,6 +163,18 @@
         "passed": true
       },
       {
+        "dimension": "has_history_production_block_shape_valid",
+        "expected": "production block has EXACTLY these keys, each number|null: trailing_2yr_ppr_total, trailing_3yr_ppr_total, trailing_2yr_ppr_mean, trailing_3yr_ppr_mean, year_over_year_ppr_trend",
+        "observed": "0 malformed blocks (missing/renamed/extra fields or wrong-typed values)",
+        "passed": true
+      },
+      {
+        "dimension": "missing_history_subgroup_report_present",
+        "expected": "missing_history_subgroup_report is a present object",
+        "observed": "present",
+        "passed": true
+      },
+      {
         "dimension": "missing_history_count",
         "expected": "125",
         "observed": "125",
@@ -239,7 +260,7 @@
   },
   "decision": {
     "decision": "player_history_contract_v0_non_production_implementation_ready_for_review",
-    "rationale": "Source identity was re-verified and locked, the generated non-production contract instance passed structural validation, run_id recomputed deterministically, and the replay reproduced the pinned #122 joined-population smoke metrics exactly. This does not authorize seasonalPprModel.ts wiring, production feature use, or any Fantasy/product consumer change."
+    "rationale": "Source identity was re-verified and locked, the committed promoted mirrors verified against that locked identity, the generated non-production contract instance passed structural validation, run_id recomputed deterministically, and the replay reproduced the pinned #122 joined-population smoke metrics exactly. This does not authorize seasonalPprModel.ts wiring, production feature use, or any Fantasy/product consumer change."
   },
   "instance_generated": true,
   "instance_path": "data/fixtures/tiberData/player_history_production_feature_v0.experimental_contract_instance.json",

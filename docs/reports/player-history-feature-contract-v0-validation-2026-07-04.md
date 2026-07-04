@@ -4,7 +4,7 @@ _Generated 2026-07-04 • player-history-contract-v0-replay-v1_
 
 **Decision: `player_history_contract_v0_non_production_implementation_ready_for_review`**
 
-Source identity was re-verified and locked, the generated non-production contract instance passed structural validation, run_id recomputed deterministically, and the replay reproduced the pinned #122 joined-population smoke metrics exactly. This does not authorize seasonalPprModel.ts wiring, production feature use, or any Fantasy/product consumer change.
+Source identity was re-verified and locked, the committed promoted mirrors verified against that locked identity, the generated non-production contract instance passed structural validation, run_id recomputed deterministically, and the replay reproduced the pinned #122 joined-population smoke metrics exactly. This does not authorize seasonalPprModel.ts wiring, production feature use, or any Fantasy/product consumer change.
 
 Non-production, non-binding: not_production_bound, not_consumed_by_seasonalPprModel, not_fantasy_product_output.
 
@@ -12,6 +12,7 @@ Non-production, non-binding: not_production_bound, not_consumed_by_seasonalPprMo
 
 - Gate status: `passed` • decision: `may_open_promoted_mirror_refresh_issue`
 - Locked `source_dataset_refs`: `{"repo":"Prometheus-Frameworks/TIBER-Data","artifact_path":"exports/promoted/nfl/player_season_coverage_v0.json","artifact_sha256":"29f8e378127fa5426e5897ac4522b6187941312edabab357d8a427fb20511035","promotion_review":"TIBER-Data#192"}`
+- Committed promoted mirrors verified against the locked identity: **true**
 
 ## 2. run_id determinism
 
@@ -21,7 +22,7 @@ Non-production, non-binding: not_production_bound, not_consumed_by_seasonalPprMo
 
 ## 3. Structural schema validation
 
-- Status: `passed` (26/26 checks passed)
+- Status: `passed` (29/29 checks passed)
 
 ## 4. Missing-history subgroup report
 
