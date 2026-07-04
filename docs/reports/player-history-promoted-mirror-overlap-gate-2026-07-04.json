@@ -1,0 +1,220 @@
+{
+  "report_version": "player-history-promoted-mirror-overlap-gate-report-v1",
+  "repo": "Prometheus-Frameworks/TIBER-Forecast",
+  "issue": "TIBER-Forecast#119",
+  "generated_at": "2026-07-04T00:00:00.000Z",
+  "evidence_sources": {
+    "preflight_gate_evidence": "data/fixtures/tiberData/PLAYER_SEASON_COVERAGE_V0_PROMOTED_SOURCE_GATE_EVIDENCE.json",
+    "outcome_mirror": "data/fixtures/tiberData/player_season_coverage_v0_2025.promoted_outcome_mirror.json",
+    "input_mirror": "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.promoted_input_mirror.json",
+    "provenance_companion": "data/fixtures/tiberData/player_season_coverage_v0_promoted_mirror_provenance.json",
+    "refresh_report": "docs/reports/player-history-promoted-mirror-refresh-2026-07-04.json"
+  },
+  "gate_result": {
+    "gate_version": "player-history-promoted-mirror-refresh-v1",
+    "issue": "TIBER-Forecast#119",
+    "decision_rule": "malformed gate input -> promoted_mirror_refresh_invalid_must_not_use; #117 preflight failed OR any mirror integrity/leakage/provenance check failed OR the overlap evidence is internally contradictory -> blocked_promoted_mirror_refresh_gate_failed; integrity passed but a population/overlap floor or derangement feasibility failed -> may_use_promoted_mirrors_for_design_only; everything passed -> may_open_promoted_controlled_rerun_issue. No decision authorizes a model run, metric computation, production binding, product output, or advice/rankings.",
+    "thresholds": {
+      "min_joined_rows_overall": 200,
+      "min_joined_rows_per_position": 30,
+      "min_joined_share": 0.6,
+      "required_positions": [
+        "QB",
+        "RB",
+        "WR",
+        "TE"
+      ]
+    },
+    "leakage_discipline": {
+      "target_season_2025_remains_outcome_only_for_prior_experiment_shape": true,
+      "input_seasons_for_2025_prediction_remain_2022_2024_only": true,
+      "no_2025_production_summaries_may_become_2025_input_features": true,
+      "no_active_availability_ownership_fields_may_be_consumed": true,
+      "unavailable_usage_fields_remain_null_never_zero_coerced": true
+    },
+    "archived_candidate_mirror_statement": "The archived candidate mirrors (#110) at data/fixtures/tiberData/player_season_coverage_v0_2025.outcome_mirror.json, data/fixtures/tiberData/player_season_coverage_v0_2022_2024.real_population_input_mirror.json, data/fixtures/tiberData/PLAYER_HISTORY_RUN_POPULATION_MIRRORS_PROVENANCE.json are preserved unchanged as the archived record of the #112/#116 candidate experiment. The promoted-source mirrors are written to new *.promoted_*_mirror.json paths and carry an explicit source_lineage block; nothing overwrites the archived mirrors silently.",
+    "ceiling_note": "may_open_promoted_controlled_rerun_issue is the strongest decision this refresh can emit. It authorizes only OPENING a separate, later issue to consider rerunning the controlled experiment against the promoted-source mirrors. It does not itself authorize the rerun, runs no model here, computes no MAE/RMSE/Pearson/Spearman or other metric, binds nothing into production Forecast, and makes no product or signal claim.",
+    "status": "passed",
+    "decision": "may_open_promoted_controlled_rerun_issue",
+    "checks": [
+      {
+        "dimension": "preflight_gate_status_passed",
+        "expected": "passed",
+        "observed": "passed",
+        "passed": true
+      },
+      {
+        "dimension": "preflight_gate_decision",
+        "expected": "may_open_promoted_mirror_refresh_issue",
+        "observed": "may_open_promoted_mirror_refresh_issue",
+        "passed": true
+      },
+      {
+        "dimension": "preflight_promoted_sha_matches_pin",
+        "expected": "29f8e378127fa5426e5897ac4522b6187941312edabab357d8a427fb20511035",
+        "observed": "29f8e378127fa5426e5897ac4522b6187941312edabab357d8a427fb20511035",
+        "passed": true
+      },
+      {
+        "dimension": "preflight_candidate_lineage_sha_matches_pin",
+        "expected": "39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b",
+        "observed": "39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b",
+        "passed": true
+      },
+      {
+        "dimension": "preflight_leakage_discipline_recorded_true",
+        "expected": "all 5 leakage-discipline fields present and true",
+        "observed": "target_season_2025_remains_outcome_only_for_prior_experiment_shape=true, input_seasons_for_2025_prediction_remain_2022_2024_only=true, no_2025_production_summaries_may_become_2025_input_features=true, no_active_availability_ownership_fields_may_be_consumed=true, unavailable_usage_fields_remain_null_never_zero_coerced=true",
+        "passed": true
+      },
+      {
+        "dimension": "outcome_mirror_kind_and_source",
+        "expected": "kind player_history_promoted_outcome_mirror tied to promoted sha 29f8e378127fa5426e5897ac4522b6187941312edabab357d8a427fb20511035 (status promoted_governed_artifact)",
+        "observed": "kind=player_history_promoted_outcome_mirror sha=29f8e378127fa5426e5897ac4522b6187941312edabab357d8a427fb20511035 status=promoted_governed_artifact",
+        "passed": true
+      },
+      {
+        "dimension": "outcome_rows_2025_reg_approved_positions_only",
+        "expected": "every row season=2025, season_type=REG, position in QB/RB/WR/TE",
+        "observed": "0 off-scope rows of 610",
+        "passed": true
+      },
+      {
+        "dimension": "outcome_population_count_consistent",
+        "expected": "rows > 0, one row per player, counts.rows/players match the rows array",
+        "observed": "rows=610 players=610 counts={\"rows\":610,\"players\":610}",
+        "passed": true
+      },
+      {
+        "dimension": "input_mirror_kind_and_source",
+        "expected": "kind player_history_promoted_input_mirror tied to promoted sha 29f8e378127fa5426e5897ac4522b6187941312edabab357d8a427fb20511035 (status promoted_governed_artifact)",
+        "observed": "kind=player_history_promoted_input_mirror sha=29f8e378127fa5426e5897ac4522b6187941312edabab357d8a427fb20511035 status=promoted_governed_artifact",
+        "passed": true
+      },
+      {
+        "dimension": "input_no_2025_rows",
+        "expected": "0 rows with season 2025; every row in 2022/2023/2024 REG",
+        "observed": "0 target-season rows, 0 off-window rows of 1145",
+        "passed": true
+      },
+      {
+        "dimension": "input_positions_in_scope",
+        "expected": "every row position in QB/RB/WR/TE",
+        "observed": "0 off-scope rows",
+        "passed": true
+      },
+      {
+        "dimension": "input_players_subset_of_outcome_population",
+        "expected": "every input row belongs to an outcome-mirror player",
+        "observed": "0 rows outside the population",
+        "passed": true
+      },
+      {
+        "dimension": "input_no_target_outcome_values",
+        "expected": "no input row carries ppr_2025_actual/season_ppr_2025/target_outcome/target_season_ppr (2025 outcomes live in the outcome layer only)",
+        "observed": "0 rows carrying a target-outcome key",
+        "passed": true
+      },
+      {
+        "dimension": "mirror_source_refs_present",
+        "expected": "every mirror row carries >= 1 source_ref",
+        "observed": "0 rows missing refs (of 1755)",
+        "passed": true
+      },
+      {
+        "dimension": "mirror_source_refs_prefix_approved",
+        "expected": "ALL refs start with an approved prefix (nflreadpy.load_player_stats( | nflreadpy.load_players(); mixed and embedded-token provenance fail closed",
+        "observed": "0 unapproved of 5265 refs",
+        "passed": true
+      },
+      {
+        "dimension": "mirror_no_fixture_scaffold_markers",
+        "expected": "no ref contains offline_fixture/fixture_/scaffold/fixture_demonstration_only",
+        "observed": "0 fixture-marked refs",
+        "passed": true
+      },
+      {
+        "dimension": "mirror_no_forbidden_availability_fields",
+        "expected": "no mirror row carries active_status/ownership_status/roster_status/active_roster_status",
+        "observed": "0 forbidden-field hits",
+        "passed": true
+      },
+      {
+        "dimension": "mirror_unavailable_usage_fields_remain_null",
+        "expected": "snap_share/routes_run/route_participation/red_zone_targets/red_zone_carries stay null in every input row: any non-null (zero-coerced OR populated) fails",
+        "observed": "0 zero-coerced, 0 populated non-null values",
+        "passed": true
+      },
+      {
+        "dimension": "overlap_counts_sane",
+        "expected": "0 <= joined_rows <= scored_target_rows, both finite",
+        "observed": "scored=610, joined=485",
+        "passed": true
+      },
+      {
+        "dimension": "overlap_min_joined_rows_overall",
+        "expected": ">= 200",
+        "observed": "485",
+        "passed": true
+      },
+      {
+        "dimension": "overlap_min_joined_rows_position_QB",
+        "expected": ">= 30",
+        "observed": "66",
+        "passed": true
+      },
+      {
+        "dimension": "overlap_min_joined_rows_position_RB",
+        "expected": ">= 30",
+        "observed": "115",
+        "passed": true
+      },
+      {
+        "dimension": "overlap_min_joined_rows_position_WR",
+        "expected": ">= 30",
+        "observed": "189",
+        "passed": true
+      },
+      {
+        "dimension": "overlap_min_joined_rows_position_TE",
+        "expected": ">= 30",
+        "observed": "115",
+        "passed": true
+      },
+      {
+        "dimension": "overlap_min_joined_share",
+        "expected": ">= 0.6",
+        "observed": "0.7951",
+        "passed": true
+      },
+      {
+        "dimension": "overlap_shuffle_evidence_present_for_joined_positions",
+        "expected": "every required position with joined rows carries a shuffle-group evidence entry (missing evidence fails closed)",
+        "observed": "all joined positions have shuffle evidence (QB, RB, TE, WR)",
+        "passed": true
+      },
+      {
+        "dimension": "overlap_derangement_feasible_by_position",
+        "expected": "every position group with feature-bearing rows supports a derangement (required if later control runs are considered)",
+        "observed": "QB:66, RB:115, TE:115, WR:189",
+        "passed": true
+      }
+    ],
+    "blocking_reasons": [],
+    "preflight_passed": true,
+    "mirror_integrity_passed": true,
+    "overlap_floors_passed": true,
+    "observed_overlap": {
+      "scored_target_rows": 610,
+      "joined_rows": 485,
+      "joined_share": 0.7950819672131147,
+      "joined_rows_by_position": {
+        "QB": 66,
+        "TE": 115,
+        "WR": 189,
+        "RB": 115
+      }
+    }
+  },
+  "next_allowed_step": "Open a SEPARATE issue to consider rerunning the controlled experiment against the promoted-source mirrors; that issue must pass its own review before any arm is run or any metric is computed. This gate result authorizes opening that issue and nothing else."
+}

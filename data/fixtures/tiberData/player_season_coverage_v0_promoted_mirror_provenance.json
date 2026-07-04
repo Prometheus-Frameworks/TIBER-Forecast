@@ -1,0 +1,98 @@
+{
+  "kind": "player_history_promoted_mirror_provenance",
+  "version": "player-history-promoted-mirror-refresh-v1",
+  "issue": "TIBER-Forecast#119",
+  "generated_at": "2026-07-04T00:00:00.000Z",
+  "generator_script": "scripts/runPlayerHistoryPromotedMirrorRefresh.ts",
+  "statement": "Mirror refresh only: these mirrors re-source the player-history experiment mirrors from the promoted TIBER-Data artifact. No model was run, no metric was computed, nothing was bound into production Forecast, and no product/advice output was created.",
+  "promoted_source": {
+    "repo": "Prometheus-Frameworks/TIBER-Data",
+    "promotedArtifactPath": "exports/promoted/nfl/player_season_coverage_v0.json",
+    "promotedArtifactSha256Pinned": "29f8e378127fa5426e5897ac4522b6187941312edabab357d8a427fb20511035",
+    "promotedArtifactSha256Actual": "29f8e378127fa5426e5897ac4522b6187941312edabab357d8a427fb20511035",
+    "promotedManifestPath": "exports/promoted/nfl/PLAYER_SEASON_COVERAGE_V0_PROMOTION_MANIFEST.json",
+    "promotedManifestSha256Actual": "08a1863227e46610e7e354da288888a21f36cc0c49bb4b9c80a1ab4e355c2ae5",
+    "promotionMergeCommit": "65fb498253b5bdb6a7f6d0598d7235c90a78c729",
+    "sourceCandidateSha256": "39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b",
+    "sha256_verified_fail_closed_by_generator": true
+  },
+  "preflight_gate": {
+    "evidence_path": "data/fixtures/tiberData/PLAYER_SEASON_COVERAGE_V0_PROMOTED_SOURCE_GATE_EVIDENCE.json",
+    "committed_decision": "may_open_promoted_mirror_refresh_issue",
+    "rerun_status": "passed",
+    "rerun_decision": "may_open_promoted_mirror_refresh_issue",
+    "rerun_checks_passed": "29/29"
+  },
+  "mirrors": {
+    "outcome_mirror": {
+      "path": "data/fixtures/tiberData/player_season_coverage_v0_2025.promoted_outcome_mirror.json",
+      "sha256": "59fc0ace47c30afa254fa3fcf4aee5368ed5eeda0ed6254dd3fc3f8a83f874c9",
+      "scope": "season 2025, REG, QB/RB/WR/TE, outcome layer only",
+      "counts": {
+        "rows": 610,
+        "players": 610,
+        "by_position": {
+          "QB": 81,
+          "TE": 138,
+          "WR": 240,
+          "RB": 151
+        }
+      },
+      "trimming_rationale": "Rows carry the target outcome (season_ppr), identity/position, and row-level provenance (source_refs, identity_confidence) -- and nothing else. No input-feature payloads are copied, so this mirror cannot be consumed as 2025 input features."
+    },
+    "input_mirror": {
+      "path": "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.promoted_input_mirror.json",
+      "sha256": "dc3a007e49de32a07df2eb6b937b5c388a871161e65cefbb5355f6c729b6a40e",
+      "scope": "seasons 2022/2023/2024, REG, QB/RB/WR/TE, players limited to the outcome-mirror population",
+      "counts": {
+        "rows": 1145,
+        "players_with_history": 485,
+        "outcome_players_without_history": 125,
+        "by_season": {
+          "2022": 315,
+          "2023": 378,
+          "2024": 452
+        },
+        "by_position": {
+          "QB": 165,
+          "TE": 273,
+          "WR": 436,
+          "RB": 271
+        }
+      },
+      "trimming_rationale": "Rows are trimmed to exactly the fields the #104 feature-extraction scaffold consumes (identity, provenance, team-of-record context, coverage, production_summary, usage_summary, age/career fields). Unavailable usage fields stay null exactly as in the promoted source; nulls are preserved verbatim and never coerced to zero. No availability/ownership/depth/injury field exists in any row."
+    }
+  },
+  "exclusion_rules": {
+    "input_mirror_excludes_all_2025_records": true,
+    "positions_limited_to": [
+      "QB",
+      "RB",
+      "TE",
+      "WR"
+    ],
+    "season_type_limited_to": "REG",
+    "outcome_players_without_history": "125 outcome players have no 2022-2024 source rows (e.g. rookies); documented absence (no-history subgroup), not a mirror failure. Listed per player in the input mirror's no_history_players."
+  },
+  "archived_candidate_mirrors": {
+    "preserved_unchanged_at": [
+      "data/fixtures/tiberData/player_season_coverage_v0_2025.outcome_mirror.json",
+      "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.real_population_input_mirror.json",
+      "data/fixtures/tiberData/PLAYER_HISTORY_RUN_POPULATION_MIRRORS_PROVENANCE.json"
+    ],
+    "not_overwritten_by_this_refresh": true,
+    "relationship": "The candidate-derived mirrors remain the archived record of the #112/#116 candidate experiment; the promoted-source mirrors above are the refreshed set for any FUTURE separately-authorized work."
+  },
+  "refresh_gate_decision": "may_open_promoted_controlled_rerun_issue",
+  "boundary_statements": {
+    "mirror_refresh_only_not_a_model_run": true,
+    "no_metrics_computed": true,
+    "no_production_binding_authorized": true,
+    "no_product_or_advice_output": true,
+    "no_tiber_data_change": true,
+    "no_availability_ownership_depth_injury_inference": true,
+    "input_mirror_contains_no_2025_rows": true,
+    "outcome_mirror_is_outcome_layer_only": true,
+    "nulls_preserved_never_zero_coerced": true
+  }
+}
