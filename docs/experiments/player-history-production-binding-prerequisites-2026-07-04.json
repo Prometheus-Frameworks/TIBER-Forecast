@@ -1,0 +1,179 @@
+{
+  "design_id": "player-history-production-binding-prerequisites-2026-07-04",
+  "status": "design_only_no_production_binding_no_feature_wiring",
+  "issue": "TIBER-Forecast#123",
+  "date": "2026-07-04",
+  "predecessors": [
+    "TIBER-Forecast#99/#100",
+    "TIBER-Forecast#101/#102",
+    "TIBER-Forecast#103/#104",
+    "TIBER-Forecast#107/#108",
+    "TIBER-Forecast#109/#110",
+    "TIBER-Forecast#111/#112",
+    "TIBER-Forecast#115/#116",
+    "TIBER-Forecast#117/#118",
+    "TIBER-Forecast#119/#120",
+    "TIBER-Forecast#121/#122"
+  ],
+  "purpose": "Define what must be true before the replicated player-history signal from #112/#122 can ever be considered for production binding. Design/review artifact only; does not itself authorize any implementation.",
+  "triggering_decision": {
+    "source": "TIBER-Forecast#121 / PR #122",
+    "merge_commit": "5a6bf22f733d40da0f69fd46f1463c875c9d8c87",
+    "decision": "promoted_player_history_signal_replicated_requires_followup",
+    "ceiling_note": "Authorizes only opening this follow-up review/design issue (#123). Does not authorize production binding, feature wiring, seasonalPprModel.ts changes, or product output."
+  },
+  "evidence_chain": [
+    {
+      "stage": "candidate_source_controlled_run",
+      "issue": "TIBER-Forecast#111",
+      "pr": "TIBER-Forecast#112",
+      "decision": "candidate_player_history_signal_observed_requires_followup",
+      "joined_mae": { "baseline_only": 68.926, "real_player_history_features": 40.034, "shuffled_player_history_control": 72.031 },
+      "joined_rmse": { "baseline_only": 88.553, "real_player_history_features": 57.287, "shuffled_player_history_control": 90.409 }
+    },
+    {
+      "stage": "candidate_source_robustness_checks",
+      "issue": "TIBER-Forecast#115",
+      "pr": "TIBER-Forecast#116",
+      "decision": "candidate_signal_survives_initial_robustness_checks",
+      "attribution_note": "production_only (joined MAE 40.173) within 0.138 of full_feature_set (40.034); production family (prior-year/trailing PPR) carries essentially all of the signal"
+    },
+    {
+      "stage": "promoted_source_gate",
+      "issue": "TIBER-Forecast#117",
+      "pr": "TIBER-Forecast#118",
+      "decision": "may_open_promoted_mirror_refresh_issue",
+      "checks_passed": "29/29"
+    },
+    {
+      "stage": "promoted_source_mirror_refresh",
+      "issue": "TIBER-Forecast#119",
+      "pr": "TIBER-Forecast#120",
+      "merge_commit": "2a4b9d56851306ab8aef0ad198887648545975cd",
+      "decision": "may_open_promoted_controlled_rerun_issue",
+      "checks_passed": "27/27",
+      "population": { "outcome_rows": 610, "input_rows": 1145, "joined_rows": 485, "joined_share": 0.795 }
+    },
+    {
+      "stage": "promoted_source_controlled_rerun",
+      "issue": "TIBER-Forecast#121",
+      "pr": "TIBER-Forecast#122",
+      "merge_commit": "5a6bf22f733d40da0f69fd46f1463c875c9d8c87",
+      "decision": "promoted_player_history_signal_replicated_requires_followup",
+      "joined_mae": { "baseline_only": 68.926, "real_player_history_features": 40.034, "shuffled_player_history_control": 72.031 },
+      "joined_rmse": { "baseline_only": 88.553, "real_player_history_features": 57.287, "shuffled_player_history_control": 90.409 },
+      "directionally_consistent_with_candidate": true,
+      "delta_vs_candidate": { "baseline_only": 0, "real_player_history_features": 0, "shuffled_player_history_control": 0 }
+    }
+  ],
+  "upstream_identity": {
+    "candidate_source_artifact": {
+      "repo": "Prometheus-Frameworks/TIBER-Data",
+      "path": "data/processed/evidence/player_season_coverage_2022_2025.source_backed.json",
+      "sha256": "39b6e71e36d667509221137f2b712143fe5fdccf5423f50e81b5c7a138c0072b"
+    },
+    "promoted_artifact": {
+      "repo": "Prometheus-Frameworks/TIBER-Data",
+      "path": "exports/promoted/nfl/player_season_coverage_v0.json",
+      "sha256": "29f8e378127fa5426e5897ac4522b6187941312edabab357d8a427fb20511035",
+      "promotion_review": "TIBER-Data#192",
+      "promotion_pr": "TIBER-Data#193",
+      "promotion_merge_commit": "65fb498253b5bdb6a7f6d0598d7235c90a78c729"
+    },
+    "forecast_promoted_mirrors": [
+      "data/fixtures/tiberData/player_season_coverage_v0_2025.promoted_outcome_mirror.json",
+      "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.promoted_input_mirror.json"
+    ]
+  },
+  "boundary_preserved": {
+    "no_seasonal_ppr_model_ts_change": true,
+    "no_player_history_features_in_production_model": true,
+    "no_fantasy_product_output": true,
+    "no_ranking_scoring_advice_behavior_change": true,
+    "replicated_mae_not_treated_as_production_ready": true,
+    "no_tiber_data_artifact_promotion_or_demotion": true,
+    "no_availability_ownership_depth_injury_inference": true,
+    "this_document_authorizes_nothing_beyond_its_own_existence": true
+  },
+  "production_binding_prerequisites": [
+    { "id": "stable_feature_contract_name_and_version", "description": "A versioned, non-breaking feature-contract identifier (see feature_contract_shape)." },
+    { "id": "source_artifact_identity_and_hash_expectations", "description": "The production feature must pin to a specific promoted artifact path + sha256 + promotion review, fail closed on mismatch." },
+    { "id": "train_eval_split_semantics", "description": "A production split/retraining-cadence policy must be defined and reviewed separately from the one-shot 2022-2024 -> 2025 experimental split." },
+    { "id": "leakage_review", "description": "A production-scoped leakage review broader than the experimental leakage discipline: real-time data availability at inference time, look-ahead in derived features, generated_at timing vs in-season availability." },
+    { "id": "deterministic_replay_instructions", "description": "A documented command sequence reproducing the cited numbers, exercised (not just read) by the reviewer." },
+    { "id": "real_vs_baseline_vs_shuffled_validation_framing", "description": "Any production acceptance criterion must require beating both a baseline and a deterministic shuffled control, not baseline alone." },
+    { "id": "acceptance_threshold_or_threshold_setting_process", "description": "Not set by this document; a future issue must propose and get review for a concrete threshold." },
+    { "id": "missing_invalid_history_behavior", "description": "Explicit, reviewed behavior for the no-history subgroup; never silently zero-filled." },
+    { "id": "rollback_fail_closed_behavior", "description": "If the source artifact becomes unavailable/stale/fails re-verification, the production path fails closed to current baseline behavior." },
+    { "id": "future_fantasy_consumer_boundary", "description": "Any consumer (ranking/projection/advice surface) must be named, scoped, and separately approved." },
+    { "id": "human_approved_issue_gated_binding_preserved", "description": "No decision in this chain or this document authorizes automatic/unsupervised binding; every step requires a new issue and human-reviewed PR." }
+  ],
+  "feature_contract_shape": {
+    "note": "Design proposal only. Not implemented as a type or schema consumed anywhere in this PR.",
+    "contract_id": "player_history_production_feature_v0",
+    "contract_version": "0.1.0-proposed",
+    "source_dataset_refs": {
+      "repo": "Prometheus-Frameworks/TIBER-Data",
+      "artifact_path": "exports/promoted/nfl/player_season_coverage_v0.json",
+      "artifact_sha256": "<locked at contract-acceptance time>",
+      "promotion_review": "<TIBER-Data promotion PR reference>"
+    },
+    "player_identity_join_keys": ["player_id", "season", "season_type", "position"],
+    "temporal_cutoff_semantics": {
+      "rule": "feature values for target season S are built ONLY from seasons < S",
+      "input_window": "rolling N prior seasons (N to be fixed by the future implementation issue; 3 in this experiment)",
+      "excluded": "target season S in any form, including partial-season in-progress data"
+    },
+    "feature_availability_rules": {
+      "requires": "at least one prior-season REG record for this player_id in the input window",
+      "family_scope_note": "production-family aggregates carry ~all of the observed signal per #116 attribution; a minimal contract may be scoped to production-only fields, subject to future review",
+      "no_partial_season_substitution": true
+    },
+    "null_missing_history_rules": {
+      "no_history_player": "entire feature block is null, never zero-filled, never imputed at serve time using post-hoc population statistics",
+      "unavailable_usage_fields": "remain null even when history exists, exactly as in the source artifact"
+    },
+    "provenance_state": "experimental_replicated_not_production_bound",
+    "generated_at_expectation": "ISO-8601 timestamp of generation, not of consumption",
+    "run_id_expectation": "deterministic identifier tying a generated feature set to a specific source artifact sha256 + contract_version + generator script version",
+    "validation_status": "design_proposed_not_reviewed",
+    "non_advice_non_ranking_statement": "This contract describes a candidate MODEL FEATURE only. It is not fantasy advice, not a ranking, not a start/sit recommendation, and not a product-facing claim. No consumer may present its values, or any derivative of them, as advice or ranking output without a separate, explicitly-approved product-integration review."
+  },
+  "future_implementation_gates": [
+    "design contract reviewed and explicitly accepted (not just drafted)",
+    "source artifact identity for the contract locked (path + sha256 + promotion review), with documented fail-closed re-verification",
+    "leakage audit passed for the specific production inference path proposed (broader than experimental leakage discipline)",
+    "deterministic rerun command exercised by the reviewer, not just read",
+    "validation for the production proposal uses real-vs-baseline-vs-shuffled framing on the proposal's actual target population",
+    "missing/invalid player-history failure mode documented for the specific production consumer proposed",
+    "no Fantasy/product consumer change included in the same slice as contract implementation",
+    "human reviewer with authority over seasonalPprModel.ts has explicitly signed off"
+  ],
+  "non_goals": [
+    "does not bind any feature into seasonalPprModel.ts or any other production path",
+    "does not set a production acceptance threshold (deferred to a future issue)",
+    "does not lock the feature-contract's source artifact sha256 (happens at contract-acceptance time, not yet occurred)",
+    "does not approve a Fantasy consumer, UI surface, ranking, or advice behavior of any kind",
+    "does not promote or demote any TIBER-Data artifact",
+    "does not claim the replicated result is stable across future seasons, future promoted-artifact refreshes, or a production-scale rolling retraining cadence"
+  ],
+  "failure_modes_prevented": [
+    { "failure_mode": "a future PR wires the feature directly into seasonalPprModel.ts citing replication alone", "prevention": "boundary_preserved + future_implementation_gates make explicit that replication alone satisfies none of the production-binding gates" },
+    { "failure_mode": "a future PR locks a final contract without review", "prevention": "feature_contract_shape.validation_status is design_proposed_not_reviewed; contract acceptance is its own gate" },
+    { "failure_mode": "a future PR silently zero-fills missing player history in production", "prevention": "null_missing_history_rules + missing_invalid_history_behavior prerequisite require explicit, reviewed behavior" },
+    { "failure_mode": "a future PR bundles contract implementation with a Fantasy-facing consumer change", "prevention": "future_implementation_gates explicitly forbids bundling; consumer approval is a separate prerequisite" },
+    { "failure_mode": "a future PR treats the promoted artifact as permanently trustworthy without re-verification", "prevention": "source_artifact_identity_and_hash_expectations prerequisite requires fail-closed re-verification, matching every gate in the chain" },
+    { "failure_mode": "a future PR skips the shuffled-control framing once the signal looks obviously real", "prevention": "real_vs_baseline_vs_shuffled_validation_framing prerequisite and gate carry the framing forward" },
+    { "failure_mode": "a future PR treats this document itself as authorization to proceed", "prevention": "purpose and boundary_preserved state plainly that this document authorizes nothing beyond its own existence" }
+  ],
+  "deterministic_replay_commands": [
+    "npm run experiment:player-history-controlled-run",
+    "npm run experiment:player-history-robustness",
+    "npm run gate:player-history-promoted-source -- --artifact=<local promoted artifact> --manifest=<local promotion manifest>",
+    "npm run refresh:player-history-promoted-mirrors -- --artifact=<local promoted artifact> --manifest=<local promotion manifest>",
+    "npm run experiment:player-history-promoted-controlled-rerun",
+    "npm run build",
+    "npm test"
+  ],
+  "next_step": "Wait for a separate, explicitly-scoped implementation-design issue that addresses every future_implementation_gate before any code touching seasonalPprModel.ts or a production feature path is written. This document is that issue's prerequisite checklist, not that issue."
+}
