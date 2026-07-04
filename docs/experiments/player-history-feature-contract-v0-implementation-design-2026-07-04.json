@@ -1,0 +1,118 @@
+{
+  "design_id": "player-history-feature-contract-v0-implementation-design-2026-07-04",
+  "status": "implementation_design_only_no_production_binding_no_feature_wiring",
+  "issue": "TIBER-Forecast#127",
+  "date": "2026-07-04",
+  "reviews": {
+    "source_prs": ["TIBER-Forecast#124", "TIBER-Forecast#126"],
+    "source_issues": ["TIBER-Forecast#123", "TIBER-Forecast#125"],
+    "source_merge_commits": {
+      "pr_124": "b2edd63a99dbabf2e10ba3fa27af4be088858562",
+      "pr_126": "e340247878d41ae6f8cf80c2f6297298afbd8d8d"
+    },
+    "source_documents": [
+      "docs/experiments/player-history-production-binding-prerequisites-2026-07-04.md",
+      "docs/experiments/player-history-production-binding-prerequisites-2026-07-04.json",
+      "docs/experiments/player-history-feature-contract-v0-review-2026-07-04.md",
+      "docs/experiments/player-history-feature-contract-v0-review-2026-07-04.json"
+    ]
+  },
+  "purpose": "Resolve or explicitly scope the eight unresolved items left open by PR #126 so a future, separate implementation issue can be opened without guessing. Implementation-design only; does not authorize production binding.",
+  "next_step_decision": "may_open_player_history_contract_implementation_issue",
+  "allowed_decision_enum": [
+    "may_open_player_history_contract_implementation_issue",
+    "player_history_contract_implementation_design_requires_followup",
+    "player_history_contract_implementation_design_rejected"
+  ],
+  "decision_rationale": "Every one of the eight unresolved items from PR #126 section 5 is addressed: resolved with a concrete default, given an explicit decision rule, specified as a checklist, scoped as a requirement without being implemented, or represented as a concrete governance mechanism. Nothing is left open-ended for a future implementation issue to guess at.",
+  "unresolved_item_resolutions": [
+    {
+      "item": "exact_artifact_sha_lock",
+      "resolution_kind": "deferred_with_reference",
+      "decision": "Do not lock source_dataset_refs.artifact_sha256 here. Reference the current known identity (path exports/promoted/nfl/player_season_coverage_v0.json, sha256 29f8e378127fa5426e5897ac4522b6187941312edabab357d8a427fb20511035, promotion review TIBER-Data#192/PR#193) as informative context only. The implementation issue must re-verify this identity via npm run gate:player-history-promoted-source and npm run refresh:player-history-promoted-mirrors before locking any value."
+    },
+    {
+      "item": "feature_family_scope",
+      "resolution_kind": "decision_rule",
+      "decision": "production_only is the v0 default per the #116 attribution (joined MAE 40.173 vs full set 40.034, a 0.138 gap). Expanding to the full feature set requires clearing an added-value test (improvement must exceed the eventual acceptance-threshold bar, not just be nonzero) and a governance test (no expanded forbidden-field surface; reviewed as its own contract amendment, minimum MINOR version bump)."
+    },
+    {
+      "item": "rolling_window_length",
+      "resolution_kind": "resolved_default",
+      "decision": "N = 3 prior seasons is the v0 default, matching the #112/#122 experiments. Changing N requires re-running the full LOOCV/train-fold-only/shuffled-control experimental design against the new window, not a config edit."
+    },
+    {
+      "item": "production_acceptance_threshold",
+      "resolution_kind": "process_defined_not_a_number",
+      "decision": "No number set here. A future threshold proposal must: preserve real-vs-baseline-vs-shuffled framing; evaluate on the production split semantics active at proposal time; state both a relative-improvement floor and an absolute joined-MAE floor; explicitly acknowledge single-season risk (current evidence is one replicated season); and carry the human sign-off from item 8."
+    },
+    {
+      "item": "production_path_leakage_audit",
+      "resolution_kind": "checklist_defined",
+      "decision": "Required checklist: target-season exclusion, partial-season exclusion, generated_at timing vs actual inference-time availability, real inference-time field availability, documented train/eval split semantics, source-artifact freshness/staleness policy, derived-feature look-ahead risk, missing-history treatment. Drafting the checklist into a document is future implementation-issue work; running it against a real proposal is wiring-issue-time work."
+    },
+    {
+      "item": "deterministic_implementation_replay_command",
+      "resolution_kind": "requirements_specified_not_implemented",
+      "decision": "Must take a locked source_dataset_refs + contract_version as input; produce a conforming contract instance with a recomputable run_id as output; fail closed on source-identity mismatch, forbidden fields, and null-semantics violations; and reproduce the committed #122 joined MAE/RMSE (baseline 68.926, real 40.034, shuffled 72.031; RMSE 88.553/57.287/90.409) as a smoke test when pointed at the same identity. Not implemented in this document; building it is in-scope for the future implementation issue (see future_implementation_issue_boundary.allowed)."
+    },
+    {
+      "item": "missing_history_subgroup_reporting",
+      "resolution_kind": "requirements_specified",
+      "decision": "Any future validation/replay output must report the no-history subgroup count, share, and by-position breakdown, plus confirmation every no-history player's feature block is entirely null. Silent pass-through with no reporting is non-conforming even if null-handling is technically correct."
+    },
+    {
+      "item": "human_sign_off_authority",
+      "resolution_kind": "governance_mechanism_defined",
+      "decision": "Sign-off must be a comment/review on the specific wiring PR (not a blanket pre-approval), must reference the exact run_id/contract_version, confirm the leakage-audit checklist passed, cite the acceptance-threshold evidence relied on, be dated, and be attributable to the repository's merge-authority operator account. No external or unavailable approver is named."
+    }
+  ],
+  "non_negotiables_preserved": [
+    "target season S may only use seasons < S -- no exceptions",
+    "no target-season or partial-target-season substitution, under any feature-availability fallback",
+    "missing-history players must not be silently zero-filled -- entire feature block stays null, and its presence must be reported",
+    "source artifact identity must be path + sha256 + promotion review, never sha256 alone; mismatch fails closed",
+    "run_id must derive from the full source identity plus contract_version, generator_script_version, and generated_at",
+    "the real-vs-baseline-vs-shuffled validation framing remains required for any acceptance-threshold proposal",
+    "this document does not authorize seasonalPprModel.ts wiring, in whole or in part",
+    "any Fantasy/product consumer requires its own separate, explicitly-approved review"
+  ],
+  "future_implementation_issue_boundary": {
+    "allowed": [
+      "create a non-production contract schema/type or JSON Schema representing the amended v0 shape",
+      "create validation logic checking a contract instance against that schema (structural validation only, not a production consumer)",
+      "create the deterministic replay/validation script specified in unresolved_item_resolutions.deterministic_implementation_replay_command",
+      "lock source_dataset_refs for a specific implementation artifact, following the re-verification requirement in unresolved_item_resolutions.exact_artifact_sha_lock",
+      "generate an experimental/non-production contract instance under an experiment-scoped path",
+      "add tests for schema conformance, provenance/run_id recomputation, fail-closed identity-mismatch behavior, and missing-history null-and-reporting behavior"
+    ],
+    "still_forbidden_unless_separately_approved": [
+      "seasonalPprModel.ts wiring, in whole or in part",
+      "production model feature use of any kind",
+      "any Fantasy/product consumer change",
+      "advice/ranking/scoring behavior",
+      "UI, routes, or export changes"
+    ]
+  },
+  "failure_modes_prevented": [
+    { "failure_mode": "choosing the full feature scope just because it has a slightly lower MAE", "prevention": "feature_family_scope resolution requires clearing an added-value test against a not-yet-set threshold bar" },
+    { "failure_mode": "locking a stale artifact sha too early", "prevention": "exact_artifact_sha_lock resolution requires re-verification via existing fail-closed gate scripts at implementation time" },
+    { "failure_mode": "treating N=3 as permanent without review", "prevention": "rolling_window_length resolution requires re-running the full experimental design for any change" },
+    { "failure_mode": "setting a production threshold based on one replicated season only", "prevention": "production_acceptance_threshold resolution requires explicit single-season-risk acknowledgment" },
+    { "failure_mode": "implementing replay that does not verify source identity", "prevention": "deterministic_implementation_replay_command resolution requires fail-closed source-identity verification as required behavior" },
+    { "failure_mode": "reporting missing history as zeros", "prevention": "missing_history_subgroup_reporting resolution requires visible subgroup reporting, never zero-fill" },
+    { "failure_mode": "letting contract implementation become model wiring by accident", "prevention": "future_implementation_issue_boundary.still_forbidden_unless_separately_approved names seasonalPprModel.ts wiring explicitly" }
+  ],
+  "non_goals": [
+    "does not implement any part of the contract in code",
+    "does not create a TypeScript runtime schema or validation logic (future implementation-issue work)",
+    "does not lock source_dataset_refs.artifact_sha256 to a concrete value",
+    "does not resolve feature-family scope with a final answer beyond the default rule (a future amendment may still justify the full set)",
+    "does not set a production acceptance threshold or number",
+    "does not run the leakage-audit checklist against any real proposal, only specifies it",
+    "does not approve a Fantasy consumer, UI surface, ranking, or advice behavior",
+    "does not promote or demote any TIBER-Data artifact",
+    "does not modify seasonalPprModel.ts or any other production Forecast file"
+  ],
+  "next_step": "The next_step_decision permits opening a SEPARATE implementation issue scoped exactly to future_implementation_issue_boundary.allowed. That issue must respect every non_negotiables_preserved entry and every gate established by PR #124 and PR #126, and must not attempt seasonalPprModel.ts wiring, production feature generation consumed by production code, or any Fantasy/product consumer change."
+}
