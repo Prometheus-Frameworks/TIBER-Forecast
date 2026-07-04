@@ -31,7 +31,8 @@
     { "field": "null_missing_history_rules", "classification": "required_non_negotiable", "amended": false, "note": "Accepted as-is and locked. No-history players get an entirely null feature block; never zero-coerced." },
     { "field": "provenance_state", "classification": "required", "amended": true, "note": "Amended from free text to a closed enum (see provenance_state_enum)." },
     { "field": "generated_at", "classification": "required", "amended": false, "note": "Accepted as-is: ISO-8601 timestamp of generation, not consumption." },
-    { "field": "run_id", "classification": "required", "amended": true, "note": "Amended to a specified composition rule (see run_id_composition_rule)." },
+    { "field": "generator_script_version", "classification": "required", "amended": true, "note": "New field, not present in the PR #124 proposal. Added because run_id derives from it and must be recomputable from a readable field on the contract instance." },
+    { "field": "run_id", "classification": "required", "amended": true, "note": "Amended to a specified composition rule (see run_id_composition_rule) hashing the full source identity (path + sha256 + promotion_review), not artifact_sha256 alone." },
     { "field": "validation_status", "classification": "required", "amended": true, "note": "Amended from free text to a closed enum (see validation_status_enum)." },
     { "field": "non_advice_non_ranking_statement", "classification": "required_non_negotiable_verbatim", "amended": false, "note": "Accepted as-is and locked; must be preserved verbatim by every consumer." }
   ],
@@ -63,12 +64,12 @@
       "implementation_design_accepted",
       "rejected_requires_redesign"
     ],
-    "run_id_composition_rule": "deterministic_hash(source_dataset_refs.artifact_sha256, contract_version, generator_script_version, generated_at)"
+    "run_id_composition_rule": "deterministic_hash(source_dataset_refs.artifact_path, source_dataset_refs.artifact_sha256, source_dataset_refs.promotion_review, contract_version, generator_script_version, generated_at)"
   },
   "amended_contract_shape_reference": {
     "note": "Shape reference only, not implemented as code or a runtime-validated schema in this PR.",
     "contract_id": "player_history_production_feature_v0",
-    "contract_version": "0.2.0-reviewed",
+    "contract_version": "0.3.0-reviewed",
     "source_dataset_refs": {
       "repo": "Prometheus-Frameworks/TIBER-Data",
       "artifact_path": "exports/promoted/nfl/player_season_coverage_v0.json",
@@ -92,7 +93,8 @@
     },
     "provenance_state": "contract_reviewed_not_production_bound",
     "generated_at": "ISO-8601 timestamp of generation, not of consumption",
-    "run_id": "deterministic_hash(artifact_sha256, contract_version, generator_script_version, generated_at)",
+    "generator_script_version": "version/revision identifier of the generator script that produced this instance",
+    "run_id": "deterministic_hash(source_dataset_refs.artifact_path, source_dataset_refs.artifact_sha256, source_dataset_refs.promotion_review, contract_version, generator_script_version, generated_at)",
     "validation_status": "accepted_with_amendments_for_future_implementation_design",
     "non_advice_non_ranking_statement": "This contract describes a candidate MODEL FEATURE only. It is not fantasy advice, not a ranking, not a start/sit recommendation, and not a product-facing claim. No consumer of this contract may present its values, or any derivative of them, as advice or ranking output without a separate, explicitly-approved product-integration review."
   },
@@ -129,7 +131,7 @@
   "failure_modes_prevented": [
     { "failure_mode": "a future implementation issue invents its own provenance_state/validation_status values ad hoc", "prevention": "amendments.provenance_state_enum and amendments.validation_status_enum close both fields to fixed enums" },
     { "failure_mode": "a future implementation issue bumps contract_version inconsistently", "prevention": "amendments.version_bump_policy defines the bump policy explicitly" },
-    { "failure_mode": "a future implementation issue treats run_id as any unique string", "prevention": "amendments.run_id_composition_rule specifies the exact composition" },
+    { "failure_mode": "a future implementation issue treats run_id as any unique string, or hashes source sha256 alone and collapses distinct promoted-source identities", "prevention": "amendments.run_id_composition_rule specifies the exact composition over the full source identity (path + sha256 + promotion_review) plus contract_version, generator_script_version, and generated_at" },
     { "failure_mode": "a future implementation issue silently decides the feature-family scope without review", "prevention": "unresolved_items keeps this an open, named decision" },
     { "failure_mode": "a future implementation issue treats this review as production-bound authorization", "prevention": "provenance_state_enum makes production_bound unreachable by this review or the next issue alone" },
     { "failure_mode": "a future implementation issue bundles a Fantasy consumer with contract implementation", "prevention": "non_negotiables_locked restates that consumer approval is never the same decision as contract acceptance" }
