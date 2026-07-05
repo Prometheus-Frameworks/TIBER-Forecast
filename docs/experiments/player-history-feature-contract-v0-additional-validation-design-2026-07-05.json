@@ -49,7 +49,7 @@
       "mirror_generation_requirements": "new outcome + input mirror pair analogous to PR #120's, for the new season pair",
       "replay_report_requirements": "new controlled-rerun report and contract-instance validation report analogous to #122/PR #130, explicitly dated/labeled for S2, never overwriting the 2025 reports",
       "missing_history_reporting": "independently computed for the S2 population; must not assume the 2025 no-history count/share (125/610) carries over",
-      "reuse_of_pr130_infrastructure": "contract schema/type is season-generic already (player_identity_join_keys.season is a plain number); generator/replay scripts (playerHistoryContractV0Replay.ts, runPlayerHistoryContractV0Replay.ts) hardcode CONTRACT_V0_TARGET_SEASON=2025 and CONTRACT_V0_INPUT_SEASONS=[2022,2023,2024] as module constants and would need parameterization -- generator-script work, not a contract schema amendment",
+      "reuse_of_pr130_infrastructure": "contract schema/type is season-generic already (player_identity_join_keys.season is a plain number); generator/replay scripts (playerHistoryContractV0Replay.ts, runPlayerHistoryContractV0Replay.ts) hardcode CONTRACT_V0_TARGET_SEASON=2025 and CONTRACT_V0_INPUT_SEASONS=[2022,2023,2024] as module constants and would need parameterization; the controlled-rerun script/module (scripts/runPlayerHistoryPromotedControlledRerun.ts, src/rehearsal/playerHistoryPromotedControlledRerun.ts) this option's replay_report_requirements depend on carries the same hardcoding (fixed mirror paths, fixed REPORT_DATE, and two season-specific TARGET_OUTCOME_KEYS entries) and must be parameterized alongside them -- generator-script work, not a contract schema amendment",
       "failure_modes": [
         "S2-1..S2-3 not available under governed/promoted status -- blocks entirely (the actual current state)",
         "materially smaller joined population for S2 than 2025's 485/610, weakening statistical power",
@@ -60,7 +60,7 @@
     {
       "id": "option_b_rolling_origin_backtest",
       "description": "Evaluate multiple target seasons (e.g. 2023, 2024, 2025), each predicted from its own 3 prior seasons, as independent origins.",
-      "required_source_seasons": "union of each target's 3-season trailing window -- e.g. targets {2023,2024,2025} need input seasons {2020,2021,2022,2023,2024}, a 5-season span for 3 origins",
+      "required_source_seasons": "the full governed span must cover each origin's own outcome/target season AND its 3 prior input seasons -- e.g. targets {2023,2024,2025} need outcome seasons {2023,2024,2025} plus input seasons {2020,2021,2022,2023,2024}, a combined 2020-2025 span (6 seasons for 3 origins). Of that span, 2022-2025 already exist in the current promoted artifact; 2020 and 2021 are the new/missing seasons.",
       "example": "origins 2023 (from 2020-2022), 2024 (from 2021-2023), 2025 (from 2022-2024, already done)",
       "input_window_semantics": "identical per-origin semantics to option A, repeated per origin; each origin's model fit/imputation must not see another origin's held-out rows",
       "source_artifact_requirements": "same governed/promoted discipline as option A, over a wider season span",
@@ -72,7 +72,7 @@
         "same as option A's failure modes, compounded across origins",
         "treating a rolling-origin result as stronger evidence than warranted when origins are close in time and may share correlated season-level shocks rather than being truly independent draws"
       ],
-      "estimated_governance_complexity": "substantially larger than option A: widest source-season span of any option here (5 seasons for 3 origins vs 4 for option A), multiplies the mirror-refresh/controlled-rerun pattern by the number of origins"
+      "estimated_governance_complexity": "substantially larger than option A: widest source-season span of any option here (2020-2025, 6 seasons for 3 origins vs 2021-2024's 4 seasons for option A), multiplies the mirror-refresh/controlled-rerun pattern by the number of origins"
     }
   ],
   "recommendation": "option_a_first_option_b_as_follow_on",
@@ -126,6 +126,7 @@
     "forecast_side_generator_readiness": {
       "contract_schema_type": "already season-generic (player_identity_join_keys.season is a plain number); no contract amendment needed for a new target season",
       "generator_and_mirror_scripts": "hardcode target season (2025) and input window ([2022,2023,2024]) as module constants, and bake 2025 into output file names and boundary-statement keys (e.g. contains_no_2025_outcome_values) in playerHistoryRunPopulationMirrors.ts, playerHistoryPromotedMirrorRefresh.ts, and playerHistoryContractV0Replay.ts -- generalizing requires generator-script parameterization, not a schema change",
+      "controlled_rerun_script_and_module": "scripts/runPlayerHistoryPromotedControlledRerun.ts hardcodes OUTCOME_MIRROR_REL to the ..._2025.promoted_outcome_mirror.json path, INPUT_MIRROR_REL to the ..._2022_2024.promoted_input_mirror.json path, and a fixed REPORT_DATE='2026-07-04' baked into its output report paths; src/rehearsal/playerHistoryPromotedControlledRerun.ts additionally hardcodes TARGET_OUTCOME_KEYS=['ppr_2025_actual','season_ppr_2025','target_outcome','target_season_ppr'], two of which are season-specific. Option A's required controlled-rerun report (see validation_options[0].replay_report_requirements) depends on this path, so it must be included in the same parameterization work as the mirror/replay generators -- a follow-up that parameterized only those generators would still be unable to produce the required second-season metrics/report.",
       "evidence": "direct inspection of the named Forecast source files in this repository"
     }
   },

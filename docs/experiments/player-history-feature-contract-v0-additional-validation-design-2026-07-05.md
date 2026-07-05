@@ -80,7 +80,7 @@ treating each as an independent origin point in a rolling-origin design.
 
 | | Requirement |
 | --- | --- |
-| Required source seasons | For `k` target seasons, the union of each target's own 3-season trailing window — e.g., targets `{2023, 2024, 2025}` need input seasons `{2020, 2021, 2022, 2023, 2024}` (a 5-season span for 3 origins) |
+| Required source seasons | For `k` target seasons, the full governed span must cover each origin's own outcome/target season **and** its 3 prior input seasons — e.g., targets `{2023, 2024, 2025}` need outcome seasons `{2023, 2024, 2025}` plus input seasons `{2020, 2021, 2022, 2023, 2024}`, a combined `2020-2025` span (6 seasons for 3 origins). Of that span, `2022-2025` already exist in the current promoted artifact; `2020` and `2021` are the new/missing seasons (§5.3) |
 | Example | Targets 2023 (from 2020-2022), 2024 (from 2021-2023), 2025 (from 2022-2024, already done) |
 | Input window semantics | Identical per-origin semantics to Option A, repeated for each origin; each origin's evaluation must be fully independent (no origin's model fit or imputation may see another origin's held-out target rows) |
 | Source artifact requirements | Same governed/promoted discipline as Option A, but for a *wider* season span — strictly more source seasons than Option A requires for a single additional point |
@@ -89,7 +89,7 @@ treating each as an independent origin point in a rolling-origin design.
 | Missing-history reporting | Independently per origin; a rollup should also show whether the no-history share trends across origins (informational, not itself a pass/fail gate beyond PR #132 §3.7's per-evaluation ceiling) |
 | Reuse of PR #130 infrastructure | Same as Option A, but the generator/replay scripts would need to be parameterized (not just for one alternate season, but genuinely multi-invocation) — somewhat more script work than Option A, though the same underlying change |
 | Failure modes | Same as Option A's (a)-(c), compounded across origins; additionally: (d) treating a rolling-origin result as stronger evidence than it is by construction, when origins are close together in time and may share correlated season-level shocks (e.g., a rule change spanning two adjacent seasons) rather than being truly independent draws |
-| Estimated governance complexity | Substantially larger than Option A: requires the *widest* source-season span of any option here (5 seasons for 3 origins, vs. 4 for Option A's single additional origin), and multiplies the mirror-refresh/controlled-rerun issue pattern by the number of origins. |
+| Estimated governance complexity | Substantially larger than Option A: requires the *widest* source-season span of any option here (2020-2025, 6 seasons for 3 origins, vs. 2021-2024's 4 seasons for Option A's single additional origin), and multiplies the mirror-refresh/controlled-rerun issue pattern by the number of origins. |
 
 ### 2.3 Comparison and recommendation
 
@@ -201,7 +201,7 @@ methodology obstacle either.
 ### 5.3 What a rolling-origin backtest (Option B) would additionally require
 
 Option B's minimal useful shape (3 origins: 2023, 2024, 2025) would require governed data back to
-**2020**, two seasons earlier than Option A needs. 2020 predates the 17-game format change, so a 2020
+**2020**, one season earlier than Option A needs (2021). 2020 predates the 17-game format change, so a 2020
 promotion would also need TIBER-Data to resolve the coverage-status methodology question §5.2 flags for
 pre-2021 seasons. This is a strictly larger and more uncertain source-availability question than
 Option A's.
@@ -224,6 +224,17 @@ Inspected directly in this repository:
     keys literally named `contains_no_2025_outcome_values`, `outcome_values_must_not_become_2025_input_features`.
   - `src/rehearsal/playerHistoryContractV0Replay.ts`: `CONTRACT_V0_TARGET_SEASON = 2025`,
     `CONTRACT_V0_INPUT_SEASONS = [2022, 2023, 2024]`.
+  - The **controlled-rerun script and module** Option A's replay/report requirement depends on
+    (§2.1) carry the same hardcoding and were omitted from an earlier draft of this inventory:
+    `scripts/runPlayerHistoryPromotedControlledRerun.ts` hardcodes `OUTCOME_MIRROR_REL` to the
+    `..._2025.promoted_outcome_mirror.json` path, `INPUT_MIRROR_REL` to the `..._2022_2024.promoted_input_mirror.json`
+    path, and a fixed `REPORT_DATE = '2026-07-04'` baked into its output report paths.
+    `src/rehearsal/playerHistoryPromotedControlledRerun.ts` additionally hardcodes
+    `TARGET_OUTCOME_KEYS = ['ppr_2025_actual', 'season_ppr_2025', 'target_outcome', 'target_season_ppr']`
+    — two of those four literal leakage-guard key names are season-specific and would need
+    generalizing for a different target season. A follow-up that parameterized only the mirror/replay
+    generators listed above, without also parameterizing this controlled-rerun path, would still be
+    unable to produce the required second-season metrics/report.
   - Validating a second target season therefore requires **generator-script changes** (new constants,
     new file-naming and boundary-statement conventions that do not collide with the existing 2025
     artifacts), not merely flipping a config value, and not a contract schema/type amendment. This is
