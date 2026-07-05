@@ -153,8 +153,9 @@ as a candidate framework, but full acceptance is deferred pending additional val
 
 ## 5. Qualitative / governance conditions (non-numeric, must ALL hold regardless of §3)
 
-A threshold is necessary but never sufficient. Before any future production-path leakage audit or
-wiring proposal may even be opened against this signal, all of the following must independently hold:
+A threshold is necessary but never sufficient. Before any future **production wiring or binding
+proposal** (i.e., a proposal that would actually touch `seasonalPprModel.ts` or a production feature
+path) may even be opened against this signal, all of the following must independently hold:
 
 - [ ] Source identity lock and committed-mirror source-identity verification (PR #130) must pass for
       whatever artifact snapshot the proposal uses — re-verified at proposal time, never inherited from
@@ -166,9 +167,15 @@ wiring proposal may even be opened against this signal, all of the following mus
 - [ ] The missing-history subgroup must be reported (count/share/by-position) for the specific
       population the proposal evaluates — never silently passed through.
 - [ ] A production-path leakage audit (PR #124 §5 prerequisite 4; PR #128 §2.5's checklist), broader
-      than the experimental leakage discipline already enforced, must still be **separately designed
-      and executed** against the specific production inference path being proposed. Clearing the
-      quantitative threshold in §3 does not substitute for this audit in any way.
+      than the experimental leakage discipline already enforced, must have been **separately designed
+      and executed** against the specific production inference path being proposed, with a passing
+      result. Clearing the quantitative threshold in §3 does not substitute for this audit in any way.
+
+This gate applies to a *wiring/binding* proposal, not to the leakage-audit design/execution issue
+itself (§7's next allowed issue is scoped to additional validation, and a later leakage-audit design
+issue would follow it) — that issue is exactly where the audit above gets designed and run, so it
+cannot be a precondition for its own existence. It is a precondition only for the wiring proposal that
+would come *after* the audit passes.
 - [ ] Human sign-off (PR #128 §2.8) must be a comment or review on the *specific* wiring PR, dated,
       attributable to the repository's merge-authority operator, and must reference the exact
       `run_id`/`contract_version` being wired, confirmation the leakage audit passed for that specific
