@@ -1,0 +1,274 @@
+{
+  "report_version": "player-history-feature-contract-v0-validation-report-v1",
+  "repo": "Prometheus-Frameworks/TIBER-Forecast",
+  "issue": "TIBER-Forecast#129",
+  "generated_at": "2026-07-04T00:00:00.000Z",
+  "contract_id": "player_history_production_feature_v0",
+  "boundary_statements": {
+    "not_production_bound": true,
+    "not_consumed_by_seasonalPprModel": true,
+    "not_fantasy_product_output": true,
+    "no_production_forecast_behavior_changed": true,
+    "no_feature_binding_occurred": true,
+    "no_tiber_data_artifact_promoted_or_demoted": true
+  },
+  "source_identity": {
+    "re_verification_gate": "TIBER-Forecast#117 (playerHistoryPromotedSourceGate)",
+    "gate_status": "passed",
+    "gate_decision": "may_open_promoted_mirror_refresh_issue",
+    "locked_source_dataset_refs": {
+      "repo": "Prometheus-Frameworks/TIBER-Data",
+      "artifact_path": "exports/promoted/nfl/player_season_coverage_v0.json",
+      "artifact_sha256": "29f8e378127fa5426e5897ac4522b6187941312edabab357d8a427fb20511035",
+      "promotion_review": "TIBER-Data#192"
+    },
+    "committed_mirror_source_verification": {
+      "verified": true
+    }
+  },
+  "run_id_recomputation": {
+    "deterministic": true,
+    "instance_a_run_id": "9a773e1c520d842f9d01766034220bf2d51377c3e592b5703b11067b8023695f",
+    "instance_b_run_id": "9a773e1c520d842f9d01766034220bf2d51377c3e592b5703b11067b8023695f"
+  },
+  "schema_validation": {
+    "schema_version": "player-history-feature-contract-v0-schema-v1",
+    "status": "passed",
+    "decision": "contract_instance_conforms_non_production",
+    "checks": [
+      {
+        "dimension": "kind",
+        "expected": "player_history_production_feature_v0_experimental_instance",
+        "observed": "player_history_production_feature_v0_experimental_instance",
+        "passed": true
+      },
+      {
+        "dimension": "not_production_bound",
+        "expected": "true",
+        "observed": "true",
+        "passed": true
+      },
+      {
+        "dimension": "not_consumed_by_seasonal_ppr_model",
+        "expected": "true",
+        "observed": "true",
+        "passed": true
+      },
+      {
+        "dimension": "not_fantasy_product_output",
+        "expected": "true",
+        "observed": "true",
+        "passed": true
+      },
+      {
+        "dimension": "envelope_present",
+        "expected": "envelope is a present object",
+        "observed": "present",
+        "passed": true
+      },
+      {
+        "dimension": "contract_id",
+        "expected": "player_history_production_feature_v0",
+        "observed": "player_history_production_feature_v0",
+        "passed": true
+      },
+      {
+        "dimension": "contract_version",
+        "expected": "0.3.0-reviewed",
+        "observed": "0.3.0-reviewed",
+        "passed": true
+      },
+      {
+        "dimension": "source_dataset_refs_shape",
+        "expected": "repo (non-empty string) + artifact_path (non-empty string) + artifact_sha256 (sha256 hex) + promotion_review (non-empty string)",
+        "observed": "repo=Prometheus-Frameworks/TIBER-Data artifact_path=exports/promoted/nfl/player_season_coverage_v0.json artifact_sha256=29f8e378127fa5426e5897ac4522b6187941312edabab357d8a427fb20511035 promotion_review=TIBER-Data#192",
+        "passed": true
+      },
+      {
+        "dimension": "player_identity_join_keys",
+        "expected": "[\"player_id\",\"season\",\"season_type\",\"position\"]",
+        "observed": "[\"player_id\",\"season\",\"season_type\",\"position\"]",
+        "passed": true
+      },
+      {
+        "dimension": "temporal_cutoff_semantics",
+        "expected": "rule=\"feature values for target season S are built ONLY from seasons < S\"; excluded=\"target season S in any form, including partial-season in-progress data\"",
+        "observed": "rule=\"feature values for target season S are built ONLY from seasons < S\"; excluded=\"target season S in any form, including partial-season in-progress data\"",
+        "passed": true
+      },
+      {
+        "dimension": "feature_availability_rules",
+        "expected": "requires=\"at least one prior-season REG record for this player_id in the input window\"; family_scope=\"production_only\"; no_partial_season_substitution=true",
+        "observed": "requires=\"at least one prior-season REG record for this player_id in the input window\"; family_scope=\"production_only\"; no_partial_season_substitution=true",
+        "passed": true
+      },
+      {
+        "dimension": "null_missing_history_rules",
+        "expected": "no_history_player=\"entire feature block is null, never zero-filled, never imputed at serve time using population statistics computed after the fact\"; unavailable_usage_fields=\"remain null even when history exists, exactly as in the source artifact\"",
+        "observed": "no_history_player=\"entire feature block is null, never zero-filled, never imputed at serve time using population statistics computed after the fact\"; unavailable_usage_fields=\"remain null even when history exists, exactly as in the source artifact\"",
+        "passed": true
+      },
+      {
+        "dimension": "provenance_state_closed_enum",
+        "expected": "experimental_replicated_not_production_bound | contract_reviewed_not_production_bound | implementation_designed_not_production_bound | production_bound",
+        "observed": "implementation_designed_not_production_bound",
+        "passed": true
+      },
+      {
+        "dimension": "validation_status_closed_enum",
+        "expected": "design_proposed_not_reviewed | accepted_with_amendments_for_future_implementation_design | implementation_design_in_progress | implementation_design_accepted | rejected_requires_redesign",
+        "observed": "implementation_design_accepted",
+        "passed": true
+      },
+      {
+        "dimension": "generated_at_iso8601",
+        "expected": "ISO-8601 timestamp",
+        "observed": "2026-07-04T00:00:00.000Z",
+        "passed": true
+      },
+      {
+        "dimension": "generator_script_version_present",
+        "expected": "non-empty string",
+        "observed": "player-history-contract-v0-replay-v1",
+        "passed": true
+      },
+      {
+        "dimension": "run_id_recomputable",
+        "expected": "run_id === composeRunId(source_dataset_refs, contract_version, generator_script_version, generated_at)",
+        "observed": "stored=9a773e1c520d842f9d01766034220bf2d51377c3e592b5703b11067b8023695f recomputed=9a773e1c520d842f9d01766034220bf2d51377c3e592b5703b11067b8023695f",
+        "passed": true
+      },
+      {
+        "dimension": "non_advice_non_ranking_statement_verbatim",
+        "expected": "This contract describes a candidate MODEL FEATURE only. It is not fantasy advice, not a ranking, not a start/sit recommendation, and not a product-facing claim. No consumer of this contract may present its values, or any derivative of them, as advice or ranking output without a separate, explicitly-approved product-integration review.",
+        "observed": "This contract describes a candidate MODEL FEATURE only. It is not fantasy advice, not a ranking, not a start/sit recommendation, and not a product-facing claim. No consumer of this contract may present its values, or any derivative of them, as advice or ranking output without a separate, explicitly-approved product-integration review.",
+        "passed": true
+      },
+      {
+        "dimension": "row_join_keys_valid",
+        "expected": "player_id:string, season:number, season_type:REG, position:QB|RB|WR|TE",
+        "observed": "0 invalid of 610",
+        "passed": true
+      },
+      {
+        "dimension": "no_history_rows_entirely_null",
+        "expected": "has_prior_history=false => production block is null (never zero-filled, never partially populated)",
+        "observed": "0 non-null no-history blocks (0 zero-coerced)",
+        "passed": true
+      },
+      {
+        "dimension": "has_history_rows_carry_production_block",
+        "expected": "has_prior_history=true => production block present (object, may contain individually-null fields)",
+        "observed": "0 missing blocks",
+        "passed": true
+      },
+      {
+        "dimension": "has_history_production_block_shape_valid",
+        "expected": "production block has EXACTLY these keys, each number|null: trailing_2yr_ppr_total, trailing_3yr_ppr_total, trailing_2yr_ppr_mean, trailing_3yr_ppr_mean, year_over_year_ppr_trend",
+        "observed": "0 malformed blocks (missing/renamed/extra fields or wrong-typed values)",
+        "passed": true
+      },
+      {
+        "dimension": "missing_history_subgroup_report_present",
+        "expected": "missing_history_subgroup_report is a present object",
+        "observed": "present",
+        "passed": true
+      },
+      {
+        "dimension": "missing_history_count",
+        "expected": "125",
+        "observed": "125",
+        "passed": true
+      },
+      {
+        "dimension": "missing_history_total",
+        "expected": "610",
+        "observed": "610",
+        "passed": true
+      },
+      {
+        "dimension": "missing_history_share",
+        "expected": "0.204918",
+        "observed": "0.204918",
+        "passed": true
+      },
+      {
+        "dimension": "missing_history_by_position",
+        "expected": "{\"QB\":15,\"RB\":36,\"TE\":23,\"WR\":51}",
+        "observed": "{\"QB\":15,\"RB\":36,\"TE\":23,\"WR\":51}",
+        "passed": true
+      },
+      {
+        "dimension": "missing_history_every_row_entirely_null_flag",
+        "expected": "true",
+        "observed": "true",
+        "passed": true
+      },
+      {
+        "dimension": "no_forbidden_fields_or_language",
+        "expected": "none of: active_status, ownership_status, roster_status, active_roster_status, availability_status, injury_status, depth_chart_rank, ranking, rank, advice, recommendation, start_sit, trade_value, draft_rank, production_acceptance_threshold",
+        "observed": "none present",
+        "passed": true
+      }
+    ],
+    "blocking_reasons": []
+  },
+  "missing_history_subgroup_report": {
+    "count": 125,
+    "total": 610,
+    "share": 0.20491803278688525,
+    "by_position": {
+      "QB": 15,
+      "RB": 36,
+      "TE": 23,
+      "WR": 51
+    },
+    "every_no_history_row_entirely_null": true
+  },
+  "replay_smoke_test": {
+    "reused_module": "playerHistoryPromotedControlledRerun (#121, full five-family design, unmodified)",
+    "purpose": "plumbing check only -- proves this implementation reads the same governed mirrors and reproduces the committed #122 numbers; does not re-scope the contract, which stays production-only per PR #128 §2.2",
+    "pinned_reference_issue": "TIBER-Forecast#122",
+    "rerun_issue_reused": "TIBER-Forecast#121",
+    "joined_only_metrics_observed": {
+      "baseline_only": {
+        "n": 485,
+        "mae": 68.92642356383094,
+        "rmse": 88.55310414019723,
+        "pearson": 0.18047118567059178,
+        "spearman": -0.158062020571096
+      },
+      "real_player_history_features": {
+        "n": 485,
+        "mae": 40.03420951963204,
+        "rmse": 57.28707506805985,
+        "pearson": 0.7705798065926959,
+        "spearman": 0.7514351701400404
+      },
+      "shuffled_player_history_control": {
+        "n": 485,
+        "mae": 72.03082475887823,
+        "rmse": 90.40857906441782,
+        "pearson": 0.11703039757307648,
+        "spearman": 0.06815442891503357
+      }
+    },
+    "comparison": {
+      "matches": true,
+      "diffs": []
+    }
+  },
+  "decision": {
+    "decision": "player_history_contract_v0_non_production_implementation_ready_for_review",
+    "rationale": "Source identity was re-verified and locked, the committed promoted mirrors verified against that locked identity, the generated non-production contract instance passed structural validation, run_id recomputed deterministically, and the replay reproduced the pinned #122 joined-population smoke metrics exactly. This does not authorize seasonalPprModel.ts wiring, production feature use, or any Fantasy/product consumer change."
+  },
+  "instance_generated": true,
+  "instance_path": "data/fixtures/tiberData/player_history_production_feature_v0.experimental_contract_instance.json",
+  "future_gates_still_not_satisfied": [
+    "production acceptance threshold proposal",
+    "production-path leakage audit execution against a concrete wiring proposal",
+    "human sign-off on a specific wiring PR",
+    "seasonalPprModel.ts integration issue",
+    "Fantasy/product consumer issue, if ever proposed"
+  ]
+}
