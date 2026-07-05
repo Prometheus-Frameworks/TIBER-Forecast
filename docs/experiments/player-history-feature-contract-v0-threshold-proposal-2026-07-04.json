@@ -1,0 +1,170 @@
+{
+  "design_id": "player-history-feature-contract-v0-threshold-proposal-2026-07-04",
+  "status": "threshold_proposal_only_no_production_binding_no_leakage_audit_no_feature_wiring",
+  "issue": "TIBER-Forecast#131",
+  "date": "2026-07-04",
+  "reviews": {
+    "source_prs": ["TIBER-Forecast#124", "TIBER-Forecast#126", "TIBER-Forecast#128", "TIBER-Forecast#130"],
+    "source_issues": ["TIBER-Forecast#123", "TIBER-Forecast#125", "TIBER-Forecast#127", "TIBER-Forecast#129"],
+    "source_documents": [
+      "docs/experiments/player-history-production-binding-prerequisites-2026-07-04.md",
+      "docs/experiments/player-history-production-binding-prerequisites-2026-07-04.json",
+      "docs/experiments/player-history-feature-contract-v0-review-2026-07-04.md",
+      "docs/experiments/player-history-feature-contract-v0-review-2026-07-04.json",
+      "docs/experiments/player-history-feature-contract-v0-implementation-design-2026-07-04.md",
+      "docs/experiments/player-history-feature-contract-v0-implementation-design-2026-07-04.json",
+      "docs/reports/player-history-feature-contract-v0-validation-2026-07-04.md",
+      "docs/reports/player-history-feature-contract-v0-validation-2026-07-04.json",
+      "data/fixtures/tiberData/player_history_production_feature_v0.experimental_contract_instance.json",
+      "docs/reports/player-history-controlled-run-2026-07-02.json",
+      "docs/reports/player-history-robustness-checks-2026-07-03.json",
+      "docs/reports/player-history-promoted-controlled-rerun-2026-07-04.json"
+    ]
+  },
+  "purpose": "Propose a production acceptance threshold framework for player_history_production_feature_v0, per PR #124 section 5 prerequisite 7, which every prior document in the chain has deferred. Threshold-design/report only; does not authorize production binding, a leakage audit execution, or model wiring.",
+  "allowed_decision_enum": [
+    "player_history_threshold_proposed_requires_additional_validation",
+    "player_history_threshold_candidate_accepted_for_leakage_audit_design",
+    "player_history_threshold_rejected_requires_redesign"
+  ],
+  "decision": "player_history_threshold_proposed_requires_additional_validation",
+  "decision_rationale": "The quantitative threshold components (see quantitative_threshold_components) are well-supported by the replicated evidence and proposed as concrete candidates, not left open-ended. But acceptance from current evidence alone is not justified: the evidence is one target season (2025), observed under two source-governance regimes that produced an IDENTICAL result (delta=0 vs #112 on every arm) rather than two independent seasons of validation. PR #124 section 5 prerequisite 7 requires either an additional season of validation or an explicit, reviewed risk acceptance before a threshold may rely on single-season evidence alone; this document does not make that risk-acceptance case. The candidate framework is therefore reviewable and amendable, pending additional validation, not binding on any future leakage-audit or wiring proposal yet.",
+  "evidence_summary": {
+    "replicated_joined_population_metrics": {
+      "source_reports": [
+        "docs/reports/player-history-controlled-run-2026-07-02.json",
+        "docs/reports/player-history-promoted-controlled-rerun-2026-07-04.json"
+      ],
+      "joined_mae": { "baseline_only": 68.926, "real_player_history_features": 40.034, "shuffled_player_history_control": 72.031 },
+      "joined_rmse": { "baseline_only": 88.553, "real_player_history_features": 57.287, "shuffled_player_history_control": 90.409 },
+      "relative_improvement": {
+        "real_vs_baseline_mae_pct": 41.9,
+        "real_vs_shuffled_mae_pct": 44.4,
+        "real_vs_baseline_rmse_pct": 35.3,
+        "real_vs_shuffled_rmse_pct": 36.6
+      },
+      "candidate_vs_promoted_delta_note": "identical (delta=0) on every arm per the #122 candidate-source comparison; strong replication under two source-governance regimes, but the same underlying 2025-target population, not two independent seasons"
+    },
+    "production_only_vs_full_feature_set_attribution": {
+      "source_report": "docs/reports/player-history-robustness-checks-2026-07-03.json",
+      "production_only": { "joined_mae": 40.173, "joined_rmse": 57.302 },
+      "full_feature_set": { "joined_mae": 40.034, "joined_rmse": 57.287 },
+      "gap_joined_mae": 0.139,
+      "gap_relative_to_production_only_pct": 0.35
+    },
+    "missing_history_subgroup": {
+      "source_report": "docs/reports/player-history-feature-contract-v0-validation-2026-07-04.json",
+      "count": 125,
+      "total": 610,
+      "share_pct": 20.5,
+      "by_position": { "QB": 15, "RB": 36, "TE": 23, "WR": 51 },
+      "every_no_history_row_entirely_null": true
+    },
+    "contract_implementation_state": {
+      "source_pr": "TIBER-Forecast#130",
+      "source_identity_locked": true,
+      "committed_mirror_source_verification_passed": true,
+      "contract_instance_validation_status": "contract_instance_conforms_non_production",
+      "replay_smoke_metrics_matched_pinned_122_values": true,
+      "final_pr_130_decision": "player_history_contract_v0_non_production_implementation_ready_for_review"
+    }
+  },
+  "quantitative_threshold_components": [
+    {
+      "id": "relative_mae_improvement_over_baseline",
+      "candidate_threshold": ">= 25%",
+      "currently_observed": "41.9%",
+      "rationale": "Set well below the observed 41.9% so a future season with normal signal decay still passes; must be beaten together with the shuffled-control component (never baseline alone)."
+    },
+    {
+      "id": "relative_mae_improvement_over_shuffled_control",
+      "candidate_threshold": ">= 25%",
+      "currently_observed": "44.4%",
+      "rationale": "Preserves the real-vs-baseline-vs-shuffled framing required by every prior gate in this chain; beating baseline without also beating the shuffled control by a margin is not acceptable."
+    },
+    {
+      "id": "absolute_joined_mae_ceiling",
+      "candidate_threshold": "<= 48.0",
+      "currently_observed": "40.034",
+      "rationale": "~20% headroom above the observed value, set well below both baseline (68.926) and shuffled control (72.031), so a season where the signal degrades meaningfully still fails even if it nominally still beats both comparators."
+    },
+    {
+      "id": "absolute_joined_rmse_ceiling",
+      "candidate_threshold": "<= 68.0",
+      "currently_observed": "57.287",
+      "rationale": "~19% headroom above the observed value, set well below both baseline (88.553) and shuffled control (90.409)."
+    },
+    {
+      "id": "relative_rmse_improvement_over_shuffled_control",
+      "candidate_threshold": ">= 20%",
+      "currently_observed": "36.6%",
+      "rationale": "RMSE guardrail alongside the MAE-primary metric, consistent with the secondary-metric check already used in the #121/#122 decision rule."
+    },
+    {
+      "id": "production_only_vs_full_feature_set_added_value_bar",
+      "candidate_threshold": "full feature set adopted only if its relative joined-MAE improvement over production_only exceeds 2%, AND the PR #128 section 2.2 governance test passes (no expanded forbidden-field surface; reviewed as its own MINOR-or-larger contract amendment)",
+      "currently_observed": "0.35% gap",
+      "rationale": "Gives PR #128 section 2.2's previously-undefined 'meaningful bar' a concrete number for the first time. The observed 0.35% gap does not clear it, so production_only remains the v0 default scope.",
+      "result_against_current_evidence": "full_feature_set_does_not_clear_bar_production_only_remains_default"
+    },
+    {
+      "id": "no_history_subgroup_reporting_ceiling",
+      "candidate_threshold": "must be reported (count/share/by-position) on every evaluation; share > 35% of evaluated population requires additional justification before threshold evaluation is considered valid",
+      "currently_observed": "20.5%",
+      "rationale": "A soft ceiling, not a hard reject at current evidence: 20.5% is well under it. Exists to prevent a future evaluation on a thin joined subset from silently passing a threshold that was calibrated on a much richer joined population."
+    }
+  ],
+  "single_season_risk": {
+    "accepted": false,
+    "statement": "The current replicated evidence (#112 -> #122) is strong but centered on one target season (2025), observed under two different source-governance regimes (candidate, then promoted) that produced an IDENTICAL result (delta=0 on every arm) rather than two independent seasons of validation. This document does NOT make an explicit, reviewed case for why one replicated season is sufficient, per PR #124 section 5 prerequisite 7's requirement. Making that case without a second season of actual evidence would be exactly the failure mode that prerequisite warns against.",
+    "conclusion": "single_season_risk_not_accepted_threshold_candidate_only_pending_additional_validation"
+  },
+  "qualitative_governance_conditions_scope_note": "These conditions gate a future PRODUCTION WIRING/BINDING proposal (one that would actually touch seasonalPprModel.ts or a production feature path), not the leakage-audit design/execution issue itself. The next_allowed_issue (additional-validation design) and a later leakage-audit design issue are exactly where the leakage-audit condition below gets satisfied -- it cannot be a precondition for opening the issue that satisfies it, only for the wiring proposal that would come after.",
+  "qualitative_governance_conditions": [
+    "source identity lock and committed-mirror source-identity verification (PR #130) must pass for whatever artifact snapshot a future proposal uses, re-verified at proposal time",
+    "the contract instance must pass structural validation (schema, closed enums, verbatim non-advice/non-ranking statement, null semantics, forbidden-field scan) per PR #130's validator",
+    "the deterministic replay/validation command must reproduce its own pinned smoke metrics exactly; a mismatch invalidates the evidence regardless of what the metrics show",
+    "the missing-history subgroup must be reported (count/share/by-position) for the specific population any future proposal evaluates, never silently passed through",
+    "a production-path leakage audit (PR #124 section 5 prerequisite 4; PR #128 section 2.5's checklist), broader than the experimental leakage discipline already enforced, must have been separately designed and executed against the specific production inference path being proposed, with a passing result -- clearing the quantitative threshold does not substitute for this audit",
+    "human sign-off (PR #128 section 2.8) must be a comment or review on the specific wiring PR, dated, attributable to the repository's merge-authority operator, and must reference the exact run_id/contract_version being wired, confirmation the leakage audit passed for that specific proposal, and the specific threshold evidence relied on",
+    "no Fantasy/product consumer, ranking, or advice behavior is authorized by threshold acceptance alone -- consumer approval remains its own separate, explicitly-approved review"
+  ],
+  "non_negotiables_preserved": [
+    "target season S may only use seasons < S -- no exceptions",
+    "no target-season or partial-target-season substitution, under any feature-availability fallback",
+    "missing-history players must not be silently zero-filled -- entire feature block stays null, and its presence must be reported",
+    "source artifact identity must be path + sha256 + promotion review, never sha256 alone; mismatch at generation time fails closed",
+    "the real-vs-baseline-vs-shuffled validation framing remains required for any future evaluation of this signal",
+    "this document does not authorize seasonalPprModel.ts wiring, in whole or in part",
+    "any Fantasy/product consumer requires its own separate, explicitly-approved review",
+    "this document does not promote or demote any TIBER-Data artifact"
+  ],
+  "next_allowed_issue": {
+    "title": "Design additional validation for player-history threshold acceptance",
+    "scope_note": "May design (not necessarily execute in the same PR) a second-season or backtest validation approach for the player-history signal, using the same real-vs-baseline-vs-shuffled framing, governed-source discipline, and non-production contract infrastructure from PR #130. Must not jump to a production-path leakage audit design/execution issue or a seasonalPprModel.ts wiring issue -- those remain gated behind an accepted threshold, which this document does not grant.",
+    "forbidden_in_next_issue": [
+      "seasonalPprModel.ts wiring, in whole or in part",
+      "production-path leakage audit execution against a concrete wiring proposal",
+      "any Fantasy/product consumer change",
+      "a production-readiness claim"
+    ]
+  },
+  "non_goals": [
+    "does not accept a production acceptance threshold as binding",
+    "does not run a production-path leakage audit",
+    "does not modify seasonalPprModel.ts or any other production Forecast file",
+    "does not add player-history features to any production model",
+    "does not approve a Fantasy consumer, UI surface, ranking, or advice behavior",
+    "does not promote or demote any TIBER-Data artifact",
+    "does not claim the replicated result is stable across future seasons or a production-scale rolling retraining cadence"
+  ],
+  "failure_modes_prevented": [
+    { "failure_mode": "setting a threshold that only today's exact numbers can pass", "prevention": "quantitative_threshold_components are set with deliberate headroom below observed values" },
+    { "failure_mode": "treating beats-baseline-alone as sufficient", "prevention": "relative_mae_improvement_over_baseline and _over_shuffled_control both required, preserving the real-vs-baseline-vs-shuffled framing" },
+    { "failure_mode": "accepting a threshold from one replicated season without acknowledgment", "prevention": "single_season_risk.accepted is explicitly false with a stated rationale" },
+    { "failure_mode": "letting the full feature-family set in because it is marginally better", "prevention": "production_only_vs_full_feature_set_added_value_bar gives PR #128 section 2.2's bar a concrete number; the observed 0.35% gap does not clear it" },
+    { "failure_mode": "treating threshold proposal as authorization for a leakage audit or wiring", "prevention": "qualitative_governance_conditions and next_allowed_issue state the leakage audit remains separate and this document does not accept the threshold at all" },
+    { "failure_mode": "silently passing through a shrinking or growing no-history subgroup", "prevention": "no_history_subgroup_reporting_ceiling sets a soft ceiling and requires the subgroup be reported for whatever population any future evaluation targets" }
+  ],
+  "next_step": "The decision permits opening a SEPARATE 'Design additional validation for player-history threshold acceptance' issue (see next_allowed_issue). It does not permit a production-path leakage audit design/execution issue or a seasonalPprModel.ts wiring issue; those remain gated behind an accepted threshold, which this document does not grant."
+}
