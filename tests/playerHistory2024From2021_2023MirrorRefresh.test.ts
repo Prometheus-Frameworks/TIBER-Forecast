@@ -550,6 +550,26 @@ describe('refresh gate: leakage, provenance, and null-semantics enforcement on t
     expect(result.blocking_reasons.join(' ')).toContain('overlap_counts_sane');
   });
 
+  it('a per-position breakdown that does not sum to joined_rows blocks outright, never requires-followup', () => {
+    // scored=600, joined_rows=480, but the per-position breakdown only accounts for 400 of them:
+    // impossible/malformed evidence that must never clear the floors below.
+    const result = evaluate((input) => {
+      input.overlap.joined_rows_by_position = { QB: 66, RB: 115, WR: 104, TE: 115 };
+    });
+    expect(result.decision).toBe('forecast_player_history_mirror_refresh_blocked');
+    expect(result.blocking_reasons.join(' ')).toContain('overlap_position_breakdown_reconciles_with_joined_rows');
+  });
+
+  it('a shuffle-group count that disagrees with the joined-rows-by-position breakdown blocks outright', () => {
+    const result = evaluate((input) => {
+      input.overlap.shuffle_groups = input.overlap.shuffle_groups.map((g) =>
+        g.position === 'QB' ? { ...g, feature_bearing_row_count: 40 } : g,
+      );
+    });
+    expect(result.decision).toBe('forecast_player_history_mirror_refresh_blocked');
+    expect(result.blocking_reasons.join(' ')).toContain('overlap_shuffle_counts_reconcile_with_joined_positions');
+  });
+
   it('missing shuffle evidence for a joined position blocks outright', () => {
     const result = evaluate((input) => {
       input.overlap.shuffle_groups = input.overlap.shuffle_groups.filter((g) => g.position !== 'QB');
@@ -564,6 +584,13 @@ describe('refresh gate: #107 population/overlap floors', () => {
     const result = evaluate((input) => {
       input.overlap.joined_rows = 150;
       input.overlap.joined_rows_by_position = { QB: 40, RB: 40, WR: 35, TE: 35 };
+      // Keep shuffle-group counts reconciled with the new breakdown -- only the floor should trip.
+      input.overlap.shuffle_groups = [
+        { position: 'QB', feature_bearing_row_count: 40, derangement_possible: true },
+        { position: 'RB', feature_bearing_row_count: 40, derangement_possible: true },
+        { position: 'WR', feature_bearing_row_count: 35, derangement_possible: true },
+        { position: 'TE', feature_bearing_row_count: 35, derangement_possible: true },
+      ];
     });
     expect(result.status).toBe('requires_followup');
     expect(result.decision).toBe('forecast_player_history_mirror_refresh_requires_followup');
@@ -573,7 +600,13 @@ describe('refresh gate: #107 population/overlap floors', () => {
 
   it('a single position below the per-position floor downgrades to requires-followup', () => {
     const result = evaluate((input) => {
+      // Keep joined_rows and the shuffle-group count reconciled with the lowered QB breakdown --
+      // only the per-position floor should trip, not an evidence-integrity check.
+      input.overlap.joined_rows -= 66 - 29;
       input.overlap.joined_rows_by_position = { ...input.overlap.joined_rows_by_position, QB: 29 };
+      input.overlap.shuffle_groups = input.overlap.shuffle_groups.map((g) =>
+        g.position === 'QB' ? { ...g, feature_bearing_row_count: 29 } : g,
+      );
     });
     expect(result.decision).toBe('forecast_player_history_mirror_refresh_requires_followup');
     expect(result.blocking_reasons.join(' ')).toContain('overlap_min_joined_rows_position_QB');
@@ -590,6 +623,12 @@ describe('refresh gate: #107 population/overlap floors', () => {
 
   it('an infeasible derangement in any feature-bearing position group downgrades to requires-followup', () => {
     const result = evaluate((input) => {
+      // A single feature-bearing row can never support a derangement; keep joined_rows and the
+      // per-position breakdown reconciled with the lowered QB count so only the derangement-
+      // feasibility floor trips (QB drops below its per-position floor too, which is expected and
+      // asserted below alongside the derangement failure -- both are floor dimensions).
+      input.overlap.joined_rows -= 66 - 1;
+      input.overlap.joined_rows_by_position = { ...input.overlap.joined_rows_by_position, QB: 1 };
       input.overlap.shuffle_groups[0] = { position: 'QB', feature_bearing_row_count: 1, derangement_possible: false };
     });
     expect(result.decision).toBe('forecast_player_history_mirror_refresh_requires_followup');

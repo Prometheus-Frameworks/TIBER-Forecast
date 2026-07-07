@@ -25,7 +25,7 @@ A DIFFERENT window (2024-from-2021-2023) from the same #202/#207 (2021-2025) pro
 - Promotion review: `TIBER-Data#202`
 - Promotion decision: `promote_player_season_coverage_v0_2021_2025`
 - Seasons: 2021-2025 (633/609/576/588/610 records); this refresh's window: target season 2024, input seasons 2021-2023
-- Source-identity gate: 51/51 checks passed; source_identity_passed=**true**, mirror_integrity_passed=**true**, overlap_floors_passed=**true**
+- Source-identity gate: 53/53 checks passed; source_identity_passed=**true**, mirror_integrity_passed=**true**, overlap_floors_passed=**true**
 
 ## 3. Refreshed mirrors
 
@@ -52,7 +52,7 @@ The archived candidate mirrors (#110) and the prior promoted-source mirrors (#11
 
 ## Result
 
-- **Refresh gate decision:** `may_open_player_history_2024_from_2021_2023_additional_validation_issue` (51/51 checks passed)
+- **Refresh gate decision:** `may_open_player_history_2024_from_2021_2023_additional_validation_issue` (53/53 checks passed)
 - **Next step:** a SEPARATE issue may be opened to consider running additional validation against these mirrors. Opening that issue authorizes nothing by itself; the validation run would need its own review, and would not itself accept or amend any threshold or make a production/leakage claim.
 
 ## Non-goals confirmed

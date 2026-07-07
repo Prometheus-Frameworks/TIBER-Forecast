@@ -35,7 +35,7 @@
   "source_identity_gate": {
     "status": "passed",
     "decision": "may_open_player_history_2024_from_2021_2023_additional_validation_issue",
-    "checks_passed": "51/51",
+    "checks_passed": "53/53",
     "source_identity_passed": true,
     "mirror_integrity_passed": true,
     "overlap_floors_passed": true
@@ -297,6 +297,18 @@
       "dimension": "overlap_counts_sane",
       "expected": "0 <= joined_rows <= scored_target_rows, both finite",
       "observed": "scored=588, joined=470",
+      "passed": true
+    },
+    {
+      "dimension": "overlap_position_breakdown_reconciles_with_joined_rows",
+      "expected": "sum of joined_rows_by_position across QB/RB/WR/TE equals joined_rows",
+      "observed": "sum=470, joined_rows=470",
+      "passed": true
+    },
+    {
+      "dimension": "overlap_shuffle_counts_reconcile_with_joined_positions",
+      "expected": "shuffle-group feature_bearing_row_count equals joined_rows_by_position for every required position (QB/RB/WR/TE)",
+      "observed": "all required positions reconcile",
       "passed": true
     },
     {
@@ -694,6 +706,18 @@
         "dimension": "overlap_counts_sane",
         "expected": "0 <= joined_rows <= scored_target_rows, both finite",
         "observed": "scored=588, joined=470",
+        "passed": true
+      },
+      {
+        "dimension": "overlap_position_breakdown_reconciles_with_joined_rows",
+        "expected": "sum of joined_rows_by_position across QB/RB/WR/TE equals joined_rows",
+        "observed": "sum=470, joined_rows=470",
+        "passed": true
+      },
+      {
+        "dimension": "overlap_shuffle_counts_reconcile_with_joined_positions",
+        "expected": "shuffle-group feature_bearing_row_count equals joined_rows_by_position for every required position (QB/RB/WR/TE)",
+        "observed": "all required positions reconcile",
         "passed": true
       },
       {

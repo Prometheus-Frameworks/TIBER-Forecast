@@ -860,6 +860,37 @@ export const evaluatePlayerHistory2024From2021_2023MirrorRefreshGate = (
     `scored=${overlap.scored_target_rows}, joined=${overlap.joined_rows}`,
     countsSane,
   );
+  // Evidence-integrity: the per-position breakdown must actually account for every joined row, and the
+  // shuffle-group counts must reconcile with that same breakdown -- otherwise malformed/impossible
+  // overlap evidence (e.g. positions summing to less than joined_rows) could still clear the floors
+  // below and emit the ceiling decision. These are integrity checks (block outright), never floors.
+  const joinedByRequiredPosition = OVERLAP_REQUIRED_POSITIONS.reduce(
+    (sum, position) => sum + (overlap.joined_rows_by_position[position] ?? 0),
+    0,
+  );
+  const positionBreakdownReconciles = joinedByRequiredPosition === overlap.joined_rows;
+  check(
+    'overlap_position_breakdown_reconciles_with_joined_rows',
+    `sum of joined_rows_by_position across ${OVERLAP_REQUIRED_POSITIONS.join('/')} equals joined_rows`,
+    `sum=${joinedByRequiredPosition}, joined_rows=${overlap.joined_rows}`,
+    positionBreakdownReconciles,
+  );
+  const shuffleCountByPosition = new Map(overlap.shuffle_groups.map((g) => [g.position, g.feature_bearing_row_count]));
+  const shuffleMismatches = OVERLAP_REQUIRED_POSITIONS.filter((position) => {
+    const joined = overlap.joined_rows_by_position[position] ?? 0;
+    const shuffleCount = shuffleCountByPosition.get(position) ?? 0;
+    return joined !== shuffleCount;
+  });
+  check(
+    'overlap_shuffle_counts_reconcile_with_joined_positions',
+    `shuffle-group feature_bearing_row_count equals joined_rows_by_position for every required position (${OVERLAP_REQUIRED_POSITIONS.join('/')})`,
+    shuffleMismatches.length === 0
+      ? 'all required positions reconcile'
+      : shuffleMismatches
+          .map((p) => `${p}: joined=${overlap.joined_rows_by_position[p] ?? 0} shuffle=${shuffleCountByPosition.get(p) ?? 0}`)
+          .join(', '),
+    shuffleMismatches.length === 0,
+  );
   check(
     'overlap_min_joined_rows_overall',
     `>= ${OVERLAP_MIN_JOINED_ROWS_OVERALL}`,
@@ -910,7 +941,9 @@ export const evaluatePlayerHistory2024From2021_2023MirrorRefreshGate = (
     'overlap_derangement_feasible_by_position',
   ]);
   const overlapChecks = checks.slice(sourceIdentity.checks.length + integrityChecks.length);
-  // overlap_counts_sane and overlap_shuffle_evidence_present are evidence-integrity checks (block outright), not floors.
+  // overlap_counts_sane, overlap_position_breakdown_reconciles_with_joined_rows,
+  // overlap_shuffle_counts_reconcile_with_joined_positions, and overlap_shuffle_evidence_present are
+  // evidence-integrity checks (block outright), not floors.
   const overlapIntegrityOk = overlapChecks
     .filter((c) => !overlapFloorDimensions.has(c.dimension))
     .every((c) => c.passed);

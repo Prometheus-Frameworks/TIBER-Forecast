@@ -21,7 +21,7 @@
   "source_identity_gate": {
     "status": "passed",
     "decision": "may_open_player_history_2024_from_2021_2023_additional_validation_issue",
-    "checks_passed": "51/51",
+    "checks_passed": "53/53",
     "source_identity_passed": true,
     "mirror_integrity_passed": true,
     "overlap_floors_passed": true
