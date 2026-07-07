@@ -1,0 +1,548 @@
+{
+  "report_version": "player-history-2024-from-2021-2023-additional-validation-report-v1",
+  "repo": "Prometheus-Frameworks/TIBER-Forecast",
+  "issue": "TIBER-Forecast#137",
+  "generated_at": "2026-07-07T00:00:00.000Z",
+  "marking": "experimental_2024_from_2021_2023_result_not_production_signal",
+  "predecessor_refs": [
+    "TIBER-Data#202/#207 (2021-2025 promotion)",
+    "TIBER-Forecast#135/#136 (2024-from-2021-2023 mirror refresh, squash-merged as db13503)"
+  ],
+  "inputs": {
+    "outcome_mirror": {
+      "path": "data/fixtures/tiberData/player_history_2024_target_outcome_mirror.json",
+      "governed_source": {
+        "repo": "Prometheus-Frameworks/TIBER-Data",
+        "promotedArtifactPath": "exports/promoted/nfl/player_season_coverage_v0.json",
+        "promotedManifestPath": "exports/promoted/nfl/PLAYER_SEASON_COVERAGE_V0_PROMOTION_MANIFEST.json",
+        "promotionMergeCommit": "711d6ee158d4e3bd116d1df4d76dea282200454d",
+        "promotionReview": "TIBER-Data#202",
+        "sha256": "d45f612b207085df00b4b080e4f55ce1abbd060dcbf30b0bee777ff833ddd8ac",
+        "artifactStatus": "promoted_governed_artifact"
+      },
+      "counts": {
+        "rows": 588,
+        "players": 588,
+        "by_position": {
+          "QB": 78,
+          "TE": 128,
+          "WR": 234,
+          "RB": 148
+        }
+      }
+    },
+    "input_mirror": {
+      "path": "data/fixtures/tiberData/player_history_2021_2023_input_mirror.json",
+      "governed_source": {
+        "repo": "Prometheus-Frameworks/TIBER-Data",
+        "promotedArtifactPath": "exports/promoted/nfl/player_season_coverage_v0.json",
+        "promotedManifestPath": "exports/promoted/nfl/PLAYER_SEASON_COVERAGE_V0_PROMOTION_MANIFEST.json",
+        "promotionMergeCommit": "711d6ee158d4e3bd116d1df4d76dea282200454d",
+        "promotionReview": "TIBER-Data#202",
+        "sha256": "d45f612b207085df00b4b080e4f55ce1abbd060dcbf30b0bee777ff833ddd8ac",
+        "artifactStatus": "promoted_governed_artifact"
+      },
+      "counts": {
+        "rows": 1090,
+        "players_with_history": 470,
+        "outcome_players_without_history": 118,
+        "by_season": {
+          "2021": 287,
+          "2022": 365,
+          "2023": 438
+        },
+        "by_position": {
+          "QB": 164,
+          "TE": 240,
+          "WR": 422,
+          "RB": 264
+        }
+      }
+    },
+    "mirror_refresh_gate": {
+      "path": "docs/reports/player-history-2024-from-2021-2023-mirror-refresh-2026-07-07.json",
+      "status": "passed",
+      "decision": "may_open_player_history_2024_from_2021_2023_additional_validation_issue"
+    }
+  },
+  "design_note": "Same isolated three-arm LOOCV design as #111/#121 (baseline_only / real_player_history_features / shuffled_player_history_control), reusing the #111 LOOCV engine and metric primitives verbatim. Only the feature window differs: target season 2024, input seasons 2021-2023, so the player-history feature block is re-keyed to seasons 2023/2022/2021 rather than the 2024/2023/2022 keys #111/#121 used for their 2025-target window.",
+  "scope_note": "Runs ONLY the 2024-from-2021-2023 additional-validation path against the #136 refreshed mirrors. Does not consume, recompute, or compare against the #110 archived candidate mirrors, the #119/#120 promoted-source mirrors (2025 outcome / 2022-2024 input), or any other prior mirror family.",
+  "validation": {
+    "version": "player-history-2024-from-2021-2023-additional-validation-v1",
+    "issue": "TIBER-Forecast#137",
+    "marking": "experimental_2024_from_2021_2023_result_not_production_signal",
+    "preconditions": {
+      "checks": [
+        {
+          "dimension": "prior_mirror_refresh_gate_decision",
+          "expected": "status passed, decision may_open_player_history_2024_from_2021_2023_additional_validation_issue",
+          "observed": "status=passed, decision=may_open_player_history_2024_from_2021_2023_additional_validation_issue",
+          "passed": true
+        },
+        {
+          "dimension": "outcome_mirror_kind_and_source",
+          "expected": "kind player_history_2024_from_2021_2023_outcome_mirror, sha d45f612b207085df00b4b080e4f55ce1abbd060dcbf30b0bee777ff833ddd8ac, review TIBER-Data#202, decision promote_player_season_coverage_v0_2021_2025",
+          "observed": "kind=player_history_2024_from_2021_2023_outcome_mirror, sha=d45f612b207085df00b4b080e4f55ce1abbd060dcbf30b0bee777ff833ddd8ac, review=TIBER-Data#202",
+          "passed": true
+        },
+        {
+          "dimension": "input_mirror_kind_and_source",
+          "expected": "kind player_history_2024_from_2021_2023_input_mirror, sha d45f612b207085df00b4b080e4f55ce1abbd060dcbf30b0bee777ff833ddd8ac, review TIBER-Data#202",
+          "observed": "kind=player_history_2024_from_2021_2023_input_mirror, sha=d45f612b207085df00b4b080e4f55ce1abbd060dcbf30b0bee777ff833ddd8ac, review=TIBER-Data#202",
+          "passed": true
+        },
+        {
+          "dimension": "outcome_rows_2024_reg_approved_positions_only",
+          "expected": "every row season=2024, season_type=REG, position in QB/RB/WR/TE",
+          "observed": "0 off-scope rows of 588",
+          "passed": true
+        },
+        {
+          "dimension": "input_no_2024_rows_leakage_split_preserved",
+          "expected": "0 rows with season 2024; every row in 2021/2022/2023 REG",
+          "observed": "0 target-season rows, 0 off-window rows of 1090",
+          "passed": true
+        },
+        {
+          "dimension": "input_no_target_outcome_values",
+          "expected": "no input row carries ppr_2024_actual/season_ppr_2024/target_outcome/target_season_ppr (2024 target values live in the outcome layer only)",
+          "observed": "0 rows carrying a target-outcome key",
+          "passed": true
+        },
+        {
+          "dimension": "mirror_source_refs_present",
+          "expected": "every mirror row carries >= 1 source_ref",
+          "observed": "0 rows missing refs (of 1678)",
+          "passed": true
+        },
+        {
+          "dimension": "mirror_source_refs_prefix_approved_no_fixture_markers",
+          "expected": "all refs prefix-approved (nflreadpy.load_player_stats( | nflreadpy.load_players() and free of offline_fixture/fixture_/scaffold/fixture_demonstration_only",
+          "observed": "0 unapproved of 5034 refs, 0 fixture-marked",
+          "passed": true
+        },
+        {
+          "dimension": "no_forbidden_availability_fields",
+          "expected": "no mirror row carries active_status/ownership_status/roster_status/active_roster_status",
+          "observed": "0 forbidden-field hits",
+          "passed": true
+        },
+        {
+          "dimension": "unavailable_usage_fields_remain_null",
+          "expected": "snap_share/routes_run/route_participation/red_zone_targets/red_zone_carries stay null in every input row",
+          "observed": "0 zero-coerced, 0 populated non-null values",
+          "passed": true
+        },
+        {
+          "dimension": "overlap_min_joined_rows_overall",
+          "expected": ">= 200",
+          "observed": "470",
+          "passed": true
+        },
+        {
+          "dimension": "overlap_min_joined_rows_position_QB",
+          "expected": ">= 30",
+          "observed": "67",
+          "passed": true
+        },
+        {
+          "dimension": "overlap_min_joined_rows_position_RB",
+          "expected": ">= 30",
+          "observed": "116",
+          "passed": true
+        },
+        {
+          "dimension": "overlap_min_joined_rows_position_WR",
+          "expected": ">= 30",
+          "observed": "184",
+          "passed": true
+        },
+        {
+          "dimension": "overlap_min_joined_rows_position_TE",
+          "expected": ">= 30",
+          "observed": "103",
+          "passed": true
+        },
+        {
+          "dimension": "overlap_min_joined_share",
+          "expected": ">= 0.6",
+          "observed": "0.7993",
+          "passed": true
+        }
+      ],
+      "blocking_reasons": [],
+      "integrity_passed": true,
+      "floors_passed": true,
+      "observed_overlap": {
+        "scored_target_rows": 588,
+        "joined_rows": 470,
+        "joined_share": 0.7993197278911565,
+        "joined_rows_by_position": {
+          "QB": 67,
+          "TE": 103,
+          "WR": 184,
+          "RB": 116
+        }
+      }
+    },
+    "arms": [
+      "baseline_only",
+      "real_player_history_features",
+      "shuffled_player_history_control"
+    ],
+    "fold_design": {
+      "method": "leave_one_out_cross_validation",
+      "folds": 588,
+      "imputation": "train_fold_mean_via_104_primitives",
+      "standardization": "train_fold_only_z_score",
+      "ridge_lambda": 1,
+      "shuffle_seed": 20260707,
+      "shuffle_method": "seeded_derangement_within_position_pre_outcome_independent"
+    },
+    "boundary_statements": {
+      "additional_validation_run_only": true,
+      "uses_136_refreshed_mirrors_not_prior_mirror_families": true,
+      "leakage_split_preserved": true,
+      "no_threshold_accepted_rejected_or_amended": true,
+      "no_production_binding_authorized": true,
+      "no_product_facing_signal_claimed": true,
+      "no_fantasy_advice_or_rankings_output": true,
+      "no_tiber_data_change": true,
+      "metrics_exist_only_inside_this_report": true,
+      "positive_decision_authorizes_only_a_separate_threshold_review_issue": true
+    },
+    "decision": "may_open_player_history_2024_from_2021_2023_threshold_review_issue",
+    "population": {
+      "evaluated_rows": 588,
+      "joined_rows": 470,
+      "no_history_rows": 118,
+      "by_position": {
+        "QB": 78,
+        "TE": 128,
+        "WR": 234,
+        "RB": 148
+      },
+      "shuffled_control_integrity": {
+        "donors_assigned": 470,
+        "self_donations": 0,
+        "cross_position_donations": 0
+      }
+    },
+    "metrics_by_arm": {
+      "overall": {
+        "baseline_only": {
+          "n": 588,
+          "mae": 71.2295260095505,
+          "rmse": 88.33812071867882,
+          "pearson": 0.17438101855043883,
+          "spearman": -0.16437703350031646
+        },
+        "real_player_history_features": {
+          "n": 588,
+          "mae": 46.6670255736618,
+          "rmse": 64.1109814192281,
+          "pearson": 0.6998305032980434,
+          "spearman": 0.614505463436744
+        },
+        "shuffled_player_history_control": {
+          "n": 588,
+          "mae": 69.30964475963317,
+          "rmse": 87.6518798014323,
+          "pearson": 0.23991760484322142,
+          "spearman": 0.23722136229692817
+        }
+      },
+      "joined_only": {
+        "baseline_only": {
+          "n": 470,
+          "mae": 71.90830595932601,
+          "rmse": 90.32496188740929,
+          "pearson": 0.1578278855083166,
+          "spearman": -0.16348783368010472
+        },
+        "real_player_history_features": {
+          "n": 470,
+          "mae": 44.81784285925398,
+          "rmse": 60.64904709118242,
+          "pearson": 0.7467017155994486,
+          "spearman": 0.7138665488535106
+        },
+        "shuffled_player_history_control": {
+          "n": 470,
+          "mae": 73.45702176127034,
+          "rmse": 90.61238320674373,
+          "pearson": 0.1793435888276949,
+          "spearman": 0.14780900479508993
+        }
+      },
+      "no_history_only": {
+        "baseline_only": {
+          "n": 118,
+          "mae": 68.52591095535973,
+          "rmse": 79.93584570741925,
+          "pearson": 0.2458488763676957,
+          "spearman": -0.1474997812776901
+        },
+        "real_player_history_features": {
+          "n": 118,
+          "mae": 54.03241435138812,
+          "rmse": 76.35798265115324,
+          "pearson": 0.08900180571664547,
+          "spearman": -0.3499182793687118
+        },
+        "shuffled_player_history_control": {
+          "n": 118,
+          "mae": 52.79043127853593,
+          "rmse": 74.7046795752172,
+          "pearson": 0.22450467219330766,
+          "spearman": -0.054458435151690174
+        }
+      },
+      "per_position": {
+        "QB": {
+          "baseline_only": {
+            "n": 78,
+            "mae": 103.38082584082586,
+            "rmse": 122.24498883606822,
+            "pearson": -1.0000000000000002,
+            "spearman": -1
+          },
+          "real_player_history_features": {
+            "n": 78,
+            "mae": 71.87172319370202,
+            "rmse": 94.61046725545825,
+            "pearson": 0.6210351978291383,
+            "spearman": 0.5591314904718798
+          },
+          "shuffled_player_history_control": {
+            "n": 78,
+            "mae": 100.62257689805831,
+            "rmse": 120.71478448931298,
+            "pearson": 0.12281238208162534,
+            "spearman": 0.14486962240972193
+          }
+        },
+        "RB": {
+          "baseline_only": {
+            "n": 148,
+            "mae": 75.43257951829379,
+            "rmse": 93.28650058349713,
+            "pearson": -0.9999999999999998,
+            "spearman": -0.9999953702293337
+          },
+          "real_player_history_features": {
+            "n": 148,
+            "mae": 46.86556781774392,
+            "rmse": 64.53546051034411,
+            "pearson": 0.7186684958919937,
+            "spearman": 0.6216938487844812
+          },
+          "shuffled_player_history_control": {
+            "n": 148,
+            "mae": 71.52182132460264,
+            "rmse": 91.2218655601369,
+            "pearson": 0.2084282790635319,
+            "spearman": 0.26239755656882285
+          }
+        },
+        "TE": {
+          "baseline_only": {
+            "n": 128,
+            "mae": 49.167834645669245,
+            "rmse": 61.40414703168625,
+            "pearson": -1.0000000000000007,
+            "spearman": -0.9999985678594726
+          },
+          "real_player_history_features": {
+            "n": 128,
+            "mae": 32.28465189789361,
+            "rmse": 44.41570478644941,
+            "pearson": 0.684485979331672,
+            "spearman": 0.5481581072562061
+          },
+          "shuffled_player_history_control": {
+            "n": 128,
+            "mae": 49.735443367959974,
+            "rmse": 62.95735974267492,
+            "pearson": 0.09693726282161394,
+            "spearman": 0.10476505516189272
+          }
+        },
+        "WR": {
+          "baseline_only": {
+            "n": 234,
+            "mae": 69.9220182678552,
+            "rmse": 84.03144375256518,
+            "pearson": -1.0000000000000002,
+            "spearman": -0.999998828818495
+          },
+          "real_player_history_features": {
+            "n": 234,
+            "mae": 46.00716730020473,
+            "rmse": 60.25984939616004,
+            "pearson": 0.6956964839508563,
+            "spearman": 0.5961782226498535
+          },
+          "shuffled_player_history_control": {
+            "n": 234,
+            "mae": 68.18010176699002,
+            "rmse": 83.76759648029595,
+            "pearson": 0.13477622276495094,
+            "spearman": 0.1143777999445903
+          }
+        }
+      }
+    },
+    "comparisons": [
+      {
+        "comparison": "baseline_only_vs_real_player_history_features",
+        "subgroup": "overall",
+        "mae_delta": -24.562500435888694,
+        "rmse_delta": -24.227139299450727,
+        "better_on_mae": "real_player_history_features"
+      },
+      {
+        "comparison": "baseline_only_vs_shuffled_player_history_control",
+        "subgroup": "overall",
+        "mae_delta": -1.9198812499173243,
+        "rmse_delta": -0.686240917246522,
+        "better_on_mae": "shuffled_player_history_control"
+      },
+      {
+        "comparison": "real_player_history_features_vs_shuffled_player_history_control",
+        "subgroup": "overall",
+        "mae_delta": 22.64261918597137,
+        "rmse_delta": 23.540898382204205,
+        "better_on_mae": "real_player_history_features"
+      },
+      {
+        "comparison": "baseline_only_vs_real_player_history_features",
+        "subgroup": "joined_only",
+        "mae_delta": -27.090463100072036,
+        "rmse_delta": -29.67591479622687,
+        "better_on_mae": "real_player_history_features"
+      },
+      {
+        "comparison": "baseline_only_vs_shuffled_player_history_control",
+        "subgroup": "joined_only",
+        "mae_delta": 1.5487158019443257,
+        "rmse_delta": 0.2874213193344417,
+        "better_on_mae": "baseline_only"
+      },
+      {
+        "comparison": "real_player_history_features_vs_shuffled_player_history_control",
+        "subgroup": "joined_only",
+        "mae_delta": 28.63917890201636,
+        "rmse_delta": 29.96333611556131,
+        "better_on_mae": "real_player_history_features"
+      },
+      {
+        "comparison": "baseline_only_vs_real_player_history_features",
+        "subgroup": "no_history_only",
+        "mae_delta": -14.493496603971614,
+        "rmse_delta": -3.577863056266011,
+        "better_on_mae": "real_player_history_features"
+      },
+      {
+        "comparison": "baseline_only_vs_shuffled_player_history_control",
+        "subgroup": "no_history_only",
+        "mae_delta": -15.735479676823807,
+        "rmse_delta": -5.231166132202048,
+        "better_on_mae": "shuffled_player_history_control"
+      },
+      {
+        "comparison": "real_player_history_features_vs_shuffled_player_history_control",
+        "subgroup": "no_history_only",
+        "mae_delta": -1.241983072852193,
+        "rmse_delta": -1.6533030759360372,
+        "better_on_mae": "shuffled_player_history_control"
+      },
+      {
+        "comparison": "baseline_only_vs_real_player_history_features",
+        "subgroup": "position_QB",
+        "mae_delta": -31.50910264712384,
+        "rmse_delta": -27.63452158060997,
+        "better_on_mae": "real_player_history_features"
+      },
+      {
+        "comparison": "baseline_only_vs_shuffled_player_history_control",
+        "subgroup": "position_QB",
+        "mae_delta": -2.758248942767551,
+        "rmse_delta": -1.5302043467552409,
+        "better_on_mae": "shuffled_player_history_control"
+      },
+      {
+        "comparison": "real_player_history_features_vs_shuffled_player_history_control",
+        "subgroup": "position_QB",
+        "mae_delta": 28.750853704356288,
+        "rmse_delta": 26.10431723385473,
+        "better_on_mae": "real_player_history_features"
+      },
+      {
+        "comparison": "baseline_only_vs_real_player_history_features",
+        "subgroup": "position_RB",
+        "mae_delta": -28.56701170054987,
+        "rmse_delta": -28.75104007315302,
+        "better_on_mae": "real_player_history_features"
+      },
+      {
+        "comparison": "baseline_only_vs_shuffled_player_history_control",
+        "subgroup": "position_RB",
+        "mae_delta": -3.9107581936911515,
+        "rmse_delta": -2.064635023360225,
+        "better_on_mae": "shuffled_player_history_control"
+      },
+      {
+        "comparison": "real_player_history_features_vs_shuffled_player_history_control",
+        "subgroup": "position_RB",
+        "mae_delta": 24.656253506858718,
+        "rmse_delta": 26.686405049792796,
+        "better_on_mae": "real_player_history_features"
+      },
+      {
+        "comparison": "baseline_only_vs_real_player_history_features",
+        "subgroup": "position_TE",
+        "mae_delta": -16.883182747775635,
+        "rmse_delta": -16.98844224523684,
+        "better_on_mae": "real_player_history_features"
+      },
+      {
+        "comparison": "baseline_only_vs_shuffled_player_history_control",
+        "subgroup": "position_TE",
+        "mae_delta": 0.5676087222907285,
+        "rmse_delta": 1.5532127109886673,
+        "better_on_mae": "baseline_only"
+      },
+      {
+        "comparison": "real_player_history_features_vs_shuffled_player_history_control",
+        "subgroup": "position_TE",
+        "mae_delta": 17.450791470066363,
+        "rmse_delta": 18.541654956225507,
+        "better_on_mae": "real_player_history_features"
+      },
+      {
+        "comparison": "baseline_only_vs_real_player_history_features",
+        "subgroup": "position_WR",
+        "mae_delta": -23.914850967650466,
+        "rmse_delta": -23.77159435640514,
+        "better_on_mae": "real_player_history_features"
+      },
+      {
+        "comparison": "baseline_only_vs_shuffled_player_history_control",
+        "subgroup": "position_WR",
+        "mae_delta": -1.7419165008651731,
+        "rmse_delta": -0.2638472722692313,
+        "better_on_mae": "shuffled_player_history_control"
+      },
+      {
+        "comparison": "real_player_history_features_vs_shuffled_player_history_control",
+        "subgroup": "position_WR",
+        "mae_delta": 22.172934466785293,
+        "rmse_delta": 23.507747084135907,
+        "better_on_mae": "real_player_history_features"
+      }
+    ],
+    "decision_rationale": "Mirror identity, leakage/provenance integrity, and the #107 population/overlap floors all re-verified directly against the #136 refreshed mirrors, and every required joined-population metric is defined. A SEPARATE issue may be opened to consider a threshold; this decision does not itself accept, reject, or amend any threshold, and does not bind production behavior."
+  },
+  "next_allowed_step": "A SEPARATE issue may be opened to consider a threshold against the metrics recorded above. This decision does not itself accept, reject, or amend any threshold, and does not authorize production binding, feature wiring, or product output."
+}
