@@ -318,6 +318,13 @@ export const evaluateAdditionalValidationPreconditions = (
     `${input2024Rows} target-season rows, ${inputOffWindow} off-window rows of ${inputMirror.rows.length}`,
     input2024Rows === 0 && inputOffWindow === 0 && inputMirror.rows.length > 0,
   );
+  const inputOffPositions = inputMirror.rows.filter((row) => !PLAYER_HISTORY_APPROVED_POSITIONS.includes(row.position)).length;
+  check(
+    'input_positions_in_scope',
+    `every input row position in ${PLAYER_HISTORY_APPROVED_POSITIONS.join('/')}`,
+    `${inputOffPositions} off-scope rows`,
+    inputOffPositions === 0,
+  );
   const rowsWithTargetOutcome = inputMirror.rows.filter((row) => TARGET_OUTCOME_KEYS.some((key) => Object.prototype.hasOwnProperty.call(row, key))).length;
   check(
     'input_no_target_outcome_values',

@@ -104,6 +104,12 @@
           "passed": true
         },
         {
+          "dimension": "input_positions_in_scope",
+          "expected": "every input row position in QB/RB/WR/TE",
+          "observed": "0 off-scope rows",
+          "passed": true
+        },
+        {
           "dimension": "input_no_target_outcome_values",
           "expected": "no input row carries ppr_2024_actual/season_ppr_2024/target_outcome/target_season_ppr (2024 target values live in the outcome layer only)",
           "observed": "0 rows carrying a target-outcome key",

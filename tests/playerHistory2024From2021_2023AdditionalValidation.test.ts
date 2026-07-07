@@ -264,6 +264,18 @@ describe('preconditions gate (fail-closed on the #136 decision, mirror identity,
     expect(result.blocking_reasons.join(' ')).toContain('input_mirror_kind_and_source');
   });
 
+  it('blocks on an off-scope input mirror position (K/DST etc) BEFORE any row is built into features', () => {
+    const { outcomeMirror, inputMirror, priorGate } = floorSatisfyingExperiment();
+    const tampered = inputMirrorOf([{ ...inputMirror.rows[0]!, position: 'K' }, ...inputMirror.rows.slice(1)]);
+    const result = evaluateAdditionalValidationPreconditions(priorGate, outcomeMirror, tampered);
+    expect(result.integrity_passed).toBe(false);
+    expect(result.blocking_reasons.join(' ')).toContain('input_positions_in_scope');
+    // The execute path must report `blocked`, not throw/crash inside buildPlayerHistoryFeatures's scope guard.
+    const { report, predictions } = executePlayerHistory2024From2021_2023AdditionalValidation(outcomeMirror, tampered, priorGate);
+    expect(report.decision).toBe('player_history_2024_from_2021_2023_additional_validation_blocked');
+    expect(predictions).toEqual([]);
+  });
+
   it('blocks if the input mirror contains a 2024 row (leakage split violated)', () => {
     const { outcomeMirror, inputMirror, priorGate } = floorSatisfyingExperiment();
     const tampered = inputMirrorOf([...inputMirror.rows, historyRow({ player_id: 'qb0', season: 2024, position: 'QB' })]);

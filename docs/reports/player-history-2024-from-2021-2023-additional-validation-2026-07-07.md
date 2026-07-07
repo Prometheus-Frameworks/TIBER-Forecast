@@ -11,7 +11,7 @@ Runs the bounded additional-validation pass authorized by #136's decision `may_o
 - #136 mirror-refresh gate (re-verified): status `passed` • decision `may_open_player_history_2024_from_2021_2023_additional_validation_issue`
 - Outcome mirror: `data/fixtures/tiberData/player_history_2024_target_outcome_mirror.json` (sha256 `d45f612b207085df00b4b080e4f55ce1abbd060dcbf30b0bee777ff833ddd8ac`, promotion review `TIBER-Data#202`)
 - Input mirror: `data/fixtures/tiberData/player_history_2021_2023_input_mirror.json` (2021-2023 REG only; 0 rows at or beyond target season 2024)
-- Preconditions: 16/16 checks passed — integrity_passed=**true**, floors_passed=**true**
+- Preconditions: 17/17 checks passed — integrity_passed=**true**, floors_passed=**true**
 - Observed overlap: joined 470 of 588 scored (share 0.7993), by position {"QB":67,"TE":103,"WR":184,"RB":116}
 
 ## 2. Design (same #111/#121 design; feature window re-keyed to 2023/2022/2021)
