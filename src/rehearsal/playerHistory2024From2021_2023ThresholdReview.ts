@@ -57,11 +57,9 @@ export const EXPECTED_PRIOR_ORIGIN_DECISION = 'promoted_player_history_signal_re
 export const EXPECTED_NEW_ORIGIN_DECISION = 'may_open_player_history_2024_from_2021_2023_threshold_review_issue' as const;
 
 /**
- * The five quantitative threshold components from PR #132's `quantitative_threshold_components`,
- * evaluated per-origin (no averaging, per the #134 aggregation rule). The sixth component
- * (`production_only_vs_full_feature_set_added_value_bar`) is a one-time feature-composition decision
- * established via #116 on the 2025 origin -- not re-evaluated per additional-validation origin, since
- * both #121/#122 and #137 evaluate the same full-feature-set arm the bar was calibrated against.
+ * Five of PR #132's six `quantitative_threshold_components`, evaluated per-origin (no averaging, per
+ * the #134 aggregation rule). Both #121/#122 and #137 evaluate the same full-feature-set arm these five
+ * were calibrated against.
  */
 export const MIN_RELATIVE_MAE_IMPROVEMENT_OVER_BASELINE = 0.25;
 export const MIN_RELATIVE_MAE_IMPROVEMENT_OVER_SHUFFLED = 0.25;
@@ -70,6 +68,18 @@ export const MAX_ABSOLUTE_JOINED_RMSE = 68.0;
 export const MIN_RELATIVE_RMSE_IMPROVEMENT_OVER_SHUFFLED = 0.2;
 /** Soft ceiling (reporting requirement, not a hard reject at or below it) from PR #132. */
 export const NO_HISTORY_SHARE_SOFT_CEILING = 0.35;
+
+/**
+ * PR #132's SIXTH quantitative component, `production_only_vs_full_feature_set_added_value_bar`: the
+ * full feature set may be adopted over `production_only` only if its relative joined-MAE improvement
+ * exceeds this bar (percent units, matching PR #132's own units). This is a one-time feature-composition
+ * decision established via #116 on the 2025 origin, carried forward here rather than re-evaluated per
+ * additional-validation origin -- NOT re-run for the 2024 origin, since doing so would require a new
+ * `production_only` ablation, which this review is not permitted to execute. It is reported explicitly
+ * (never folded into "every component passes") so a downstream production-binding review cannot read
+ * this review's positive decision as clearing full-feature-set wiring.
+ */
+export const PRODUCTION_ONLY_ADDED_VALUE_BAR_PCT = 2.0;
 
 /**
  * The only decisions this review may emit (per the #139 issue). Deliberately NO value contains
@@ -108,9 +118,21 @@ export interface NewOriginEvidence extends JoinedPopulationOriginEvidence {
   preconditions_floors_passed: boolean;
 }
 
+/**
+ * The two #137 boundary-statement keys this review requires to be explicitly present and true --
+ * not merely "whatever keys happen to be present are true" (a regenerated #137 report that dropped
+ * these keys entirely must not silently pass).
+ */
+export const REQUIRED_NEW_ORIGIN_BOUNDARY_KEYS = ['no_threshold_accepted_rejected_or_amended', 'no_production_binding_authorized'] as const;
+
 export interface ThresholdFrameworkEvidence {
   status: string;
   decision: string;
+  /** PR #132's sixth quantitative component, carried forward (see `PRODUCTION_ONLY_ADDED_VALUE_BAR_PCT`). */
+  production_only_added_value_bar: {
+    threshold_pct: number;
+    observed_gap_pct: number;
+  };
 }
 
 export interface ThresholdReviewInput {
@@ -201,6 +223,19 @@ export interface ThresholdReviewResult {
   component_checks: ThresholdReviewCheck[];
   components_passed_both_origins: boolean;
   per_origin_summary: Array<{ origin_label: string; all_components_passed: boolean }>;
+  /**
+   * PR #132's sixth quantitative component, reported explicitly and separately from
+   * `component_checks`/`components_passed_both_origins` -- never folded into "every component passes"
+   * (see `PRODUCTION_ONLY_ADDED_VALUE_BAR_PCT`).
+   */
+  feature_composition_gate: {
+    dimension: 'production_only_vs_full_feature_set_added_value_bar';
+    threshold_pct: number;
+    observed_gap_pct: number;
+    bar_cleared: boolean;
+    carried_forward_from: string;
+    statement: string;
+  } | null;
   decision_rationale: string;
   boundary_statements: {
     review_only_no_validation_rerun: true;
@@ -211,6 +246,7 @@ export interface ThresholdReviewResult {
     no_product_facing_claim: true;
     no_tiber_data_change: true;
     positive_decision_authorizes_only_a_separate_production_binding_review_issue: true;
+    does_not_authorize_full_feature_set_production_wiring: true;
   };
 }
 
@@ -223,7 +259,11 @@ const BOUNDARY_STATEMENTS: ThresholdReviewResult['boundary_statements'] = {
   no_product_facing_claim: true,
   no_tiber_data_change: true,
   positive_decision_authorizes_only_a_separate_production_binding_review_issue: true,
+  does_not_authorize_full_feature_set_production_wiring: true,
 };
+
+const FEATURE_COMPOSITION_CARRIED_FORWARD_FROM =
+  'TIBER-Forecast#116 (2025-from-2022-2024 production_only-vs-full-feature-set ablation); not independently re-evaluated at the 2024-from-2021-2023 origin' as const;
 
 /**
  * Review the #137 additional-validation evidence against the PR #132 acceptance framework and the
@@ -241,6 +281,17 @@ export const evaluatePlayerHistory2024From2021_2023ThresholdReview = (input: Thr
     `status ${EXPECTED_THRESHOLD_FRAMEWORK_STATUS}, decision ${EXPECTED_THRESHOLD_FRAMEWORK_DECISION}`,
     `status=${input.framework.status}, decision=${input.framework.decision}`,
     input.framework.status === EXPECTED_THRESHOLD_FRAMEWORK_STATUS && input.framework.decision === EXPECTED_THRESHOLD_FRAMEWORK_DECISION,
+  );
+  const bar = input.framework.production_only_added_value_bar;
+  identityCheck(
+    'framework_declares_feature_composition_bar_status',
+    'framework',
+    `threshold_pct=${PRODUCTION_ONLY_ADDED_VALUE_BAR_PCT}, observed_gap_pct is a finite number`,
+    `threshold_pct=${bar?.threshold_pct}, observed_gap_pct=${bar?.observed_gap_pct}`,
+    typeof bar?.threshold_pct === 'number' &&
+      bar.threshold_pct === PRODUCTION_ONLY_ADDED_VALUE_BAR_PCT &&
+      typeof bar.observed_gap_pct === 'number' &&
+      Number.isFinite(bar.observed_gap_pct),
   );
   identityCheck(
     'prior_origin_is_expected_replicated_evidence',
@@ -263,14 +314,18 @@ export const evaluatePlayerHistory2024From2021_2023ThresholdReview = (input: Thr
     `integrity_passed=${input.newOrigin.preconditions_integrity_passed}, floors_passed=${input.newOrigin.preconditions_floors_passed}`,
     input.newOrigin.preconditions_integrity_passed === true && input.newOrigin.preconditions_floors_passed === true,
   );
-  const boundaryEntries = Object.entries(input.newOrigin.boundary_statements ?? {});
+  const boundaryStatements = input.newOrigin.boundary_statements ?? {};
+  const boundaryEntries = Object.entries(boundaryStatements);
   const boundaryFailures = boundaryEntries.filter(([, value]) => value !== true);
+  const missingRequiredBoundaryKeys = REQUIRED_NEW_ORIGIN_BOUNDARY_KEYS.filter((key) => boundaryStatements[key] !== true);
   identityCheck(
     'new_origin_confirms_no_threshold_decision_and_no_production_binding',
     input.newOrigin.origin_label,
-    'every #137 boundary_statement is true (including no_threshold_accepted_rejected_or_amended, no_production_binding_authorized)',
-    boundaryEntries.length === 0 ? 'no boundary_statements present' : `${boundaryFailures.length} non-true of ${boundaryEntries.length}`,
-    boundaryEntries.length > 0 && boundaryFailures.length === 0,
+    `every #137 boundary_statement is true AND the named keys (${REQUIRED_NEW_ORIGIN_BOUNDARY_KEYS.join(', ')}) are explicitly present and true`,
+    boundaryEntries.length === 0
+      ? 'no boundary_statements present'
+      : `${boundaryFailures.length} non-true of ${boundaryEntries.length}; missing/false required keys: ${missingRequiredBoundaryKeys.length === 0 ? 'none' : missingRequiredBoundaryKeys.join(', ')}`,
+    boundaryEntries.length > 0 && boundaryFailures.length === 0 && missingRequiredBoundaryKeys.length === 0,
   );
 
   const identityPassed = identityChecks.every((c) => c.passed);
@@ -283,6 +338,22 @@ export const evaluatePlayerHistory2024From2021_2023ThresholdReview = (input: Thr
       }))
     : [];
   const componentsPassedBothOrigins = identityPassed && perOriginSummary.every((s) => s.all_components_passed);
+
+  const featureCompositionGate: ThresholdReviewResult['feature_composition_gate'] = identityPassed
+    ? (() => {
+        const barCleared = bar.observed_gap_pct > PRODUCTION_ONLY_ADDED_VALUE_BAR_PCT;
+        return {
+          dimension: 'production_only_vs_full_feature_set_added_value_bar' as const,
+          threshold_pct: bar.threshold_pct,
+          observed_gap_pct: bar.observed_gap_pct,
+          bar_cleared: barCleared,
+          carried_forward_from: FEATURE_COMPOSITION_CARRIED_FORWARD_FROM,
+          statement: barCleared
+            ? 'The full-feature-set added-value bar is cleared in the carried-forward evidence; a future production-binding proposal may consider the full feature set, subject to its own re-verification at proposal time.'
+            : `The full-feature-set added-value bar is NOT cleared (observed gap ${bar.observed_gap_pct}% <= threshold ${bar.threshold_pct}%, carried forward from #116, not independently re-evaluated at this origin). production_only remains the v0 default. This review's decision does NOT authorize full-feature-set production wiring; a future production-binding proposal must use production_only unless this bar is separately cleared via its own amendment.`,
+        };
+      })()
+    : null;
 
   let decision: PlayerHistory2024From2021_2023ThresholdReviewDecision;
   let rationale: string;
@@ -297,7 +368,9 @@ export const evaluatePlayerHistory2024From2021_2023ThresholdReview = (input: Thr
   } else {
     decision = 'may_open_player_history_production_binding_review_issue';
     rationale =
-      'Every PR #132 quantitative threshold component passes independently for both the prior (2025-from-2022-2024, #121/#122) and new (2024-from-2021-2023, #137) origins, satisfying the additional-season-of-validation bar PR #132 deferred on. #137 itself never decided a threshold or bound production. A SEPARATE issue may be opened to consider production-binding prerequisites, including the qualitative governance conditions (production-path leakage audit, human sign-off) PR #132 explicitly deferred to that stage. This decision does not itself bind production, claim production readiness, or make a product claim.';
+      'Five of PR #132\'s six quantitative threshold components pass independently for both the prior (2025-from-2022-2024, #121/#122) and new (2024-from-2021-2023, #137) origins, satisfying the additional-season-of-validation bar PR #132 deferred on. #137 itself never decided a threshold or bound production. ' +
+      `The sixth component (production_only_vs_full_feature_set_added_value_bar) is carried forward, not re-evaluated at this origin: see feature_composition_gate -- ${featureCompositionGate!.statement} ` +
+      'A SEPARATE issue may be opened to consider production-binding prerequisites, including the qualitative governance conditions (production-path leakage audit, human sign-off) PR #132 explicitly deferred to that stage. This decision does not itself bind production, claim production readiness, authorize full-feature-set wiring, or make a product claim.';
   }
 
   return {
@@ -309,6 +382,7 @@ export const evaluatePlayerHistory2024From2021_2023ThresholdReview = (input: Thr
     component_checks: componentChecks,
     components_passed_both_origins: componentsPassedBothOrigins,
     per_origin_summary: perOriginSummary,
+    feature_composition_gate: featureCompositionGate,
     decision_rationale: rationale,
     boundary_statements: BOUNDARY_STATEMENTS,
   };

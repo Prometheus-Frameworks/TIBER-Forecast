@@ -23,6 +23,7 @@ import { fileURLToPath } from 'node:url';
 
 import {
   PLAYER_HISTORY_2024_FROM_2021_2023_THRESHOLD_REVIEW_ISSUE,
+  PRODUCTION_ONLY_ADDED_VALUE_BAR_PCT,
   evaluatePlayerHistory2024From2021_2023ThresholdReview,
   type JoinedPopulationOriginEvidence,
   type NewOriginEvidence,
@@ -40,7 +41,12 @@ const REPORT_MD_REL = `docs/reports/player-history-2024-from-2021-2023-threshold
 
 const readJson = <T>(rel: string): T => JSON.parse(readFileSync(path.join(REPO_ROOT, rel), 'utf-8')) as T;
 
-const frameworkDoc = readJson<{ status: string; decision: string }>(FRAMEWORK_REL);
+const frameworkDoc = readJson<{
+  status: string;
+  decision: string;
+  quantitative_threshold_components: Array<{ id: string; candidate_threshold: string }>;
+  evidence_summary: { production_only_vs_full_feature_set_attribution: { gap_relative_to_production_only_pct: number } };
+}>(FRAMEWORK_REL);
 const priorOriginReport = readJson<{
   experiment: { decision: { decision: string }; metrics_by_arm: { joined_only: Record<string, ControlledRunMetrics> }; population: { evaluated_rows: number; joined_rows: number; no_history_rows: number } };
 }>(PRIOR_ORIGIN_REL);
@@ -54,7 +60,14 @@ const newOriginReport = readJson<{
   };
 }>(NEW_ORIGIN_REL);
 
-const framework: ThresholdFrameworkEvidence = { status: frameworkDoc.status, decision: frameworkDoc.decision };
+const framework: ThresholdFrameworkEvidence = {
+  status: frameworkDoc.status,
+  decision: frameworkDoc.decision,
+  production_only_added_value_bar: {
+    threshold_pct: PRODUCTION_ONLY_ADDED_VALUE_BAR_PCT,
+    observed_gap_pct: frameworkDoc.evidence_summary.production_only_vs_full_feature_set_attribution.gap_relative_to_production_only_pct,
+  },
+};
 
 const armsOf = (joined: Record<string, ControlledRunMetrics>) => ({
   mae: {
@@ -144,12 +157,24 @@ ${review.component_checks.length > 0 ? checksTable(review.component_checks) : '_
 
 ${review.per_origin_summary.map((s) => `- **${s.origin_label}**: all components passed = **${s.all_components_passed}**`).join('\n') || '_Not evaluated: identity checks failed._'}
 
-## 5. Decision
+## 5. Feature-composition gate (PR #132's sixth quantitative component -- carried forward, NOT re-evaluated here)
+
+${
+  review.feature_composition_gate
+    ? `- Dimension: \`${review.feature_composition_gate.dimension}\`
+- Threshold: > ${review.feature_composition_gate.threshold_pct}% relative joined-MAE improvement of the full feature set over \`production_only\`
+- Observed gap (carried forward from ${review.feature_composition_gate.carried_forward_from}): ${review.feature_composition_gate.observed_gap_pct}%
+- Bar cleared: **${review.feature_composition_gate.bar_cleared}**
+- ${review.feature_composition_gate.statement}`
+    : '_Not evaluated: identity checks failed._'
+}
+
+## 6. Decision
 
 - **\`${review.decision}\`**
 - ${review.decision_rationale}
 
-## 6. Non-goals confirmed
+## 7. Non-goals confirmed
 
 - No validation was rerun; every metric cited above is read directly from the committed #121/#122 and #137 reports.
 - No threshold was accepted, rejected, or amended.
@@ -157,9 +182,10 @@ ${review.per_origin_summary.map((s) => `- **${s.origin_label}**: all components 
 - No production-path leakage audit was run; no human sign-off was recorded.
 - No product/UI/rankings/advice/Fantasy behavior was authorized.
 - No TIBER-Data change.
+- Full-feature-set production wiring is NOT authorized by this review; \`production_only\` remains the v0 default per PR #132's uncleared added-value bar.
 - ${review.decision === 'may_open_player_history_production_binding_review_issue' ? 'The positive decision authorizes only a separate production-binding review issue; it does not itself decide production readiness.' : 'No production-binding review issue is authorized by this result as recorded.'}
 
-## 7. Next allowed step
+## 8. Next allowed step
 
 ${fullReport.next_allowed_step}
 

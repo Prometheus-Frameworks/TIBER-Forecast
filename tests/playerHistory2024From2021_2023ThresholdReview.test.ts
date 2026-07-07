@@ -30,6 +30,8 @@ import {
   MIN_RELATIVE_RMSE_IMPROVEMENT_OVER_SHUFFLED,
   NO_HISTORY_SHARE_SOFT_CEILING,
   PLAYER_HISTORY_2024_FROM_2021_2023_THRESHOLD_REVIEW_DECISIONS,
+  PRODUCTION_ONLY_ADDED_VALUE_BAR_PCT,
+  REQUIRED_NEW_ORIGIN_BOUNDARY_KEYS,
   evaluatePlayerHistory2024From2021_2023ThresholdReview,
   type JoinedPopulationOriginEvidence,
   type NewOriginEvidence,
@@ -47,6 +49,7 @@ const readRepoJson = <T>(rel: string): T => JSON.parse(readFileSync(path.join(RE
 const passingFramework = (overrides: Partial<ThresholdFrameworkEvidence> = {}): ThresholdFrameworkEvidence => ({
   status: EXPECTED_THRESHOLD_FRAMEWORK_STATUS,
   decision: EXPECTED_THRESHOLD_FRAMEWORK_DECISION,
+  production_only_added_value_bar: { threshold_pct: PRODUCTION_ONLY_ADDED_VALUE_BAR_PCT, observed_gap_pct: 0.35 },
   ...overrides,
 });
 
@@ -145,6 +148,18 @@ describe('identity and boundary checks (fail-closed on evidence drift)', () => {
     expect(result.identity_passed).toBe(false);
   });
 
+  it('blocks when a #137 report OMITS a required boundary key entirely, even though every present key is true (regression: bare presence+truthy is not enough)', () => {
+    expect(REQUIRED_NEW_ORIGIN_BOUNDARY_KEYS).toEqual(['no_threshold_accepted_rejected_or_amended', 'no_production_binding_authorized']);
+    for (const omittedKey of REQUIRED_NEW_ORIGIN_BOUNDARY_KEYS) {
+      const input = passingInput();
+      const { [omittedKey]: _omitted, ...rest } = passingNewOrigin().boundary_statements;
+      input.newOrigin = passingNewOrigin({ boundary_statements: { ...rest, some_other_true_statement: true } });
+      const result = evaluatePlayerHistory2024From2021_2023ThresholdReview(input);
+      expect(result.identity_passed).toBe(false);
+      expect(result.decision).toBe('player_history_2024_from_2021_2023_threshold_review_blocked');
+    }
+  });
+
   it('never evaluates quantitative components when identity fails (no partial credit)', () => {
     const input = passingInput();
     input.framework = passingFramework({ decision: 'wrong' });
@@ -223,6 +238,52 @@ describe('quantitative threshold components: independent per origin, no averagin
     expect(byId.absolute_joined_rmse_ceiling).toContain('68.0');
     expect(byId.relative_rmse_improvement_over_shuffled_control).toContain('20%');
     expect(byId.no_history_subgroup_reporting_ceiling).toContain('35%');
+  });
+});
+
+// ---------------------------------------------------------------------------------------------
+// Feature-composition gate (PR #132's sixth component): reported explicitly, never folded into
+// "every component passes" (regression for the Codex P2 finding on PR #140).
+// ---------------------------------------------------------------------------------------------
+
+describe('feature-composition gate is reported explicitly and never authorizes full-feature-set wiring', () => {
+  it('an uncleared gap (<=2%) is reported as bar_cleared=false with an explicit non-authorization statement', () => {
+    const result = evaluatePlayerHistory2024From2021_2023ThresholdReview(passingInput());
+    expect(result.feature_composition_gate).not.toBeNull();
+    expect(result.feature_composition_gate?.bar_cleared).toBe(false);
+    expect(result.feature_composition_gate?.observed_gap_pct).toBe(0.35);
+    expect(result.feature_composition_gate?.statement).toMatch(/does NOT authorize full-feature-set production wiring/);
+    expect(result.decision_rationale).toMatch(/does not itself.*authorize full-feature-set wiring/);
+  });
+
+  it('a cleared gap (>2%) is reported as bar_cleared=true, still without changing components_passed_both_origins semantics', () => {
+    const input = passingInput();
+    input.framework = passingFramework({ production_only_added_value_bar: { threshold_pct: PRODUCTION_ONLY_ADDED_VALUE_BAR_PCT, observed_gap_pct: 2.5 } });
+    const result = evaluatePlayerHistory2024From2021_2023ThresholdReview(input);
+    expect(result.feature_composition_gate?.bar_cleared).toBe(true);
+    expect(result.decision).toBe('may_open_player_history_production_binding_review_issue');
+  });
+
+  it('blocks when the framework does not declare the expected pinned bar threshold (drift/tamper detection)', () => {
+    const input = passingInput();
+    input.framework = passingFramework({ production_only_added_value_bar: { threshold_pct: 5.0, observed_gap_pct: 0.35 } });
+    const result = evaluatePlayerHistory2024From2021_2023ThresholdReview(input);
+    expect(result.identity_passed).toBe(false);
+    expect(result.feature_composition_gate).toBeNull();
+  });
+
+  it('blocks when the framework omits the bar entirely (malformed input)', () => {
+    const input = passingInput();
+    const { production_only_added_value_bar: _omitted, ...rest } = passingFramework();
+    input.framework = rest as ThresholdFrameworkEvidence;
+    const result = evaluatePlayerHistory2024From2021_2023ThresholdReview(input);
+    expect(result.identity_passed).toBe(false);
+  });
+
+  it('the decision enum itself never claims full-feature-set authorization', () => {
+    for (const decision of PLAYER_HISTORY_2024_FROM_2021_2023_THRESHOLD_REVIEW_DECISIONS) {
+      expect(decision).not.toContain('full_feature_set');
+    }
   });
 });
 
@@ -310,6 +371,7 @@ describe('committed 2024-from-2021-2023 threshold-review report', () => {
       identity_passed: boolean;
       components_passed_both_origins: boolean;
       per_origin_summary: Array<{ origin_label: string; all_components_passed: boolean }>;
+      feature_composition_gate: { bar_cleared: boolean; observed_gap_pct: number; threshold_pct: number } | null;
       boundary_statements: Record<string, boolean>;
     };
   }>(REPORT_PATH);
@@ -338,5 +400,13 @@ describe('committed 2024-from-2021-2023 threshold-review report', () => {
     expect(Object.values(report.review.boundary_statements).every((v) => v === true)).toBe(true);
     expect(report.review.boundary_statements.no_production_binding_authorized).toBe(true);
     expect(report.review.boundary_statements.no_threshold_amended).toBe(true);
+    expect(report.review.boundary_statements.does_not_authorize_full_feature_set_production_wiring).toBe(true);
+  });
+
+  it('the feature-composition gate is reported honestly: uncleared (0.35% <= 2%), production_only stays default', () => {
+    expect(report.review.feature_composition_gate).not.toBeNull();
+    expect(report.review.feature_composition_gate?.bar_cleared).toBe(false);
+    expect(report.review.feature_composition_gate?.observed_gap_pct).toBe(0.35);
+    expect(report.review.feature_composition_gate?.threshold_pct).toBe(2.0);
   });
 });
