@@ -1,0 +1,803 @@
+{
+  "report_version": "player-history-2024-from-2021-2023-mirror-refresh-report-v1",
+  "repo": "Prometheus-Frameworks/TIBER-Forecast",
+  "issue": "TIBER-Forecast#135",
+  "generated_at": "2026-07-07T00:00:00.000Z",
+  "evaluation_kind": "mirror_refresh_only_no_run_no_validation_no_threshold_no_binding",
+  "existing_mirror_inventory": {
+    "archived_candidate_mirrors_from_110": [
+      "data/fixtures/tiberData/player_season_coverage_v0_2025.outcome_mirror.json",
+      "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.real_population_input_mirror.json",
+      "data/fixtures/tiberData/PLAYER_HISTORY_RUN_POPULATION_MIRRORS_PROVENANCE.json"
+    ],
+    "note_on_archived_mirrors": "Built from the CANDIDATE (not-promoted) 2022-2025 evidence artifact for the original #109 controlled-run design; preserved as the archived record of the #112/#116 experiment. Not touched by this refresh.",
+    "promoted_source_mirrors_from_119_120": [
+      "data/fixtures/tiberData/player_season_coverage_v0_2025.promoted_outcome_mirror.json",
+      "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.promoted_input_mirror.json",
+      "data/fixtures/tiberData/player_season_coverage_v0_promoted_mirror_provenance.json"
+    ],
+    "note_on_prior_promoted_mirrors": "Refreshed from the TIBER-Data #192/#193 promotion (2022-2025 scope, sha 29f8e378...): 2025 outcome / 2022-2024 input. Superseded in scope by the #202/#207 (2021-2025) promotion this issue consumes, but NOT overwritten -- they remain valid as the refreshed record of that prior promotion event. Not touched by this refresh.",
+    "this_refresh_covers": "A DIFFERENT window (2024-from-2021-2023) from the same #202/#207 (2021-2025) promoted artifact, needed for a possible future additional-validation issue. Does not replace or invalidate the 2025-from-2022-2024 mirrors above."
+  },
+  "promoted_source": {
+    "repo": "Prometheus-Frameworks/TIBER-Data",
+    "promotedArtifactPath": "exports/promoted/nfl/player_season_coverage_v0.json",
+    "promotedArtifactSha256Pinned": "d45f612b207085df00b4b080e4f55ce1abbd060dcbf30b0bee777ff833ddd8ac",
+    "promotedArtifactSha256Actual": "d45f612b207085df00b4b080e4f55ce1abbd060dcbf30b0bee777ff833ddd8ac",
+    "promotedManifestPath": "exports/promoted/nfl/PLAYER_SEASON_COVERAGE_V0_PROMOTION_MANIFEST.json",
+    "promotedManifestSha256Actual": "5e9a382db0681e7a808a1d5fdf4334653cf2f0b26314c45425b333aa2024d154",
+    "promotionMergeCommit": "711d6ee158d4e3bd116d1df4d76dea282200454d",
+    "promotionReview": "TIBER-Data#202",
+    "promotionDecision": "promote_player_season_coverage_v0_2021_2025",
+    "sourceCandidateSha256": "c92404a1b519a62ee9f4b75f74662157fc8dd02b883648d4cdae694d0e021424",
+    "sha256_verified_fail_closed_by_generator": true
+  },
+  "source_identity_gate": {
+    "status": "passed",
+    "decision": "may_open_player_history_2024_from_2021_2023_additional_validation_issue",
+    "checks_passed": "53/53",
+    "source_identity_passed": true,
+    "mirror_integrity_passed": true,
+    "overlap_floors_passed": true
+  },
+  "gate_checks": [
+    {
+      "dimension": "manifest_artifact_id",
+      "expected": "player_season_coverage_v0",
+      "observed": "player_season_coverage_v0",
+      "passed": true
+    },
+    {
+      "dimension": "manifest_promoted_status",
+      "expected": "promoted_governed_artifact",
+      "observed": "promoted_governed_artifact",
+      "passed": true
+    },
+    {
+      "dimension": "manifest_promotion_review",
+      "expected": "TIBER-Data#202",
+      "observed": "TIBER-Data#202",
+      "passed": true
+    },
+    {
+      "dimension": "manifest_promotion_decision",
+      "expected": "promote_player_season_coverage_v0_2021_2025",
+      "observed": "promote_player_season_coverage_v0_2021_2025",
+      "passed": true
+    },
+    {
+      "dimension": "manifest_promoted_artifact_path",
+      "expected": "exports/promoted/nfl/player_season_coverage_v0.json",
+      "observed": "exports/promoted/nfl/player_season_coverage_v0.json",
+      "passed": true
+    },
+    {
+      "dimension": "promoted_sha256_matches_actual_bytes",
+      "expected": "manifest.promoted_artifact_sha256 === sha256(actual local promoted artifact bytes)",
+      "observed": "manifest=d45f612b207085df00b4b080e4f55ce1abbd060dcbf30b0bee777ff833ddd8ac actual=d45f612b207085df00b4b080e4f55ce1abbd060dcbf30b0bee777ff833ddd8ac",
+      "passed": true
+    },
+    {
+      "dimension": "promoted_sha256_matches_forecast_pin",
+      "expected": "d45f612b207085df00b4b080e4f55ce1abbd060dcbf30b0bee777ff833ddd8ac",
+      "observed": "d45f612b207085df00b4b080e4f55ce1abbd060dcbf30b0bee777ff833ddd8ac",
+      "passed": true
+    },
+    {
+      "dimension": "candidate_lineage_path",
+      "expected": "data/processed/evidence/player_season_coverage_2021_2025.source_backed.json",
+      "observed": "data/processed/evidence/player_season_coverage_2021_2025.source_backed.json",
+      "passed": true
+    },
+    {
+      "dimension": "candidate_lineage_sha256",
+      "expected": "c92404a1b519a62ee9f4b75f74662157fc8dd02b883648d4cdae694d0e021424 (the prior Forecast candidate pin: promoted artifact must descend from exactly the candidate the archived experiment mirrors used)",
+      "observed": "c92404a1b519a62ee9f4b75f74662157fc8dd02b883648d4cdae694d0e021424",
+      "passed": true
+    },
+    {
+      "dimension": "candidate_lineage_status_at_promotion",
+      "expected": "candidate_evidence_artifact_not_promoted",
+      "observed": "candidate_evidence_artifact_not_promoted",
+      "passed": true
+    },
+    {
+      "dimension": "manifest_allowlist_is_pinned_prefix_set",
+      "expected": "[\"nflreadpy.load_player_stats(\",\"nflreadpy.load_players(\"]",
+      "observed": "[\"nflreadpy.load_player_stats(\",\"nflreadpy.load_players(\"]",
+      "passed": true
+    },
+    {
+      "dimension": "artifact_promoted_status",
+      "expected": "promoted_governed_artifact",
+      "observed": "promoted_governed_artifact",
+      "passed": true
+    },
+    {
+      "dimension": "artifact_source_candidate_matches_manifest",
+      "expected": "artifact.source_candidate identical to manifest.source_candidate (path, sha256, status_at_promotion)",
+      "observed": "identical",
+      "passed": true
+    },
+    {
+      "dimension": "record_count",
+      "expected": "3016 records, matching envelope counts.records",
+      "observed": "3016 records, envelope counts.records=3016",
+      "passed": true
+    },
+    {
+      "dimension": "seasons_scope_and_counts",
+      "expected": "seasons 2021,2022,2023,2024,2025; per-season counts {\"2021\":633,\"2022\":609,\"2023\":576,\"2024\":588,\"2025\":610} recomputed from records",
+      "observed": "seasons 2021,2022,2023,2024,2025; recomputed {\"2021\":633,\"2022\":609,\"2023\":576,\"2024\":588,\"2025\":610}",
+      "passed": true
+    },
+    {
+      "dimension": "season_type_reg_only",
+      "expected": "every record season_type=REG; envelope scope [REG]",
+      "observed": "0 non-REG records; envelope scope [REG]",
+      "passed": true
+    },
+    {
+      "dimension": "positions_scope_and_counts",
+      "expected": "positions QB/RB/TE/WR only; per-position counts {\"QB\":404,\"RB\":771,\"TE\":650,\"WR\":1191} recomputed from records",
+      "observed": "0 out-of-scope position records; recomputed {\"QB\":404,\"RB\":771,\"TE\":650,\"WR\":1191}",
+      "passed": true
+    },
+    {
+      "dimension": "row_grain_declared",
+      "expected": "player_id + season + season_type",
+      "observed": "player_id + season + season_type",
+      "passed": true
+    },
+    {
+      "dimension": "duplicate_grain",
+      "expected": "0 duplicate (player_id, season, season_type) grains across all records",
+      "observed": "0 duplicates",
+      "passed": true
+    },
+    {
+      "dimension": "deterministic_ordering",
+      "expected": "records sorted by (season, player_id) as the #192 promotion review recorded",
+      "observed": "0 ordering violations",
+      "passed": true
+    },
+    {
+      "dimension": "records_present",
+      "expected": "records array present and non-empty",
+      "observed": "3016 records",
+      "passed": true
+    },
+    {
+      "dimension": "source_refs_present",
+      "expected": "every record carries >= 1 source_ref",
+      "observed": "0 records missing refs (of 3016)",
+      "passed": true
+    },
+    {
+      "dimension": "source_refs_prefix_approved",
+      "expected": "ALL refs start with an approved prefix (nflreadpy.load_player_stats( | nflreadpy.load_players(); mixed and embedded-token provenance fail closed",
+      "observed": "0 unapproved of 9048 refs",
+      "passed": true
+    },
+    {
+      "dimension": "no_fixture_scaffold_markers",
+      "expected": "no ref contains offline_fixture/fixture_/scaffold/fixture_demonstration_only",
+      "observed": "0 fixture-marked refs",
+      "passed": true
+    },
+    {
+      "dimension": "observed_at_present",
+      "expected": "every ref carries observed_at",
+      "observed": "0 refs missing observed_at",
+      "passed": true
+    },
+    {
+      "dimension": "consumer_safety_not_allowed_boundary",
+      "expected": "consumer_safety.not_allowed present and includes all 6 required boundaries (roster status, availability/injury, depth chart, ownership, advice/rankings, Forecast binding w/o separate gate)",
+      "observed": "all required boundaries present",
+      "passed": true
+    },
+    {
+      "dimension": "forecast_compatibility_note_boundary",
+      "expected": "note present and requires: separate Forecast-side gate • re-verifies sha/provenance • leakage splits • production-only feature contract • No product-facing claim is authorized until a Forecast production-binding review passes",
+      "observed": "all required elements present",
+      "passed": true
+    },
+    {
+      "dimension": "no_forbidden_availability_fields",
+      "expected": "no record carries active_status/ownership_status/roster_status/active_roster_status",
+      "observed": "0 forbidden-field hits",
+      "passed": true
+    },
+    {
+      "dimension": "unavailable_usage_fields_remain_null",
+      "expected": "snap_share/routes_run/route_participation/red_zone_targets/red_zone_carries are not source-backed in this artifact and must stay null: any non-null value (zero-coerced OR populated) fails",
+      "observed": "0 zero-coerced, 0 populated non-null values",
+      "passed": true
+    },
+    {
+      "dimension": "outcome_mirror_kind_and_source",
+      "expected": "kind player_history_2024_from_2021_2023_outcome_mirror tied to promoted sha d45f612b207085df00b4b080e4f55ce1abbd060dcbf30b0bee777ff833ddd8ac (status promoted_governed_artifact)",
+      "observed": "kind=player_history_2024_from_2021_2023_outcome_mirror sha=d45f612b207085df00b4b080e4f55ce1abbd060dcbf30b0bee777ff833ddd8ac status=promoted_governed_artifact",
+      "passed": true
+    },
+    {
+      "dimension": "outcome_rows_2024_reg_approved_positions_only",
+      "expected": "every row season=2024, season_type=REG, position in QB/RB/WR/TE",
+      "observed": "0 off-scope rows of 588",
+      "passed": true
+    },
+    {
+      "dimension": "outcome_population_count_consistent",
+      "expected": "rows > 0, one row per player, counts.rows/players match the rows array",
+      "observed": "rows=588 players=588 counts={\"rows\":588,\"players\":588}",
+      "passed": true
+    },
+    {
+      "dimension": "input_mirror_kind_and_source",
+      "expected": "kind player_history_2024_from_2021_2023_input_mirror tied to promoted sha d45f612b207085df00b4b080e4f55ce1abbd060dcbf30b0bee777ff833ddd8ac (status promoted_governed_artifact)",
+      "observed": "kind=player_history_2024_from_2021_2023_input_mirror sha=d45f612b207085df00b4b080e4f55ce1abbd060dcbf30b0bee777ff833ddd8ac status=promoted_governed_artifact",
+      "passed": true
+    },
+    {
+      "dimension": "input_no_2024_rows",
+      "expected": "0 rows with season 2024; every row in 2021/2022/2023 REG",
+      "observed": "0 target-season rows, 0 off-window rows of 1090",
+      "passed": true
+    },
+    {
+      "dimension": "input_positions_in_scope",
+      "expected": "every row position in QB/RB/WR/TE",
+      "observed": "0 off-scope rows",
+      "passed": true
+    },
+    {
+      "dimension": "input_players_subset_of_outcome_population",
+      "expected": "every input row belongs to an outcome-mirror player",
+      "observed": "0 rows outside the population",
+      "passed": true
+    },
+    {
+      "dimension": "input_no_target_outcome_values",
+      "expected": "no input row carries ppr_2024_actual/season_ppr_2024/target_outcome/target_season_ppr (2024 outcomes live in the outcome layer only)",
+      "observed": "0 rows carrying a target-outcome key",
+      "passed": true
+    },
+    {
+      "dimension": "mirror_source_refs_present",
+      "expected": "every mirror row carries >= 1 source_ref",
+      "observed": "0 rows missing refs (of 1678)",
+      "passed": true
+    },
+    {
+      "dimension": "mirror_source_refs_prefix_approved",
+      "expected": "ALL refs start with an approved prefix (nflreadpy.load_player_stats( | nflreadpy.load_players(); mixed and embedded-token provenance fail closed",
+      "observed": "0 unapproved of 5034 refs",
+      "passed": true
+    },
+    {
+      "dimension": "mirror_no_fixture_scaffold_markers",
+      "expected": "no ref contains offline_fixture/fixture_/scaffold/fixture_demonstration_only",
+      "observed": "0 fixture-marked refs",
+      "passed": true
+    },
+    {
+      "dimension": "mirror_no_forbidden_availability_fields",
+      "expected": "no mirror row carries active_status/ownership_status/roster_status/active_roster_status",
+      "observed": "0 forbidden-field hits",
+      "passed": true
+    },
+    {
+      "dimension": "mirror_unavailable_usage_fields_remain_null",
+      "expected": "snap_share/routes_run/route_participation/red_zone_targets/red_zone_carries stay null in every input row: any non-null (zero-coerced OR populated) fails",
+      "observed": "0 zero-coerced, 0 populated non-null values",
+      "passed": true
+    },
+    {
+      "dimension": "overlap_counts_sane",
+      "expected": "0 <= joined_rows <= scored_target_rows, both finite",
+      "observed": "scored=588, joined=470",
+      "passed": true
+    },
+    {
+      "dimension": "overlap_position_breakdown_reconciles_with_joined_rows",
+      "expected": "sum of joined_rows_by_position across QB/RB/WR/TE equals joined_rows",
+      "observed": "sum=470, joined_rows=470",
+      "passed": true
+    },
+    {
+      "dimension": "overlap_shuffle_counts_reconcile_with_joined_positions",
+      "expected": "shuffle-group feature_bearing_row_count equals joined_rows_by_position for every required position (QB/RB/WR/TE)",
+      "observed": "all required positions reconcile",
+      "passed": true
+    },
+    {
+      "dimension": "overlap_min_joined_rows_overall",
+      "expected": ">= 200",
+      "observed": "470",
+      "passed": true
+    },
+    {
+      "dimension": "overlap_min_joined_rows_position_QB",
+      "expected": ">= 30",
+      "observed": "67",
+      "passed": true
+    },
+    {
+      "dimension": "overlap_min_joined_rows_position_RB",
+      "expected": ">= 30",
+      "observed": "116",
+      "passed": true
+    },
+    {
+      "dimension": "overlap_min_joined_rows_position_WR",
+      "expected": ">= 30",
+      "observed": "184",
+      "passed": true
+    },
+    {
+      "dimension": "overlap_min_joined_rows_position_TE",
+      "expected": ">= 30",
+      "observed": "103",
+      "passed": true
+    },
+    {
+      "dimension": "overlap_min_joined_share",
+      "expected": ">= 0.6",
+      "observed": "0.7993",
+      "passed": true
+    },
+    {
+      "dimension": "overlap_shuffle_evidence_present_for_joined_positions",
+      "expected": "every required position with joined rows carries a shuffle-group evidence entry (missing evidence fails closed)",
+      "observed": "all joined positions have shuffle evidence (QB, TE, WR, RB)",
+      "passed": true
+    },
+    {
+      "dimension": "overlap_derangement_feasible_by_position",
+      "expected": "every position group with feature-bearing rows supports a derangement (required if a later validation issue considers control runs)",
+      "observed": "QB:67, TE:103, WR:184, RB:116",
+      "passed": true
+    }
+  ],
+  "mirrors": {
+    "outcome_mirror": {
+      "path": "data/fixtures/tiberData/player_history_2024_target_outcome_mirror.json",
+      "sha256": "917fd8f72435638bcc1b62ccdcdcd1f40ba9e3a1085a668b0e9f4bc426535d3b",
+      "scope": "season 2024, REG, QB/RB/WR/TE, outcome layer only",
+      "counts": {
+        "rows": 588,
+        "players": 588,
+        "by_position": {
+          "QB": 78,
+          "TE": 128,
+          "WR": 234,
+          "RB": 148
+        }
+      },
+      "trimming_rationale": "Rows carry the target outcome (season_ppr), identity/position, and row-level provenance (source_refs, identity_confidence) -- and nothing else. No input-feature payloads are copied, so this mirror cannot be consumed as 2024 input features."
+    },
+    "input_mirror": {
+      "path": "data/fixtures/tiberData/player_history_2021_2023_input_mirror.json",
+      "sha256": "f5216cc1c74f48e892b5fa1b61ba676358e4cf5bf55e05b4f75c3ebc7e13a159",
+      "scope": "seasons 2021/2022/2023, REG, QB/RB/WR/TE, players limited to the outcome-mirror population",
+      "counts": {
+        "rows": 1090,
+        "players_with_history": 470,
+        "outcome_players_without_history": 118,
+        "by_season": {
+          "2021": 287,
+          "2022": 365,
+          "2023": 438
+        },
+        "by_position": {
+          "QB": 164,
+          "TE": 240,
+          "WR": 422,
+          "RB": 264
+        }
+      },
+      "trimming_rationale": "Rows are trimmed to exactly the fields the #104 feature-extraction scaffold consumes (identity, provenance, team-of-record context, coverage, production_summary, usage_summary, age/career fields). Unavailable usage fields stay null exactly as in the promoted source; nulls are preserved verbatim and never coerced to zero. No availability/ownership/depth/injury field exists in any row."
+    }
+  },
+  "prior_mirrors": {
+    "preserved_unchanged_at": [
+      "data/fixtures/tiberData/player_season_coverage_v0_2025.outcome_mirror.json",
+      "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.real_population_input_mirror.json",
+      "data/fixtures/tiberData/PLAYER_HISTORY_RUN_POPULATION_MIRRORS_PROVENANCE.json",
+      "data/fixtures/tiberData/player_season_coverage_v0_2025.promoted_outcome_mirror.json",
+      "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.promoted_input_mirror.json",
+      "data/fixtures/tiberData/player_season_coverage_v0_promoted_mirror_provenance.json"
+    ],
+    "not_overwritten_by_this_refresh": true,
+    "relationship": "The #110 archived candidate mirrors remain the archived record of the #112/#116 candidate experiment. The #119/#120 promoted-source mirrors (2025 outcome / 2022-2024 input) remain the refreshed record of the prior (#192/#193, 2022-2025) promotion event. The mirrors above are a NEW, separate refreshed set for the 2024-from-2021-2023 window, sourced from the #202/#207 (2021-2025) promotion."
+  },
+  "overlap_evidence": {
+    "scored_target_rows": 588,
+    "joined_rows": 470,
+    "joined_rows_by_position": {
+      "QB": 67,
+      "TE": 103,
+      "WR": 184,
+      "RB": 116
+    },
+    "joined_share": 0.7993197278911565
+  },
+  "refresh_gate_result": {
+    "gate_version": "player-history-2024-from-2021-2023-mirror-refresh-v1",
+    "issue": "TIBER-Forecast#135",
+    "decision_rule": "malformed gate input, OR any source-identity check (manifest/artifact/provenance/consumer-safety/leakage-data boundaries) failed, OR any refreshed-mirror integrity/leakage/provenance/null-semantics check failed -> forecast_player_history_mirror_refresh_blocked; identity and integrity passed but a population/overlap floor or derangement feasibility failed -> forecast_player_history_mirror_refresh_requires_followup; everything passed -> may_open_player_history_2024_from_2021_2023_additional_validation_issue. No decision authorizes a model run, metric computation, production binding, product output, advice/rankings, or threshold acceptance.",
+    "thresholds": {
+      "min_joined_rows_overall": 200,
+      "min_joined_rows_per_position": 30,
+      "min_joined_share": 0.6,
+      "required_positions": [
+        "QB",
+        "RB",
+        "WR",
+        "TE"
+      ]
+    },
+    "leakage_discipline": {
+      "target_season_2025_remains_outcome_only_for_prior_experiment_shape": true,
+      "input_seasons_for_2025_prediction_remain_2022_2024_only": true,
+      "no_2025_production_summaries_may_become_2025_input_features": true,
+      "no_active_availability_ownership_fields_may_be_consumed": true,
+      "unavailable_usage_fields_remain_null_never_zero_coerced": true
+    },
+    "prior_mirror_statement": "The #110 archived candidate mirrors and the #119/#120 promoted-source mirrors (2025 outcome / 2022-2024 input) at data/fixtures/tiberData/player_season_coverage_v0_2025.outcome_mirror.json, data/fixtures/tiberData/player_season_coverage_v0_2022_2024.real_population_input_mirror.json, data/fixtures/tiberData/PLAYER_HISTORY_RUN_POPULATION_MIRRORS_PROVENANCE.json, data/fixtures/tiberData/player_season_coverage_v0_2025.promoted_outcome_mirror.json, data/fixtures/tiberData/player_season_coverage_v0_2022_2024.promoted_input_mirror.json, data/fixtures/tiberData/player_season_coverage_v0_promoted_mirror_provenance.json are preserved unchanged. The mirrors refreshed here are written to new, distinct paths for the 2024-from-2021-2023 window and carry an explicit source_lineage block; nothing overwrites any prior mirror silently.",
+    "ceiling_note": "may_open_player_history_2024_from_2021_2023_additional_validation_issue is the strongest decision this refresh can emit. It authorizes only OPENING a separate, later issue to consider running additional validation against these mirrors. It does not itself run that validation, accept or amend thresholds, make a leakage-audit or production-readiness claim, compute any metric, bind anything into production Forecast, or make a product/signal claim.",
+    "status": "passed",
+    "decision": "may_open_player_history_2024_from_2021_2023_additional_validation_issue",
+    "checks": [
+      {
+        "dimension": "manifest_artifact_id",
+        "expected": "player_season_coverage_v0",
+        "observed": "player_season_coverage_v0",
+        "passed": true
+      },
+      {
+        "dimension": "manifest_promoted_status",
+        "expected": "promoted_governed_artifact",
+        "observed": "promoted_governed_artifact",
+        "passed": true
+      },
+      {
+        "dimension": "manifest_promotion_review",
+        "expected": "TIBER-Data#202",
+        "observed": "TIBER-Data#202",
+        "passed": true
+      },
+      {
+        "dimension": "manifest_promotion_decision",
+        "expected": "promote_player_season_coverage_v0_2021_2025",
+        "observed": "promote_player_season_coverage_v0_2021_2025",
+        "passed": true
+      },
+      {
+        "dimension": "manifest_promoted_artifact_path",
+        "expected": "exports/promoted/nfl/player_season_coverage_v0.json",
+        "observed": "exports/promoted/nfl/player_season_coverage_v0.json",
+        "passed": true
+      },
+      {
+        "dimension": "promoted_sha256_matches_actual_bytes",
+        "expected": "manifest.promoted_artifact_sha256 === sha256(actual local promoted artifact bytes)",
+        "observed": "manifest=d45f612b207085df00b4b080e4f55ce1abbd060dcbf30b0bee777ff833ddd8ac actual=d45f612b207085df00b4b080e4f55ce1abbd060dcbf30b0bee777ff833ddd8ac",
+        "passed": true
+      },
+      {
+        "dimension": "promoted_sha256_matches_forecast_pin",
+        "expected": "d45f612b207085df00b4b080e4f55ce1abbd060dcbf30b0bee777ff833ddd8ac",
+        "observed": "d45f612b207085df00b4b080e4f55ce1abbd060dcbf30b0bee777ff833ddd8ac",
+        "passed": true
+      },
+      {
+        "dimension": "candidate_lineage_path",
+        "expected": "data/processed/evidence/player_season_coverage_2021_2025.source_backed.json",
+        "observed": "data/processed/evidence/player_season_coverage_2021_2025.source_backed.json",
+        "passed": true
+      },
+      {
+        "dimension": "candidate_lineage_sha256",
+        "expected": "c92404a1b519a62ee9f4b75f74662157fc8dd02b883648d4cdae694d0e021424 (the prior Forecast candidate pin: promoted artifact must descend from exactly the candidate the archived experiment mirrors used)",
+        "observed": "c92404a1b519a62ee9f4b75f74662157fc8dd02b883648d4cdae694d0e021424",
+        "passed": true
+      },
+      {
+        "dimension": "candidate_lineage_status_at_promotion",
+        "expected": "candidate_evidence_artifact_not_promoted",
+        "observed": "candidate_evidence_artifact_not_promoted",
+        "passed": true
+      },
+      {
+        "dimension": "manifest_allowlist_is_pinned_prefix_set",
+        "expected": "[\"nflreadpy.load_player_stats(\",\"nflreadpy.load_players(\"]",
+        "observed": "[\"nflreadpy.load_player_stats(\",\"nflreadpy.load_players(\"]",
+        "passed": true
+      },
+      {
+        "dimension": "artifact_promoted_status",
+        "expected": "promoted_governed_artifact",
+        "observed": "promoted_governed_artifact",
+        "passed": true
+      },
+      {
+        "dimension": "artifact_source_candidate_matches_manifest",
+        "expected": "artifact.source_candidate identical to manifest.source_candidate (path, sha256, status_at_promotion)",
+        "observed": "identical",
+        "passed": true
+      },
+      {
+        "dimension": "record_count",
+        "expected": "3016 records, matching envelope counts.records",
+        "observed": "3016 records, envelope counts.records=3016",
+        "passed": true
+      },
+      {
+        "dimension": "seasons_scope_and_counts",
+        "expected": "seasons 2021,2022,2023,2024,2025; per-season counts {\"2021\":633,\"2022\":609,\"2023\":576,\"2024\":588,\"2025\":610} recomputed from records",
+        "observed": "seasons 2021,2022,2023,2024,2025; recomputed {\"2021\":633,\"2022\":609,\"2023\":576,\"2024\":588,\"2025\":610}",
+        "passed": true
+      },
+      {
+        "dimension": "season_type_reg_only",
+        "expected": "every record season_type=REG; envelope scope [REG]",
+        "observed": "0 non-REG records; envelope scope [REG]",
+        "passed": true
+      },
+      {
+        "dimension": "positions_scope_and_counts",
+        "expected": "positions QB/RB/TE/WR only; per-position counts {\"QB\":404,\"RB\":771,\"TE\":650,\"WR\":1191} recomputed from records",
+        "observed": "0 out-of-scope position records; recomputed {\"QB\":404,\"RB\":771,\"TE\":650,\"WR\":1191}",
+        "passed": true
+      },
+      {
+        "dimension": "row_grain_declared",
+        "expected": "player_id + season + season_type",
+        "observed": "player_id + season + season_type",
+        "passed": true
+      },
+      {
+        "dimension": "duplicate_grain",
+        "expected": "0 duplicate (player_id, season, season_type) grains across all records",
+        "observed": "0 duplicates",
+        "passed": true
+      },
+      {
+        "dimension": "deterministic_ordering",
+        "expected": "records sorted by (season, player_id) as the #192 promotion review recorded",
+        "observed": "0 ordering violations",
+        "passed": true
+      },
+      {
+        "dimension": "records_present",
+        "expected": "records array present and non-empty",
+        "observed": "3016 records",
+        "passed": true
+      },
+      {
+        "dimension": "source_refs_present",
+        "expected": "every record carries >= 1 source_ref",
+        "observed": "0 records missing refs (of 3016)",
+        "passed": true
+      },
+      {
+        "dimension": "source_refs_prefix_approved",
+        "expected": "ALL refs start with an approved prefix (nflreadpy.load_player_stats( | nflreadpy.load_players(); mixed and embedded-token provenance fail closed",
+        "observed": "0 unapproved of 9048 refs",
+        "passed": true
+      },
+      {
+        "dimension": "no_fixture_scaffold_markers",
+        "expected": "no ref contains offline_fixture/fixture_/scaffold/fixture_demonstration_only",
+        "observed": "0 fixture-marked refs",
+        "passed": true
+      },
+      {
+        "dimension": "observed_at_present",
+        "expected": "every ref carries observed_at",
+        "observed": "0 refs missing observed_at",
+        "passed": true
+      },
+      {
+        "dimension": "consumer_safety_not_allowed_boundary",
+        "expected": "consumer_safety.not_allowed present and includes all 6 required boundaries (roster status, availability/injury, depth chart, ownership, advice/rankings, Forecast binding w/o separate gate)",
+        "observed": "all required boundaries present",
+        "passed": true
+      },
+      {
+        "dimension": "forecast_compatibility_note_boundary",
+        "expected": "note present and requires: separate Forecast-side gate • re-verifies sha/provenance • leakage splits • production-only feature contract • No product-facing claim is authorized until a Forecast production-binding review passes",
+        "observed": "all required elements present",
+        "passed": true
+      },
+      {
+        "dimension": "no_forbidden_availability_fields",
+        "expected": "no record carries active_status/ownership_status/roster_status/active_roster_status",
+        "observed": "0 forbidden-field hits",
+        "passed": true
+      },
+      {
+        "dimension": "unavailable_usage_fields_remain_null",
+        "expected": "snap_share/routes_run/route_participation/red_zone_targets/red_zone_carries are not source-backed in this artifact and must stay null: any non-null value (zero-coerced OR populated) fails",
+        "observed": "0 zero-coerced, 0 populated non-null values",
+        "passed": true
+      },
+      {
+        "dimension": "outcome_mirror_kind_and_source",
+        "expected": "kind player_history_2024_from_2021_2023_outcome_mirror tied to promoted sha d45f612b207085df00b4b080e4f55ce1abbd060dcbf30b0bee777ff833ddd8ac (status promoted_governed_artifact)",
+        "observed": "kind=player_history_2024_from_2021_2023_outcome_mirror sha=d45f612b207085df00b4b080e4f55ce1abbd060dcbf30b0bee777ff833ddd8ac status=promoted_governed_artifact",
+        "passed": true
+      },
+      {
+        "dimension": "outcome_rows_2024_reg_approved_positions_only",
+        "expected": "every row season=2024, season_type=REG, position in QB/RB/WR/TE",
+        "observed": "0 off-scope rows of 588",
+        "passed": true
+      },
+      {
+        "dimension": "outcome_population_count_consistent",
+        "expected": "rows > 0, one row per player, counts.rows/players match the rows array",
+        "observed": "rows=588 players=588 counts={\"rows\":588,\"players\":588}",
+        "passed": true
+      },
+      {
+        "dimension": "input_mirror_kind_and_source",
+        "expected": "kind player_history_2024_from_2021_2023_input_mirror tied to promoted sha d45f612b207085df00b4b080e4f55ce1abbd060dcbf30b0bee777ff833ddd8ac (status promoted_governed_artifact)",
+        "observed": "kind=player_history_2024_from_2021_2023_input_mirror sha=d45f612b207085df00b4b080e4f55ce1abbd060dcbf30b0bee777ff833ddd8ac status=promoted_governed_artifact",
+        "passed": true
+      },
+      {
+        "dimension": "input_no_2024_rows",
+        "expected": "0 rows with season 2024; every row in 2021/2022/2023 REG",
+        "observed": "0 target-season rows, 0 off-window rows of 1090",
+        "passed": true
+      },
+      {
+        "dimension": "input_positions_in_scope",
+        "expected": "every row position in QB/RB/WR/TE",
+        "observed": "0 off-scope rows",
+        "passed": true
+      },
+      {
+        "dimension": "input_players_subset_of_outcome_population",
+        "expected": "every input row belongs to an outcome-mirror player",
+        "observed": "0 rows outside the population",
+        "passed": true
+      },
+      {
+        "dimension": "input_no_target_outcome_values",
+        "expected": "no input row carries ppr_2024_actual/season_ppr_2024/target_outcome/target_season_ppr (2024 outcomes live in the outcome layer only)",
+        "observed": "0 rows carrying a target-outcome key",
+        "passed": true
+      },
+      {
+        "dimension": "mirror_source_refs_present",
+        "expected": "every mirror row carries >= 1 source_ref",
+        "observed": "0 rows missing refs (of 1678)",
+        "passed": true
+      },
+      {
+        "dimension": "mirror_source_refs_prefix_approved",
+        "expected": "ALL refs start with an approved prefix (nflreadpy.load_player_stats( | nflreadpy.load_players(); mixed and embedded-token provenance fail closed",
+        "observed": "0 unapproved of 5034 refs",
+        "passed": true
+      },
+      {
+        "dimension": "mirror_no_fixture_scaffold_markers",
+        "expected": "no ref contains offline_fixture/fixture_/scaffold/fixture_demonstration_only",
+        "observed": "0 fixture-marked refs",
+        "passed": true
+      },
+      {
+        "dimension": "mirror_no_forbidden_availability_fields",
+        "expected": "no mirror row carries active_status/ownership_status/roster_status/active_roster_status",
+        "observed": "0 forbidden-field hits",
+        "passed": true
+      },
+      {
+        "dimension": "mirror_unavailable_usage_fields_remain_null",
+        "expected": "snap_share/routes_run/route_participation/red_zone_targets/red_zone_carries stay null in every input row: any non-null (zero-coerced OR populated) fails",
+        "observed": "0 zero-coerced, 0 populated non-null values",
+        "passed": true
+      },
+      {
+        "dimension": "overlap_counts_sane",
+        "expected": "0 <= joined_rows <= scored_target_rows, both finite",
+        "observed": "scored=588, joined=470",
+        "passed": true
+      },
+      {
+        "dimension": "overlap_position_breakdown_reconciles_with_joined_rows",
+        "expected": "sum of joined_rows_by_position across QB/RB/WR/TE equals joined_rows",
+        "observed": "sum=470, joined_rows=470",
+        "passed": true
+      },
+      {
+        "dimension": "overlap_shuffle_counts_reconcile_with_joined_positions",
+        "expected": "shuffle-group feature_bearing_row_count equals joined_rows_by_position for every required position (QB/RB/WR/TE)",
+        "observed": "all required positions reconcile",
+        "passed": true
+      },
+      {
+        "dimension": "overlap_min_joined_rows_overall",
+        "expected": ">= 200",
+        "observed": "470",
+        "passed": true
+      },
+      {
+        "dimension": "overlap_min_joined_rows_position_QB",
+        "expected": ">= 30",
+        "observed": "67",
+        "passed": true
+      },
+      {
+        "dimension": "overlap_min_joined_rows_position_RB",
+        "expected": ">= 30",
+        "observed": "116",
+        "passed": true
+      },
+      {
+        "dimension": "overlap_min_joined_rows_position_WR",
+        "expected": ">= 30",
+        "observed": "184",
+        "passed": true
+      },
+      {
+        "dimension": "overlap_min_joined_rows_position_TE",
+        "expected": ">= 30",
+        "observed": "103",
+        "passed": true
+      },
+      {
+        "dimension": "overlap_min_joined_share",
+        "expected": ">= 0.6",
+        "observed": "0.7993",
+        "passed": true
+      },
+      {
+        "dimension": "overlap_shuffle_evidence_present_for_joined_positions",
+        "expected": "every required position with joined rows carries a shuffle-group evidence entry (missing evidence fails closed)",
+        "observed": "all joined positions have shuffle evidence (QB, TE, WR, RB)",
+        "passed": true
+      },
+      {
+        "dimension": "overlap_derangement_feasible_by_position",
+        "expected": "every position group with feature-bearing rows supports a derangement (required if a later validation issue considers control runs)",
+        "observed": "QB:67, TE:103, WR:184, RB:116",
+        "passed": true
+      }
+    ],
+    "blocking_reasons": [],
+    "source_identity_passed": true,
+    "mirror_integrity_passed": true,
+    "overlap_floors_passed": true,
+    "observed_overlap": {
+      "scored_target_rows": 588,
+      "joined_rows": 470,
+      "joined_share": 0.7993197278911565,
+      "joined_rows_by_position": {
+        "QB": 67,
+        "TE": 103,
+        "WR": 184,
+        "RB": 116
+      }
+    }
+  },
+  "final_decision": "may_open_player_history_2024_from_2021_2023_additional_validation_issue",
+  "boundary_statements": {
+    "mirror_refresh_only_not_a_model_run": true,
+    "no_metrics_computed": true,
+    "no_validation_run": true,
+    "no_threshold_accepted_rejected_or_amended": true,
+    "no_leakage_audit_or_production_readiness_claim": true,
+    "no_production_binding_authorized": true,
+    "no_product_or_advice_output": true,
+    "no_tiber_data_change": true,
+    "no_availability_ownership_depth_injury_inference": true,
+    "input_mirror_contains_no_2024_rows": true,
+    "outcome_mirror_is_outcome_layer_only": true,
+    "nulls_preserved_never_zero_coerced": true
+  }
+}

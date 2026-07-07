@@ -23,6 +23,7 @@
     "gate:player-history-population": "tsx scripts/runPlayerHistoryPopulationGates.ts",
     "gate:player-history-promoted-source": "tsx scripts/runPlayerHistoryPromotedSourceGate.ts",
     "refresh:player-history-promoted-mirrors": "tsx scripts/runPlayerHistoryPromotedMirrorRefresh.ts",
+    "refresh:player-history-2024-from-2021-2023-mirrors": "tsx scripts/runPlayerHistory2024From2021_2023MirrorRefresh.ts",
     "experiment:player-history-controlled-run": "tsx scripts/runPlayerHistoryControlledRun.ts",
     "experiment:player-history-robustness": "tsx scripts/runPlayerHistoryRobustnessChecks.ts",
     "experiment:player-history-promoted-controlled-rerun": "tsx scripts/runPlayerHistoryPromotedControlledRerun.ts",
