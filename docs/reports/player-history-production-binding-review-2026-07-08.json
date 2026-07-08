@@ -179,9 +179,9 @@
       },
       {
         "id": "source_artifact_identity_locked_and_fail_closed",
-        "description": "The production feature pins to a specific promoted TIBER-Data artifact identity (path + sha256 + promotion review) and fails closed on mismatch.",
-        "satisfied": true,
-        "evidence": "docs/reports/player-history-2024-from-2021-2023-mirror-refresh-2026-07-07.json records promotedArtifactSha256Pinned === promotedArtifactSha256Actual (d45f612b...) with sha256_verified_fail_closed_by_generator=true, promotion TIBER-Data#202/#207."
+        "description": "The FEATURE CONTRACT pins its source_dataset_refs.artifact_sha256 to a specific promoted TIBER-Data artifact identity (path + sha256 + promotion review) and fails closed on mismatch.",
+        "satisfied": false,
+        "evidence": "docs/reports/player-history-2024-from-2021-2023-mirror-refresh-2026-07-07.json shows the MIRROR-REFRESH pipeline pins and fail-closed-verifies a sha256 (promotedArtifactSha256Pinned === promotedArtifactSha256Actual, d45f612b...), but that is evidence for the mirror-refresh process, not the feature contract itself. The proposed contract (docs/experiments/player-history-production-binding-prerequisites-2026-07-04.json section 7) explicitly leaves source_dataset_refs.artifact_sha256 as \"<locked at contract-acceptance time>\", and contract acceptance (see feature_contract_reviewed_and_accepted above) has not occurred. This gate is not satisfied until the contract itself locks its artifact identity."
       },
       {
         "id": "production_leakage_review_for_a_named_inference_path",
@@ -191,9 +191,9 @@
       },
       {
         "id": "deterministic_rerun_exercised_by_reviewer",
-        "description": "The deterministic replay commands for the cited evidence have been exercised by the reviewer, not just read.",
-        "satisfied": true,
-        "evidence": "This review ran `npm run build` and `npm test` against the committed tree (74 test files, 927 tests passing) before writing this report."
+        "description": "The deterministic replay sequence for the cited evidence (#123 design doc section 8: controlled run, robustness checks, promoted-source gate, mirror refresh, promoted rerun, then build/test) has been exercised end-to-end by the reviewer, not just read.",
+        "satisfied": false,
+        "evidence": "This review ran only `npm run build` and `npm test` against the already-committed tree (75 test files, 975 tests passing after this review's own additions) -- it did NOT rerun the evidence-producing commands themselves (experiment:player-history-controlled-run, experiment:player-history-robustness, gate:player-history-promoted-source, refresh:player-history-promoted-mirrors, experiment:player-history-promoted-controlled-rerun), several of which require a locally available promoted TIBER-Data artifact/manifest not present in this repo checkout. Re-running build/test only confirms the committed reports are internally consistent with current code; it does not confirm the underlying evidence would reproduce from source. This gate remains open for a reviewer with access to the promoted artifact."
       },
       {
         "id": "real_vs_baseline_vs_shuffled_framing_carried_forward",
@@ -220,10 +220,10 @@
         "evidence": "No human sign-off has been recorded for any player-history production-binding proposal. This review is an automated review issue, not a human sign-off, and does not substitute for one."
       }
     ],
-    "prerequisites_satisfied_count": 3,
+    "prerequisites_satisfied_count": 1,
     "prerequisites_total": 8,
     "all_prerequisites_satisfied": false,
-    "decision_rationale": "The #140 decision and required boundary statements are confirmed, production_only is confirmed carried forward as the v0 default (feature-composition bar_cleared=false), the production-path leakage audit scanned 16 production paths and found zero player-history references, and this review recorded 16 production wiring point(s), 10 required artifact input(s), and 8 prerequisite gate(s) (3/8 currently satisfied). A SEPARATE future issue may be opened to propose a bounded production-binding implementation. This decision does not itself wire any feature, change seasonalPprModel.ts, authorize full-feature-set wiring, make a product/advice/ranking claim, or claim production readiness -- 5 prerequisite gate(s) remain unsatisfied and are recorded as open blockers for that future issue.",
+    "decision_rationale": "The #140 decision and required boundary statements are confirmed, production_only is confirmed carried forward as the v0 default (feature-composition bar_cleared=false), the production-path leakage audit scanned 16 production paths and found zero player-history references, and this review recorded 16 production wiring point(s), 10 required artifact input(s), and 8 prerequisite gate(s) (1/8 currently satisfied). A SEPARATE future issue may be opened to propose a bounded production-binding implementation. This decision does not itself wire any feature, change seasonalPprModel.ts, authorize full-feature-set wiring, make a product/advice/ranking claim, or claim production readiness -- 7 prerequisite gate(s) remain unsatisfied and are recorded as open blockers for that future issue.",
     "boundary_statements": {
       "review_only_no_feature_wiring": true,
       "no_production_binding_authorized": true,
