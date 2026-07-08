@@ -8,6 +8,12 @@
  *
  * No neural networks; no external ML dependencies. The closed-form normal
  * equations make every fit fully deterministic.
+ *
+ * Forecast #143 adds the reviewed `production_only` player-history trailing-history feature family
+ * (see `PLAYER_HISTORY_PRODUCTION_ONLY_FEATURES`) as additional design-matrix columns. They default
+ * to 0 (decoupled from every other column in the ridge normal equations, see `trainSeasonalRidgeModel`)
+ * whenever `observation.player_history` is absent/null, so a caller that never attaches player-history
+ * data gets numerically identical fits/predictions to the pre-#143 model.
  */
 import type { ScoringPosition } from '../../contracts/scoring.js';
 import type { SeasonalPlayerObservation, SeasonalPprFeatureSpec } from '../../contracts/seasonalPprBacktest.js';
@@ -20,13 +26,38 @@ const POSITIONS: readonly ScoringPosition[] = ['QB', 'RB', 'WR', 'TE'];
  * defines the design-matrix column order and therefore the reported feature
  * list. `ppr_2024` is the strongest signal and is also the naive baseline.
  */
-const NUMERIC_FEATURES: SeasonalPprFeatureSpec[] = [
+const BASE_NUMERIC_FEATURES: SeasonalPprFeatureSpec[] = [
   { name: 'ppr_2024', kind: 'numeric', description: '2024 full-season total PPR fantasy points.' },
   { name: 'ppr_per_game_2024', kind: 'numeric', description: '2024 PPR points per game played.' },
   { name: 'games_2024', kind: 'numeric', description: '2024 games played.' },
   { name: 'targets_2024', kind: 'numeric', description: '2024 total targets (receiving volume).' },
   { name: 'rush_attempts_2024', kind: 'numeric', description: '2024 total rush attempts (rushing volume).' },
 ];
+
+/**
+ * Player-history production-only trailing-history features (Forecast #143), joined from a locked,
+ * promoted TIBER-Data artifact covering seasons strictly before the 2024 input season (2021-2023 --
+ * see `PlayerHistoryProductionOnlyObservation`). A player with no qualifying prior history has
+ * `observation.player_history` absent/null; every feature below then defaults to 0, EXACTLY like
+ * every pre-existing numeric feature above already does for a missing value (see `numericValue`) --
+ * this is not a new precedent. `trailing_2yr_ppr_total`/`trailing_2yr_ppr_mean` (and the `_3yr`
+ * pair) are exactly collinear after standardization (mean = total / constant); they are still both
+ * included here because they are exactly the named `production` feature family PR #132/#140/#142
+ * reviewed and validated -- ridge regularization (see `DEFAULT_LAMBDA`) handles the redundancy
+ * without any numerical issue, and this module intentionally does not redesign or prune the
+ * reviewed feature family on its own judgment.
+ */
+const PLAYER_HISTORY_PRODUCTION_ONLY_FEATURES: SeasonalPprFeatureSpec[] = [
+  { name: 'player_history_prior_season_1_ppr', kind: 'numeric', description: 'Player-history: prior season (2023) total PPR fantasy points. 0 if no qualifying history.' },
+  { name: 'player_history_prior_season_2_ppr', kind: 'numeric', description: 'Player-history: two seasons prior (2022) total PPR fantasy points. 0 if no qualifying history.' },
+  { name: 'player_history_trailing_2yr_ppr_total', kind: 'numeric', description: 'Player-history: sum of the 2 most recent prior seasons (2022-2023) total PPR. 0 if either season is missing.' },
+  { name: 'player_history_trailing_3yr_ppr_total', kind: 'numeric', description: 'Player-history: sum of all 3 approved prior seasons (2021-2023) total PPR. 0 unless all 3 are present.' },
+  { name: 'player_history_trailing_2yr_ppr_mean', kind: 'numeric', description: 'Player-history: mean of the 2 most recent prior seasons (2022-2023) total PPR. 0 if either season is missing.' },
+  { name: 'player_history_trailing_3yr_ppr_mean', kind: 'numeric', description: 'Player-history: mean of all 3 approved prior seasons (2021-2023) total PPR. 0 unless all 3 are present.' },
+  { name: 'player_history_year_over_year_ppr_trend', kind: 'numeric', description: 'Player-history: prior_season_1_ppr minus prior_season_2_ppr (2023 minus 2022). 0 if either season is missing.' },
+];
+
+const NUMERIC_FEATURES: SeasonalPprFeatureSpec[] = [...BASE_NUMERIC_FEATURES, ...PLAYER_HISTORY_PRODUCTION_ONLY_FEATURES];
 
 const POSITION_FEATURE: SeasonalPprFeatureSpec = {
   name: 'position',
@@ -40,6 +71,15 @@ export const seasonalPprFeatureList: SeasonalPprFeatureSpec[] = [...NUMERIC_FEAT
 /** Numeric feature names a row can be "missing" (defaulted to 0) for coverage tracking. */
 export const seasonalPprNumericFeatureNames: string[] = NUMERIC_FEATURES.map((feature) => feature.name);
 
+/**
+ * The pre-#143 base feature names ONLY (never includes player-history columns), pinned for any
+ * out-of-scope consumer (e.g. the Run 2 Teamstate comparison, `runRun2FeatureMatrixCandidate.ts`)
+ * that must stay byte-identical regardless of future extensions to `seasonalPprNumericFeatureNames`.
+ * Do not use this for anything that should reflect the CURRENT production feature set -- use
+ * `seasonalPprNumericFeatureNames` for that.
+ */
+export const seasonalPprBaseNumericFeatureNames: string[] = BASE_NUMERIC_FEATURES.map((feature) => feature.name);
+
 const numericValue = (observation: SeasonalPlayerObservation, name: string): number => {
   switch (name) {
     case 'ppr_2024':
@@ -52,6 +92,20 @@ const numericValue = (observation: SeasonalPlayerObservation, name: string): num
       return observation.targets_2024;
     case 'rush_attempts_2024':
       return observation.rush_attempts_2024;
+    case 'player_history_prior_season_1_ppr':
+      return observation.player_history?.prior_season_1_ppr ?? 0;
+    case 'player_history_prior_season_2_ppr':
+      return observation.player_history?.prior_season_2_ppr ?? 0;
+    case 'player_history_trailing_2yr_ppr_total':
+      return observation.player_history?.trailing_2yr_ppr_total ?? 0;
+    case 'player_history_trailing_3yr_ppr_total':
+      return observation.player_history?.trailing_3yr_ppr_total ?? 0;
+    case 'player_history_trailing_2yr_ppr_mean':
+      return observation.player_history?.trailing_2yr_ppr_mean ?? 0;
+    case 'player_history_trailing_3yr_ppr_mean':
+      return observation.player_history?.trailing_3yr_ppr_mean ?? 0;
+    case 'player_history_year_over_year_ppr_trend':
+      return observation.player_history?.year_over_year_ppr_trend ?? 0;
     default:
       return 0;
   }

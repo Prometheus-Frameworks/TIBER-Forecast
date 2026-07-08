@@ -27,6 +27,7 @@
     "validate:player-history-2024-from-2021-2023-additional": "tsx scripts/runPlayerHistory2024From2021_2023AdditionalValidation.ts",
     "review:player-history-2024-from-2021-2023-threshold": "tsx scripts/runPlayerHistory2024From2021_2023ThresholdReview.ts",
     "review:player-history-production-binding": "tsx scripts/runPlayerHistoryProductionBindingReview.ts",
+    "review:player-history-production-binding-implementation": "tsx scripts/runPlayerHistoryProductionBindingImplementation.ts",
     "experiment:player-history-controlled-run": "tsx scripts/runPlayerHistoryControlledRun.ts",
     "experiment:player-history-robustness": "tsx scripts/runPlayerHistoryRobustnessChecks.ts",
     "experiment:player-history-promoted-controlled-rerun": "tsx scripts/runPlayerHistoryPromotedControlledRerun.ts",

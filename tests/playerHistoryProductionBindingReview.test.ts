@@ -285,24 +285,33 @@ describe('decision-enum purity, no I/O, and production isolation', () => {
 });
 
 // ---------------------------------------------------------------------------------------------
-// Real production tree: prove, today, that zero production Forecast paths reference player-history.
-// This is the actual leakage-audit assertion the #141 issue requires as a test, independent of the
-// generator script.
+// At #141/#142 time (review-only), every production Forecast path was required to carry zero
+// player-history references -- #142's positive decision authorized nothing beyond opening a future
+// implementation issue. Forecast #143 is that authorized implementation: it deliberately wires
+// player-history into the FIVE named consumer files below. This block is updated (not deleted) to
+// reflect that authorized baseline while still catching any FUTURE unauthorized leakage into
+// anything outside the named consumer scope (board/scoring/fusion/rankings/other API routes, etc).
 // ---------------------------------------------------------------------------------------------
 
-describe('the real production Forecast tree carries zero player-history references (no leakage today)', () => {
+describe('player-history production-only wiring stays inside the #143-authorized consumer scope', () => {
   const FORBIDDEN_TERMS = ['player_history', 'player-history', 'playerHistory', 'PlayerHistory'];
 
-  const PRODUCTION_PATHS = [
+  /** The #143 "named production consumer" files -- authorized to reference player-history. */
+  const AUTHORIZED_CONSUMER_PATHS = [
     'src/models/seasonal/seasonalPprModel.ts',
-    'src/models/seasonal/seasonalPprBaselines.ts',
     'src/contracts/seasonalPprBacktest.ts',
     'src/datasets/seasonal/loadSeasonalPprDataset.ts',
+    'src/services/runSeasonalPprBacktestService.ts',
+    'src/datasets/seasonal/playerHistoryProductionOnlySource.ts',
+  ];
+
+  /** Everything else from the #142 production wiring-point inventory: must stay clean. */
+  const STILL_CLEAN_PATHS = [
+    'src/models/seasonal/seasonalPprBaselines.ts',
     'src/datasets/seasonal/parseTiberDataWeeklyArtifact.ts',
     'src/datasets/seasonal/tiberDataSeasonalPprDataset.ts',
     'src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts',
     'src/datasets/seasonal/fixtures/tiberDataWeeklyPprScaffold.ts',
-    'src/services/runSeasonalPprBacktestService.ts',
     'src/studio/loadSeasonalPprArtifacts.ts',
     'src/studio/buildModelContextExport.ts',
     'src/studio/renderStudioPage.ts',
@@ -312,23 +321,38 @@ describe('the real production Forecast tree carries zero player-history referenc
     'src/index.ts',
   ];
 
-  it.each(PRODUCTION_PATHS)('%s contains no player-history reference', (rel) => {
+  it.each(AUTHORIZED_CONSUMER_PATHS)('%s is authorized to (and does) reference player-history', (rel) => {
+    const content = readRepoText(rel);
+    expect(FORBIDDEN_TERMS.some((term) => content.includes(term))).toBe(true);
+  });
+
+  it.each(STILL_CLEAN_PATHS)('%s still contains no player-history reference (scope was not exceeded)', (rel) => {
     const content = readRepoText(rel);
     for (const term of FORBIDDEN_TERMS) {
       expect(content).not.toContain(term);
     }
   });
 
-  it('seasonalPprModel.ts NUMERIC_FEATURES is unchanged from the pre-#141 production feature set (no feature was added)', () => {
+  it('seasonalPprModel.ts NUMERIC_FEATURES now includes exactly the 5 pre-#143 base features plus the 7 authorized player-history production_only features', () => {
     const source = readRepoText('src/models/seasonal/seasonalPprModel.ts');
-    expect(source).toContain("{ name: 'ppr_2024', kind: 'numeric'");
-    expect(source).toContain("{ name: 'ppr_per_game_2024', kind: 'numeric'");
-    expect(source).toContain("{ name: 'games_2024', kind: 'numeric'");
-    expect(source).toContain("{ name: 'targets_2024', kind: 'numeric'");
-    expect(source).toContain("{ name: 'rush_attempts_2024', kind: 'numeric'");
-    // Exactly five numeric features plus position -- no sixth feature was inserted.
-    const numericFeatureMatches = source.match(/\{ name: '[a-z_0-9]+', kind: 'numeric'/g) ?? [];
-    expect(numericFeatureMatches).toHaveLength(5);
+    for (const name of [
+      'ppr_2024',
+      'ppr_per_game_2024',
+      'games_2024',
+      'targets_2024',
+      'rush_attempts_2024',
+      'player_history_prior_season_1_ppr',
+      'player_history_prior_season_2_ppr',
+      'player_history_trailing_2yr_ppr_total',
+      'player_history_trailing_3yr_ppr_total',
+      'player_history_trailing_2yr_ppr_mean',
+      'player_history_trailing_3yr_ppr_mean',
+      'player_history_year_over_year_ppr_trend',
+    ]) {
+      expect(source).toContain(`name: '${name}', kind: 'numeric'`);
+    }
+    const numericFeatureMatches = source.match(/name: '[a-zA-Z_0-9]+', kind: 'numeric'/g) ?? [];
+    expect(numericFeatureMatches).toHaveLength(12);
   });
 });
 

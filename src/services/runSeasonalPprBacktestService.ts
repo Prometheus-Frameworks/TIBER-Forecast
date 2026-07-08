@@ -70,6 +70,15 @@ export interface RunSeasonalPprBacktestOptions {
   generatedAt?: string;
   /** Ridge L2 penalty override. */
   lambda?: number;
+  /**
+   * Truthful disclosure of the player-history production-only binding (Forecast #143) for this run.
+   * Omitted/undefined means disabled -- the default for every caller that does not explicitly attach
+   * player-history data to its observations beforehand. This option does not itself attach anything;
+   * it only controls what the report DISCLOSES, so callers that DO attach player-history data (via
+   * `attachPlayerHistoryProductionOnly`) must pass the matching sha256 here for the report to be
+   * truthful.
+   */
+  playerHistoryProductionOnly?: { enabled: true; sourceArtifactSha256: string };
 }
 
 export interface RunSeasonalPprBacktestOutput {
@@ -92,6 +101,14 @@ const featuresPresent = (observation: SeasonalPlayerObservation): string[] => {
   if (observation.targets_2024 > 0) present.push('targets_2024');
   if (observation.rush_attempts_2024 > 0) present.push('rush_attempts_2024');
   present.push('position');
+  const history = observation.player_history;
+  if (history?.prior_season_1_ppr != null) present.push('player_history_prior_season_1_ppr');
+  if (history?.prior_season_2_ppr != null) present.push('player_history_prior_season_2_ppr');
+  if (history?.trailing_2yr_ppr_total != null) present.push('player_history_trailing_2yr_ppr_total');
+  if (history?.trailing_3yr_ppr_total != null) present.push('player_history_trailing_3yr_ppr_total');
+  if (history?.trailing_2yr_ppr_mean != null) present.push('player_history_trailing_2yr_ppr_mean');
+  if (history?.trailing_3yr_ppr_mean != null) present.push('player_history_trailing_3yr_ppr_mean');
+  if (history?.year_over_year_ppr_trend != null) present.push('player_history_year_over_year_ppr_trend');
   return present;
 };
 
@@ -332,6 +349,13 @@ export const runSeasonalPprBacktestService = (
       },
       feature_list: seasonalPprFeatureList,
       missing_feature_coverage: missingFeatureCoverage,
+      player_history_production_only: options.playerHistoryProductionOnly
+        ? {
+            enabled: true,
+            source_artifact_sha256: options.playerHistoryProductionOnly.sourceArtifactSha256,
+            human_signoff_recorded: false,
+          }
+        : { enabled: false, source_artifact_sha256: null, human_signoff_recorded: false },
       evaluation_method:
         'Leave-one-out cross-validation (LOOCV) over scored rows for the ridge model and position-mean baseline; the previous-year baseline requires no fitting.',
       model: modelEvaluation,

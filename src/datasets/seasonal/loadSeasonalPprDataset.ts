@@ -305,6 +305,9 @@ export const loadSeasonalPprDatasetFromWeeklyOutcomes = (
       targets_2024: inputAgg.targets,
       rush_attempts_2024: inputAgg.rushing_attempts,
       ppr_2025_actual: targetAgg ? Number(targetAgg.season_actual.toFixed(4)) : null,
+      // Forecast #143: this loader does not attach player-history. A separate, explicit call to
+      // attachPlayerHistoryProductionOnly() is required to populate this field.
+      player_history: null,
     });
   }
 
