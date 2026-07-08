@@ -1,0 +1,244 @@
+{
+  "report_version": "player-history-production-binding-review-report-v1",
+  "repo": "Prometheus-Frameworks/TIBER-Forecast",
+  "issue": "TIBER-Forecast#141",
+  "generated_at": "2026-07-08T00:00:00.000Z",
+  "cited_documents": {
+    "prior_review": {
+      "path": "docs/reports/player-history-2024-from-2021-2023-threshold-review-2026-07-07.json",
+      "source_issue": "TIBER-Forecast#139/#140",
+      "decision": "may_open_player_history_production_binding_review_issue"
+    },
+    "prerequisites_design_doc": {
+      "path": "docs/experiments/player-history-production-binding-prerequisites-2026-07-04.md",
+      "source_issue": "TIBER-Forecast#123"
+    }
+  },
+  "review": {
+    "version": "player-history-production-binding-review-v1",
+    "issue": "TIBER-Forecast#141",
+    "decision": "may_open_player_history_production_binding_implementation_issue",
+    "identity_checks": [
+      {
+        "dimension": "prior_review_decision_is_expected_ceiling",
+        "expected": "decision may_open_player_history_production_binding_review_issue",
+        "observed": "decision=may_open_player_history_production_binding_review_issue",
+        "passed": true
+      },
+      {
+        "dimension": "prior_review_confirms_required_boundary_statements",
+        "expected": "keys (no_production_binding_authorized, no_production_readiness_claim, no_leakage_audit_run, does_not_authorize_full_feature_set_production_wiring) explicitly present and true",
+        "observed": "all present and true",
+        "passed": true
+      },
+      {
+        "dimension": "prior_review_declares_feature_composition_gate",
+        "expected": "feature_composition_gate present with a boolean bar_cleared and finite observed_gap_pct/threshold_pct",
+        "observed": "bar_cleared=false, observed_gap_pct=0.35, threshold_pct=2",
+        "passed": true
+      }
+    ],
+    "identity_passed": true,
+    "inventory_checks": [
+      {
+        "dimension": "production_wiring_points_identified",
+        "expected": "a non-empty list of {path, role} entries",
+        "observed": "16 entries, well_formed=true",
+        "passed": true
+      },
+      {
+        "dimension": "required_artifact_inputs_identified",
+        "expected": "a non-empty list of {path, description} entries",
+        "observed": "10 entries, well_formed=true",
+        "passed": true
+      },
+      {
+        "dimension": "prerequisite_gates_recorded",
+        "expected": "a non-empty list of {id, description, satisfied, evidence} entries",
+        "observed": "8 entries, well_formed=true",
+        "passed": true
+      }
+    ],
+    "inventories_passed": true,
+    "leakage_audit_clean": true,
+    "leakage_audit_findings": [],
+    "production_wiring_points": [
+      {
+        "path": "src/models/seasonal/seasonalPprModel.ts",
+        "role": "Ridge model design matrix (NUMERIC_FEATURES). A future binding would add player-history feature columns here. Named off-limits for THIS issue by the #141 hard boundary."
+      },
+      {
+        "path": "src/models/seasonal/seasonalPprBaselines.ts",
+        "role": "Baseline comparison models the backtest report evaluates the ridge model against; a production_only-vs-full-feature-set comparison arm would need parallel handling here."
+      },
+      {
+        "path": "src/contracts/seasonalPprBacktest.ts",
+        "role": "Declares SeasonalPlayerObservation. A future binding would add nullable player-history fields here, following the null_missing_history_rules design in the #123 prerequisites doc."
+      },
+      {
+        "path": "src/datasets/seasonal/loadSeasonalPprDataset.ts",
+        "role": "Dataset assembly entrypoint for the seasonal backtest; a future binding would join the player-history mirror/artifact onto the seasonal observation set here."
+      },
+      {
+        "path": "src/datasets/seasonal/parseTiberDataWeeklyArtifact.ts",
+        "role": "Parses the raw TIBER-Data weekly PPR artifact; a future binding would need an analogous parser (or a shared one) for the promoted player-history artifact."
+      },
+      {
+        "path": "src/datasets/seasonal/tiberDataSeasonalPprDataset.ts",
+        "role": "Builds the seasonal PPR dataset from TIBER-Data inputs; the join point where a specific promoted player-history artifact identity would be pinned and fail-closed re-verified."
+      },
+      {
+        "path": "src/datasets/seasonal/fixtures/seasonalPprSeedSnapshot.ts",
+        "role": "Deterministic fixture snapshot used by tests/dev; would need a player-history-augmented fixture variant so tests can cover the augmented feature set without network access."
+      },
+      {
+        "path": "src/datasets/seasonal/fixtures/tiberDataWeeklyPprScaffold.ts",
+        "role": "Bundled scaffold fixture; same fixture-augmentation concern as the seed snapshot above."
+      },
+      {
+        "path": "src/services/runSeasonalPprBacktestService.ts",
+        "role": "Orchestrates train/eval of the seasonal ridge model; the exact call site that would pass an augmented feature set into trainSeasonalRidgeModel."
+      },
+      {
+        "path": "src/studio/loadSeasonalPprArtifacts.ts",
+        "role": "Loads backtest artifacts for PPM Studio; would need to reflect the augmented feature list in whatever it surfaces."
+      },
+      {
+        "path": "src/studio/buildModelContextExport.ts",
+        "role": "Builds the model-context export payload served at /api/studio/seasonal-ppr/export/model-context; would need to disclose player-history feature usage in the export."
+      },
+      {
+        "path": "src/studio/renderStudioPage.ts",
+        "role": "Renders the PPM Studio HTML page -- the closest thing this repo has to a served UI surface for the seasonal model, though it is explicitly not a Fantasy product surface."
+      },
+      {
+        "path": "src/api/routes/studio.ts",
+        "role": "Serves /api/studio/seasonal-ppr/{report,predictions,export/model-context}; the actual network-served production path an inference-time leakage review must cover end-to-end."
+      },
+      {
+        "path": "src/api/app.ts",
+        "role": "Registers and documents the studio routes in the served API surface manifest (route map at app.ts:50-87)."
+      },
+      {
+        "path": "src/server.ts",
+        "role": "HTTP server bootstrap that mounts app.ts -- the literal production process entrypoint."
+      },
+      {
+        "path": "src/index.ts",
+        "role": "Public library entrypoint; re-exports may surface the model/contract to library consumers outside the HTTP server."
+      }
+    ],
+    "required_artifact_inputs": [
+      {
+        "path": "exports/promoted/nfl/player_season_coverage_v0.json (TIBER-Data)",
+        "description": "The promoted source artifact, sha256 d45f612b207085df00b4b080e4f55ce1abbd060dcbf30b0bee777ff833ddd8ac (TIBER-Data#202/#207, 2021-2025 promotion). A binding proposal must pin this exact sha256 and fail closed on mismatch."
+      },
+      {
+        "path": "exports/promoted/nfl/PLAYER_SEASON_COVERAGE_V0_PROMOTION_MANIFEST.json (TIBER-Data)",
+        "description": "The promotion manifest for the above artifact; must be re-verified alongside the artifact sha256."
+      },
+      {
+        "path": "data/fixtures/tiberData/player_history_2024_target_outcome_mirror.json",
+        "description": "Newest validated Forecast outcome mirror (2024 target, from the 2021-2025 promotion), produced by #135/#136."
+      },
+      {
+        "path": "data/fixtures/tiberData/player_history_2021_2023_input_mirror.json",
+        "description": "Newest validated Forecast input mirror (2021-2023 window, from the 2021-2025 promotion), produced by #135/#136."
+      },
+      {
+        "path": "data/fixtures/tiberData/player_season_coverage_v0_2025.promoted_outcome_mirror.json",
+        "description": "Prior validated outcome mirror (2025-from-2022-2024 window, #119/#120), still valid evidence for the replicated signal."
+      },
+      {
+        "path": "data/fixtures/tiberData/player_season_coverage_v0_2022_2024.promoted_input_mirror.json",
+        "description": "Prior validated input mirror (2022-2024 window, #119/#120), paired with the outcome mirror above."
+      },
+      {
+        "path": "docs/experiments/player-history-production-binding-prerequisites-2026-07-04.json",
+        "description": "The #123 design doc: proposed feature-contract shape (contract_id player_history_production_feature_v0), prerequisites, and validation gates a binding proposal must satisfy."
+      },
+      {
+        "path": "docs/experiments/player-history-feature-contract-v0-threshold-proposal-2026-07-04.json",
+        "description": "The #132 threshold framework: the six quantitative acceptance components, including the uncleared production_only-vs-full-feature-set added-value bar."
+      },
+      {
+        "path": "docs/reports/player-history-2024-from-2021-2023-threshold-review-2026-07-07.json",
+        "description": "The #140 threshold-review decision this review (#141) cites as its own prerequisite."
+      },
+      {
+        "path": "docs/reports/player-history-2024-from-2021-2023-additional-validation-2026-07-07.json",
+        "description": "The #137/#138 additional-validation metrics underlying the #140 decision."
+      }
+    ],
+    "prerequisite_gates": [
+      {
+        "id": "feature_contract_reviewed_and_accepted",
+        "description": "The proposed feature-contract shape (docs/experiments/player-history-production-binding-prerequisites-2026-07-04.json section 7) has been reviewed and explicitly accepted, not just drafted.",
+        "satisfied": false,
+        "evidence": "The contract carries provenance_state=\"experimental_replicated_not_production_bound\" and validation_status=\"design_proposed_not_reviewed\" (also see docs/reports/player-history-feature-contract-v0-validation-2026-07-04.json, decision contract_instance_conforms_non_production). No document records explicit contract acceptance."
+      },
+      {
+        "id": "source_artifact_identity_locked_and_fail_closed",
+        "description": "The production feature pins to a specific promoted TIBER-Data artifact identity (path + sha256 + promotion review) and fails closed on mismatch.",
+        "satisfied": true,
+        "evidence": "docs/reports/player-history-2024-from-2021-2023-mirror-refresh-2026-07-07.json records promotedArtifactSha256Pinned === promotedArtifactSha256Actual (d45f612b...) with sha256_verified_fail_closed_by_generator=true, promotion TIBER-Data#202/#207."
+      },
+      {
+        "id": "production_leakage_review_for_a_named_inference_path",
+        "description": "A leakage review broader than the experimental discipline -- covering real-time data availability at inference time and look-ahead in derived features -- has been performed for the SPECIFIC production inference path a binding proposal targets.",
+        "satisfied": false,
+        "evidence": "This issue performed a static reference-leakage audit (zero player-history references in any current production path) but no production inference path has been proposed yet, so the deeper inference-time leakage review from the #123 design doc prerequisite 4 has nothing concrete to review against."
+      },
+      {
+        "id": "deterministic_rerun_exercised_by_reviewer",
+        "description": "The deterministic replay commands for the cited evidence have been exercised by the reviewer, not just read.",
+        "satisfied": true,
+        "evidence": "This review ran `npm run build` and `npm test` against the committed tree (74 test files, 927 tests passing) before writing this report."
+      },
+      {
+        "id": "real_vs_baseline_vs_shuffled_framing_carried_forward",
+        "description": "Any production acceptance criterion is expressed as beating both a baseline and a deterministic shuffled control, not just \"beats baseline.\"",
+        "satisfied": true,
+        "evidence": "Confirmed present in the #140 report component_checks (relative_mae_improvement_over_baseline and _over_shuffled_control, both origins)."
+      },
+      {
+        "id": "missing_history_behavior_specified_for_a_named_consumer",
+        "description": "What a production consumer does for a player with no prior-season history is specified for the SPECIFIC production consumer being proposed.",
+        "satisfied": false,
+        "evidence": "The #123 design doc specifies null_missing_history_rules for the proposed contract shape in the abstract, but no production consumer has been named or proposed yet, so no consumer-specific behavior has been specified."
+      },
+      {
+        "id": "no_fantasy_consumer_change_bundled_with_contract_wiring",
+        "description": "Any future proposing issue/PR must not bundle a Fantasy/product consumer change with contract wiring in the same slice.",
+        "satisfied": false,
+        "evidence": "Not yet applicable: no contract-wiring PR has been proposed. Recorded here as a constraint the future implementation issue must satisfy."
+      },
+      {
+        "id": "human_sign_off_on_seasonal_ppr_model_change",
+        "description": "A human reviewer with authority over seasonalPprModel.ts has explicitly signed off on the specific wiring proposal.",
+        "satisfied": false,
+        "evidence": "No human sign-off has been recorded for any player-history production-binding proposal. This review is an automated review issue, not a human sign-off, and does not substitute for one."
+      }
+    ],
+    "prerequisites_satisfied_count": 3,
+    "prerequisites_total": 8,
+    "all_prerequisites_satisfied": false,
+    "decision_rationale": "The #140 decision and required boundary statements are confirmed, production_only is confirmed carried forward as the v0 default (feature-composition bar_cleared=false), the production-path leakage audit scanned 16 production paths and found zero player-history references, and this review recorded 16 production wiring point(s), 10 required artifact input(s), and 8 prerequisite gate(s) (3/8 currently satisfied). A SEPARATE future issue may be opened to propose a bounded production-binding implementation. This decision does not itself wire any feature, change seasonalPprModel.ts, authorize full-feature-set wiring, make a product/advice/ranking claim, or claim production readiness -- 5 prerequisite gate(s) remain unsatisfied and are recorded as open blockers for that future issue.",
+    "boundary_statements": {
+      "review_only_no_feature_wiring": true,
+      "no_production_binding_authorized": true,
+      "no_seasonal_ppr_model_change": true,
+      "no_production_readiness_claim": true,
+      "production_only_remains_v0_default": true,
+      "does_not_authorize_full_feature_set_production_wiring": true,
+      "positive_decision_authorizes_only_a_separate_implementation_issue": true,
+      "no_human_sign_off_recorded_by_this_review": true
+    }
+  },
+  "human_sign_off_requirements": [
+    "A named human reviewer with authority over src/models/seasonal/seasonalPprModel.ts must explicitly sign off, in writing, on the specific wiring proposal before any future implementation PR merges.",
+    "This review, and the positive decision it may emit, does not constitute that sign-off and must not be cited as satisfying it.",
+    "Every unsatisfied prerequisite gate recorded in this report is a blocker for that future sign-off, not merely a suggestion."
+  ],
+  "next_allowed_step": "A SEPARATE issue may be opened to propose a bounded, production_only-scoped player-history production-binding implementation. That issue must close every open prerequisite gate recorded above (see prerequisite_gates), obtain the human sign-off recorded above, and must not bundle a Fantasy/product consumer change with contract wiring."
+}
