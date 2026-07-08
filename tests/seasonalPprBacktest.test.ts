@@ -236,9 +236,9 @@ describe('trainSeasonalRidgeModel', () => {
     const sum = explanation.intercept + explanation.contributions.reduce((s, c) => s + c.contribution, 0);
     expect(sum).toBeCloseTo(explanation.raw_prediction, 9);
     expect(explanation.prediction).toBe(predicted);
-    // One contribution per numeric feature plus a single position term.
+    // One contribution per numeric feature (5 base + 7 player-history, Forecast #143) plus a single position term.
     expect(explanation.contributions.some((c) => c.feature === 'position=WR')).toBe(true);
-    expect(explanation.contributions.filter((c) => c.kind === 'numeric')).toHaveLength(5);
+    expect(explanation.contributions.filter((c) => c.kind === 'numeric')).toHaveLength(12);
   });
 });
 

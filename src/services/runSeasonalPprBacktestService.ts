@@ -27,6 +27,8 @@ import {
   SEASONAL_PPR_PREDICTION_ARTIFACT_VERSION,
   SEASONAL_PPR_TARGET_DEFINITION,
   SEASONAL_PPR_TARGET_SEASON,
+  resolveGatedPlayerHistory,
+  type PlayerHistoryProductionOnlyGate,
   type SeasonalPlayerObservation,
   type SeasonalPprBacktestReport,
   type SeasonalPprDatasetDescriptor,
@@ -70,6 +72,15 @@ export interface RunSeasonalPprBacktestOptions {
   generatedAt?: string;
   /** Ridge L2 penalty override. */
   lambda?: number;
+  /**
+   * Truthful disclosure of the player-history production-only binding (Forecast #143) for this run.
+   * Omitted/undefined means disabled -- the default for every caller that does not explicitly attach
+   * player-history data to its observations beforehand. This option does not itself attach anything;
+   * it only controls what the report DISCLOSES, so callers that DO attach player-history data (via
+   * `attachPlayerHistoryProductionOnly`) must pass the matching sha256 here for the report to be
+   * truthful.
+   */
+  playerHistoryProductionOnly?: PlayerHistoryProductionOnlyGate;
 }
 
 export interface RunSeasonalPprBacktestOutput {
@@ -84,7 +95,14 @@ export type RunSeasonalPprBacktestResult = ServiceResult<RunSeasonalPprBacktestO
 const hasUsableActual = (observation: SeasonalPlayerObservation): boolean =>
   observation.ppr_2025_actual != null && Number.isFinite(observation.ppr_2025_actual);
 
-const featuresPresent = (observation: SeasonalPlayerObservation): string[] => {
+/**
+ * `gate` must be the SAME gate passed to `trainSeasonalRidgeModel` (via `options.playerHistoryProductionOnly`)
+ * so that "features present" always reflects what the model actually used -- never what the raw
+ * dataset happens to carry. Uses `resolveGatedPlayerHistory` (Forecast #143 Codex review): a
+ * `player_history` block is only trusted when `gate.enabled` is true AND the block's own
+ * `contract_id`/`contract_version`/`source_artifact_sha256` match exactly what `gate` declares.
+ */
+const featuresPresent = (observation: SeasonalPlayerObservation, gate: PlayerHistoryProductionOnlyGate | undefined): string[] => {
   const present: string[] = [];
   if (observation.ppr_2024 > 0) present.push('ppr_2024');
   if (observation.games_2024 > 0 && observation.ppr_2024 > 0) present.push('ppr_per_game_2024');
@@ -92,11 +110,19 @@ const featuresPresent = (observation: SeasonalPlayerObservation): string[] => {
   if (observation.targets_2024 > 0) present.push('targets_2024');
   if (observation.rush_attempts_2024 > 0) present.push('rush_attempts_2024');
   present.push('position');
+  const history = resolveGatedPlayerHistory(observation, gate);
+  if (history?.prior_season_1_ppr != null) present.push('player_history_prior_season_1_ppr');
+  if (history?.prior_season_2_ppr != null) present.push('player_history_prior_season_2_ppr');
+  if (history?.trailing_2yr_ppr_total != null) present.push('player_history_trailing_2yr_ppr_total');
+  if (history?.trailing_3yr_ppr_total != null) present.push('player_history_trailing_3yr_ppr_total');
+  if (history?.trailing_2yr_ppr_mean != null) present.push('player_history_trailing_2yr_ppr_mean');
+  if (history?.trailing_3yr_ppr_mean != null) present.push('player_history_trailing_3yr_ppr_mean');
+  if (history?.year_over_year_ppr_trend != null) present.push('player_history_year_over_year_ppr_trend');
   return present;
 };
 
-const featureValuePresent = (observation: SeasonalPlayerObservation, feature: string): boolean =>
-  featuresPresent(observation).includes(feature);
+const featureValuePresent = (observation: SeasonalPlayerObservation, feature: string, gate: PlayerHistoryProductionOnlyGate | undefined): boolean =>
+  featuresPresent(observation, gate).includes(feature);
 
 const buildModelEvaluation = (
   name: string,
@@ -118,6 +144,7 @@ export const runSeasonalPprBacktestService = (
   try {
     const generatedAt = options.generatedAt ?? new Date().toISOString();
     const observations = dataset.observations;
+    const playerHistoryGate = options.playerHistoryProductionOnly;
 
     if (observations.length === 0) {
       return serviceFailure({
@@ -149,7 +176,7 @@ export const runSeasonalPprBacktestService = (
 
     for (const target of scored) {
       const trainRows = scored.filter((row) => row.player_id !== target.player_id);
-      const model = trainSeasonalRidgeModel(trainRows, { lambda: options.lambda });
+      const model = trainSeasonalRidgeModel(trainRows, { lambda: options.lambda, playerHistoryProductionOnly: playerHistoryGate });
       modelLoocv.set(target.player_id, model.predict(target));
       explanationLoocv.set(target.player_id, model.explain(target));
 
@@ -199,7 +226,7 @@ export const runSeasonalPprBacktestService = (
     // Missing-feature coverage across ALL observations (scored + unavailable).
     const missingFeatureCoverage = seasonalPprNumericFeatureNames.map((feature) => ({
       feature,
-      rows_missing: observations.filter((observation) => !featureValuePresent(observation, feature)).length,
+      rows_missing: observations.filter((observation) => !featureValuePresent(observation, feature, playerHistoryGate)).length,
     }));
 
     // Top misses from the model's LOOCV predictions over scored rows.
@@ -224,7 +251,7 @@ export const runSeasonalPprBacktestService = (
       .sort((a, b) => a.player_id.localeCompare(b.player_id))
       .map((observation) => {
         const usable = hasUsableActual(observation);
-        const present = featuresPresent(observation);
+        const present = featuresPresent(observation, playerHistoryGate);
         const coreComplete =
           observation.ppr_2024 > 0 && observation.games_2024 > 0;
         const predicted = usable ? (modelLoocv.get(observation.player_id) as number) : null;
@@ -332,6 +359,13 @@ export const runSeasonalPprBacktestService = (
       },
       feature_list: seasonalPprFeatureList,
       missing_feature_coverage: missingFeatureCoverage,
+      player_history_production_only: options.playerHistoryProductionOnly
+        ? {
+            enabled: true,
+            source_artifact_sha256: options.playerHistoryProductionOnly.sourceArtifactSha256,
+            human_signoff_recorded: false,
+          }
+        : { enabled: false, source_artifact_sha256: null, human_signoff_recorded: false },
       evaluation_method:
         'Leave-one-out cross-validation (LOOCV) over scored rows for the ridge model and position-mean baseline; the previous-year baseline requires no fitting.',
       model: modelEvaluation,

@@ -8,9 +8,29 @@
  *
  * No neural networks; no external ML dependencies. The closed-form normal
  * equations make every fit fully deterministic.
+ *
+ * Forecast #143 adds the reviewed `production_only` player-history trailing-history feature family
+ * (see `PLAYER_HISTORY_PRODUCTION_ONLY_FEATURES`) as additional design-matrix columns. Reading
+ * `observation.player_history` is fail-closed and gated (see `resolveGatedPlayerHistory`,
+ * `TrainSeasonalRidgeOptions.playerHistoryProductionOnly`): unless the CALLER of
+ * `trainSeasonalRidgeModel` explicitly passes a gate whose `sourceArtifactSha256` matches the
+ * `player_history` block's own declared identity, every player-history feature evaluates to 0 for
+ * every observation -- REGARDLESS of what an observation's `player_history` field actually contains.
+ * This means an observation carrying attached (or even forged) player-history data cannot influence
+ * training or prediction just by being passed to this module directly; the gate must be explicitly
+ * supplied to `trainSeasonalRidgeModel` itself, not merely to some other calling service. A 0-valued
+ * column decouples from every other coefficient in the ridge normal equations (see
+ * `trainSeasonalRidgeModel`), so an ungated caller gets numerically identical fits/predictions to the
+ * pre-#143 model.
  */
 import type { ScoringPosition } from '../../contracts/scoring.js';
-import type { SeasonalPlayerObservation, SeasonalPprFeatureSpec } from '../../contracts/seasonalPprBacktest.js';
+import {
+  resolveGatedPlayerHistory,
+  type PlayerHistoryProductionOnlyGate,
+  type PlayerHistoryProductionOnlyObservation,
+  type SeasonalPlayerObservation,
+  type SeasonalPprFeatureSpec,
+} from '../../contracts/seasonalPprBacktest.js';
 import { multiply, multiplyVector, solveLinearSystem, transpose, type Matrix } from './linearAlgebra.js';
 
 const POSITIONS: readonly ScoringPosition[] = ['QB', 'RB', 'WR', 'TE'];
@@ -20,13 +40,38 @@ const POSITIONS: readonly ScoringPosition[] = ['QB', 'RB', 'WR', 'TE'];
  * defines the design-matrix column order and therefore the reported feature
  * list. `ppr_2024` is the strongest signal and is also the naive baseline.
  */
-const NUMERIC_FEATURES: SeasonalPprFeatureSpec[] = [
+const BASE_NUMERIC_FEATURES: SeasonalPprFeatureSpec[] = [
   { name: 'ppr_2024', kind: 'numeric', description: '2024 full-season total PPR fantasy points.' },
   { name: 'ppr_per_game_2024', kind: 'numeric', description: '2024 PPR points per game played.' },
   { name: 'games_2024', kind: 'numeric', description: '2024 games played.' },
   { name: 'targets_2024', kind: 'numeric', description: '2024 total targets (receiving volume).' },
   { name: 'rush_attempts_2024', kind: 'numeric', description: '2024 total rush attempts (rushing volume).' },
 ];
+
+/**
+ * Player-history production-only trailing-history features (Forecast #143), joined from a locked,
+ * promoted TIBER-Data artifact covering seasons strictly before the 2024 input season (2021-2023 --
+ * see `PlayerHistoryProductionOnlyObservation`). A player with no qualifying prior history has
+ * `observation.player_history` absent/null; every feature below then defaults to 0, EXACTLY like
+ * every pre-existing numeric feature above already does for a missing value (see `numericValue`) --
+ * this is not a new precedent. `trailing_2yr_ppr_total`/`trailing_2yr_ppr_mean` (and the `_3yr`
+ * pair) are exactly collinear after standardization (mean = total / constant); they are still both
+ * included here because they are exactly the named `production` feature family PR #132/#140/#142
+ * reviewed and validated -- ridge regularization (see `DEFAULT_LAMBDA`) handles the redundancy
+ * without any numerical issue, and this module intentionally does not redesign or prune the
+ * reviewed feature family on its own judgment.
+ */
+const PLAYER_HISTORY_PRODUCTION_ONLY_FEATURES: SeasonalPprFeatureSpec[] = [
+  { name: 'player_history_prior_season_1_ppr', kind: 'numeric', description: 'Player-history: prior season (2023) total PPR fantasy points. 0 if no qualifying history.' },
+  { name: 'player_history_prior_season_2_ppr', kind: 'numeric', description: 'Player-history: two seasons prior (2022) total PPR fantasy points. 0 if no qualifying history.' },
+  { name: 'player_history_trailing_2yr_ppr_total', kind: 'numeric', description: 'Player-history: sum of the 2 most recent prior seasons (2022-2023) total PPR. 0 if either season is missing.' },
+  { name: 'player_history_trailing_3yr_ppr_total', kind: 'numeric', description: 'Player-history: sum of all 3 approved prior seasons (2021-2023) total PPR. 0 unless all 3 are present.' },
+  { name: 'player_history_trailing_2yr_ppr_mean', kind: 'numeric', description: 'Player-history: mean of the 2 most recent prior seasons (2022-2023) total PPR. 0 if either season is missing.' },
+  { name: 'player_history_trailing_3yr_ppr_mean', kind: 'numeric', description: 'Player-history: mean of all 3 approved prior seasons (2021-2023) total PPR. 0 unless all 3 are present.' },
+  { name: 'player_history_year_over_year_ppr_trend', kind: 'numeric', description: 'Player-history: prior_season_1_ppr minus prior_season_2_ppr (2023 minus 2022). 0 if either season is missing.' },
+];
+
+const NUMERIC_FEATURES: SeasonalPprFeatureSpec[] = [...BASE_NUMERIC_FEATURES, ...PLAYER_HISTORY_PRODUCTION_ONLY_FEATURES];
 
 const POSITION_FEATURE: SeasonalPprFeatureSpec = {
   name: 'position',
@@ -40,7 +85,16 @@ export const seasonalPprFeatureList: SeasonalPprFeatureSpec[] = [...NUMERIC_FEAT
 /** Numeric feature names a row can be "missing" (defaulted to 0) for coverage tracking. */
 export const seasonalPprNumericFeatureNames: string[] = NUMERIC_FEATURES.map((feature) => feature.name);
 
-const numericValue = (observation: SeasonalPlayerObservation, name: string): number => {
+/**
+ * The pre-#143 base feature names ONLY (never includes player-history columns), pinned for any
+ * out-of-scope consumer (e.g. the Run 2 Teamstate comparison, `runRun2FeatureMatrixCandidate.ts`)
+ * that must stay byte-identical regardless of future extensions to `seasonalPprNumericFeatureNames`.
+ * Do not use this for anything that should reflect the CURRENT production feature set -- use
+ * `seasonalPprNumericFeatureNames` for that.
+ */
+export const seasonalPprBaseNumericFeatureNames: string[] = BASE_NUMERIC_FEATURES.map((feature) => feature.name);
+
+const numericValue = (observation: SeasonalPlayerObservation, name: string, gatedHistory: PlayerHistoryProductionOnlyObservation | null): number => {
   switch (name) {
     case 'ppr_2024':
       return observation.ppr_2024;
@@ -52,13 +106,29 @@ const numericValue = (observation: SeasonalPlayerObservation, name: string): num
       return observation.targets_2024;
     case 'rush_attempts_2024':
       return observation.rush_attempts_2024;
+    case 'player_history_prior_season_1_ppr':
+      return gatedHistory?.prior_season_1_ppr ?? 0;
+    case 'player_history_prior_season_2_ppr':
+      return gatedHistory?.prior_season_2_ppr ?? 0;
+    case 'player_history_trailing_2yr_ppr_total':
+      return gatedHistory?.trailing_2yr_ppr_total ?? 0;
+    case 'player_history_trailing_3yr_ppr_total':
+      return gatedHistory?.trailing_3yr_ppr_total ?? 0;
+    case 'player_history_trailing_2yr_ppr_mean':
+      return gatedHistory?.trailing_2yr_ppr_mean ?? 0;
+    case 'player_history_trailing_3yr_ppr_mean':
+      return gatedHistory?.trailing_3yr_ppr_mean ?? 0;
+    case 'player_history_year_over_year_ppr_trend':
+      return gatedHistory?.year_over_year_ppr_trend ?? 0;
     default:
       return 0;
   }
 };
 
-const numericVector = (observation: SeasonalPlayerObservation): number[] =>
-  NUMERIC_FEATURES.map((feature) => numericValue(observation, feature.name));
+const numericVector = (observation: SeasonalPlayerObservation, gate: PlayerHistoryProductionOnlyGate | undefined): number[] => {
+  const gatedHistory = resolveGatedPlayerHistory(observation, gate);
+  return NUMERIC_FEATURES.map((feature) => numericValue(observation, feature.name, gatedHistory));
+};
 
 // Position dummies for QB/RB/WR; TE is the reference level (all zeros).
 const positionDummies = (position: ScoringPosition): number[] =>
@@ -108,6 +178,14 @@ export interface SeasonalRidgeModel {
 export interface TrainSeasonalRidgeOptions {
   /** L2 penalty. Default chosen for the small, low-dimensional seasonal design. */
   lambda?: number;
+  /**
+   * Opt-in gate (Forecast #143) required before ANY observation's `player_history` block may
+   * influence this model. Omitted (the default) means every player-history feature is 0 for every
+   * observation, for both training and every subsequent `predict`/`explain` call on the returned
+   * model -- regardless of what `player_history` data any observation carries. See
+   * `resolveGatedPlayerHistory` in `contracts/seasonalPprBacktest.ts`.
+   */
+  playerHistoryProductionOnly?: PlayerHistoryProductionOnlyGate;
 }
 
 const DEFAULT_LAMBDA = 1.0;
@@ -126,8 +204,9 @@ export const trainSeasonalRidgeModel = (
   }
 
   const lambda = options.lambda ?? DEFAULT_LAMBDA;
+  const playerHistoryGate = options.playerHistoryProductionOnly;
 
-  const numericMatrix = trainRows.map((row) => numericVector(row));
+  const numericMatrix = trainRows.map((row) => numericVector(row, playerHistoryGate));
   const featureCount = NUMERIC_FEATURES.length;
 
   // Standardization statistics from the training set only (no leakage).
@@ -160,7 +239,7 @@ export const trainSeasonalRidgeModel = (
   // Design row: [intercept=1, standardized numeric features..., position dummies...].
   const designRow = (observation: SeasonalPlayerObservation): number[] => [
     1,
-    ...standardize(numericVector(observation)),
+    ...standardize(numericVector(observation, playerHistoryGate)),
     ...positionDummies(observation.position),
   ];
 
@@ -192,7 +271,7 @@ export const trainSeasonalRidgeModel = (
       Math.max(0, rawPrediction(observation)),
 
     explain: (observation) => {
-      const numeric = numericVector(observation);
+      const numeric = numericVector(observation, playerHistoryGate);
       const standardized = standardize(numeric);
       const intercept = coefficients[0];
 

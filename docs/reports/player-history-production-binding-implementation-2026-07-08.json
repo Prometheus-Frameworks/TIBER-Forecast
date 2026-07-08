@@ -1,0 +1,130 @@
+{
+  "report_version": "player-history-production-binding-implementation-report-v1",
+  "repo": "Prometheus-Frameworks/TIBER-Forecast",
+  "issue": "TIBER-Forecast#143",
+  "generated_at": "2026-07-08T00:00:00.000Z",
+  "cited_documents": {
+    "prior_review": {
+      "path": "docs/reports/player-history-production-binding-review-2026-07-08.json",
+      "source_issue": "TIBER-Forecast#141/#142",
+      "decision": "may_open_player_history_production_binding_implementation_issue"
+    }
+  },
+  "review": {
+    "version": "player-history-production-binding-implementation-v1",
+    "issue": "TIBER-Forecast#143",
+    "decision": "player_history_production_binding_implemented_pending_human_signoff",
+    "identity_checks": [
+      {
+        "dimension": "prior_review_decision_is_expected_ceiling",
+        "expected": "decision may_open_player_history_production_binding_implementation_issue",
+        "observed": "decision=may_open_player_history_production_binding_implementation_issue",
+        "passed": true
+      },
+      {
+        "dimension": "mirror_provenance_verified_against_locked_identity",
+        "expected": "verified=true, mismatches=[]",
+        "observed": "verified=true, mismatches=[]",
+        "passed": true
+      }
+    ],
+    "identity_passed": true,
+    "scope_checks": [
+      {
+        "dimension": "scope_audit_covers_a_non_empty_file_set",
+        "expected": "authorized_consumer_paths and still_clean_paths are both non-empty",
+        "observed": "authorized=5, still_clean=15",
+        "passed": true
+      },
+      {
+        "dimension": "wiring_is_confined_to_the_authorized_consumer_scope",
+        "expected": "0 scope violations (every authorized path references player-history; every still-clean path does not)",
+        "observed": "0 violation(s): none",
+        "passed": true
+      }
+    ],
+    "scope_passed": true,
+    "replay_checks": [
+      {
+        "dimension": "build_and_tests_pass",
+        "expected": "build_passed=true, tests_passed=true",
+        "observed": "build_passed=true, tests_passed=true (78 files, 1040 tests)",
+        "passed": true
+      },
+      {
+        "dimension": "deterministic_cli_run_confirmed",
+        "expected": "deterministic_cli_run_confirmed=true",
+        "observed": "deterministic_cli_run_confirmed=true",
+        "passed": true
+      }
+    ],
+    "replay_passed": true,
+    "prerequisite_gates": [
+      {
+        "id": "feature_contract_reviewed_and_accepted",
+        "description": "The player-history production-only feature contract is reviewed and explicitly accepted, not just drafted.",
+        "satisfied": true,
+        "evidence": "src/contracts/seasonalPprBacktest.ts now defines and exports PLAYER_HISTORY_PRODUCTION_ONLY_CONTRACT_ID (\"player_history_production_only_v0\") and PLAYER_HISTORY_PRODUCTION_ONLY_CONTRACT_VERSION (\"1.0.0\") as an implemented, tested TypeScript contract -- superseding the prior \"-proposed\"/\"design_proposed_not_reviewed\" experimental shape doc for this bounded production_only slice."
+      },
+      {
+        "id": "source_artifact_identity_locked_and_fail_closed_in_the_contract",
+        "description": "The binding module itself (not just the mirror-refresh pipeline) locks the promoted artifact's sha256/path/promotion identity and fails closed on mismatch.",
+        "satisfied": true,
+        "evidence": "src/datasets/seasonal/playerHistoryProductionOnlySource.ts hardcodes the locked identity (sha256 d45f612b207085df00b4b080e4f55ce1abbd060dcbf30b0bee777ff833ddd8ac, promotion review TIBER-Data#202, merge commit 711d6ee158d4e3bd116d1df4d76dea282200454d) and verifyPlayerHistoryMirrorProvenance() throws (fail-closed) on ANY mismatch. Verified against the real committed mirror just now: verified=true."
+      },
+      {
+        "id": "named_production_inference_path_leakage_review",
+        "description": "A leakage review for the SPECIFIC production inference path this binding proposes (the seasonal PPR Forecast path) has been performed.",
+        "satisfied": true,
+        "evidence": "The named inference path never performs a live/real-time fetch: every player-history value is sourced from a static, committed, historical (seasons 2021-2023, strictly before the 2024 input season) mirror file. There is no code path by which same-season or future-season data, or any live external call, can reach a prediction. The scope audit below additionally confirms zero references anywhere outside the 5 authorized consumer files."
+      },
+      {
+        "id": "deterministic_replay_sequence_exercised_by_reviewer",
+        "description": "`npm run build && npm test` (including the CLI opt-in flag determinism test) were actually executed for this PR, not just read.",
+        "satisfied": true,
+        "evidence": "This script executed `npm run build` (passed=true) and `npm test` (passed=true, 78 files / 1040 tests) against the committed tree, including tests/playerHistoryProductionOnlyBinding.test.ts's CLI determinism check."
+      },
+      {
+        "id": "missing_history_behavior_specified_for_the_named_consumer",
+        "description": "Exact missing-history behavior is specified for the seasonal PPR Forecast consumer specifically (not just an abstract design doc).",
+        "satisfied": true,
+        "evidence": "SeasonalPlayerObservation.player_history is null (never zero-filled, never imputed) for any player absent from the locked mirror index (attachPlayerHistoryProductionOnly). seasonalPprModel.ts numericValue() defaults each player-history feature to 0 (never a fabricated non-zero value) when player_history is null/absent, decoupling from every other coefficient in the ridge normal equations (see the model inertness tests in tests/playerHistoryProductionOnlyBinding.test.ts)."
+      },
+      {
+        "id": "no_fantasy_product_consumer_change_bundled_with_contract_wiring",
+        "description": "This PR does not bundle a Fantasy/product/UI/ranking/advice consumer change alongside the contract wiring.",
+        "satisfied": true,
+        "evidence": "Scope audit: 5 authorized file(s) reference player-history, 15 other production file(s) (including board/scoring/market ranking and edge-scoring paths) checked and found clean. Violations: none."
+      },
+      {
+        "id": "human_signoff_on_seasonal_ppr_model_change",
+        "description": "A human reviewer with authority over seasonalPprModel.ts has explicitly signed off on this specific wiring proposal.",
+        "satisfied": false,
+        "evidence": "No human sign-off has been recorded. This is an automated implementation PR; it cannot record human sign-off on its own behalf. The binding is inert by default (opt-in CLI flag only) specifically so that no live production behavior changes before that sign-off occurs."
+      }
+    ],
+    "prerequisites_satisfied_count": 6,
+    "prerequisites_total": 7,
+    "all_mechanical_prerequisites_satisfied": true,
+    "decision_rationale": "#142's decision and the locked mirror provenance are confirmed. The scope audit found player-history wiring confined to exactly the authorized named-consumer files (5 file(s)) with zero references anywhere else (15 file(s) checked). Build and tests pass (78 files, 1040 tests), and the CLI binding was confirmed deterministic. Every mechanically-satisfiable #143 prerequisite gate is satisfied (6/7 overall). The one gate that can never be satisfied by this automated review -- human_signoff_on_seasonal_ppr_model_change -- remains explicitly open: No human sign-off has been recorded. This is an automated implementation PR; it cannot record human sign-off on its own behalf. The binding is inert by default (opt-in CLI flag only) specifically so that no live production behavior changes before that sign-off occurs. This binding is implemented and inert-by-default (a caller must explicitly opt in); it must not be treated as production-ready, activated against a real mounted artifact, or claimed as signed off until a human reviewer with authority over seasonalPprModel.ts explicitly records sign-off.",
+    "boundary_statements": {
+      "production_only_scope_only": true,
+      "no_full_feature_set_wiring": true,
+      "no_fantasy_product_ui_ranking_advice_behavior": true,
+      "no_tiber_data_change": true,
+      "no_threshold_amendment": true,
+      "no_production_readiness_claim_without_all_gates_and_signoff": true,
+      "human_signoff_not_recorded_by_this_automated_review": true
+    }
+  },
+  "activation_status": {
+    "default_behavior": "inert -- byte-for-byte identical to a pre-#143 run unless the caller explicitly opts in",
+    "opt_in_mechanism": "--enable-player-history-production-only CLI flag on scripts/runSeasonalPprBacktest.ts",
+    "live_production_activation_requires": [
+      "Human sign-off recorded (see prerequisite_gates: human_signoff_on_seasonal_ppr_model_change).",
+      "A mounted/governed TIBER-Data artifact for the actual served run (this PR only validates against the bundled scaffold fixture).",
+      "Every remaining open prerequisite gate closed."
+    ]
+  },
+  "next_allowed_step": "A human reviewer with authority over seasonalPprModel.ts must review this PR and record explicit sign-off before the --enable-player-history-production-only flag is used against anything beyond the bundled scaffold fixture. No further automated issue is authorized to claim production readiness."
+}

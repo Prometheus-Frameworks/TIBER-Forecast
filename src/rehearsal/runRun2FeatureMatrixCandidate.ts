@@ -8,7 +8,7 @@ import {
   type SeasonalPprDatasetDescriptor,
 } from '../contracts/seasonalPprBacktest.js';
 import { tiberDataSeasonalPprDataset } from '../datasets/seasonal/tiberDataSeasonalPprDataset.js';
-import { seasonalPprNumericFeatureNames } from '../models/seasonal/seasonalPprModel.js';
+import { seasonalPprBaseNumericFeatureNames } from '../models/seasonal/seasonalPprModel.js';
 import { serviceSuccess, type ServiceResult } from '../services/result.js';
 import type { Run2FeatureExclusion } from './runRun2FeatureInclusionPreflight.js';
 import {
@@ -178,7 +178,7 @@ export const buildRun2FeatureMatrixCandidate = (
   // pressure-named or target-named column that should never reach the feature matrix.
   const teamstateFeatureColumns = featureTable.feature_columns.filter((column) => !isBlockedColumn(column));
   const teamstatePartialNullColumns = featureTable.partial_null_columns.filter((column) => !isBlockedColumn(column));
-  const run1FeatureColumns = [...seasonalPprNumericFeatureNames];
+  const run1FeatureColumns = [...seasonalPprBaseNumericFeatureNames];
   const featureColumns = [...run1FeatureColumns, ...teamstateFeatureColumns];
 
   const nullColumns = (columns: string[]): Record<string, null> =>
