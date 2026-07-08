@@ -55,6 +55,25 @@ const APPROVED_PLAYER_HISTORY_FEATURES = [
 const BASE_FEATURES = ['ppr_2024', 'ppr_per_game_2024', 'games_2024', 'targets_2024', 'rush_attempts_2024', 'position'];
 const KNOWN_ID_COLLISIONS = ['00-0037539', '00-0038977', '00-0033857'];
 
+/**
+ * Pinned pre-#143 baseline (generated from commit 7a66996, the parent of PR #144), committed so this
+ * check is a REAL, re-runnable comparison rather than prose citing a one-time manual finding (Codex
+ * P1 review on PR #146: "the script should actually compare the disabled report/predictions against
+ * the pinned pre-#143 baseline before marking this check passed").
+ */
+const PRE_143_BASELINE_REPORT_PATH = 'data/fixtures/seasonalPpr/pre_143_baseline_report.json';
+const PRE_143_BASELINE_PREDICTIONS_PATH = 'data/fixtures/seasonalPpr/pre_143_baseline_predictions.jsonl';
+
+interface BaselinePredictionRow {
+  player_id: string;
+  predicted_ppr: number | null;
+  actual_ppr: number | null;
+  absolute_error: number | null;
+  feature_coverage_status: string;
+  governance_status: string;
+  features_present: string[];
+}
+
 // -------------------------------------------------------------------------------------------
 // 0. Confirm the expected merge commit is actually an ancestor of HEAD.
 // -------------------------------------------------------------------------------------------
@@ -109,14 +128,36 @@ if (!disabledRun.ok) {
   defaultBehaviorUnchanged = { id: 'default_behavior_unchanged', description: 'Default (no-flag) execution succeeds and discloses the binding as disabled.', passed: false, evidence: `CLI run failed: ${disabledRun.stderr}` };
 } else {
   const report = readAbsJson<{ player_history_production_only: { enabled: boolean }; model: { overall: { mae: number; rmse: number } } }>(path.join(disabledDir, 'seasonal_ppr_backtest_report.json'));
-  const predictions = loadJsonl<{ features_present: string[] }>(path.join(disabledDir, 'seasonal_ppr_predictions.jsonl'));
+  const predictions = loadJsonl<BaselinePredictionRow>(path.join(disabledDir, 'seasonal_ppr_predictions.jsonl'));
   const noHistoryFeaturesPresent = predictions.every((p) => p.features_present.every((f) => !f.startsWith('player_history_')));
   const disabledDeclared = report.player_history_production_only.enabled === false;
+
+  const baselineReport = readJson<{ model: { overall: { mae: number; rmse: number } } }>(PRE_143_BASELINE_REPORT_PATH);
+  const baselinePredictions = loadJsonl<BaselinePredictionRow>(path.join(REPO_ROOT, PRE_143_BASELINE_PREDICTIONS_PATH));
+  const baselineById = new Map(baselinePredictions.map((r) => [r.player_id, r]));
+  const currentById = new Map(predictions.map((r) => [r.player_id, r]));
+  const samePlayerSet = baselineById.size === currentById.size && [...baselineById.keys()].every((id) => currentById.has(id));
+  const fieldMismatches: string[] = [];
+  if (samePlayerSet) {
+    for (const [id, baseRow] of baselineById) {
+      const curRow = currentById.get(id)!;
+      for (const key of ['predicted_ppr', 'actual_ppr', 'absolute_error', 'feature_coverage_status', 'governance_status'] as const) {
+        if (baseRow[key] !== curRow[key]) fieldMismatches.push(`${id}.${key}: baseline=${baseRow[key]} current=${curRow[key]}`);
+      }
+      if (JSON.stringify([...baseRow.features_present].sort()) !== JSON.stringify([...curRow.features_present].sort())) {
+        fieldMismatches.push(`${id}.features_present differs: baseline=${JSON.stringify(baseRow.features_present)} current=${JSON.stringify(curRow.features_present)}`);
+      }
+    }
+  }
+  const maeMatches = report.model.overall.mae === baselineReport.model.overall.mae;
+  const rmseMatches = report.model.overall.rmse === baselineReport.model.overall.rmse;
+  const baselineMatches = samePlayerSet && fieldMismatches.length === 0 && maeMatches && rmseMatches;
+
   defaultBehaviorUnchanged = {
     id: 'default_behavior_unchanged',
-    description: 'Default (no-flag) execution discloses disabled and no prediction row reports a player-history feature as present.',
-    passed: disabledDeclared && noHistoryFeaturesPresent,
-    evidence: `enabled=${report.player_history_production_only.enabled}, model MAE/RMSE=${report.model.overall.mae}/${report.model.overall.rmse}, every prediction row has zero player_history_* entries in features_present=${noHistoryFeaturesPresent}. This exactly matches the byte-for-byte core-metric comparison performed against the pre-#143 commit (7a66996) during manual verification: 39/39 prediction rows had zero mismatches on predicted_ppr/actual_ppr/absolute_error/feature_coverage_status/governance_status/features_present, and MAE/RMSE were identical (35.15/43.64) in both.`,
+    description: 'Default (no-flag) execution discloses disabled, exercises no player-history feature, and matches the pinned pre-#143 baseline (data/fixtures/seasonalPpr/) exactly on every prediction field and on overall MAE/RMSE.',
+    passed: disabledDeclared && noHistoryFeaturesPresent && baselineMatches,
+    evidence: `enabled=${report.player_history_production_only.enabled}; every row has zero player_history_* entries in features_present=${noHistoryFeaturesPresent}; same ${baselineById.size}-player set vs. pinned baseline=${samePlayerSet}; field mismatches vs. baseline=${fieldMismatches.length} (${fieldMismatches.slice(0, 5).join('; ') || 'none'}); MAE matches baseline (${baselineReport.model.overall.mae})=${maeMatches}; RMSE matches baseline (${baselineReport.model.overall.rmse})=${rmseMatches}.`,
   };
 }
 
@@ -138,11 +179,25 @@ if (!enabledRunA.ok) {
       if (APPROVED_PLAYER_HISTORY_FEATURES.includes(f)) observedApproved.add(f);
     }
   }
+
+  // Per-row `features_present` only lists NON-ZERO/NON-NULL values (see featuresPresent() in
+  // runSeasonalPprBacktestService.ts), so an unapproved 8th column that happens to be zero/null for
+  // every bundled-fixture row would never show up there even though the model's actual design matrix
+  // had grown (Codex P2 review on PR #146). The DEFINITIVE feature set is report.feature_list, which
+  // enumerates every design-matrix column regardless of any row's runtime value -- check that instead
+  // of (or in addition to) per-row presence.
+  const enabledReportForFeatureList = readAbsJson<{ feature_list: Array<{ name: string; kind: string }> }>(path.join(enabledDirA, 'seasonal_ppr_backtest_report.json'));
+  const numericFeatureListNames = new Set(enabledReportForFeatureList.feature_list.filter((f) => f.kind === 'numeric').map((f) => f.name));
+  const expectedNumericNames = new Set([...BASE_FEATURES.filter((f) => f !== 'position'), ...APPROVED_PLAYER_HISTORY_FEATURES]);
+  const featureListExtra = [...numericFeatureListNames].filter((n) => !expectedNumericNames.has(n));
+  const featureListMissing = [...expectedNumericNames].filter((n) => !numericFeatureListNames.has(n));
+  const featureListExactMatch = featureListExtra.length === 0 && featureListMissing.length === 0;
+
   onlyApprovedFeaturesActivated = {
     id: 'only_approved_features_activated',
-    description: 'Enabled execution activates exactly the 7 approved production_only features and nothing else.',
-    passed: unexpected.size === 0 && observedApproved.size === APPROVED_PLAYER_HISTORY_FEATURES.length,
-    evidence: `unexpected feature names observed: ${unexpected.size === 0 ? 'none' : [...unexpected].join(', ')}. Approved features actually exercised: ${observedApproved.size}/${APPROVED_PLAYER_HISTORY_FEATURES.length}.`,
+    description: "Enabled execution's declared feature_list (not just per-row presence) is exactly the 5 base + 7 approved production_only numeric columns, and every approved column is exercised by at least one row.",
+    passed: unexpected.size === 0 && observedApproved.size === APPROVED_PLAYER_HISTORY_FEATURES.length && featureListExactMatch,
+    evidence: `unexpected feature names observed in any row: ${unexpected.size === 0 ? 'none' : [...unexpected].join(', ')}. Approved features actually exercised: ${observedApproved.size}/${APPROVED_PLAYER_HISTORY_FEATURES.length}. report.feature_list numeric names exactly match expected set=${featureListExactMatch} (extra: ${featureListExtra.join(', ') || 'none'}; missing: ${featureListMissing.join(', ') || 'none'}).`,
   };
 }
 

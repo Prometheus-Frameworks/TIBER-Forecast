@@ -1,0 +1,304 @@
+{
+  "report_version": "seasonal-ppr-backtest-report-v1",
+  "output_kind": "model-inference",
+  "model_version": "seasonal-ppr-ridge-v1",
+  "generated_at": "2026-01-01T00:00:00.000Z",
+  "target_definition": "Full-season total PPR fantasy points scored in the 2025 NFL regular season, predicted from 2024-season input features only.",
+  "input_season": 2024,
+  "target_season": 2025,
+  "dataset": {
+    "dataset_id": "tiber-data-seasonal-ppr-2024-2025",
+    "dataset_version": "scaffold-snapshot-2026-06-01",
+    "governance_status": "fixture",
+    "data_source": "bundled-scaffold",
+    "source_dataset_refs": [
+      {
+        "dataset_id": "tiber-data:scaffold-fixture",
+        "version": "scaffold-snapshot-2026-06-01",
+        "uri": "tiber-data:scaffold-fixture"
+      }
+    ],
+    "provenance": "Aggregated from TIBER-Data weekly PPR outcome rows (player_weekly_ppr_outcomes_v1) into 2024->2025 player-level rows. Data source: bundled-scaffold (scaffold = bundled fixture; mounted-artifact = a real TIBER-Data artifact provided via the runner seam). Governance: fixture (governed is only honored with an explicit TIBER-Data marker, never inferred from a path or data source). Harness/loader validation only: the committed promoted artifacts are documented as scaffold-only fixture coverage and do not approve predictive loss for 2026 use. Built from a bundled scaffold weekly artifact; replace with a mounted TIBER-Data artifact for real coverage.",
+    "observation_count": 39,
+    "scored_row_count": 38,
+    "unavailable_row_count": 1
+  },
+  "feature_list": [
+    {
+      "name": "ppr_2024",
+      "kind": "numeric",
+      "description": "2024 full-season total PPR fantasy points."
+    },
+    {
+      "name": "ppr_per_game_2024",
+      "kind": "numeric",
+      "description": "2024 PPR points per game played."
+    },
+    {
+      "name": "games_2024",
+      "kind": "numeric",
+      "description": "2024 games played."
+    },
+    {
+      "name": "targets_2024",
+      "kind": "numeric",
+      "description": "2024 total targets (receiving volume)."
+    },
+    {
+      "name": "rush_attempts_2024",
+      "kind": "numeric",
+      "description": "2024 total rush attempts (rushing volume)."
+    },
+    {
+      "name": "position",
+      "kind": "categorical",
+      "description": "Player position (QB/RB/WR/TE), one-hot encoded; TE is the reference level."
+    }
+  ],
+  "missing_feature_coverage": [
+    {
+      "feature": "ppr_2024",
+      "rows_missing": 0
+    },
+    {
+      "feature": "ppr_per_game_2024",
+      "rows_missing": 0
+    },
+    {
+      "feature": "games_2024",
+      "rows_missing": 0
+    },
+    {
+      "feature": "targets_2024",
+      "rows_missing": 8
+    },
+    {
+      "feature": "rush_attempts_2024",
+      "rows_missing": 20
+    }
+  ],
+  "evaluation_method": "Leave-one-out cross-validation (LOOCV) over scored rows for the ridge model and position-mean baseline; the previous-year baseline requires no fitting.",
+  "model": {
+    "name": "seasonal-ppr-ridge-v1",
+    "is_baseline": false,
+    "description": "Ridge linear regression over standardized 2024 features plus position one-hot, evaluated leave-one-out.",
+    "overall": {
+      "sample_size": 38,
+      "mae": 35.1476538355775,
+      "rmse": 43.64041863230445,
+      "correlation": 0.728605421870201,
+      "rank_correlation": 0.7056570740781267
+    },
+    "by_position": {
+      "TE": {
+        "sample_size": 6,
+        "mae": 18.29788380457484,
+        "rmse": 22.04725270541711,
+        "correlation": 0.8352892504401256,
+        "rank_correlation": 0.8857142857142857
+      },
+      "WR": {
+        "sample_size": 14,
+        "mae": 43.88353039130697,
+        "rmse": 54.22288039186678,
+        "correlation": 0.45057299791699323,
+        "rank_correlation": 0.46373626373626375
+      },
+      "QB": {
+        "sample_size": 8,
+        "mae": 26.694521250905566,
+        "rmse": 30.43330344826698,
+        "correlation": 0.5665525127122917,
+        "rank_correlation": 0.38095238095238093
+      },
+      "RB": {
+        "sample_size": 10,
+        "mae": 39.78979474389539,
+        "rmse": 45.69770986176727,
+        "correlation": 0.13220303840562345,
+        "rank_correlation": 0.23636363636363636
+      }
+    }
+  },
+  "baselines": [
+    {
+      "name": "baseline-prev-year-ppr",
+      "is_baseline": true,
+      "description": "Predicts 2025 PPR equal to the player's 2024 PPR total (persistence baseline).",
+      "overall": {
+        "sample_size": 38,
+        "mae": 43.58684210526316,
+        "rmse": 59.67891940252129,
+        "correlation": 0.6541039863919881,
+        "rank_correlation": 0.6877120035014772
+      },
+      "by_position": {
+        "TE": {
+          "sample_size": 6,
+          "mae": 27.516666666666662,
+          "rmse": 32.09582008091811,
+          "correlation": 0.8874247435040463,
+          "rank_correlation": 0.8857142857142857
+        },
+        "WR": {
+          "sample_size": 14,
+          "mae": 50.771428571428565,
+          "rmse": 60.71120160234023,
+          "correlation": 0.48291576213641224,
+          "rank_correlation": 0.3230769230769231
+        },
+        "QB": {
+          "sample_size": 8,
+          "mae": 32.88749999999999,
+          "rmse": 39.49966772012139,
+          "correlation": 0.6904910256562227,
+          "rank_correlation": 0.5476190476190477
+        },
+        "RB": {
+          "sample_size": 10,
+          "mae": 51.73,
+          "rmse": 80.66923205287131,
+          "correlation": 0.07511827726813926,
+          "rank_correlation": 0.38181818181818183
+        }
+      }
+    },
+    {
+      "name": "baseline-position-mean",
+      "is_baseline": true,
+      "description": "Predicts 2025 PPR as the mean 2025 PPR of all players at the same position (overall mean fallback).",
+      "overall": {
+        "sample_size": 38,
+        "mae": 41.73403765824819,
+        "rmse": 51.02695969328347,
+        "correlation": 0.5980472070921193,
+        "rank_correlation": 0.3504759820549294
+      },
+      "by_position": {
+        "TE": {
+          "sample_size": 6,
+          "mae": 37.18,
+          "rmse": 43.69963386574308,
+          "correlation": -0.9999999999999999,
+          "rank_correlation": -1
+        },
+        "WR": {
+          "sample_size": 14,
+          "mae": 55.17692307692307,
+          "rmse": 65.1569325397395,
+          "correlation": -1.0000000000000002,
+          "rank_correlation": -1
+        },
+        "QB": {
+          "sample_size": 8,
+          "mae": 33.114285714285735,
+          "rmse": 41.807332625084946,
+          "correlation": -0.9999999999999999,
+          "rank_correlation": -1
+        },
+        "RB": {
+          "sample_size": 10,
+          "mae": 32.54222222222222,
+          "rmse": 37.50438492881718,
+          "correlation": -1,
+          "rank_correlation": -1
+        }
+      }
+    }
+  ],
+  "beats_baseline": true,
+  "beats_baseline_summary": "Model MAE 35.15 beats best baseline (baseline-position-mean) MAE 41.73 by 6.59 PPR.",
+  "top_misses": [
+    {
+      "player_id": "00-0039910",
+      "player_name": "Malik Nabers",
+      "position": "WR",
+      "predicted_ppr": 289.51297017349026,
+      "actual_ppr": 169.4,
+      "absolute_error": 120.11297017349025
+    },
+    {
+      "player_id": "00-0039051",
+      "player_name": "Jaxon Smith-Njigba",
+      "position": "WR",
+      "predicted_ppr": 211.07478191059596,
+      "actual_ppr": 312.9,
+      "absolute_error": 101.82521808940402
+    },
+    {
+      "player_id": "00-0038542",
+      "player_name": "Saquon Barkley",
+      "position": "RB",
+      "predicted_ppr": 350.8532003133695,
+      "actual_ppr": 268.4,
+      "absolute_error": 82.4532003133695
+    },
+    {
+      "player_id": "00-0036223",
+      "player_name": "Bijan Robinson",
+      "position": "RB",
+      "predicted_ppr": 266.5089814371585,
+      "actual_ppr": 333.6,
+      "absolute_error": 67.0910185628415
+    },
+    {
+      "player_id": "00-0033040",
+      "player_name": "Tyreek Hill",
+      "position": "WR",
+      "predicted_ppr": 215.94998110009945,
+      "actual_ppr": 156.2,
+      "absolute_error": 59.74998110009946
+    },
+    {
+      "player_id": "00-0034791",
+      "player_name": "Christian McCaffrey",
+      "position": "RB",
+      "predicted_ppr": 233.1655128671814,
+      "actual_ppr": 289.4,
+      "absolute_error": 56.23448713281857
+    },
+    {
+      "player_id": "00-0038543",
+      "player_name": "Puka Nacua",
+      "position": "WR",
+      "predicted_ppr": 261.2806954309264,
+      "actual_ppr": 314.7,
+      "absolute_error": 53.419304569073574
+    },
+    {
+      "player_id": "00-0036262",
+      "player_name": "Justin Jefferson",
+      "position": "WR",
+      "predicted_ppr": 284.28537217800175,
+      "actual_ppr": 336.7,
+      "absolute_error": 52.41462782199824
+    },
+    {
+      "player_id": "00-0036389",
+      "player_name": "Joe Burrow",
+      "position": "QB",
+      "predicted_ppr": 355.4289592945215,
+      "actual_ppr": 305.2,
+      "absolute_error": 50.22895929452153
+    },
+    {
+      "player_id": "00-0034844",
+      "player_name": "Derrick Henry",
+      "position": "RB",
+      "predicted_ppr": 291.74537588172086,
+      "actual_ppr": 244.5,
+      "absolute_error": 47.24537588172086
+    }
+  ],
+  "limitations": [
+    "OUTPUT IS MODEL INFERENCE, NOT OBSERVED REALITY. Predicted PPR values are estimates from a simple model and must not be presented as facts or as advice.",
+    "Dataset shown here is PPM-local scaffold/fixture coverage with fixture governance, not full real 2025 coverage and not a live governed TIBER-Data pull; it must not be promoted as governed.",
+    "HARNESS/LOADER VALIDATION ONLY. This proves the TIBER-Data weekly-outcome loader, contract, and backtest loop run and compare against baselines. It does NOT approve the model for 2026 predictive use until a canonical source-backed/governed TIBER-Data artifact is mounted and verified.",
+    "Scope guardrails: no TIBER-Fantasy integration, no TIBER-Rookies ML, no neural networks, and no advice language are part of this harness.",
+    "Single season pair (2024 inputs -> 2025 outcomes). LOOCV reduces but does not eliminate optimism; there is no out-of-period holdout season.",
+    "Small sample of skill-position players only (QB/RB/WR/TE). Results do not generalize to all players, depth pieces, or rookies without 2024 input data.",
+    "Season-ending injuries, role/team changes, and rookie breakouts are not modeled and drive the largest misses.",
+    "Features are 2024 box-score volume/efficiency only; no schedule, age, contract, scheme, or coaching-change signals.",
+    "Not integrated with TIBER-Fantasy. No downstream Management, Team Direction, scoring, promotion, or UI behavior consumes this output."
+  ]
+}
