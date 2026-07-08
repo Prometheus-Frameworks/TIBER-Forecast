@@ -75,8 +75,17 @@ scope; the full feature set has never been, and is not now, authorized for produ
 | Additional validation | #137 / #138 | `may_open_player_history_2024_from_2021_2023_threshold_review_issue` |
 | Threshold review | #139 / #140 | `may_open_player_history_production_binding_review_issue` |
 | Production-binding prerequisite review | #141 / #142 | `may_open_player_history_production_binding_implementation_issue` |
-| Production-only implementation | #143 / #144 | `player_history_production_binding_implemented_pending_human_signoff` (human sign-off completed during PR #144 review) |
+| Production-only implementation | #143 / #144 | `player_history_production_binding_implemented_pending_human_signoff` (PR #144 was reviewed and approved by a human maintainer before merge -- see the PR's review history) |
 | Activation verification | #145 / #146 | `player_history_production_binding_activation_verified` (10/10 independent checks passed against the merged `main` implementation) |
+
+**On "human sign-off":** the `human_signoff_recorded` field emitted by every committed report and every
+runtime disclosure (`src/services/runSeasonalPprBacktestService.ts`) is **always `false`**, by design --
+an automated report can never self-certify a human decision, so this field is not something that
+"becomes true" once a human has looked at the code. A human maintainer reviewing and approving the
+PR #144 diff is a real, separate fact (visible in that PR's GitHub review history), but it is not the
+same thing as the codebase's sign-off gate being satisfied, and it does not carry forward to authorize
+any *future*, differently-scoped activation proposal. Any activation beyond the bundled scaffold
+fixture requires its own explicit, separately-recorded human review of that specific proposal.
 
 ## Default / off behavior
 
