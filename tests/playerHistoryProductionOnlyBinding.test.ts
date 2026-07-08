@@ -97,6 +97,76 @@ describe('model inertness when player-history is absent (default for every exist
 });
 
 // ---------------------------------------------------------------------------------------------
+// REGRESSION (Codex P2, second pass): the MODEL boundary itself must fail closed, not just the
+// service. A caller using trainSeasonalRidgeModel directly (bypassing runSeasonalPprBacktestService
+// entirely, e.g. via the public library export) must not be able to change predictions just by
+// attaching a player_history object -- the gate must be supplied to the model itself.
+// ---------------------------------------------------------------------------------------------
+
+describe('trainSeasonalRidgeModel fails closed on forged/pre-enriched player_history when called directly', () => {
+  const forgedHistory = {
+    contract_id: 'player_history_production_only_v0' as const,
+    contract_version: '1.0.0' as const,
+    source_artifact_sha256: LOCKED_PLAYER_HISTORY_ARTIFACT_SHA256,
+    prior_season_1_ppr: 500,
+    prior_season_2_ppr: 500,
+    trailing_2yr_ppr_total: 1000,
+    trailing_3yr_ppr_total: 1500,
+    trailing_2yr_ppr_mean: 500,
+    trailing_3yr_ppr_mean: 500,
+    year_over_year_ppr_trend: 0,
+  };
+
+  const trainRowsWithHistory = Array.from({ length: 8 }, (_, i) =>
+    makeObservation({
+      player_id: `train-${i}`,
+      ppr_2024: 150 + i * 20,
+      ppr_2025_actual: 160 + i * 18,
+      position: i % 2 === 0 ? 'WR' : 'RB',
+      player_history: { ...forgedHistory, prior_season_1_ppr: 100 + i * 10, prior_season_2_ppr: 90 + i * 10 },
+    }),
+  );
+  const target = makeObservation({ player_id: 'target', ppr_2024: 180, player_history: forgedHistory });
+  const trainRowsNoHistory = trainRowsWithHistory.map((r) => ({ ...r, player_history: null }));
+  const targetNoHistory: SeasonalPlayerObservation = { ...target, player_history: null };
+
+  it('a caller with NO gate option gets identical predictions/contributions whether or not observations carry player_history', () => {
+    const modelWithHistoryData = trainSeasonalRidgeModel(trainRowsWithHistory, { lambda: 1 });
+    const modelNoHistoryData = trainSeasonalRidgeModel(trainRowsNoHistory, { lambda: 1 });
+
+    expect(modelWithHistoryData.predict(target)).toBeCloseTo(modelNoHistoryData.predict(targetNoHistory), 9);
+
+    const explanation = modelWithHistoryData.explain(target);
+    const historyContributions = explanation.contributions.filter((c) => c.feature.startsWith('player_history_'));
+    expect(historyContributions).toHaveLength(7);
+    for (const c of historyContributions) {
+      expect(c.contribution).toBe(0);
+    }
+  });
+
+  it('a gate with the WRONG sha256 is ignored: predictions are unaffected by the forged history', () => {
+    const modelWrongSha = trainSeasonalRidgeModel(trainRowsWithHistory, {
+      lambda: 1,
+      playerHistoryProductionOnly: { enabled: true, sourceArtifactSha256: 'not-the-locked-sha256' },
+    });
+    const modelNoHistoryData = trainSeasonalRidgeModel(trainRowsNoHistory, { lambda: 1 });
+    expect(modelWrongSha.predict(target)).toBeCloseTo(modelNoHistoryData.predict(targetNoHistory), 9);
+  });
+
+  it('a gate with the correct sha256 DOES use player_history and changes predictions/contributions', () => {
+    const gate = { enabled: true as const, sourceArtifactSha256: LOCKED_PLAYER_HISTORY_ARTIFACT_SHA256 };
+    const modelGated = trainSeasonalRidgeModel(trainRowsWithHistory, { lambda: 1, playerHistoryProductionOnly: gate });
+    const modelUngated = trainSeasonalRidgeModel(trainRowsWithHistory, { lambda: 1 });
+
+    expect(modelGated.predict(target)).not.toBeCloseTo(modelUngated.predict(target), 6);
+
+    const explanation = modelGated.explain(target);
+    const historyContributions = explanation.contributions.filter((c) => c.feature.startsWith('player_history_'));
+    expect(historyContributions.some((c) => c.standardized_value !== 0)).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------------------------
 // Service: coverage tracking and truthful disclosure when player-history IS attached.
 // ---------------------------------------------------------------------------------------------
 

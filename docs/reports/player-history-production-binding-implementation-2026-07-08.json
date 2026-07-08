@@ -48,7 +48,7 @@
       {
         "dimension": "build_and_tests_pass",
         "expected": "build_passed=true, tests_passed=true",
-        "observed": "build_passed=true, tests_passed=true (78 files, 1037 tests)",
+        "observed": "build_passed=true, tests_passed=true (78 files, 1040 tests)",
         "passed": true
       },
       {
@@ -82,7 +82,7 @@
         "id": "deterministic_replay_sequence_exercised_by_reviewer",
         "description": "`npm run build && npm test` (including the CLI opt-in flag determinism test) were actually executed for this PR, not just read.",
         "satisfied": true,
-        "evidence": "This script executed `npm run build` (passed=true) and `npm test` (passed=true, 78 files / 1037 tests) against the committed tree, including tests/playerHistoryProductionOnlyBinding.test.ts's CLI determinism check."
+        "evidence": "This script executed `npm run build` (passed=true) and `npm test` (passed=true, 78 files / 1040 tests) against the committed tree, including tests/playerHistoryProductionOnlyBinding.test.ts's CLI determinism check."
       },
       {
         "id": "missing_history_behavior_specified_for_the_named_consumer",
@@ -106,7 +106,7 @@
     "prerequisites_satisfied_count": 6,
     "prerequisites_total": 7,
     "all_mechanical_prerequisites_satisfied": true,
-    "decision_rationale": "#142's decision and the locked mirror provenance are confirmed. The scope audit found player-history wiring confined to exactly the authorized named-consumer files (5 file(s)) with zero references anywhere else (15 file(s) checked). Build and tests pass (78 files, 1037 tests), and the CLI binding was confirmed deterministic. Every mechanically-satisfiable #143 prerequisite gate is satisfied (6/7 overall). The one gate that can never be satisfied by this automated review -- human_signoff_on_seasonal_ppr_model_change -- remains explicitly open: No human sign-off has been recorded. This is an automated implementation PR; it cannot record human sign-off on its own behalf. The binding is inert by default (opt-in CLI flag only) specifically so that no live production behavior changes before that sign-off occurs. This binding is implemented and inert-by-default (a caller must explicitly opt in); it must not be treated as production-ready, activated against a real mounted artifact, or claimed as signed off until a human reviewer with authority over seasonalPprModel.ts explicitly records sign-off.",
+    "decision_rationale": "#142's decision and the locked mirror provenance are confirmed. The scope audit found player-history wiring confined to exactly the authorized named-consumer files (5 file(s)) with zero references anywhere else (15 file(s) checked). Build and tests pass (78 files, 1040 tests), and the CLI binding was confirmed deterministic. Every mechanically-satisfiable #143 prerequisite gate is satisfied (6/7 overall). The one gate that can never be satisfied by this automated review -- human_signoff_on_seasonal_ppr_model_change -- remains explicitly open: No human sign-off has been recorded. This is an automated implementation PR; it cannot record human sign-off on its own behalf. The binding is inert by default (opt-in CLI flag only) specifically so that no live production behavior changes before that sign-off occurs. This binding is implemented and inert-by-default (a caller must explicitly opt in); it must not be treated as production-ready, activated against a real mounted artifact, or claimed as signed off until a human reviewer with authority over seasonalPprModel.ts explicitly records sign-off.",
     "boundary_statements": {
       "production_only_scope_only": true,
       "no_full_feature_set_wiring": true,

@@ -137,6 +137,39 @@ export interface SeasonalPlayerObservation {
   player_history?: PlayerHistoryProductionOnlyObservation | null;
 }
 
+/**
+ * The opt-in gate a caller must supply before ANY production code (model or service) may read a
+ * `player_history` block. `enabled: true` alone is not sufficient -- {@link resolveGatedPlayerHistory}
+ * additionally requires the block's own `contract_id`/`contract_version`/`source_artifact_sha256` to
+ * match this gate's declared `sourceArtifactSha256` exactly.
+ */
+export interface PlayerHistoryProductionOnlyGate {
+  enabled: true;
+  sourceArtifactSha256: string;
+}
+
+/**
+ * The ONE sanctioned way to read `player_history` off an observation anywhere in production Forecast
+ * code (`seasonalPprModel.ts` and `runSeasonalPprBacktestService.ts` both call this; neither reads
+ * `observation.player_history` directly). Fails closed: returns `null` unless `gate` is defined,
+ * `gate.enabled` is `true`, the observation actually carries a `player_history` block, AND that
+ * block's `contract_id`, `contract_version`, and `source_artifact_sha256` all match exactly what
+ * `gate` declares. This is what prevents a caller from changing model behavior merely by attaching a
+ * `player_history` object to an observation -- with no gate (or a mismatched one), the object is
+ * inert no matter which production entrypoint receives it.
+ */
+export const resolveGatedPlayerHistory = (
+  observation: SeasonalPlayerObservation,
+  gate: PlayerHistoryProductionOnlyGate | undefined,
+): PlayerHistoryProductionOnlyObservation | null => {
+  const history = observation.player_history;
+  if (!gate?.enabled || !history) return null;
+  if (history.contract_id !== PLAYER_HISTORY_PRODUCTION_ONLY_CONTRACT_ID) return null;
+  if (history.contract_version !== PLAYER_HISTORY_PRODUCTION_ONLY_CONTRACT_VERSION) return null;
+  if (history.source_artifact_sha256 !== gate.sourceArtifactSha256) return null;
+  return history;
+};
+
 /** Dataset descriptor: provenance + governance for the curated observation set. */
 export interface SeasonalPprDatasetDescriptor {
   dataset_id: string;
