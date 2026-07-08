@@ -125,6 +125,73 @@ describe('service coverage tracking and disclosure when player-history is attach
       human_signoff_recorded: false,
     });
   });
+
+  it('REGRESSION (Codex P2): player_history on observations is ignored when the option is omitted, even though the data is attached', () => {
+    const mirror = JSON.parse(readFileSync(path.resolve(LOCKED_PLAYER_HISTORY_MIRROR_PATH), 'utf8'));
+    const index = buildPlayerHistoryProductionOnlyIndex(mirror);
+    const enriched = attachPlayerHistoryProductionOnly(tiberDataSeasonalPprDataset.observations, index);
+
+    // No playerHistoryProductionOnly option passed, despite observations carrying real player_history.
+    const result = runSeasonalPprBacktestService({ ...tiberDataSeasonalPprDataset, observations: enriched }, { generatedAt: '2026-07-08T00:00:00.000Z' });
+    if (!result.ok) throw new Error('expected success');
+
+    expect(result.data.report.player_history_production_only).toEqual({ enabled: false, source_artifact_sha256: null, human_signoff_recorded: false });
+    // The disclosure must be true, not just optimistic: no prediction row may report a player_history
+    // feature as present when the report says the binding was disabled.
+    for (const row of result.data.predictions) {
+      expect(row.features_present.some((f) => f.startsWith('player_history_'))).toBe(false);
+    }
+    for (const m of result.data.report.missing_feature_coverage) {
+      if (m.feature.startsWith('player_history_')) {
+        expect(m.rows_missing).toBe(tiberDataSeasonalPprDataset.observations.length);
+      }
+    }
+  });
+
+  it('REGRESSION (Codex P2): a player_history block with the WRONG declared sha256 is ignored even when enabled: true', () => {
+    const mirror = JSON.parse(readFileSync(path.resolve(LOCKED_PLAYER_HISTORY_MIRROR_PATH), 'utf8'));
+    const index = buildPlayerHistoryProductionOnlyIndex(mirror);
+    const enriched = attachPlayerHistoryProductionOnly(tiberDataSeasonalPprDataset.observations, index);
+
+    const result = runSeasonalPprBacktestService(
+      { ...tiberDataSeasonalPprDataset, observations: enriched },
+      { generatedAt: '2026-07-08T00:00:00.000Z', playerHistoryProductionOnly: { enabled: true, sourceArtifactSha256: 'not-the-locked-sha256' } },
+    );
+    if (!result.ok) throw new Error('expected success');
+    for (const m of result.data.report.missing_feature_coverage) {
+      if (m.feature.startsWith('player_history_')) {
+        expect(m.rows_missing).toBe(tiberDataSeasonalPprDataset.observations.length);
+      }
+    }
+  });
+
+  it('a player_history block with a forged/stale contract_id or contract_version is ignored even when enabled: true with the right sha256', () => {
+    const forged = tiberDataSeasonalPprDataset.observations.map((o) => ({
+      ...o,
+      player_history: {
+        contract_id: 'player_history_production_only_v0' as const,
+        contract_version: '0.1.0-proposed' as unknown as '1.0.0', // stale/forged version, not the accepted one
+        source_artifact_sha256: LOCKED_PLAYER_HISTORY_ARTIFACT_SHA256,
+        prior_season_1_ppr: 999,
+        prior_season_2_ppr: 999,
+        trailing_2yr_ppr_total: 1998,
+        trailing_3yr_ppr_total: 2997,
+        trailing_2yr_ppr_mean: 999,
+        trailing_3yr_ppr_mean: 999,
+        year_over_year_ppr_trend: 0,
+      },
+    }));
+    const result = runSeasonalPprBacktestService(
+      { ...tiberDataSeasonalPprDataset, observations: forged },
+      { generatedAt: '2026-07-08T00:00:00.000Z', playerHistoryProductionOnly: { enabled: true, sourceArtifactSha256: LOCKED_PLAYER_HISTORY_ARTIFACT_SHA256 } },
+    );
+    if (!result.ok) throw new Error('expected success');
+    for (const m of result.data.report.missing_feature_coverage) {
+      if (m.feature.startsWith('player_history_')) {
+        expect(m.rows_missing).toBe(tiberDataSeasonalPprDataset.observations.length);
+      }
+    }
+  });
 });
 
 // ---------------------------------------------------------------------------------------------

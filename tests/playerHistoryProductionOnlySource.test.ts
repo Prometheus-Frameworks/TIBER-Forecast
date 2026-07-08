@@ -132,24 +132,26 @@ describe('buildPlayerHistoryProductionOnlyIndex against the real committed mirro
     expect(index.has('00-0023459')).toBe(true);
   });
 
-  it('stamps the correct contract_id/version and the mirror sha256 onto every entry', () => {
+  it('stamps the correct contract_id/version and the mirror sha256 onto every entry, and records identity for verification', () => {
     const index = buildPlayerHistoryProductionOnlyIndex(realMirror());
     const entry = index.get('00-0023459')!;
-    expect(entry.contract_id).toBe('player_history_production_only_v0');
-    expect(entry.contract_version).toBe('1.0.0');
-    expect(entry.source_artifact_sha256).toBe(LOCKED_PLAYER_HISTORY_ARTIFACT_SHA256);
+    expect(entry.feature.contract_id).toBe('player_history_production_only_v0');
+    expect(entry.feature.contract_version).toBe('1.0.0');
+    expect(entry.feature.source_artifact_sha256).toBe(LOCKED_PLAYER_HISTORY_ARTIFACT_SHA256);
+    expect(entry.position).toBe('QB');
+    expect(entry.player_name).toBe('Aaron Rodgers');
   });
 
   it('computes trailing aggregates that are internally consistent (total = sum of the two prior seasons)', () => {
     const index = buildPlayerHistoryProductionOnlyIndex(realMirror());
-    for (const [playerId, entry] of index) {
-      if (entry.prior_season_1_ppr !== null && entry.prior_season_2_ppr !== null) {
-        expect(entry.trailing_2yr_ppr_total).toBeCloseTo(entry.prior_season_1_ppr + entry.prior_season_2_ppr, 6);
-        expect(entry.trailing_2yr_ppr_mean).toBeCloseTo(entry.trailing_2yr_ppr_total! / 2, 6);
-        expect(entry.year_over_year_ppr_trend).toBeCloseTo(entry.prior_season_1_ppr - entry.prior_season_2_ppr, 6);
+    for (const [playerId, { feature }] of index) {
+      if (feature.prior_season_1_ppr !== null && feature.prior_season_2_ppr !== null) {
+        expect(feature.trailing_2yr_ppr_total).toBeCloseTo(feature.prior_season_1_ppr + feature.prior_season_2_ppr, 6);
+        expect(feature.trailing_2yr_ppr_mean).toBeCloseTo(feature.trailing_2yr_ppr_total! / 2, 6);
+        expect(feature.year_over_year_ppr_trend).toBeCloseTo(feature.prior_season_1_ppr - feature.prior_season_2_ppr, 6);
       } else {
-        expect(entry.trailing_2yr_ppr_total, `${playerId} trailing_2yr_ppr_total should be null when a prior season is missing`).toBeNull();
-        expect(entry.year_over_year_ppr_trend).toBeNull();
+        expect(feature.trailing_2yr_ppr_total, `${playerId} trailing_2yr_ppr_total should be null when a prior season is missing`).toBeNull();
+        expect(feature.year_over_year_ppr_trend).toBeNull();
       }
     }
   });
@@ -195,6 +197,36 @@ describe('attachPlayerHistoryProductionOnly', () => {
     const [attached] = attachPlayerHistoryProductionOnly([observation('00-0000000-not-real')], index);
     expect(attached.player_history).toBeNull();
     expect('player_history' in attached).toBe(true);
+  });
+
+  it('REGRESSION (Codex P1): refuses a player_id match at the wrong position -- fixture ID collisions are real', () => {
+    // 00-0033857 is George Kittle (TE) in the bundled scaffold but JuJu Smith-Schuster (WR) in the
+    // real mirror -- confirmed identity collision across the two fixtures. The join must never hand
+    // one real player's PPR history to a different player just because an ID string matches.
+    const index = buildPlayerHistoryProductionOnlyIndex(realMirror());
+    const collidingId = '00-0033857';
+    expect(index.has(collidingId)).toBe(true);
+    expect(index.get(collidingId)!.position).toBe('WR'); // JuJu Smith-Schuster, per the real mirror
+
+    const kittle = observation(collidingId); // helper defaults to position: 'QB' below; force TE explicitly
+    const [attached] = attachPlayerHistoryProductionOnly([{ ...kittle, position: 'TE' }], index);
+    expect(attached.player_history).toBeNull();
+  });
+
+  it('confirms the exact three known scaffold/mirror ID collisions all null out rather than cross-contaminate', () => {
+    const index = buildPlayerHistoryProductionOnlyIndex(realMirror());
+    const knownCollisions: Array<{ id: string; scaffoldPosition: SeasonalPlayerObservation['position'] }> = [
+      { id: '00-0037539', scaffoldPosition: 'RB' }, // scaffold: Jahmyr Gibbs; mirror: Lucas Krull (TE)
+      { id: '00-0038977', scaffoldPosition: 'RB' }, // scaffold: Bucky Irving; mirror: Tank Dell (WR)
+      { id: '00-0033857', scaffoldPosition: 'TE' }, // scaffold: George Kittle; mirror: JuJu Smith-Schuster (WR)
+    ];
+    for (const { id, scaffoldPosition } of knownCollisions) {
+      const entry = index.get(id);
+      expect(entry, `${id} should be present in the real mirror (at a different position)`).toBeDefined();
+      expect(entry!.position, `${id} mirror position should differ from the scaffold's`).not.toBe(scaffoldPosition);
+      const [attached] = attachPlayerHistoryProductionOnly([{ ...observation(id), position: scaffoldPosition }], index);
+      expect(attached.player_history, `${id} must null out, not borrow ${entry!.player_name}'s history`).toBeNull();
+    }
   });
 
   it('does not mutate the input observations array or its elements', () => {

@@ -121,13 +121,27 @@ export const verifyPlayerHistoryMirrorProvenance = (mirror: PlayerHistoryProduct
 };
 
 /**
- * Build a player_id -> feature-block index from a provenance-verified mirror. Reuses
+ * One indexed mirror entry: the feature block PLUS the identity (position, player_name) the mirror
+ * itself recorded for this `player_id`, so a consumer can verify the join before trusting it.
+ * `player_id` values are not guaranteed globally unique/stable across every fixture in this repo
+ * (confirmed collisions exist between the bundled scaffold and this real-data mirror, e.g. the same
+ * ID naming different real players at different positions) -- position is the cheapest available
+ * cross-check and is REQUIRED, never optional, before a match is trusted.
+ */
+export interface PlayerHistoryProductionOnlyIndexEntry {
+  position: string;
+  player_name: string;
+  feature: PlayerHistoryProductionOnlyObservation;
+}
+
+/**
+ * Build a player_id -> {identity, feature-block} index from a provenance-verified mirror. Reuses
  * `buildPlayerHistoryFeatures` (families: ['production'] only) so the trailing-window math and
  * leakage guards are byte-identical to the already-reviewed scaffold module.
  */
 export const buildPlayerHistoryProductionOnlyIndex = (
   mirror: PlayerHistoryProductionOnlyMirrorDocument,
-): Map<string, PlayerHistoryProductionOnlyObservation> => {
+): Map<string, PlayerHistoryProductionOnlyIndexEntry> => {
   verifyPlayerHistoryMirrorProvenance(mirror);
 
   const featureRows = buildPlayerHistoryFeatures(mirror.rows, {
@@ -136,22 +150,26 @@ export const buildPlayerHistoryProductionOnlyIndex = (
     inputSeasons: [...PLAYER_HISTORY_PRODUCTION_ONLY_INPUT_SEASONS],
   });
 
-  const index = new Map<string, PlayerHistoryProductionOnlyObservation>();
+  const index = new Map<string, PlayerHistoryProductionOnlyIndexEntry>();
   const anchor = PLAYER_HISTORY_PRODUCTION_ONLY_TRAILING_ANCHOR_SEASON;
   for (const row of featureRows) {
     const production = row.production;
     if (!production) continue; // families requested only 'production'; should always be present.
     index.set(row.player_id, {
-      contract_id: PLAYER_HISTORY_PRODUCTION_ONLY_CONTRACT_ID,
-      contract_version: PLAYER_HISTORY_PRODUCTION_ONLY_CONTRACT_VERSION,
-      source_artifact_sha256: mirror.governed_source.sha256,
-      prior_season_1_ppr: production.season_ppr_by_season[anchor - 1] ?? null,
-      prior_season_2_ppr: production.season_ppr_by_season[anchor - 2] ?? null,
-      trailing_2yr_ppr_total: production.trailing_2yr_ppr_total,
-      trailing_3yr_ppr_total: production.trailing_3yr_ppr_total,
-      trailing_2yr_ppr_mean: production.trailing_2yr_ppr_mean,
-      trailing_3yr_ppr_mean: production.trailing_3yr_ppr_mean,
-      year_over_year_ppr_trend: production.year_over_year_ppr_trend,
+      position: row.position,
+      player_name: row.player_name,
+      feature: {
+        contract_id: PLAYER_HISTORY_PRODUCTION_ONLY_CONTRACT_ID,
+        contract_version: PLAYER_HISTORY_PRODUCTION_ONLY_CONTRACT_VERSION,
+        source_artifact_sha256: mirror.governed_source.sha256,
+        prior_season_1_ppr: production.season_ppr_by_season[anchor - 1] ?? null,
+        prior_season_2_ppr: production.season_ppr_by_season[anchor - 2] ?? null,
+        trailing_2yr_ppr_total: production.trailing_2yr_ppr_total,
+        trailing_3yr_ppr_total: production.trailing_3yr_ppr_total,
+        trailing_2yr_ppr_mean: production.trailing_2yr_ppr_mean,
+        trailing_3yr_ppr_mean: production.trailing_3yr_ppr_mean,
+        year_over_year_ppr_trend: production.year_over_year_ppr_trend,
+      },
     });
   }
   return index;
@@ -159,14 +177,18 @@ export const buildPlayerHistoryProductionOnlyIndex = (
 
 /**
  * Attach player-history to every observation in a dataset. A player_id present in `index` gets that
- * exact feature block; a player_id absent from `index` gets `player_history: null` -- explicit,
- * never zero-filled, never imputed. Pure; does not mutate the input observations.
+ * exact feature block ONLY IF the index entry's `position` matches the observation's `position`
+ * (fail-closed identity check -- `player_id` collisions across fixtures are real, see
+ * {@link PlayerHistoryProductionOnlyIndexEntry}). A player_id absent from `index`, or present but at
+ * a different position, gets `player_history: null` -- explicit, never zero-filled, never imputed,
+ * and never another player's history. Pure; does not mutate the input observations.
  */
 export const attachPlayerHistoryProductionOnly = (
   observations: readonly SeasonalPlayerObservation[],
-  index: ReadonlyMap<string, PlayerHistoryProductionOnlyObservation>,
+  index: ReadonlyMap<string, PlayerHistoryProductionOnlyIndexEntry>,
 ): SeasonalPlayerObservation[] =>
-  observations.map((observation) => ({
-    ...observation,
-    player_history: index.get(observation.player_id) ?? null,
-  }));
+  observations.map((observation) => {
+    const entry = index.get(observation.player_id);
+    const identityVerified = entry !== undefined && entry.position === observation.position;
+    return { ...observation, player_history: identityVerified ? entry.feature : null };
+  });

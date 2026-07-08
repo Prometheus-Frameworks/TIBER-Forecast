@@ -27,6 +27,8 @@ import {
   SEASONAL_PPR_PREDICTION_ARTIFACT_VERSION,
   SEASONAL_PPR_TARGET_DEFINITION,
   SEASONAL_PPR_TARGET_SEASON,
+  PLAYER_HISTORY_PRODUCTION_ONLY_CONTRACT_ID,
+  PLAYER_HISTORY_PRODUCTION_ONLY_CONTRACT_VERSION,
   type SeasonalPlayerObservation,
   type SeasonalPprBacktestReport,
   type SeasonalPprDatasetDescriptor,
@@ -115,6 +117,35 @@ const featuresPresent = (observation: SeasonalPlayerObservation): string[] => {
 const featureValuePresent = (observation: SeasonalPlayerObservation, feature: string): boolean =>
   featuresPresent(observation).includes(feature);
 
+/**
+ * Fail-closed gate (Forecast #143 Codex review): `player_history` is only trusted when the CALLER
+ * explicitly enabled it via `options.playerHistoryProductionOnly` AND the block's own
+ * `contract_id`/`contract_version`/`source_artifact_sha256` match exactly what the caller declared.
+ * Without this gate, any dataset carrying a `player_history` field would silently influence
+ * predictions regardless of the disclosed `enabled` option, and a mismatched/forged/stale contract
+ * block could be consumed as if it were the locked, reviewed source. Every observation that fails
+ * this check has its `player_history` stripped to `null` (never partially trusted) before anything
+ * else in this service reads it -- this is the ONLY place `player_history` is allowed to flow from
+ * the dataset into the model.
+ */
+const gatePlayerHistoryOnDeclaredProvenance = (
+  observations: SeasonalPlayerObservation[],
+  option: RunSeasonalPprBacktestOptions['playerHistoryProductionOnly'],
+): SeasonalPlayerObservation[] => {
+  if (!option?.enabled) {
+    return observations.map((observation) => (observation.player_history ? { ...observation, player_history: null } : observation));
+  }
+  return observations.map((observation) => {
+    const history = observation.player_history;
+    const trusted =
+      history != null &&
+      history.contract_id === PLAYER_HISTORY_PRODUCTION_ONLY_CONTRACT_ID &&
+      history.contract_version === PLAYER_HISTORY_PRODUCTION_ONLY_CONTRACT_VERSION &&
+      history.source_artifact_sha256 === option.sourceArtifactSha256;
+    return trusted ? observation : { ...observation, player_history: null };
+  });
+};
+
 const buildModelEvaluation = (
   name: string,
   description: string,
@@ -134,7 +165,7 @@ export const runSeasonalPprBacktestService = (
 ): RunSeasonalPprBacktestResult => {
   try {
     const generatedAt = options.generatedAt ?? new Date().toISOString();
-    const observations = dataset.observations;
+    const observations = gatePlayerHistoryOnDeclaredProvenance(dataset.observations, options.playerHistoryProductionOnly);
 
     if (observations.length === 0) {
       return serviceFailure({
