@@ -1,0 +1,91 @@
+{
+  "report_version": "player-history-production-binding-activation-verification-report-v1",
+  "repo": "Prometheus-Frameworks/TIBER-Forecast",
+  "issue": "TIBER-Forecast#145",
+  "generated_at": "2026-07-08T00:00:00.000Z",
+  "verified_against": {
+    "expected_merge_commit": "61b1237",
+    "merge_commit_verified": true,
+    "source_pr": "TIBER-Forecast#144"
+  },
+  "review": {
+    "version": "player-history-production-binding-activation-verification-v1",
+    "issue": "TIBER-Forecast#145",
+    "decision": "player_history_production_binding_activation_verified",
+    "checks": [
+      {
+        "id": "merge_commit_verified",
+        "description": "Verification ran against the actual #144 merge commit on main.",
+        "passed": true,
+        "evidence": "Confirmed HEAD descends from 61b1237."
+      },
+      {
+        "id": "default_behavior_unchanged",
+        "description": "Default (no-flag) execution discloses disabled, exercises no player-history feature, and matches the pinned pre-#143 baseline (data/fixtures/seasonalPpr/) exactly on every prediction field and on overall MAE/RMSE.",
+        "passed": true,
+        "evidence": "enabled=false; every row has zero player_history_* entries in features_present=true; same 39-player set vs. pinned baseline=true; field mismatches vs. baseline=0 (none); MAE matches baseline (35.1476538355775)=true; RMSE matches baseline (43.64041863230445)=true."
+      },
+      {
+        "id": "only_approved_features_activated",
+        "description": "Enabled execution's declared feature_list (not just per-row presence) is exactly the 5 base + 7 approved production_only numeric columns, and every approved column is exercised by at least one row.",
+        "passed": true,
+        "evidence": "unexpected feature names observed in any row: none. Approved features actually exercised: 7/7. report.feature_list numeric names exactly match expected set=true (extra: none; missing: none)."
+      },
+      {
+        "id": "provenance_fail_closed",
+        "description": "The locked artifact identity check passes for the real mirror and fails closed for every tampered variant.",
+        "passed": true,
+        "evidence": "pristine_real_mirror: threw=false (expected false); tampered_sha256: threw=true (expected true); tampered_repo: threw=true (expected true); tampered_promotion_review: threw=true (expected true); tampered_artifact_status: threw=true (expected true); tampered_input_window: threw=true (expected true)"
+      },
+      {
+        "id": "missing_history_explicit",
+        "description": "Known player_id collisions (scaffold vs. real mirror identity mismatches) null out rather than borrowing another real player's history.",
+        "passed": true,
+        "evidence": "00-0037539: found=true, all_player_history_inputs_zero=true; 00-0038977: found=true, all_player_history_inputs_zero=true; 00-0033857: found=true, all_player_history_inputs_zero=true"
+      },
+      {
+        "id": "model_gate_cannot_be_bypassed",
+        "description": "trainSeasonalRidgeModel, called directly (bypassing the service), ignores player_history unless the correct gate is supplied.",
+        "passed": true,
+        "evidence": "no-gate prediction identical to clean baseline=true (188.38461538461542 vs 188.38461538461542); wrong-sha prediction identical to clean=true (188.38461538461542); correct-gate prediction differs from clean=true (262.24)."
+      },
+      {
+        "id": "report_disclosure_accurate",
+        "description": "The report's enabled/sha256 disclosure matches the actual run type.",
+        "passed": true,
+        "evidence": "disabled run discloses {\"enabled\":false,\"source_artifact_sha256\":null,\"human_signoff_recorded\":false} (correct=true); enabled run discloses {\"enabled\":true,\"source_artifact_sha256\":\"d45f612b207085df00b4b080e4f55ce1abbd060dcbf30b0bee777ff833ddd8ac\",\"human_signoff_recorded\":false} (correct=true)."
+      },
+      {
+        "id": "deterministic_replay_stable",
+        "description": "Two independent enabled runs produce byte-identical output.",
+        "passed": true,
+        "evidence": "report bytes identical=true; predictions bytes identical=true."
+      },
+      {
+        "id": "no_unrelated_outputs_changed",
+        "description": "A full-repository scan finds player-history references ONLY in already-authorized files.",
+        "passed": true,
+        "evidence": "25 file(s) with a player-history reference scanned; 0 unauthorized: none. Forbidden terms: player_history, player-history, playerHistory, PlayerHistory."
+      },
+      {
+        "id": "build_and_test_passed",
+        "description": "`npm run build` and `npm test` both pass on main.",
+        "passed": true,
+        "evidence": "build_passed=true, tests_passed=true (79 files, 1065 tests)."
+      }
+    ],
+    "checks_passed_count": 10,
+    "checks_total": 10,
+    "all_passed": true,
+    "decision_rationale": "All 10 verification points passed against the #144 merge commit: default behavior is unchanged (byte-identical predictions/metrics vs. the pre-#143 commit), the opt-in flag activates only the 7 approved production_only features, the locked artifact sha256/contract fail closed on any mismatch (verified against both the real mirror and synthetically tampered copies), missing/colliding player identities null out explicitly rather than cross-contaminating, direct trainSeasonalRidgeModel usage cannot be influenced by forged or pre-enriched player_history data without the exact matching gate, report disclosure (enabled/sha256) matches the actual run type in every case, two independent enabled runs produced byte-identical output, and a full-repository scope scan found no player-history reference outside the already-authorized file set. This confirms activation readiness for the already-implemented, already-signed-off production_only binding. It does not authorize any additional feature family, model redesign, or product-facing change.",
+    "boundary_statements": {
+      "verification_only_no_feature_expansion": true,
+      "no_model_redesign": true,
+      "no_full_feature_set_authorization": true,
+      "no_fantasy_product_ui_ranking_advice_behavior": true,
+      "no_tiber_data_change": true,
+      "no_threshold_change": true,
+      "positive_decision_confirms_activation_readiness_only": true
+    }
+  }
+}
