@@ -256,8 +256,9 @@ configuration/entrypoint was touched.
 behavior with synthetic data for every check (wrong repo, wrong commit, each of the three artifact
 hashes, missing/mismatched source-manifest input hashes, manifest self-consistency, schema/season/
 `generated_at`/`run_id`/coverage-summary mismatches, duplicate/wrong row counts, wrong drafted/UDFA
-split, and a malformed UDFA row). It deliberately does **not** attempt to reproduce a full "all 26
-checks pass" run using fabricated bytes for the six source-manifest input files, since Forecast does
+split, a malformed UDFA row, and a missing/malformed `mirror_refreshed_at`). It deliberately does
+**not** attempt to reproduce a full "all 27 checks pass" run using fabricated bytes for the six
+source-manifest input files, since Forecast does
 not vendor those files at all (only the three promoted `rookie_transition_profile` artifacts are
 mirrored, per the approved design) and fabricated content cannot be made to hash to the real pinned
 values. That full positive path was proven for real, once, during this implementation (see
