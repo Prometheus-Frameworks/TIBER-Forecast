@@ -1,0 +1,181 @@
+{
+  "report_id": "rookie-transition-profile-forecast-mirror-rehearsal-2026-07-11",
+  "status": "report_only_no_repair_no_adapter_no_join_no_experiment_no_activation",
+  "issue": "TIBER-Forecast#153",
+  "date": "2026-07-11",
+  "predecessors": ["TIBER-Forecast#151", "TIBER-Forecast#152"],
+  "locked_identities": {
+    "forecast": {
+      "repo": "Prometheus-Frameworks/TIBER-Forecast",
+      "commit": "6f67c3ee8cfff27eb74b22df5cc233d5d0601bbf",
+      "source_pr": "TIBER-Forecast#152",
+      "implementation_issue": "TIBER-Forecast#151"
+    },
+    "tiber_rookies": {
+      "repo": "Prometheus-Frameworks/TIBER-Rookies",
+      "commit": "2ef92faf9a9c91a393f53e9140428451529a1c48",
+      "promoted_path": "exports/promoted/rookie-transition-profile/",
+      "schema_version": "rookie-transition-profile-v0.2.0",
+      "season": 2026,
+      "run_id": "rookie-transition-profile-2026-2026-07-10T12:00:00+00:00",
+      "row_count": 48
+    }
+  },
+  "clean_start": {
+    "forecast_head": "6f67c3ee8cfff27eb74b22df5cc233d5d0601bbf",
+    "forecast_status_clean": true,
+    "tiber_rookies_head": "2ef92faf9a9c91a393f53e9140428451529a1c48",
+    "tiber_rookies_status_clean": true,
+    "node_version": "v22.22.2",
+    "npm_version": "10.9.7"
+  },
+  "committed_mirror_verification": {
+    "directory_contains_exactly_four_authorized_files": true,
+    "independently_computed_hashes": {
+      "rookie_transition_profile_v0_2026.mirror.json": "c95b941c7855612daccfc2226fc51e0e34dbb2ebe8a2487596675d2522a22f37",
+      "rookie_transition_profile_v0_2026.mirror.csv": "3005bcd6ad4ffc87a312c6926e20c5e3658747012855aa9d8ccfa33d898545e6",
+      "rookie_transition_profile_v0_2026.manifest.mirror.json": "0acf361c6d2d8cc6f684026481a5aa279e9f7fa718256fad78da0366d5804413",
+      "ROOKIE_TRANSITION_PROFILE_V0_MIRROR_PROVENANCE.json": "2639d5acb11e8d77400700e814ad9c50dba9bf0a46f3f80413e4f0d51860aaa6"
+    },
+    "payload_hashes_match_locked_values": true,
+    "wrapper_kind": "rookie_transition_profile_v0_forecast_mirror_provenance",
+    "wrapper_schema_version": "1.0.0",
+    "wrapper_source_lock_matches_pins": true,
+    "wrapper_mirrored_hashes_independently_recomputed_and_matched": true,
+    "wrapper_governing_design_correct": {
+      "consumption_design_issue": "TIBER-Forecast#149",
+      "consumption_design_pr": "TIBER-Forecast#150",
+      "consumption_design_merge_commit": "6c68b1691476f0d26f1b0270e32c199a3ee2f436"
+    },
+    "wrapper_identity_row_count": 48,
+    "wrapper_resolved_count": 0,
+    "wrapper_unresolved_count": 48,
+    "all_identity_statuses_unresolved_to_forecast_population": true,
+    "wrapper_identity_ids_equal_mirrored_json_ids_no_duplicates": true,
+    "temporal_and_authorization_status": {
+      "all_field_families": "audit_only",
+      "pre_draft_temporal_eligibility": "unresolved",
+      "phase_specific_projection_created": false,
+      "experiment_eligibility_established": false,
+      "model_use_authorized": false,
+      "production_use_authorized": false
+    },
+    "wrapper_population_and_outcome_parity": {
+      "unique_player_id_rows": 48,
+      "status_drafted_count": 47,
+      "status_udfa_signed_count": 1
+    }
+  },
+  "upstream_source_verification": {
+    "verified_from_separate_worktree_not_forecast_vendored_copy": true,
+    "remote_matches": true,
+    "commit_matches": true,
+    "all_nine_hashes_match_locked_values": true,
+    "schema_season_generated_at_run_id_row_count_coverage_summary_match": true
+  },
+  "byte_comparison": {
+    "json_byte_identical": true,
+    "csv_byte_identical": true,
+    "manifest_byte_identical": true,
+    "method": "diff and cmp, both directions confirmed exit code 0"
+  },
+  "deterministic_reproduction": {
+    "mirror_refreshed_at_used": "2026-07-11T00:00:00.000Z",
+    "disposable_output_path": ".tmp/rookie-transition-profile-mirror-rehearsal",
+    "run_1": { "checks_passed": "27/27", "decision": "may_open_rookie_transition_profile_forecast_mirror_rehearsal_issue", "files_emitted": 4, "debris_remaining": 0 },
+    "run_2": { "checks_passed": "27/27", "decision": "may_open_rookie_transition_profile_forecast_mirror_rehearsal_issue", "files_emitted": 4, "debris_remaining": 0 },
+    "run1_vs_run2_all_four_files_byte_identical": true,
+    "run2_vs_committed_all_four_files_byte_identical_including_wrapper": true,
+    "disposable_directory_removed_after_capture": true
+  },
+  "negative_controls": [
+    {
+      "control": "non_git_source_root",
+      "source_root": "/tmp/rehearsal-neg1-nongit",
+      "exit_code_nonzero": true,
+      "no_final_mirror_directory_created": true,
+      "no_staging_or_backup_debris": true
+    },
+    {
+      "control": "real_git_checkout_correct_bytes_wrong_commit",
+      "source_root": "/tmp/rehearsal-neg3-wrongcommit",
+      "resolved_repo": "Prometheus-Frameworks/TIBER-Rookies",
+      "resolved_commit": "d17c4bae318f916fef1139aedf88c9ea64be757c",
+      "checks_passed": "26/27",
+      "failed_check": "source_commit",
+      "decision": "rookie_transition_profile_forecast_mirror_blocked",
+      "exit_code_nonzero": true,
+      "no_final_mirror_directory_created": true,
+      "no_staging_or_backup_debris": true
+    }
+  ],
+  "override_bypass_check": {
+    "attempted_flags": ["--source-commit=2ef92faf9a9c91a393f53e9140428451529a1c48", "--source-repo=Prometheus-Frameworks/TIBER-Rookies"],
+    "flags_exist_in_cli": false,
+    "result_identical_to_no_flags": true,
+    "conclusion": "no_caller_supplied_override_can_bypass_the_identity_check"
+  },
+  "population_and_source_semantics": {
+    "unique_player_id_rows": 48,
+    "status_drafted_count": 47,
+    "status_udfa_signed_count": 1,
+    "udfa_row": {
+      "player_id": "te-daequan-wright",
+      "nfl_team": "PHI",
+      "is_udfa": true,
+      "draft_round": null,
+      "overall_pick": null,
+      "last_verified_at": null
+    },
+    "every_row_retains_official_postdraft_outcome": true,
+    "draft_capital_source_type_market_derived_proxy_all_rows": true,
+    "official_outcome_source_type_official_draft_result_all_present": true,
+    "unavailable_fields_remain_unavailable": true,
+    "athletic_testing_null_count": 16,
+    "age_at_entry_null_count": 1,
+    "no_fill_imputation_normalization_filtering_score_rank_composite_projection_field_found": true
+  },
+  "json_csv_parity": {
+    "row_counts_equal": true,
+    "ordered_player_id_sequence_identical": true,
+    "no_duplicates_either_representation": true,
+    "no_extra_or_missing_row": true,
+    "official_outcome_status_parity_all_rows": true,
+    "dae_quan_wright_null_udfa_semantics_survive_as_empty_string_csv_convention": true
+  },
+  "inertness_after_merge": {
+    "src_models_references": 0,
+    "src_services_references": 0,
+    "entrypoints_src_index_src_server_references": 0,
+    "package_json_start_dev_build_scripts_reference_mirror": false,
+    "generic_fixture_discovery_mechanism_exists": false,
+    "mirror_modules_imported_only_by_cli_and_own_tests": true,
+    "refresh_script_is_operational_tooling_only": true,
+    "no_phase_specific_or_model_ready_artifact_elsewhere": true,
+    "no_ui_or_downstream_import_added_after_pr_152": true
+  },
+  "build_and_test": {
+    "build_command": "npm run build",
+    "build_result": "clean_no_errors",
+    "test_command": "npm test",
+    "test_files": 84,
+    "tests": 1136,
+    "matches_pr152_baseline": true,
+    "baseline_test_files": 84,
+    "baseline_tests": 1136
+  },
+  "cleanup": {
+    "all_disposable_paths_removed": true,
+    "final_git_status_short_shows_only_this_reports_two_new_files": true
+  },
+  "changed_files": [
+    "docs/experiments/rookie-transition-profile-forecast-mirror-rehearsal-2026-07-11.md",
+    "docs/experiments/rookie-transition-profile-forecast-mirror-rehearsal-2026-07-11.json"
+  ],
+  "decision": "may_open_rookie_transition_profile_forecast_preexperiment_readiness_design_issue",
+  "decision_scope": "authorizes only opening a separate pre-experiment readiness design issue; does not authorize governed identity resolution/crosswalk implementation, source-availability proof implementation, a phase-specific projection, controlled validation, predictive experimentation, feature use, downstream consumption, production binding, or activation",
+  "remaining_prerequisites_for_future_design_issue": [
+    "governed Forecast identity resolution / crosswalk policy (0 of 48 identities currently resolved)",
+    "field-family source-availability proof and pinned historical as-of rules (pre_draft_temporal_eligibility remains unresolved for every family)"
+  ]
+}
