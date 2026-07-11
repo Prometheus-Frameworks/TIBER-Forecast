@@ -388,28 +388,55 @@ separate controlled-experiment design      (future issue: proposes which §4 "au
                                              experiment-design stage)
         ↓
 baseline + shuffled comparison             (future issue: a real-vs-baseline-vs-shuffled-control run,
-                                             evaluated independently across at least one disjoint
-                                             population/season per the existing aggregation
-                                             discipline — not averaged)
+                                             evaluated independently across at least TWO disjoint
+                                             populations/seasons, per `docs/capabilities/README.md`'s
+                                             own validation-stage requirement — no averaging across
+                                             origins, matching the exact discipline player-history's
+                                             two-origin validation already established)
         ↓
-threshold review                           (future issue: pre-registered acceptance framework, per the
-                                             existing player-history precedent)
+threshold review                           (future issue: the validated evidence is compared against
+                                             a pre-registered acceptance framework; decides only
+                                             whether a production-binding *review* may be opened —
+                                             binds nothing)
         ↓
-production binding, only if separately authorized (future issue, requiring explicit human sign-off
-                                             per `docs/capabilities/README.md`'s non-automatable gate)
+binding review                             (future issue: production Forecast paths, required
+                                             artifact/report inputs, and outstanding prerequisite
+                                             gates are inventoried; a real leakage audit is run;
+                                             decides only whether an *implementation* issue may be
+                                             opened — still binds nothing)
+        ↓
+implementation                             (future issue: the feature is actually wired, narrowest
+                                             safe scope only, inert by default behind an explicit
+                                             opt-in; requires human sign-off before any non-default
+                                             activation)
+        ↓
+activation verification                    (future issue: the merged implementation is independently
+                                             re-exercised from the default branch before the
+                                             capability is considered ready to activate)
 ```
 
-**Future issues this design identifies as required** (at minimum, matching the issue's own list):
+**Future issues this design identifies as required** (at minimum, matching the issue's own list, and
+aligned exactly with `docs/capabilities/README.md`'s eight-stage path — no stage is compressed or
+skipped):
 
 1. Mirror implementation and validation (implements §2's mirror form and §9's validation contract).
 2. Controlled experiment / rehearsal design (proposes feature extraction and null-handling for any
    field classified "structurally could be eligible" in §4 — resolves nothing about eligibility by
    itself).
-3. Experiment execution (a real, shuffled-control, leakage-audited run).
+3. Experiment execution — a real, shuffled-control, leakage-audited run, evaluated independently
+   across at least **two** disjoint populations/seasons (per `docs/capabilities/README.md`'s
+   validation-stage requirement; a single disjoint origin is not sufficient evidence to proceed).
 4. Threshold review (a pre-registered acceptance framework compared against the experiment's
-   evidence).
-5. Production binding, only if the threshold review's evidence supports it, and only with the
-   explicit human sign-off `docs/capabilities/README.md` requires for every capability.
+   evidence; decides only whether a binding-review issue may be opened).
+5. Binding review (inventories production Forecast paths and outstanding prerequisite gates, and
+   runs a real leakage audit; decides only whether an implementation issue may be opened).
+6. Implementation (the feature is actually wired, narrowest safe scope only, inert by default behind
+   an explicit opt-in).
+7. Activation verification (the merged implementation is independently re-exercised from the default
+   branch).
+8. Production binding / non-default activation, only with the explicit human sign-off
+   `docs/capabilities/README.md` requires for every capability, and only after activation
+   verification passes — never immediately after threshold review.
 
 No stage's positive decision authorizes skipping ahead to a later one — each is a ceiling on what the
 *next* issue may do, never a running total, exactly as every existing capability in this repo already

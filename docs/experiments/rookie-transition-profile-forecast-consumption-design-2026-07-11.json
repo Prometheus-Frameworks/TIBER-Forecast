@@ -155,15 +155,19 @@
     "no model or production imports reference the mirror (repo-wide import check)"
   ],
   "lifecycle_placement": {
-    "reference": "docs/capabilities/README.md governed capability path",
+    "reference": "docs/capabilities/README.md governed capability path (eight stages; none compressed or skipped)",
     "current_stage": "between owned_source_artifact (done) and mirror_rehearsal_path (this design governs the next issue)",
-    "path": ["promoted_tiber_rookies_source", "this_approved_consumption_design", "inert_forecast_mirror_wrapper", "mirror_validation_and_rehearsal", "controlled_experiment_design", "baseline_and_shuffled_comparison", "threshold_review", "production_binding_if_separately_authorized"],
+    "path": ["promoted_tiber_rookies_source", "this_approved_consumption_design", "inert_forecast_mirror_wrapper", "mirror_validation_and_rehearsal", "controlled_experiment_design", "baseline_and_shuffled_comparison_two_disjoint_origins", "threshold_review", "binding_review", "implementation", "activation_verification", "production_binding_or_non_default_activation"],
+    "validation_disjoint_origin_requirement": "at least TWO disjoint populations/seasons, evaluated independently with no averaging across origins, per docs/capabilities/README.md's validation-stage requirement -- a single disjoint origin is not sufficient",
     "future_issues_required": [
       "mirror implementation and validation",
       "controlled experiment / rehearsal design",
-      "experiment execution",
-      "threshold review",
-      "production binding, only if evidence supports it, with explicit human sign-off"
+      "experiment execution across at least two disjoint populations/seasons",
+      "threshold review (decides only whether a binding-review issue may be opened)",
+      "binding review (production-path inventory + real leakage audit; decides only whether an implementation issue may be opened)",
+      "implementation (narrowest safe scope, inert by default behind explicit opt-in)",
+      "activation verification (independent re-exercise from the default branch)",
+      "production binding / non-default activation, only with explicit human sign-off, only after activation verification passes"
     ],
     "no_stage_authorizes_skipping_ahead": true
   },
