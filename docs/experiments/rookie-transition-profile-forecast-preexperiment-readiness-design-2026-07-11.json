@@ -306,20 +306,23 @@
       "kind": "rookie_transition_profile_v0_forecast_availability_evidence",
       "schema_version": "1.0.0",
       "ownership": "Forecast (consumption-side; underlying facts remain externally sourced and cited, never Forecast-invented)",
-      "required_fields": ["season", "cutoff_at", "field_family", "source_identity", "availability_status", "available_at", "source_snapshot_as_of", "evidence_source (repo/commit/path/hash)", "notes", "review_decision"],
-      "validation": "fail closed if cutoff_at is null but any row claims eligible_at_cutoff; fail closed if any eligible_at_cutoff row lacks a full evidence citation; deterministic ordering by (field_family, source_player_id); duplicate prevention on the same key"
+      "source_identity_completeness": "source_identity carries the same complete, four-field governed key as the crosswalk and matrix -- source_repository, source_schema, source_player_id, source_season -- never a three-field or partial subset; this is the identical key section 2 defines and section 15 requires the matrix to dereference against",
+      "required_fields": ["season", "cutoff_at", "field_family", "source_identity (source_repository, source_schema, source_player_id, source_season)", "availability_status", "available_at", "source_snapshot_as_of", "evidence_source (repo/commit/path/hash)", "notes", "review_decision"],
+      "grain": "(source_repository, source_schema, source_player_id, source_season, field_family) within one (season, cutoff_at) artifact instance -- the same governed key as the crosswalk and matrix, plus field_family",
+      "validation": "fail closed if cutoff_at is null but any row claims eligible_at_cutoff; fail closed if any eligible_at_cutoff row lacks a full evidence citation; deterministic ordering by (source_season, source_repository, source_schema, source_player_id, field_family) ascending; duplicate prevention on the full (source_repository, source_schema, source_player_id, source_season, field_family) key; reject the artifact if any row's source_identity does not correspond to exactly one of the 48 locked source keys, or if any of the 48 locked keys is missing a row for any of the five field families -- no duplicate, missing, or extra locked source key is permitted, fail-closed"
     }
   },
   "integrated_readiness": {
     "row_and_field_readiness_rule": {
-      "eligibility_condition": "identity resolved AND availability proven for the pinned cutoff AND value is present AND provenance is intact AND field is permitted for the requested phase AND no leakage rule is violated",
+      "eligibility_condition": "identity resolved AND availability proven for the pinned cutoff AND value is present AND provenance is intact AND field is permitted for the requested phase AND no leakage rule is violated AND the top-level identity population gate has not failed (pre_draft only; see identity_population_gate below)",
       "failure_handling": "failure or ambiguity on any condition results in exclusion -- never inference, imputation, substitution, or best-effort inclusion",
       "non_transitivity_rules": [
         "resolving one player's identity does not make any of their fields eligible -- each field still needs its own availability proof",
         "proving one family available at the cutoff does not resolve identity for any row",
         "one eligible row never promotes the full population -- every other row is evaluated independently",
         "one season's readiness never automatically promotes another season -- both cutoff and per-family proof require independent, per-season proof"
-      ]
+      ],
+      "seventh_condition_is_population_scoped": "the seventh condition is deliberately population-scoped, not row-and-field-scoped -- per-row identity resolution alone cannot prove the absence of a population-level selection-bias leak; a matrix whose identity_population_gate.population_gate_status is fail excludes every row in a pre_draft context, regardless of how favorably any individual row's other six conditions evaluate"
     },
     "future_integrated_readiness_matrix_contract": {
       "populated_by_this_design": false,
@@ -352,7 +355,32 @@
       },
       "deterministic_ordering": "(source_season, source_repository, source_schema, source_player_id, field_family) ascending",
       "duplicate_prevention": "fail closed on any repeated (source_repository, source_schema, source_player_id, source_season, field_family) key within one execution-context artifact instance",
-      "fail_closed_aggregation": "final_readiness_status: eligible requires every one of the six row-and-field conditions to independently hold; any single failing condition forces excluded, and blocking_reasons must enumerate every failing condition, not just the first one found -- partial credit is never given"
+      "identity_population_gate": {
+        "required_for": "every pre_draft matrix instance (optional/null for post_draft, since this population-selection concern is specific to a purported pre-draft evaluation)",
+        "rationale": "a machine-readable encoding of the leakage_controls population-level identity coverage rule, distinct from any individual row's leakage_status -- a row-level check alone cannot prove the population-level condition, because matrix rows repeat once per field_family (48 identities x 5 families = 240 rows), so a naive row count is not an identity count",
+        "fields": {
+          "locked_identity_count": "48 -- the fixed, locked source population size",
+          "unique_source_identity_count": "count of distinct full governed source keys (source_repository, source_schema, source_player_id, source_season) appearing in the matrix -- never a row count; must equal locked_identity_count, any other value fails closed",
+          "resolved_count": "count of distinct identities (not rows) with identity_status=resolved, computed from the dereferenced crosswalk",
+          "unresolved_count": "count of distinct identities with identity_status=unresolved",
+          "conflicting_evidence_count": "count of distinct identities with identity_status=conflicting_evidence",
+          "blocked_count": "count of distinct identities with identity_status=blocked; the four counts must sum to unique_source_identity_count, mirroring the crosswalk's own four-status-count invariant at the matrix level",
+          "full_resolution": "true iff unique_source_identity_count=48 AND resolved_count=48 -- every locked identity is resolved, zero unresolved/conflicting/blocked. Does NOT depend on any row's identity_coverage_dependency value -- if literally every identity is resolved, no row was excluded for being unresolvable, so no population-selection bias is possible regardless of how each row was resolved; row-level leakage from a specific outcome-derived evidence class (e.g. the 3.1 default-exclusion rule) is a separate, orthogonal check",
+          "independent_complete_coverage_source": "null, or the exact {repo, commit, path, schema_version, sha256} of a pinned governed source cited as proof of complete, independent identity coverage",
+          "independent_complete_coverage_verified": "true only if that cited source's own distinct full-key coverage is verified to equal the complete 48-key locked population exactly -- no partial overlap, no extra keys, no missing keys -- with independence from draft status, roster/game participation, target outcomes, and future performance proven and cited, not merely asserted",
+          "population_gate_status": "pass_full_resolution (when full_resolution is true) | pass_independent_complete_coverage (when full_resolution is false but independent_complete_coverage_verified is true) | fail (otherwise)",
+          "blocking_reasons": "non-empty whenever population_gate_status is fail; enumerates every failing condition, not just the first"
+        },
+        "deterministic_validation": [
+          "all counts operate on distinct full governed source keys, never row-and-field records",
+          "pass_full_resolution requires exactly 48 distinct locked keys and all 48 at resolution_status=resolved -- nothing else qualifies",
+          "pass_independent_complete_coverage requires the cited source's distinct full-key coverage to equal the complete 48-key locked population, with the independence proof re-verified in the integrated readiness review -- a partial-overlap or extra/missing-key source fails closed to fail, never a partial pass",
+          "any other configuration is fail, and no controlled-experiment design may open",
+          "the population gate is separate from, and does not override, the 3.1 row-level leakage rule: population_gate_status=pass_full_resolution (48/48 resolved) must NOT clear a row whose only identity evidence is outcome-derived 3.1 -- that row's leakage_status remains violation regardless of the population gate's status; the two checks are independent AND conditions, not alternatives",
+          "final_readiness_status must require the population gate to pass in addition to every existing row-and-field condition: no row's final_readiness_status may be eligible in a pre_draft matrix whose identity_population_gate.population_gate_status is fail, regardless of that individual row's own conditions"
+        ]
+      },
+      "fail_closed_aggregation": "final_readiness_status: eligible requires every one of the seven row-and-field conditions to independently hold -- the six row-and-field conditions and the population-scoped seventh (identity_population_gate.population_gate_status not fail, for pre_draft matrices); any single failing condition forces excluded, and blocking_reasons must enumerate every failing condition, not just the first one found -- partial credit is never given"
     },
     "leakage_controls": [
       "post-draft outcomes appearing in any pre-draft-phase feature",
@@ -382,6 +410,7 @@
         "unresolved and ineligible population counts -- reported explicitly, not implied",
         "the matrix's execution context (requested_phase/season/cutoff_at/identity_crosswalk_source/availability_evidence_source) matches the actual crosswalk and availability-evidence artifacts used at their exact cited commits -- not merely internally self-consistent",
         "identity-coverage-dependency proof -- for any pre_draft controlled-experiment design relying on less than full (48/48) identity resolution, independent re-verification that every relied-upon row's identity_coverage_dependency is genuinely independent_of_post_draft_outcome with a real, citable identity_coverage_mechanism, not accepted merely because the crosswalk labels it so, and never inferred from resolution_evidence_class alone",
+        "identity_population_gate correctness -- independent recomputation of unique_source_identity_count/resolved_count/unresolved_count/conflicting_evidence_count/blocked_count from the dereferenced crosswalk (never trusting the matrix's self-reported counts), confirmation that population_gate_status follows deterministically from those counts and, where claimed, an independently re-verified independent_complete_coverage_source, and confirmation that no row's final_readiness_status is eligible while the population gate is fail",
         "confirmation that no experiment or production activation occurred during either prerequisite lane's own work"
       ],
       "not_performed_here": true,
@@ -421,6 +450,8 @@
     "the future integrated readiness matrix records its execution context (requested_phase/season/cutoff_at/crosswalk and availability-evidence source citations) so a readiness decision is reproducible and distinguishable across phases/cutoffs",
     "matrix dereferencing requires all five crosswalk-derived fields -- forecast_canonical_player_id, identity_status, resolution_evidence_class, independent_resolution_evidence_class, and identity_coverage_dependency -- to match the exact cited crosswalk row via its full governed key (source_repository, source_schema, source_player_id, source_season, carried in every matrix row's source_identity), with zero/multiple matches failing closed against both the crosswalk and availability-evidence sources; a matrix cannot spoof a different canonical player or fabricate independent evidence the crosswalk never established",
     "identity-coverage selection leakage is tracked as a distinct dimension from evidence-class leakage: every row records identity_coverage_dependency/identity_coverage_mechanism, defaulting to unproven; no pre_draft controlled-experiment design may open on less than full (48/48) identity resolution unless coverage independence from post-draft outcomes is proven and cited, not merely asserted or inferred from an evidence class -- grounded in the concrete fact that the only identified GSIS-bearing source (player_season_coverage_v0.json) is itself built from accrued-stats data",
+    "the identity-coverage population rule is machine-readable, not prose-only: identity_population_gate is a required top-level object for every pre_draft matrix, with deterministically defined counts over distinct identities (never row-and-field records), an exact pass_full_resolution | pass_independent_complete_coverage | fail algorithm, and a required 7th AND-condition blocking final_readiness_status=eligible wherever the gate is fail -- independent of, and never overriding, the row-level 3.1 leakage rule",
+    "the availability-evidence artifact carries the same complete four-field source_identity as the crosswalk and matrix, with grain/ordering/duplicate-prevention over the full key plus field_family, and fails closed on any missing, duplicated, or extra locked source key -- so the matrix's full-key dereferencing can be satisfied exactly against this artifact too",
     "the positive decision opens only the two prerequisite issues"
   ],
   "non_goals": [
