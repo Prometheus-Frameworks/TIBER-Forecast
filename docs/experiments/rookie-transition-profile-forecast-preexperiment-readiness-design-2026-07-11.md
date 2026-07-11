@@ -196,23 +196,44 @@ Requirements (apply only once the precondition above is satisfied and class 3.1 
   is structurally available only for `drafted` rows (no `overall_pick` exists for `udfa_signed`
   rows). §16 defines the resulting leakage-control obligation this disclosure exists to satisfy.
 
-### 3.2 Explicit reviewed mapping with documentary evidence (required for UDFA rows; fallback for unresolved drafted rows)
+### 3.2 Explicit reviewed mapping with documentary evidence (required for UDFA rows; fallback for unresolved drafted rows; **currently the only available path, since §3.1 remains blocked**)
 
-A named human reviewer records a one-off mapping, citing a specific, dated, external, official
-source (e.g. an NFL team's own roster/transactions page explicitly naming the player) **plus at
-least one independent corroborating fact** (e.g. jersey number, a directly-stated `gsis_id`-linked
-profile URL, or a second independent official source) — never the player's name alone.
+A named human reviewer records a one-off mapping backed by **two distinct evidence roles** — never
+merely "two generic corroborating facts" treated as interchangeable:
+
+1. **GSIS-bearing evidence (mandatory):** at least one source that directly exposes/binds the exact
+   target `gsis_id` value to a specific, named real player — e.g. an official roster/statistics
+   record that states the `gsis_id` (or nflverse's own equivalent identifier) alongside identifying
+   player information. **A team roster or transactions page that never states or links to the GSIS
+   ID does not qualify as GSIS-bearing evidence, no matter how official** — such a page can only
+   ever serve the corroborating role below. Two corroborating facts about a player's identity,
+   without a source that actually states the target `gsis_id`, prove only that a real player was
+   identified — never that the specific `00-...` value belongs to them.
+2. **Corroborating facts (at least two, independent, never name-only):** facts that bind the
+   GSIS-bearing record to the TIBER-Rookies source player — e.g. team, jersey number, position, or
+   draft/signing timing, corroborated against an independent source.
 
 Requirements:
 
 - Named, attributable human reviewer.
 - Dated sign-off, separate from any automated process.
+- **GSIS-bearing evidence is mandatory, not optional.** If no reproducible GSIS-bearing source
+  exists, the row remains `unresolved` — a reviewer's assertion cannot manufacture the canonical ID.
+- **All evidence is archived, never cited by a live URL alone.** Every GSIS-bearing source and every
+  corroborating fact's source must be archived (a retrieved, dated, immutable copy — the same
+  mutable-source discipline §12 already requires for Lane B evidence, applied here to Lane A) and
+  cited by exact repository, commit, path, schema/version (where applicable), and SHA-256 of the
+  archived content. The original URL and retrieval date are preserved as metadata alongside the
+  archive, never as the only evidence — a live URL that can change or disappear is not reproducible.
 - At least **two** independent corroborating facts, never name-only.
-- Full citation: source URL(s) and retrieval date(s) for every corroborating fact.
 - **Team + position + season matching, on its own, is never sufficient** — it may serve as *one* of
   the two required corroborating facts, never as the entire basis, because the current 48-row
   population already contains multiple players sharing both position and (in some cases) similar
   draft timing, making position/team alone genuinely ambiguous.
+- **Validation obligation:** a validator must verify that the archived GSIS-bearing evidence
+  actually contains the exact `resolves_to_forecast_canonical_player_id` value being claimed, and
+  that the corroborating facts bind that GSIS-bearing record to the source player without relying on
+  any method §4 prohibits (name-only or fuzzy inference in particular).
 
 ### 3.3 Existing governed alias/identity artifact (conditional; not created by this design)
 
@@ -339,9 +360,15 @@ directly rather than parsing prose:
   "resolves_to_forecast_canonical_player_id": "00-0033873",
   "reviewer": "<named human reviewer>",
   "reviewed_at": "<ISO-8601 date>",
+  "gsis_bearing_evidence": {
+    "description": "<what this source is and exactly how it states/exposes the target gsis_id>",
+    "archived_citation": { "repo": "<archive repo>", "commit": "<exact sha>", "path": "<archived-copy path>", "schema_version": "<if applicable>", "sha256": "<exact hash of the archived content>" },
+    "original_url": "<live source URL -- metadata only, never the sole evidence>",
+    "retrieved_at": "<ISO-8601 retrieval date>"
+  },
   "corroborating_facts": [
-    { "fact": "<e.g. jersey number>", "source_url": "<url>", "retrieved_at": "<ISO-8601 date>" },
-    { "fact": "<second independent fact>", "source_url": "<url>", "retrieved_at": "<ISO-8601 date>" }
+    { "fact": "<e.g. jersey number>", "archived_citation": { "repo": "<archive repo>", "commit": "<exact sha>", "path": "<archived-copy path>", "sha256": "<exact hash>" }, "original_url": "<url>", "retrieved_at": "<ISO-8601 date>" },
+    { "fact": "<second independent fact>", "archived_citation": { "repo": "<archive repo>", "commit": "<exact sha>", "path": "<archived-copy path>", "sha256": "<exact hash>" }, "original_url": "<url>", "retrieved_at": "<ISO-8601 date>" }
   ]
 }
 ```
@@ -362,8 +389,9 @@ directly rather than parsing prose:
   1. If `independent_resolution_evidence_class` is non-null, `resolution_evidence` must contain **at
      least one entry** whose `evidence_class` exactly matches it.
   2. That entry must fully satisfy its own class's structural requirements (§3.2: named `reviewer`,
-     `reviewed_at`, at least two `corroborating_facts`, never name-only; §3.3: full
-     repo/commit/path/schema/hash citation of the governed alias artifact).
+     `reviewed_at`, a `gsis_bearing_evidence` entry whose archived content is verified to actually
+     contain the exact target `gsis_id`, and at least two archived `corroborating_facts`, never
+     name-only; §3.3: full repo/commit/path/schema/hash citation of the governed alias artifact).
   3. That entry must resolve to the **same** `forecast_canonical_player_id` as the row's primary
      resolution. If it resolves to a **different** id, the row must be `conflicting_evidence`, not
      `resolved` with an independent-evidence claim standing unreconciled.
@@ -375,8 +403,11 @@ directly rather than parsing prose:
   and that review is not the first place the claim is checked.
 - **Source and evidence hashes:** every `resolution_evidence` entry of class `3.1_overall_pick_chain`
   or `3.3_governed_artifact` must cite its own repo/commit/path/schema/hash per §3's requirements for
-  that class; every entry of class `3.2_reviewed_mapping` must cite its reviewer, sign-off date, and
-  at least two corroborating facts with their own source URLs and retrieval dates, per §3.2.
+  that class; every entry of class `3.2_reviewed_mapping` must cite its reviewer, sign-off date, one
+  archived `gsis_bearing_evidence` citation (repo/commit/path/schema-if-applicable/SHA-256) that a
+  validator confirms actually contains the exact claimed `gsis_id`, and at least two archived
+  `corroborating_facts` citations, per §3.2. A live `original_url`/`retrieved_at` pair is preserved as
+  metadata alongside each archived citation, never accepted as the sole evidence.
 - **Row-level status:** `resolution_status` uses exactly the §5 enum.
 - **Reviewer decision:** required (non-null `reviewer`/`reviewed_at`) for every row whose status is
   `resolved` or `conflicting_evidence`-resolved-via-tiebreak; may be null while `unresolved`. This
@@ -389,8 +420,12 @@ directly rather than parsing prose:
   `unresolved` — no row may be omitted for lacking a resolution.
 - **Fail-closed validation:** a validator must reject the artifact if the four-status-count
   invariant (§6) fails, if any `resolved` row lacks a structurally complete evidence entry for its
-  own `resolution_evidence_class`, if any evidence entry relies on a method listed in §4, or if any
-  of the independent-evidence checks above fails.
+  own `resolution_evidence_class`, if any `3.2_reviewed_mapping` entry's archived
+  `gsis_bearing_evidence` content does not actually contain the exact
+  `resolves_to_forecast_canonical_player_id` value claimed, if any evidence entry relies on a method
+  listed in §4, or if any of the independent-evidence checks above fails. A row with no reproducible
+  GSIS-bearing evidence remains `unresolved` — a reviewer's sign-off alone can never satisfy this
+  check.
 - **Explicit prohibition:** this artifact must not be imported by any model or production path until
   a separate, future authorization does so explicitly — the same "inert until authorized" discipline
   the mirror itself already follows.
@@ -603,11 +638,24 @@ source_season, field_family)` within that context:
   level of every matrix artifact instance. A validator must reject any matrix lacking one of these —
   a readiness decision that cannot say which phase/cutoff/crosswalk/evidence it was computed against
   is not reproducible and not valid.
-- **Deterministic dereferencing, not self-consistency alone:** every row's `identity_status` and
-  `resolution_evidence_class` must match what is found by dereferencing
-  `identity_crosswalk_source` at its exact cited commit — a matrix that is merely internally
-  consistent, without matching its cited source artifacts byte-for-byte, must fail validation. The
-  same applies to `temporal_status` against `availability_evidence_source`.
+- **Deterministic dereferencing, not self-consistency alone, of ALL crosswalk-derived fields:** every
+  row's `forecast_canonical_player_id`, `identity_status`, `resolution_evidence_class`, **and**
+  `independent_resolution_evidence_class` must match, exactly, what is found by dereferencing
+  `identity_crosswalk_source` at its exact cited commit, looked up via the crosswalk's own governed
+  key `(source_repository, source_schema, source_player_id, source_season)` (§2) — never a partial
+  key or an "equivalent" locked context. A matrix that is merely internally consistent, without
+  matching all four fields against its cited crosswalk byte-for-byte, must fail validation. The same
+  applies to `temporal_status` against `availability_evidence_source`. **Zero matches or multiple
+  matches on the governed key fails closed** — a matrix row with no corresponding crosswalk row, or
+  more than one, is invalid, never resolved by picking one candidate.
+- **Why all four fields, not just two:** omitting `forecast_canonical_player_id` from this check
+  would let a matrix point a source row at a different canonical player while keeping
+  otherwise-valid statuses; omitting `independent_resolution_evidence_class` would let a matrix flip
+  it from `null` to a non-null value, clearing §16's §3.1 leakage exclusion, even though the pinned
+  crosswalk never actually established independent evidence for that row. **A matrix must reject
+  `leakage_status: clear` for any row carrying `resolution_evidence_class: "3.1_overall_pick_chain"`
+  unless the dereferenced crosswalk row itself — not the matrix's own copy of the field — contains a
+  validated, non-null `independent_resolution_evidence_class`.**
 - **`resolution_evidence_class` and `independent_resolution_evidence_class` are included directly in
   every row** (mirroring §7's crosswalk fields) so that §16's default-exclusion rule for
   `3.1_overall_pick_chain`-resolved rows, and its sole permitted exception, can be evaluated row by
@@ -798,9 +846,18 @@ consumption, production binding, or activation.
       evidence entry of the matching class — resolving to the same `forecast_canonical_player_id`
       and containing no §3.1 dependency — not accepted as a bare self-declared field (§7); a
       mismatch forces `conflicting_evidence` rather than leaving the claim unreconciled.
+- [x] Every §3.2 resolution requires archived, GSIS-bearing evidence that a validator confirms
+      actually contains the exact claimed `gsis_id` (§3.2, §7) — corroborating facts alone can
+      identify a real player without proving the specific ID belongs to them, and a live URL/date is
+      never accepted as the sole citation.
 - [x] The future integrated readiness matrix (§15) records its execution context
       (`requested_phase`/`season`/`cutoff_at`/crosswalk and availability-evidence source citations)
       so a readiness decision is reproducible and distinguishable across phases/cutoffs.
+- [x] Matrix dereferencing (§15) requires ALL FOUR crosswalk-derived fields —
+      `forecast_canonical_player_id`, `identity_status`, `resolution_evidence_class`, and
+      `independent_resolution_evidence_class` — to match the exact cited crosswalk row via its full
+      governed key, with zero/multiple matches failing closed; a matrix cannot spoof a different
+      canonical player or fabricate independent evidence the crosswalk never established.
 - [x] The positive decision opens only the two prerequisite issues (Decision section above).
 
 ## Non-goals confirmed
