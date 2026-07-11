@@ -130,6 +130,11 @@ Requirements:
 - Single-source corroboration is sufficient for this class specifically, because the join key itself
   (`overall_pick`) is exact and the precedent has no known failure mode when both source artifacts
   are genuinely present and agree.
+- **Evidence-class disclosure is mandatory, not optional:** every row resolved via this class must
+  record `resolution_evidence_class: "3.1_overall_pick_chain"` in the future crosswalk artifact
+  (§7) — a distinct, structured field, never merged into free-text evidence — because this class
+  is structurally available only for `drafted` rows (no `overall_pick` exists for `udfa_signed`
+  rows). §16 defines the resulting leakage-control obligation this disclosure exists to satisfy.
 
 ### 3.2 Explicit reviewed mapping with documentary evidence (required for UDFA rows; fallback for unresolved drafted rows)
 
@@ -242,6 +247,7 @@ Not populated by this design. Future shape:
       "source_season": 2026,
       "forecast_canonical_player_id": null,
       "resolution_status": "unresolved",
+      "resolution_evidence_class": null,
       "resolution_evidence": [],
       "reviewer": null,
       "reviewed_at": null,
@@ -253,7 +259,12 @@ Not populated by this design. Future shape:
 
 - **Ownership:** Forecast (this is Forecast's own consumption-side crosswalk; the canonical
   identity concept itself remains nflverse/TIBER-Data-owned per §1).
-- **Required fields:** all seven row fields above, always present (nullable where unresolved).
+- **Required fields:** all eight row fields above, always present (nullable where unresolved).
+- **Evidence-class field:** `resolution_evidence_class` is one of
+  `3.1_overall_pick_chain | 3.2_reviewed_mapping | 3.3_governed_artifact | null`, always present and
+  distinct from the free-text `resolution_evidence` citations — required so any future experiment
+  can detect and control for §16's overall-pick-chain leakage-control rule without re-deriving it
+  from citation text.
 - **Source and evidence hashes:** every non-empty `resolution_evidence` entry must cite its own
   repo/commit/path/schema/hash per the evidence class's requirements in §3.
 - **Row-level status:** `resolution_status` uses exactly the §5 enum.
@@ -474,9 +485,22 @@ Explicitly prevented, in every future implementation this design authorizes desi
 - Current/revised values being treated as historically known at an earlier cutoff.
 - Refresh or generation timestamps (`mirror_refreshed_at`, `generated_at`) standing in for
   `available_at`.
-- Identity resolution derived from target/outcome information (e.g. using the known
-  `official_postdraft_outcome` to help resolve a pre-draft identity — this would leak the very
-  outcome a pre-draft experiment is trying to predict).
+- Identity resolution silently derived from target/outcome information without disclosure. The one
+  explicitly permitted exception is §3.1's bounded, fully-disclosed use of
+  `official_postdraft_outcome.value.overall_pick` for drafted-row identity linkage; that exception
+  does not itself authorize using its result as an outcome-blind population or feature signal (see
+  the next rule) — undisclosed uses of outcome information for identity resolution remain
+  prohibited outright.
+- Using `identity_status = resolved` (or specifically §3.1-resolved rows, i.e. rows carrying
+  `resolution_evidence_class: "3.1_overall_pick_chain"`) as an implicit population-inclusion or
+  feature signal in any future experiment whose target is, or overlaps with,
+  `official_postdraft_outcome`-derived information. §3.1 evidence is structurally available only
+  for `drafted` rows (no `overall_pick` exists for `udfa_signed` rows), so filtering a population to
+  identity-resolved rows would systematically bias it toward drafted players — leaking draft status
+  through selection, not through a feature value. Any such target-overlapping experiment must either
+  build its own population using only §3.2-resolved identities (never §3.1), or explicitly prove and
+  document population-selection independence before treating a §3.1-resolved population as safe for
+  that specific target.
 - Availability proof sourced from later downstream artifacts (e.g. citing a post-draft summary
   article as proof a pre-draft value was known pre-draft).
 - Exclusions being silently converted to neutral/default values anywhere in the pipeline.
@@ -565,6 +589,10 @@ consumption, production binding, or activation.
       AND-rule and fail-closed aggregation both enforce this structurally.
 - [x] No design path permits fuzzy/name-only resolution (§4 is exhaustive and binding).
 - [x] No timestamp substitution permits leakage (§9's table and §16 both name this explicitly).
+- [x] §3.1's use of `official_postdraft_outcome`-derived evidence for identity resolution is
+      explicitly bounded and disclosed (`resolution_evidence_class`, §7), with a corresponding §16
+      rule preventing its leakage into any outcome-target experiment's population or features via
+      selection bias.
 - [x] The positive decision opens only the two prerequisite issues (Decision section above).
 
 ## Non-goals confirmed

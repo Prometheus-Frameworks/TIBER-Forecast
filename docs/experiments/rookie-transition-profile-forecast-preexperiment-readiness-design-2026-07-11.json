@@ -76,7 +76,8 @@
           "exact repository/commit/path/schema/hash citation for both TIBER-Data artifacts used",
           "join key is overall_pick alone; no secondary matching field required, but a drafting-team disagreement for the same overall_pick is itself a conflicting_evidence signal",
           "does not apply to udfa_signed rows (no overall_pick exists) -- those use 3.2",
-          "single-source corroboration sufficient for this class specifically, because the join key is exact and the precedent has no known failure mode when both artifacts genuinely agree"
+          "single-source corroboration sufficient for this class specifically, because the join key is exact and the precedent has no known failure mode when both artifacts genuinely agree",
+          "evidence-class disclosure is mandatory: every row resolved via this class must record resolution_evidence_class: 3.1_overall_pick_chain in the future crosswalk artifact, a distinct structured field never merged into free-text evidence, because this class is structurally available only for drafted rows -- see the corresponding leakage_controls entry this disclosure exists to satisfy"
         ]
       },
       {
@@ -143,7 +144,8 @@
       "kind": "rookie_transition_profile_v0_forecast_identity_crosswalk",
       "schema_version": "1.0.0",
       "ownership": "Forecast (consumption-side crosswalk; the canonical identity concept remains nflverse/TIBER-Data-owned)",
-      "required_row_fields": ["source_repository", "source_schema", "source_player_id", "source_season", "forecast_canonical_player_id", "resolution_status", "resolution_evidence", "reviewer", "reviewed_at", "notes"],
+      "required_row_fields": ["source_repository", "source_schema", "source_player_id", "source_season", "forecast_canonical_player_id", "resolution_status", "resolution_evidence_class", "resolution_evidence", "reviewer", "reviewed_at", "notes"],
+      "resolution_evidence_class_enum": "3.1_overall_pick_chain | 3.2_reviewed_mapping | 3.3_governed_artifact | null -- always present, distinct from the free-text resolution_evidence citations; required so any future experiment can detect and control for the overall-pick-chain leakage-control rule without re-deriving it from citation text",
       "evidence_citation_requirement": "every non-empty resolution_evidence entry must cite its own repo/commit/path/schema/hash per the evidence class's requirements",
       "row_level_status_enum": "exactly the identity_status_enum above",
       "reviewer_decision_requirement": "non-null reviewer/reviewed_at required for every row whose status is resolved or conflicting_evidence-resolved-via-tiebreak; may be null while unresolved",
@@ -317,7 +319,8 @@
       "post-draft outcomes appearing in any pre-draft-phase feature",
       "current/revised values being treated as historically known at an earlier cutoff",
       "refresh or generation timestamps (mirror_refreshed_at, generated_at) standing in for available_at",
-      "identity resolution derived from target/outcome information (e.g. using the known official_postdraft_outcome to help resolve a pre-draft identity)",
+      "identity resolution silently derived from target/outcome information without disclosure -- the one explicitly permitted exception is Lane A's bounded, fully-disclosed use of official_postdraft_outcome.value.overall_pick for drafted-row identity linkage (evidence class 3.1); that exception does not itself authorize using its result as an outcome-blind population or feature signal (see next rule); undisclosed uses of outcome information for identity resolution remain prohibited outright",
+      "using identity_status=resolved (or specifically 3.1-resolved rows, i.e. rows carrying resolution_evidence_class=3.1_overall_pick_chain) as an implicit population-inclusion or feature signal in any future experiment whose target is, or overlaps with, official_postdraft_outcome-derived information -- evidence class 3.1 is structurally available only for drafted rows (no overall_pick exists for udfa_signed rows), so filtering a population to identity-resolved rows would systematically bias it toward drafted players, leaking draft status through selection rather than a feature value; any such target-overlapping experiment must either build its population using only 3.2-resolved identities, or explicitly prove and document population-selection independence before treating a 3.1-resolved population as safe for that target",
       "availability proof sourced from later downstream artifacts (e.g. citing a post-draft summary article as proof a pre-draft value was known pre-draft)",
       "exclusions being silently converted to neutral/default values anywhere in the pipeline",
       "unresolved rows being dropped without audit accounting -- every excluded row/field must remain visible in the readiness matrix with its blocking_reasons, never quietly disappear"
@@ -359,6 +362,7 @@
     "integrated readiness cannot pass with unresolved identity or unresolved timing -- the AND-rule and fail-closed aggregation both enforce this structurally",
     "no design path permits fuzzy/name-only resolution (prohibited methods list is exhaustive and binding)",
     "no timestamp substitution permits leakage (timestamp-meanings table and leakage controls both name this explicitly)",
+    "evidence class 3.1's use of official_postdraft_outcome-derived evidence for identity resolution is explicitly bounded and disclosed (resolution_evidence_class), with a corresponding leakage-controls rule preventing its leakage into any outcome-target experiment's population or features via selection bias",
     "the positive decision opens only the two prerequisite issues"
   ],
   "non_goals": [
