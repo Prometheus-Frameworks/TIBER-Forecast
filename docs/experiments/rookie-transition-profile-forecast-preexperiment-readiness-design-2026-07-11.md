@@ -318,34 +318,79 @@ Not populated by this design. Future shape:
 }
 ```
 
+**`resolution_evidence` is a structured array, never untyped free text.** Each entry carries at
+minimum `evidence_class` and that class's own required fields, so a validator can check evidence
+directly rather than parsing prose:
+
+```json
+// a 3.1 evidence entry (once class 3.1 becomes available -- see §3.1's precondition)
+{
+  "evidence_class": "3.1_overall_pick_chain",
+  "resolves_to_forecast_canonical_player_id": "00-0033873",
+  "join_key": { "draft_year": 2026, "overall_pick": 3 },
+  "source_citations": [
+    { "repo": "Prometheus-Frameworks/TIBER-Data", "commit": "<exact sha>", "path": "<draft-results artifact path>", "schema_version": "<cited>", "sha256": "<exact hash>" },
+    { "repo": "Prometheus-Frameworks/TIBER-Data", "commit": "<exact sha>", "path": "<gsis_id-bearing artifact path>", "schema_version": "<cited>", "sha256": "<exact hash>" }
+  ]
+}
+// a 3.2 evidence entry
+{
+  "evidence_class": "3.2_reviewed_mapping",
+  "resolves_to_forecast_canonical_player_id": "00-0033873",
+  "reviewer": "<named human reviewer>",
+  "reviewed_at": "<ISO-8601 date>",
+  "corroborating_facts": [
+    { "fact": "<e.g. jersey number>", "source_url": "<url>", "retrieved_at": "<ISO-8601 date>" },
+    { "fact": "<second independent fact>", "source_url": "<url>", "retrieved_at": "<ISO-8601 date>" }
+  ]
+}
+```
+
 - **Ownership:** Forecast (this is Forecast's own consumption-side crosswalk; the canonical
   identity concept itself remains nflverse/TIBER-Data-owned per §1).
-- **Required fields:** all nine row fields above, always present (nullable where unresolved).
+- **Required fields:** all twelve row fields above, always present (nullable where unresolved).
 - **Evidence-class field:** `resolution_evidence_class` is one of
   `3.1_overall_pick_chain | 3.2_reviewed_mapping | 3.3_governed_artifact | null`, always present and
-  distinct from the free-text `resolution_evidence` citations — required so any future experiment
+  distinct from the structured `resolution_evidence` entries — required so any future experiment
   can detect and control for §16's overall-pick-chain leakage-control rule without re-deriving it
-  from citation text.
-- **Independent-evidence field:** `independent_resolution_evidence_class` is one of
-  `3.2_reviewed_mapping | 3.3_governed_artifact | null` — populated only when a §3.2 or §3.3
-  resolution independently resolves the row **without relying on any §3.1 evidence**, i.e. the row
-  would still be `resolved` if all §3.1 evidence for it were deleted. This is the sole basis §16
-  permits for clearing a §3.1-resolved row's leakage status in a `pre_draft` context; it must never
-  be set to a non-null value merely because a population-level comparison happened to look
-  unaffected.
-- **Source and evidence hashes:** every non-empty `resolution_evidence` entry must cite its own
-  repo/commit/path/schema/hash per the evidence class's requirements in §3.
+  from evidence entries.
+- **Independent-evidence field, and how it is validated (not merely self-declared):**
+  `independent_resolution_evidence_class` is one of `3.2_reviewed_mapping | 3.3_governed_artifact |
+  null` — populated only when a §3.2 or §3.3 resolution independently resolves the row **without
+  relying on any §3.1 evidence**. A validator must enforce this, not accept a self-declared field
+  value:
+  1. If `independent_resolution_evidence_class` is non-null, `resolution_evidence` must contain **at
+     least one entry** whose `evidence_class` exactly matches it.
+  2. That entry must fully satisfy its own class's structural requirements (§3.2: named `reviewer`,
+     `reviewed_at`, at least two `corroborating_facts`, never name-only; §3.3: full
+     repo/commit/path/schema/hash citation of the governed alias artifact).
+  3. That entry must resolve to the **same** `forecast_canonical_player_id` as the row's primary
+     resolution. If it resolves to a **different** id, the row must be `conflicting_evidence`, not
+     `resolved` with an independent-evidence claim standing unreconciled.
+  4. That entry must contain **no dependency on §3.1 evidence** — it must not cite
+     `official_postdraft_outcome`/`overall_pick` as a corroborating fact or source.
+  A validator must reject any artifact where `independent_resolution_evidence_class` is non-null but
+  any of 1–4 fails. This is the first-line, fail-closed check; the integrated readiness review (§17)
+  independently re-proves the same claim later — validation here is not a substitute for that review,
+  and that review is not the first place the claim is checked.
+- **Source and evidence hashes:** every `resolution_evidence` entry of class `3.1_overall_pick_chain`
+  or `3.3_governed_artifact` must cite its own repo/commit/path/schema/hash per §3's requirements for
+  that class; every entry of class `3.2_reviewed_mapping` must cite its reviewer, sign-off date, and
+  at least two corroborating facts with their own source URLs and retrieval dates, per §3.2.
 - **Row-level status:** `resolution_status` uses exactly the §5 enum.
 - **Reviewer decision:** required (non-null `reviewer`/`reviewed_at`) for every row whose status is
-  `resolved` or `conflicting_evidence`-resolved-via-tiebreak; may be null while `unresolved`.
+  `resolved` or `conflicting_evidence`-resolved-via-tiebreak; may be null while `unresolved`. This
+  row-level sign-off is distinct from, and does not substitute for, any per-entry `reviewer`/
+  `reviewed_at` a `3.2_reviewed_mapping` evidence entry itself requires.
 - **Deterministic ordering:** rows sorted by `(source_season, source_player_id)` ascending.
 - **Duplicate prevention:** fail closed on any repeated `(source_repository, source_schema,
   source_player_id, source_season)` key.
 - **Unresolved-row retention:** every one of the 48 rows must always be present, even if
   `unresolved` — no row may be omitted for lacking a resolution.
 - **Fail-closed validation:** a validator must reject the artifact if the four-status-count
-  invariant (§6) fails, if any `resolved` row lacks evidence citations, or if any evidence entry
-  relies on a method listed in §4.
+  invariant (§6) fails, if any `resolved` row lacks a structurally complete evidence entry for its
+  own `resolution_evidence_class`, if any evidence entry relies on a method listed in §4, or if any
+  of the independent-evidence checks above fails.
 - **Explicit prohibition:** this artifact must not be imported by any model or production path until
   a separate, future authorization does so explicitly — the same "inert until authorized" discipline
   the mirror itself already follows.
@@ -379,7 +424,7 @@ as-of instant **strictly before Day 1, Round 1, Pick 1 begins** — never "befor
 | `event_time` | The real-world event itself (e.g. the combine date, the college season's end) | When the underlying real-world event actually occurred | Whether that event's *result* had propagated into any given artifact yet | Only when explicitly tied to a specific field's `available_at` | Sourced from external, citable fact (e.g. an official combine schedule) |
 | `generated_at` | The artifact producer (e.g. TIBER-Rookies' promotion pipeline) | When the artifact *file* was computed/written | Anything about any individual field's real-world knowability — confirmed in #149's design: this artifact's own `generated_at` (2026-07-10) is *after* the 2026 draft, commingling pre- and post-draft facts | **No** | N/A — a batch/process timestamp |
 | `ingested_at` | The ingesting repository (e.g. TIBER-Data reading an nflverse feed) | When a downstream repo *read* an upstream feed | When the underlying fact became true or public | **No** | N/A — an operational timestamp |
-| `last_verified_at` | The per-field `provenance` object (already part of the rookie_transition_profile schema) | For `official_postdraft_outcome`'s *drafted* rows only, a genuine per-row verification date (the source's own `ingested_at`, per TIBER-Rookies' #267 design) | For every other family, and for the one `udfa_signed` row, this is a generation-date fallback or explicitly `null` — **not** a verification event | Only for the one case just named; otherwise no | Sourced when genuine (drafted outcomes); otherwise explicitly absent, never backfilled |
+| `last_verified_at` | The per-field `provenance` object (already part of the rookie_transition_profile schema) | For `official_postdraft_outcome`'s *drafted* rows only, that TIBER verified/ingested the outcome at that operational time (the source's own `ingested_at`, per TIBER-Rookies' #267 design) — **an ingestion/verification event, not a public-availability event** | For every other family, and for the one `udfa_signed` row, this is a generation-date fallback or explicitly `null`. **For no case, including drafted outcomes, does it prove when the fact became publicly knowable** — it is derived from `ingested_at`, which per this same table never establishes historical eligibility | **No — for every family, including `official_postdraft_outcome`'s drafted rows.** Exact archived source evidence with its own independently-sourced `available_at` remains required (§10) | Sourced when genuine (drafted outcomes); otherwise explicitly absent, never backfilled |
 | `mirror_refreshed_at` | Forecast's own mirror wrapper (already part of the #151 implementation) | When Forecast last pulled the mirror | Anything about any underlying fact's real-world knowability | **No** | N/A — purely Forecast-side operational bookkeeping |
 
 **These seven timestamp concepts must never be treated as interchangeable.** Any future
@@ -747,7 +792,12 @@ consumption, production binding, or activation.
       exact mirrored value to be shown published pre-cutoff, not merely that the underlying event or
       window occurred/closed (§10, §11).
 - [x] `official_postdraft_outcome`'s post-draft availability proof requires an archived source with
-      its own sourced `available_at`; `ingested_at` is never treated as availability proof (§9, §10).
+      its own sourced `available_at`; `ingested_at` is never treated as availability proof anywhere,
+      including via `last_verified_at` for drafted rows (§9, §10 both now say `No` uniformly).
+- [x] `independent_resolution_evidence_class` is validated against a real, structurally complete
+      evidence entry of the matching class — resolving to the same `forecast_canonical_player_id`
+      and containing no §3.1 dependency — not accepted as a bare self-declared field (§7); a
+      mismatch forces `conflicting_evidence` rather than leaving the claim unreconciled.
 - [x] The future integrated readiness matrix (§15) records its execution context
       (`requested_phase`/`season`/`cutoff_at`/crosswalk and availability-evidence source citations)
       so a readiness decision is reproducible and distinguishable across phases/cutoffs.
