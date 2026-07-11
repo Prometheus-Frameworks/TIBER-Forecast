@@ -289,6 +289,19 @@ export const refreshRookieTransitionProfileMirror = (input: RefreshInput): Refre
   check('source_repo', SOURCE_REPO, input.sourceRepo, input.sourceRepo === SOURCE_REPO);
   check('source_commit', SOURCE_COMMIT, input.sourceCommit, input.sourceCommit === SOURCE_COMMIT);
 
+  // ---- Operator-supplied mirror_refreshed_at: non-empty, well-formed RFC3339/ISO-8601 -------------
+  const ISO8601_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/;
+  const timestampWellFormed =
+    typeof input.mirrorRefreshedAt === 'string' &&
+    ISO8601_RE.test(input.mirrorRefreshedAt) &&
+    !Number.isNaN(Date.parse(input.mirrorRefreshedAt));
+  check(
+    'mirror_refreshed_at_format',
+    'non-empty RFC3339/ISO-8601 timestamp',
+    input.mirrorRefreshedAt || '(empty)',
+    timestampWellFormed,
+  );
+
   // ---- Artifact byte hashes -------------------------------------------------------------------------
   const jsonSha256 = input.sha256(input.jsonBytes);
   const csvSha256 = input.sha256(input.csvBytes);

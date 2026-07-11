@@ -276,4 +276,21 @@ describe('rookie_transition_profile_v0.2.0 Forecast mirror refresh (#151)', () =
     expect(result.files).toBeUndefined();
     expect(result.status).toBe('blocked');
   });
+
+  it('fails closed on an empty mirror_refreshed_at (PR #152 review hardening)', () => {
+    const result = refreshRookieTransitionProfileMirror({ ...baseInput(), mirrorRefreshedAt: '' });
+    expect(result.status).toBe('blocked');
+    expect(result.blocking_reasons.some((r) => r.startsWith('mirror_refreshed_at_format'))).toBe(true);
+  });
+
+  it('fails closed on a malformed (non-RFC3339/ISO-8601) mirror_refreshed_at', () => {
+    const result = refreshRookieTransitionProfileMirror({ ...baseInput(), mirrorRefreshedAt: 'July 11 2026' });
+    expect(result.status).toBe('blocked');
+    expect(result.blocking_reasons.some((r) => r.startsWith('mirror_refreshed_at_format'))).toBe(true);
+  });
+
+  it('accepts a well-formed RFC3339/ISO-8601 mirror_refreshed_at', () => {
+    const result = refreshRookieTransitionProfileMirror({ ...baseInput(), mirrorRefreshedAt: '2026-07-11T00:00:00+00:00' });
+    expect(result.checks.find((c) => c.dimension === 'mirror_refreshed_at_format')?.passed).toBe(true);
+  });
 });

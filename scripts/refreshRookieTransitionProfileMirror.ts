@@ -5,17 +5,21 @@
  *
  * Reads a LOCAL TIBER-Rookies checkout (never fetches network/mutable `main`), verifies its
  * repository identity, commit, and every pinned artifact/source-manifest-input hash BEFORE writing
- * anything, then writes exactly four files under `data/fixtures/tiberRookies/`: three byte-identical
- * echoes of the upstream JSON/CSV/manifest and one additive Forecast-owned provenance wrapper. Any
- * failed check aborts with no file written and the previously committed mirror left untouched.
+ * anything, then commits exactly four files under `data/fixtures/tiberRookies/` as a single atomic
+ * directory swap: three byte-identical echoes of the upstream JSON/CSV/manifest and one additive
+ * Forecast-owned provenance wrapper. Any failed check, or any failure during the commit itself,
+ * leaves the previously committed mirror untouched (see
+ * `src/rehearsal/rookieTransitionProfileMirrorCommit.ts` for the rollback guarantee and its limits).
  *
  *   npm run refresh:rookie-transition-profile-mirror -- \
  *     --source-root=/path/to/TIBER-Rookies \
  *     --mirror-refreshed-at=2026-07-11T00:00:00.000Z
  *
- * Optional overrides (mainly for tests against a non-git fixture directory):
- *   --source-commit=<sha>   (default: `git -C <source-root> rev-parse HEAD`)
- *   --source-repo=<owner/repo>   (default: parsed from `git -C <source-root> remote get-url origin`)
+ * `--source-root` MUST be a real git checkout of TIBER-Rookies -- its repository identity and
+ * commit are always resolved from `git`, never accepted as caller-asserted override flags (PR #152
+ * review: spoofable identity flags would defeat the "verified, not claimed" requirement in #151).
+ *
+ * Optional:
  *   --mirror-dir=<path>   (default: data/fixtures/tiberRookies)
  *
  * Mirror refresh only: no transformation, filtering, adapter, feature extraction, experiment, model
@@ -23,9 +27,8 @@
  * `may_open_rookie_transition_profile_forecast_mirror_rehearsal_issue`.
  */
 
-import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -37,6 +40,8 @@ import {
   SOURCE_PROMOTED_PATH,
   refreshRookieTransitionProfileMirror,
 } from '../src/rehearsal/rookieTransitionProfileMirror.js';
+import { commitMirrorDirectoryAtomically, type MirrorFileToCommit } from '../src/rehearsal/rookieTransitionProfileMirrorCommit.js';
+import { resolveGitSourceIdentity } from '../src/rehearsal/rookieTransitionProfileMirrorSourceIdentity.js';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -56,28 +61,15 @@ if (!sourceRoot || !mirrorRefreshedAt) {
   process.exit(1);
 }
 
-const gitOutput = (args: string[]): string | undefined => {
-  try {
-    return execFileSync('git', args, { cwd: sourceRoot, encoding: 'utf-8' }).trim();
-  } catch {
-    return undefined;
-  }
-};
-
-const parseRepoSlug = (remoteUrl: string | undefined): string | undefined => {
-  if (!remoteUrl) return undefined;
-  const withoutGitSuffix = remoteUrl.replace(/\.git$/, '');
-  const match = withoutGitSuffix.match(/[:/]([^/:]+\/[^/]+)$/);
-  return match?.[1];
-};
-
-const sourceCommit = argValue('source-commit') ?? gitOutput(['rev-parse', 'HEAD']);
-const sourceRepo = argValue('source-repo') ?? parseRepoSlug(gitOutput(['remote', 'get-url', 'origin']));
+// Repository identity and commit are ALWAYS resolved from the real git checkout -- there is no
+// override flag. A non-git source root, or one with no origin remote, resolves to undefined and
+// fails closed below rather than silently proceeding with an unverified identity.
+const { sourceCommit, sourceRepo } = resolveGitSourceIdentity(sourceRoot);
 
 if (!sourceCommit || !sourceRepo) {
   process.stderr.write(
-    'FAIL CLOSED: could not determine the source repository identity or commit. Pass --source-commit=... ' +
-      '--source-repo=... explicitly, or point --source-root at a real git checkout. No mirror was written.\n',
+    'FAIL CLOSED: could not resolve a verified git repository identity/commit at --source-root. It must be a real ' +
+      'git checkout with an `origin` remote. No mirror was written.\n',
   );
   process.exit(1);
 }
@@ -126,57 +118,34 @@ if (result.status !== 'passed' || !result.files) {
 }
 
 const mirrorDirAbs = path.isAbsolute(mirrorDir) ? mirrorDir : path.join(REPO_ROOT, mirrorDir);
-if (!existsSync(mirrorDirAbs)) mkdirSync(mirrorDirAbs, { recursive: true });
-
 const [jsonFilename, csvFilename, manifestFilename, wrapperFilename] = AUTHORIZED_MIRROR_FILENAMES;
-const outJsonPath = path.join(mirrorDirAbs, jsonFilename);
-const outCsvPath = path.join(mirrorDirAbs, csvFilename);
-const outManifestPath = path.join(mirrorDirAbs, manifestFilename);
-const outWrapperPath = path.join(mirrorDirAbs, wrapperFilename);
+const wrapperJson = `${JSON.stringify(result.files.wrapper, null, 2)}\n`;
 
-// Write only after every check has passed -- no partial refresh, including mid-write I/O failure.
-// Stage all four files under temp names in the SAME directory first, then rename each into place
-// only once every staged write has succeeded. renameSync is atomic within one filesystem, so a
-// disk-full/permission/SIGTERM failure partway through staging leaves the previously committed
-// mirror completely untouched -- no half-written or half-swapped set of four files is possible.
-const stagingSuffix = `.tmp-${process.pid}-${Date.now()}`;
-const staged: Array<{ tempPath: string; finalPath: string }> = [
-  { tempPath: `${outJsonPath}${stagingSuffix}`, finalPath: outJsonPath },
-  { tempPath: `${outCsvPath}${stagingSuffix}`, finalPath: outCsvPath },
-  { tempPath: `${outManifestPath}${stagingSuffix}`, finalPath: outManifestPath },
-  { tempPath: `${outWrapperPath}${stagingSuffix}`, finalPath: outWrapperPath },
+const filesToCommit: MirrorFileToCommit[] = [
+  { filename: jsonFilename, contents: result.files.mirrorJson, expectedSha256: sha256(result.files.mirrorJson) },
+  { filename: csvFilename, contents: result.files.mirrorCsv, expectedSha256: sha256(result.files.mirrorCsv) },
+  { filename: manifestFilename, contents: result.files.mirrorManifest, expectedSha256: sha256(result.files.mirrorManifest) },
+  { filename: wrapperFilename, contents: wrapperJson, expectedSha256: sha256(Buffer.from(wrapperJson, 'utf-8')) },
 ];
-const stagedContents = [result.files.mirrorJson, result.files.mirrorCsv, result.files.mirrorManifest, `${JSON.stringify(result.files.wrapper, null, 2)}\n`];
 
-const cleanupStaged = (): void => {
-  for (const { tempPath } of staged) {
-    try {
-      rmSync(tempPath, { force: true });
-    } catch {
-      // best-effort cleanup only; the final files are never touched by this path
-    }
-  }
-};
+const commit = commitMirrorDirectoryAtomically(mirrorDirAbs, filesToCommit, sha256, `${process.pid}-${Date.now()}`);
 
-try {
-  staged.forEach(({ tempPath }, i) => writeFileSync(tempPath, stagedContents[i]));
-} catch (error) {
-  cleanupStaged();
-  process.stderr.write(`FAIL CLOSED: staging a mirror file failed: ${(error as Error).message}\nNo mirror was written.\n`);
-  process.exit(1);
-}
-
-try {
-  for (const { tempPath, finalPath } of staged) renameSync(tempPath, finalPath);
-} catch (error) {
-  cleanupStaged();
+if (!commit.committed) {
   process.stderr.write(
-    `FAIL CLOSED: renaming a staged mirror file into place failed: ${(error as Error).message}\nThe previously committed mirror is unchanged.\n`,
+    `FAIL CLOSED: ${commit.error}\n` +
+      (commit.rolledBack
+        ? 'The previously committed mirror was restored.\n'
+        : 'The previously committed mirror may require manual inspection -- see the error above.\n'),
   );
   process.exit(1);
 }
 
-process.stderr.write(`wrote ${outJsonPath}\nwrote ${outCsvPath}\nwrote ${outManifestPath}\nwrote ${outWrapperPath}\n`);
+process.stderr.write(
+  `committed ${path.join(mirrorDirAbs, jsonFilename)}\n` +
+    `committed ${path.join(mirrorDirAbs, csvFilename)}\n` +
+    `committed ${path.join(mirrorDirAbs, manifestFilename)}\n` +
+    `committed ${path.join(mirrorDirAbs, wrapperFilename)}\n`,
+);
 
 if (result.decision !== 'may_open_rookie_transition_profile_forecast_mirror_rehearsal_issue') {
   process.exit(1);

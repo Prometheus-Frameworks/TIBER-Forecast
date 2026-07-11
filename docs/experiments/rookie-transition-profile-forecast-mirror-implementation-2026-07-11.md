@@ -53,25 +53,39 @@ independently re-verified against the actual bytes at the pinned commit):
 1. **`src/rehearsal/rookieTransitionProfileMirror.ts`** — pure module (no I/O). Pins the full source
    lock above as exported constants; exports `refreshRookieTransitionProfileMirror()`, which takes
    the upstream JSON/CSV/manifest bytes, the six source-manifest input-file bytes, the caller-resolved
-   source repo/commit identity, and an operator-supplied `mirrorRefreshedAt`, runs 26 fail-closed
+   source repo/commit identity, and an operator-supplied `mirrorRefreshedAt`, runs 27 fail-closed
    checks (repository identity, commit, three artifact hashes, six input-file hashes, input-path
    completeness, manifest self-consistency, schema version, season, `generated_at`, `run_id`,
-   coverage summary, row count/uniqueness, drafted/UDFA counts, and the exact
-   `te-daequan-wright` UDFA shape), and — only if every check passes — assembles the four mirror
-   artifacts (three byte-identical echoes of the verified upstream bytes plus the Forecast-owned
-   provenance wrapper).
-2. **`scripts/refreshRookieTransitionProfileMirror.ts`** — the I/O-performing CLI. Resolves the
-   source repo/commit via `git -C <source-root> remote get-url origin` / `rev-parse HEAD` (with
-   `--source-repo=`/`--source-commit=` overrides for testing against a non-git fixture directory),
-   reads the local TIBER-Rookies checkout's files, calls the pure module, and — only if it returns
-   `status: 'passed'` — stages all four files under temporary names in the same directory, then
-   renames each into place only once every staged write has succeeded (fixed after a PR #152 review
-   finding: the original version wrote directly to the four final paths in sequence, so an I/O
-   failure partway through — disk full, permission change, `SIGTERM` — could leave a mix of
-   old/new files despite the "no partial refresh" contract; `renameSync` is atomic per file within
-   one filesystem, so a failure during staging now leaves the previously committed mirror completely
-   untouched). Nothing is written or renamed at all if any source-lock/hash/population check fails.
-3. **Four mirror artifacts** written under `data/fixtures/tiberRookies/` (exactly these, nothing
+   coverage summary, row count/uniqueness, drafted/UDFA counts, the exact `te-daequan-wright` UDFA
+   shape, and a well-formed RFC3339/ISO-8601 `mirror_refreshed_at`), and — only if every check
+   passes — assembles the four mirror artifacts (three byte-identical echoes of the verified
+   upstream bytes plus the Forecast-owned provenance wrapper).
+2. **`src/rehearsal/rookieTransitionProfileMirrorSourceIdentity.ts`** — resolves the ACTUAL
+   repository identity and commit of a local checkout via `git -C <source-root> rev-parse HEAD` /
+   `remote get-url origin`. **No override flag exists anywhere in this path** (fixed after a PR #152
+   review finding: the original CLI accepted `--source-repo=`/`--source-commit=` flags that let an
+   operator simply assert the expected identity strings instead of having them verified against the
+   real checkout, which defeated the "verified, not caller-claimed" requirement in #151). A non-git
+   directory, or one with no `origin` remote, resolves to `undefined` and the CLI fails closed.
+3. **`src/rehearsal/rookieTransitionProfileMirrorCommit.ts`** — atomic directory-level commit with
+   injectable I/O (defaulting to real `node:fs`), added after a second PR #152 review finding: the
+   original CLI renamed each of the four files into place one at a time, which is not a transaction
+   across the set — a failure between renames 1 and 2 could leave a mixed generation (some new
+   files, some old, including a mismatched wrapper describing payloads that weren't all committed).
+   `commitMirrorDirectoryAtomically()` instead: stages all four files into a sibling temp directory;
+   verifies the staged directory has exactly the expected files with correct hashes; backs up any
+   existing mirror directory (one atomic rename); swaps the staged directory into place (one atomic
+   rename); and on any caught failure at either swap step, rolls back to the backup and removes
+   staging/backup debris. Each swap step is a single `renameSync`, atomic within one filesystem; this
+   module does not claim immunity to uncatchable process termination or power loss between the two
+   swap steps, and says so in its own documentation rather than overclaiming.
+4. **`scripts/refreshRookieTransitionProfileMirror.ts`** — the thin I/O-performing CLI. Resolves
+   source identity via the module above (no override flags), reads the local TIBER-Rookies checkout's
+   files, calls the pure verifier, and — only if it returns `status: 'passed'` — calls
+   `commitMirrorDirectoryAtomically()` to commit all four files as a single directory swap. Nothing
+   is written at all if any source-lock/hash/population/timestamp check fails, and nothing is left
+   mixed if the commit itself fails partway.
+5. **Four mirror artifacts** written under `data/fixtures/tiberRookies/` (exactly these, nothing
    else):
    - `rookie_transition_profile_v0_2026.mirror.json` — byte-identical copy of the upstream JSON.
    - `rookie_transition_profile_v0_2026.mirror.csv` — byte-identical copy of the upstream CSV.
@@ -80,9 +94,13 @@ independently re-verified against the actual bytes at the pinned commit):
      `exports/promoted/rookie-transition-profile/...` paths, per the issue's explicit instruction).
    - `ROOKIE_TRANSITION_PROFILE_V0_MIRROR_PROVENANCE.json` — the Forecast-owned wrapper
      (`kind: rookie_transition_profile_v0_forecast_mirror_provenance`, `schema_version: 1.0.0`).
-4. **`package.json`**: added `refresh:rookie-transition-profile-mirror` script entry.
-5. **Two test files** (42 new tests): `tests/rookieTransitionProfileMirror.test.ts` (pure-function
-   fail-closed coverage against synthetic data) and
+6. **`package.json`**: added `refresh:rookie-transition-profile-mirror` script entry.
+7. **Four test files** (57 new tests): `tests/rookieTransitionProfileMirror.test.ts` (pure-function
+   fail-closed coverage against synthetic data, including the new timestamp check),
+   `tests/rookieTransitionProfileMirrorCommit.test.ts` (integration-level: real temporary
+   directories on disk with an injected `renameSync` failure proving the rollback path),
+   `tests/rookieTransitionProfileMirrorSourceIdentity.test.ts` (integration-level: real temporary
+   git repositories proving a non-git root, wrong remote, and wrong commit are all detected), and
    `tests/rookieTransitionProfileMirrorCommittedArtifacts.test.ts` (guards on the real, committed
    mirror artifacts).
 
@@ -101,24 +119,26 @@ npm run build   # tsc --noEmit
 npm test        # full repository suite
 ```
 
-**Refresh output (first run):**
+**Refresh output (final run, after both PR #152 review rounds):**
 
 ```text
 source: Prometheus-Frameworks/TIBER-Rookies@2ef92faf9a9c91a393f53e9140428451529a1c48
-checks: 26/26 passed
+checks: 27/27 passed
 status: passed -> may_open_rookie_transition_profile_forecast_mirror_rehearsal_issue
-wrote data/fixtures/tiberRookies/rookie_transition_profile_v0_2026.mirror.json
-wrote data/fixtures/tiberRookies/rookie_transition_profile_v0_2026.mirror.csv
-wrote data/fixtures/tiberRookies/rookie_transition_profile_v0_2026.manifest.mirror.json
-wrote data/fixtures/tiberRookies/ROOKIE_TRANSITION_PROFILE_V0_MIRROR_PROVENANCE.json
+committed data/fixtures/tiberRookies/rookie_transition_profile_v0_2026.mirror.json
+committed data/fixtures/tiberRookies/rookie_transition_profile_v0_2026.mirror.csv
+committed data/fixtures/tiberRookies/rookie_transition_profile_v0_2026.manifest.mirror.json
+committed data/fixtures/tiberRookies/ROOKIE_TRANSITION_PROFILE_V0_MIRROR_PROVENANCE.json
 ```
 
-All 26 checks passed: repository identity, commit, 3 artifact hashes, 6 source-manifest input
+All 27 checks passed: repository identity, commit, 3 artifact hashes, 6 source-manifest input
 hashes (independently re-verified against the real upstream bytes, not merely re-read from the
 manifest's own claims), input-path completeness, manifest self-consistency (declared input/output
 hashes agree with the pins), schema version, season, `generated_at`, `run_id`, coverage summary,
-row count/uniqueness (48/48), drafted count (47), UDFA-signed count (1), and the exact
-`te-daequan-wright` UDFA shape.
+row count/uniqueness (48/48), drafted count (47), UDFA-signed count (1), the exact
+`te-daequan-wright` UDFA shape, and a well-formed `mirror_refreshed_at`. The source identity above
+(`Prometheus-Frameworks/TIBER-Rookies@2ef92fa...`) was resolved from real `git` commands against the
+checkout, not asserted by a CLI flag.
 
 ## Wrapper schema and identity-resolution counts
 
@@ -140,9 +160,22 @@ row count/uniqueness (48/48), drafted count (47), UDFA-signed count (1), and the
 ## Deterministic-reproduction evidence
 
 The refresh command was run twice against the identical source root and pinned
-`--mirror-refreshed-at`. A byte-for-byte `diff` of both runs' `mirror.json` and
-`ROOKIE_TRANSITION_PROFILE_V0_MIRROR_PROVENANCE.json` output showed **no differences** — the
-refresh is deterministic given the same source bytes and the same operator-supplied timestamp.
+`--mirror-refreshed-at`, including once after the atomic-commit rewrite. A byte-for-byte `diff` of
+both runs' `mirror.json` and `ROOKIE_TRANSITION_PROFILE_V0_MIRROR_PROVENANCE.json` output showed
+**no differences** — the refresh is deterministic given the same source bytes and the same
+operator-supplied timestamp, and no stray staging/backup directories were left behind by either run.
+
+## Atomicity: what is and isn't guaranteed
+
+`commitMirrorDirectoryAtomically()` makes each of its two directory swaps (back up the existing
+mirror; swap the staged directory into place) individually atomic via a single `renameSync`, and
+rolls back to the backup on any **caught** failure between them. It does not, and does not claim to,
+make the two-swap sequence a single OS-level transaction: an uncatchable process termination
+(`SIGKILL`) or power loss in the narrow window between the two renames could still leave the mirror
+directory absent rather than mixed (the backup would exist but not yet be restored). This is a
+residual, extremely small window inherent to any multi-step filesystem transaction without OS/
+filesystem transactional support; the review that requested this fix explicitly asked not to claim
+immunity beyond what's actually provided, so this document does not.
 
 ## Population and parity results
 
@@ -184,12 +217,14 @@ $ npm run build
 tsc --noEmit   # clean, no errors
 
 $ npm test
-Test Files  82 passed (82)
-     Tests  1121 passed (1121)
+Test Files  84 passed (84)
+     Tests  1136 passed (1136)
 ```
 
-1121 = 1079 pre-existing (as of PR #150's merge) + 42 new
-(`tests/rookieTransitionProfileMirror.test.ts`: 20;
+1136 = 1079 pre-existing (as of PR #150's merge) + 57 new
+(`tests/rookieTransitionProfileMirror.test.ts`: 23;
+`tests/rookieTransitionProfileMirrorCommit.test.ts`: 6;
+`tests/rookieTransitionProfileMirrorSourceIdentity.test.ts`: 6;
 `tests/rookieTransitionProfileMirrorCommittedArtifacts.test.ts`: 22).
 
 ## Changed-file inventory
@@ -203,8 +238,12 @@ A  docs/experiments/rookie-transition-profile-forecast-mirror-implementation-202
 M  package.json
 A  scripts/refreshRookieTransitionProfileMirror.ts
 A  src/rehearsal/rookieTransitionProfileMirror.ts
+A  src/rehearsal/rookieTransitionProfileMirrorCommit.ts
+A  src/rehearsal/rookieTransitionProfileMirrorSourceIdentity.ts
 A  tests/rookieTransitionProfileMirror.test.ts
+A  tests/rookieTransitionProfileMirrorCommit.test.ts
 A  tests/rookieTransitionProfileMirrorCommittedArtifacts.test.ts
+A  tests/rookieTransitionProfileMirrorSourceIdentity.test.ts
 ```
 
 No file under TIBER-Rookies was modified (this is a Forecast-only change against a different
