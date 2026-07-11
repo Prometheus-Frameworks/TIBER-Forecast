@@ -25,7 +25,7 @@
 
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -134,12 +134,47 @@ const outCsvPath = path.join(mirrorDirAbs, csvFilename);
 const outManifestPath = path.join(mirrorDirAbs, manifestFilename);
 const outWrapperPath = path.join(mirrorDirAbs, wrapperFilename);
 
-// Write only after every check has passed -- no partial refresh. All three payload files are
-// byte-identical echoes of the verified upstream bytes; nothing is decoded, re-encoded, or reshaped.
-writeFileSync(outJsonPath, result.files.mirrorJson);
-writeFileSync(outCsvPath, result.files.mirrorCsv);
-writeFileSync(outManifestPath, result.files.mirrorManifest);
-writeFileSync(outWrapperPath, `${JSON.stringify(result.files.wrapper, null, 2)}\n`, 'utf-8');
+// Write only after every check has passed -- no partial refresh, including mid-write I/O failure.
+// Stage all four files under temp names in the SAME directory first, then rename each into place
+// only once every staged write has succeeded. renameSync is atomic within one filesystem, so a
+// disk-full/permission/SIGTERM failure partway through staging leaves the previously committed
+// mirror completely untouched -- no half-written or half-swapped set of four files is possible.
+const stagingSuffix = `.tmp-${process.pid}-${Date.now()}`;
+const staged: Array<{ tempPath: string; finalPath: string }> = [
+  { tempPath: `${outJsonPath}${stagingSuffix}`, finalPath: outJsonPath },
+  { tempPath: `${outCsvPath}${stagingSuffix}`, finalPath: outCsvPath },
+  { tempPath: `${outManifestPath}${stagingSuffix}`, finalPath: outManifestPath },
+  { tempPath: `${outWrapperPath}${stagingSuffix}`, finalPath: outWrapperPath },
+];
+const stagedContents = [result.files.mirrorJson, result.files.mirrorCsv, result.files.mirrorManifest, `${JSON.stringify(result.files.wrapper, null, 2)}\n`];
+
+const cleanupStaged = (): void => {
+  for (const { tempPath } of staged) {
+    try {
+      rmSync(tempPath, { force: true });
+    } catch {
+      // best-effort cleanup only; the final files are never touched by this path
+    }
+  }
+};
+
+try {
+  staged.forEach(({ tempPath }, i) => writeFileSync(tempPath, stagedContents[i]));
+} catch (error) {
+  cleanupStaged();
+  process.stderr.write(`FAIL CLOSED: staging a mirror file failed: ${(error as Error).message}\nNo mirror was written.\n`);
+  process.exit(1);
+}
+
+try {
+  for (const { tempPath, finalPath } of staged) renameSync(tempPath, finalPath);
+} catch (error) {
+  cleanupStaged();
+  process.stderr.write(
+    `FAIL CLOSED: renaming a staged mirror file into place failed: ${(error as Error).message}\nThe previously committed mirror is unchanged.\n`,
+  );
+  process.exit(1);
+}
 
 process.stderr.write(`wrote ${outJsonPath}\nwrote ${outCsvPath}\nwrote ${outManifestPath}\nwrote ${outWrapperPath}\n`);
 

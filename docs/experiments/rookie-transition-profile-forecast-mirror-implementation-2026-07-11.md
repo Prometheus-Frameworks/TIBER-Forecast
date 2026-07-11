@@ -64,8 +64,13 @@ independently re-verified against the actual bytes at the pinned commit):
    source repo/commit via `git -C <source-root> remote get-url origin` / `rev-parse HEAD` (with
    `--source-repo=`/`--source-commit=` overrides for testing against a non-git fixture directory),
    reads the local TIBER-Rookies checkout's files, calls the pure module, and — only if it returns
-   `status: 'passed'` — writes all four files together (no partial refresh on failure; nothing is
-   written at all if any check fails).
+   `status: 'passed'` — stages all four files under temporary names in the same directory, then
+   renames each into place only once every staged write has succeeded (fixed after a PR #152 review
+   finding: the original version wrote directly to the four final paths in sequence, so an I/O
+   failure partway through — disk full, permission change, `SIGTERM` — could leave a mix of
+   old/new files despite the "no partial refresh" contract; `renameSync` is atomic per file within
+   one filesystem, so a failure during staging now leaves the previously committed mirror completely
+   untouched). Nothing is written or renamed at all if any source-lock/hash/population check fails.
 3. **Four mirror artifacts** written under `data/fixtures/tiberRookies/` (exactly these, nothing
    else):
    - `rookie_transition_profile_v0_2026.mirror.json` — byte-identical copy of the upstream JSON.
