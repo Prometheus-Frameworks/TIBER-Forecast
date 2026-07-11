@@ -330,6 +330,8 @@ Not populated by this design. Future shape:
       "resolution_status": "unresolved",
       "resolution_evidence_class": null,
       "independent_resolution_evidence_class": null,
+      "identity_coverage_dependency": "unproven",
+      "identity_coverage_mechanism": null,
       "resolution_evidence": [],
       "reviewer": null,
       "reviewed_at": null,
@@ -375,7 +377,7 @@ directly rather than parsing prose:
 
 - **Ownership:** Forecast (this is Forecast's own consumption-side crosswalk; the canonical
   identity concept itself remains nflverse/TIBER-Data-owned per §1).
-- **Required fields:** all twelve row fields above, always present (nullable where unresolved).
+- **Required fields:** all fourteen row fields above, always present (nullable where unresolved).
 - **Evidence-class field:** `resolution_evidence_class` is one of
   `3.1_overall_pick_chain | 3.2_reviewed_mapping | 3.3_governed_artifact | null`, always present and
   distinct from the structured `resolution_evidence` entries — required so any future experiment
@@ -401,6 +403,21 @@ directly rather than parsing prose:
   any of 1–4 fails. This is the first-line, fail-closed check; the integrated readiness review (§17)
   independently re-proves the same claim later — validation here is not a substitute for that review,
   and that review is not the first place the claim is checked.
+- **Identity-coverage-dependency field (distinct from, and orthogonal to, evidence class):**
+  `identity_coverage_dependency` is one of `independent_of_post_draft_outcome |
+  contingent_on_post_draft_participation | unproven`, default `unproven`. This records whether the
+  row's `gsis_id` being discoverable **at all** — regardless of which evidence class (§3.1, §3.2, or
+  §3.3) ultimately proved it — depended on the player's post-draft roster/game participation. §16
+  defines why this is a distinct leakage dimension from evidence-class-specific leakage, and why a
+  validator must never infer `independent_of_post_draft_outcome` from an evidence class alone.
+  `identity_coverage_mechanism` records, in structured/citable form, *how* the `gsis_id` became
+  discoverable for this row (e.g. "sourced from `player_season_coverage_v0.json`, populated via
+  `nflreadpy.load_player_stats()` — requires accrued NFL statistics" vs. "sourced from a governed
+  pre-draft player registry assigned at draft declaration, independent of roster outcome"), with its
+  own repo/commit/path/hash citation where the mechanism is itself a governed artifact. A validator
+  must reject a `identity_coverage_dependency: "independent_of_post_draft_outcome"` claim that lacks
+  a non-null, citable `identity_coverage_mechanism` proving that independence — a bare assertion or
+  an evidence-class label is never sufficient (§16).
 - **Source and evidence hashes:** every `resolution_evidence` entry of class `3.1_overall_pick_chain`
   or `3.3_governed_artifact` must cite its own repo/commit/path/schema/hash per §3's requirements for
   that class; every entry of class `3.2_reviewed_mapping` must cite its reviewer, sign-off date, one
@@ -423,9 +440,10 @@ directly rather than parsing prose:
   own `resolution_evidence_class`, if any `3.2_reviewed_mapping` entry's archived
   `gsis_bearing_evidence` content does not actually contain the exact
   `resolves_to_forecast_canonical_player_id` value claimed, if any evidence entry relies on a method
-  listed in §4, or if any of the independent-evidence checks above fails. A row with no reproducible
-  GSIS-bearing evidence remains `unresolved` — a reviewer's sign-off alone can never satisfy this
-  check.
+  listed in §4, if any of the independent-evidence checks above fails, or if
+  `identity_coverage_dependency: "independent_of_post_draft_outcome"` lacks a non-null, citable
+  `identity_coverage_mechanism` proving that independence. A row with no reproducible GSIS-bearing
+  evidence remains `unresolved` — a reviewer's sign-off alone can never satisfy this check.
 - **Explicit prohibition:** this artifact must not be imported by any model or production path until
   a separate, future authorization does so explicitly — the same "inert until authorized" discipline
   the mirror itself already follows.
@@ -599,8 +617,9 @@ Readiness is strictly **row-and-field** specific, restated as binding rules:
 Not populated by this design. **One matrix artifact instance represents exactly one
 `(season, requested_phase, cutoff_at)` tuple** — a comparison across two phases (e.g. `pre_draft` vs
 `post_draft`) or two cutoffs is always two separate artifact instances, never two rows sharing one
-row-grain key. Future shape — one top-level execution context, and one row per `(source_player_id,
-source_season, field_family)` within that context:
+row-grain key. Future shape — one top-level execution context, and one row per the crosswalk's own
+full governed key `(source_repository, source_schema, source_player_id, source_season)` plus
+`field_family`, within that context:
 
 ```json
 {
@@ -615,11 +634,17 @@ source_season, field_family)` within that context:
   },
   "rows": [
     {
-      "source_player_id": "te-daequan-wright",
+      "source_identity": {
+        "source_repository": "Prometheus-Frameworks/TIBER-Rookies",
+        "source_schema": "rookie-transition-profile-v0.2.0",
+        "source_player_id": "te-daequan-wright",
+        "source_season": 2026
+      },
       "forecast_canonical_player_id": null,
       "identity_status": "unresolved",
       "resolution_evidence_class": null,
       "independent_resolution_evidence_class": null,
+      "identity_coverage_dependency": "unproven",
       "field_family": "draft_capital",
       "temporal_status": "unresolved_no_availability_proof",
       "value_presence": "present",
@@ -638,40 +663,58 @@ source_season, field_family)` within that context:
   level of every matrix artifact instance. A validator must reject any matrix lacking one of these —
   a readiness decision that cannot say which phase/cutoff/crosswalk/evidence it was computed against
   is not reproducible and not valid.
-- **Deterministic dereferencing, not self-consistency alone, of ALL crosswalk-derived fields:** every
-  row's `forecast_canonical_player_id`, `identity_status`, `resolution_evidence_class`, **and**
-  `independent_resolution_evidence_class` must match, exactly, what is found by dereferencing
-  `identity_crosswalk_source` at its exact cited commit, looked up via the crosswalk's own governed
-  key `(source_repository, source_schema, source_player_id, source_season)` (§2) — never a partial
-  key or an "equivalent" locked context. A matrix that is merely internally consistent, without
-  matching all four fields against its cited crosswalk byte-for-byte, must fail validation. The same
-  applies to `temporal_status` against `availability_evidence_source`. **Zero matches or multiple
-  matches on the governed key fails closed** — a matrix row with no corresponding crosswalk row, or
-  more than one, is invalid, never resolved by picking one candidate.
-- **Why all four fields, not just two:** omitting `forecast_canonical_player_id` from this check
-  would let a matrix point a source row at a different canonical player while keeping
-  otherwise-valid statuses; omitting `independent_resolution_evidence_class` would let a matrix flip
-  it from `null` to a non-null value, clearing §16's §3.1 leakage exclusion, even though the pinned
-  crosswalk never actually established independent evidence for that row. **A matrix must reject
+- **`source_identity` carries the crosswalk's full governed key, not just `source_player_id`:** every
+  row's `source_identity` object contains all four of `source_repository`, `source_schema`,
+  `source_player_id`, and `source_season` — the exact key §2 defines for the crosswalk. A row
+  carrying only `source_player_id` cannot be looked up in the crosswalk without a validator
+  reconstructing the other three key fields from surrounding context, which is itself the
+  "equivalent locked context" the next bullet prohibits.
+- **Deterministic dereferencing, not self-consistency alone, of ALL crosswalk-derived fields, via the
+  full governed key:** every row's `forecast_canonical_player_id`, `identity_status`,
+  `resolution_evidence_class`, `independent_resolution_evidence_class`, **and**
+  `identity_coverage_dependency` must match, exactly, what is found by dereferencing
+  `identity_crosswalk_source` at its exact cited commit, looked up via the row's own
+  `source_identity` — the crosswalk's complete governed key `(source_repository, source_schema,
+  source_player_id, source_season)` (§2) — never a partial key or an "equivalent" locked context. A
+  matrix that is merely internally consistent, without matching all five fields against its cited
+  crosswalk byte-for-byte, must fail validation. The same full-key lookup and fail-closed cardinality
+  rule apply to `temporal_status` against `availability_evidence_source`: the row's `source_identity`
+  must also match exactly one row in the availability-evidence artifact. **Zero matches or multiple
+  matches on the governed key, against either source, fails closed** — a matrix row with no
+  corresponding crosswalk or availability-evidence row, or more than one, is invalid, never resolved
+  by picking one candidate.
+- **Why the full key and all five fields, not a subset:** a partial key (e.g. `source_player_id`
+  alone) reintroduces exactly the cross-season collision risk §2 exists to prevent. Omitting
+  `forecast_canonical_player_id` from the dereferencing check would let a matrix point a source row
+  at a different canonical player while keeping otherwise-valid statuses; omitting
+  `independent_resolution_evidence_class` would let a matrix flip it from `null` to a non-null value,
+  clearing §16's §3.1 leakage exclusion, even though the pinned crosswalk never actually established
+  independent evidence for that row; omitting `identity_coverage_dependency` would let a matrix claim
+  population-selection independence (§16) the crosswalk never actually proved. **A matrix must reject
   `leakage_status: clear` for any row carrying `resolution_evidence_class: "3.1_overall_pick_chain"`
   unless the dereferenced crosswalk row itself — not the matrix's own copy of the field — contains a
-  validated, non-null `independent_resolution_evidence_class`.**
-- **`resolution_evidence_class` and `independent_resolution_evidence_class` are included directly in
-  every row** (mirroring §7's crosswalk fields) so that §16's default-exclusion rule for
-  `3.1_overall_pick_chain`-resolved rows, and its sole permitted exception, can be evaluated row by
-  row from the matrix alone, without re-dereferencing the crosswalk artifact for every check.
+  validated, non-null `independent_resolution_evidence_class`; and must reject any pre-draft
+  experiment relying on `identity_coverage_dependency: "independent_of_post_draft_outcome"` unless the
+  dereferenced crosswalk row itself carries that value with its required proof (§16).**
+- **`resolution_evidence_class`, `independent_resolution_evidence_class`, and
+  `identity_coverage_dependency` are included directly in every row** (mirroring §7's crosswalk
+  fields) so that §16's leakage rules can be evaluated row by row from the matrix alone, without
+  re-dereferencing the crosswalk artifact for every check.
 - **Closed enums** for every status field: `identity_status` (§5), `resolution_evidence_class`
   (`3.1_overall_pick_chain | 3.2_reviewed_mapping | 3.3_governed_artifact | null`),
   `independent_resolution_evidence_class` (`3.2_reviewed_mapping | 3.3_governed_artifact | null`),
-  `temporal_status` (§11), `value_presence` (`present` | `unavailable`), `provenance_status`
-  (`intact` | `broken`), `phase_permission` (`pre_draft_candidate` | `post_draft_candidate` |
-  `never_eligible` — the last reserved for `official_postdraft_outcome` in a pre-draft context per
-  §10), `leakage_status`
+  `identity_coverage_dependency` (`independent_of_post_draft_outcome |
+  contingent_on_post_draft_participation | unproven`), `temporal_status` (§11), `value_presence`
+  (`present` | `unavailable`), `provenance_status` (`intact` | `broken`), `phase_permission`
+  (`pre_draft_candidate` | `post_draft_candidate` | `never_eligible` — the last reserved for
+  `official_postdraft_outcome` in a pre-draft context per §10), `leakage_status`
   (`clear` | `violation` | `not_evaluated`), `final_readiness_status`
   (`eligible` | `excluded`).
-- **Deterministic ordering:** `(source_season, source_player_id, field_family)` ascending.
-- **Duplicate prevention:** fail closed on any repeated `(source_player_id, source_season,
-  field_family)` key **within one execution-context artifact instance**.
+- **Deterministic ordering:** `(source_season, source_repository, source_schema, source_player_id,
+  field_family)` ascending.
+- **Duplicate prevention:** fail closed on any repeated `(source_repository, source_schema,
+  source_player_id, source_season, field_family)` key **within one execution-context artifact
+  instance**.
 - **Fail-closed aggregation:** `final_readiness_status: eligible` requires every one of the six §14
   conditions to independently hold; any single failing condition forces `excluded`, and
   `blocking_reasons` must enumerate every failing condition, not just the first one found — partial
@@ -727,6 +770,47 @@ Explicitly prevented, in every future implementation this design authorizes desi
 - An experiment needing a §3.1-only row's identity resolved for `pre_draft` use must obtain an
   independent §3.2 or §3.3 resolution for that specific row (recorded as
   `independent_resolution_evidence_class`) — there is no shortcut via population-level reasoning.
+- **Identity-coverage selection leakage is not limited to §3.1 evidence — it is a distinct, broader
+  leakage dimension affecting every evidence class.** §1's own real-world timing constraint already
+  establishes that a `gsis_id` may never become discoverable for a player who never makes an active
+  NFL roster. Since §14's row-and-field readiness rule requires `identity_status: resolved` for any
+  field to be eligible, and resolvability *of any evidence class* — not only §3.1 — may depend on
+  post-draft roster/game participation, the resolved population can be systematically biased toward
+  players who succeeded post-draft even when the specific evidence class used is §3.2 or §3.3 and
+  contains no literal `official_postdraft_outcome` reference. **This is not hypothetical:** the only
+  concretely-identified GSIS-bearing source in this design, TIBER-Data's
+  `player_season_coverage_v0.json` (§1), is itself built from `nflreadpy.load_player_stats()` and
+  therefore inherently excludes any player who never accrued NFL statistics — its coverage is
+  definitionally contingent on post-draft game participation. §3.2's mandatory GSIS-bearing evidence
+  requirement (§3.2) does not, by itself, rule this out — a fully-compliant §3.2 resolution sourced
+  from that artifact would still carry this dependency.
+- **Retrospective technical linkage is not population eligibility.** A `gsis_id` discovered after the
+  pinned cutoff may be used to join records retrospectively — the value's existence is a fact about
+  the real world, not a leak by itself — but the *discoverability* of that ID must never determine
+  which locked source rows belong to the pre-draft evaluation population. Using resolvability as an
+  implicit inclusion filter converts an operational fact (whether Forecast happened to find the ID)
+  into a population-selection criterion correlated with the very outcome a pre-draft experiment is
+  trying to predict.
+- **Machine-readable tracking, orthogonal to evidence class:** every crosswalk row records
+  `identity_coverage_dependency` (§7) — `independent_of_post_draft_outcome |
+  contingent_on_post_draft_participation | unproven`, default `unproven` — and
+  `identity_coverage_mechanism`, a citable description of how the ID became discoverable. A validator
+  must never infer `independent_of_post_draft_outcome` from `resolution_evidence_class` or
+  `independent_resolution_evidence_class` alone; those are orthogonal dimensions (which evidence
+  class proved the ID vs. whether the ID's existence depended on a post-draft outcome).
+- **Safest fail-closed default, binding on any future controlled-experiment design:** no `pre_draft`
+  controlled-experiment design may open unless **either** (a) all 48 locked source identities are
+  `resolved`, **or** (b) a governed identity source is proven — not merely asserted — to cover the
+  complete locked population independently of draft status, roster status, game participation, target
+  outcomes, and future performance, with every row's `identity_coverage_dependency` recorded as
+  `independent_of_post_draft_outcome` and that proof independently re-verified in the integrated
+  readiness review (§17).
+- **If incomplete identity coverage is ever permitted for some other, non-headline purpose**, the
+  readiness matrix must retain every unresolved row in population accounting (never silently dropped,
+  consistent with the unresolved-row-retention rule already in §7), and any experiment relying on the
+  resolved subset must separately prove — with the same rigor as this section's other independence
+  checks, never a reviewer assertion or an evidence-class label alone — that resolvability did not
+  depend on post-draft outcomes.
 - Availability proof sourced from later downstream artifacts (e.g. citing a post-draft summary
   article as proof a pre-draft value was known pre-draft).
 - Exclusions being silently converted to neutral/default values anywhere in the pipeline.
@@ -755,7 +839,12 @@ controlled-experiment design issue may open. That review must independently re-v
 7. The matrix's execution context (`requested_phase`/`season`/`cutoff_at`/`identity_crosswalk_source`/
    `availability_evidence_source`, §15) matches the actual crosswalk and availability-evidence
    artifacts used at their exact cited commits — not merely internally self-consistent.
-8. Confirmation that no experiment or production activation occurred during either prerequisite
+8. **Identity-coverage-dependency proof (§16)** — for any `pre_draft` controlled-experiment design
+   relying on less than full (48/48) identity resolution, independent re-verification that every
+   relied-upon row's `identity_coverage_dependency` is genuinely `independent_of_post_draft_outcome`
+   with a real, citable `identity_coverage_mechanism` — not accepted merely because the crosswalk
+   labels it so, and never inferred from `resolution_evidence_class` alone.
+9. Confirmation that no experiment or production activation occurred during either prerequisite
    lane's own work (both lanes are themselves documentation/implementation-only until this review
    passes).
 
@@ -853,11 +942,21 @@ consumption, production binding, or activation.
 - [x] The future integrated readiness matrix (§15) records its execution context
       (`requested_phase`/`season`/`cutoff_at`/crosswalk and availability-evidence source citations)
       so a readiness decision is reproducible and distinguishable across phases/cutoffs.
-- [x] Matrix dereferencing (§15) requires ALL FOUR crosswalk-derived fields —
-      `forecast_canonical_player_id`, `identity_status`, `resolution_evidence_class`, and
-      `independent_resolution_evidence_class` — to match the exact cited crosswalk row via its full
-      governed key, with zero/multiple matches failing closed; a matrix cannot spoof a different
-      canonical player or fabricate independent evidence the crosswalk never established.
+- [x] Matrix dereferencing (§15) requires ALL FIVE crosswalk-derived fields —
+      `forecast_canonical_player_id`, `identity_status`, `resolution_evidence_class`,
+      `independent_resolution_evidence_class`, and `identity_coverage_dependency` — to match the
+      exact cited crosswalk row via its **full governed key** (`source_repository`, `source_schema`,
+      `source_player_id`, `source_season`, carried in every matrix row's `source_identity`), with
+      zero/multiple matches failing closed against both the crosswalk and availability-evidence
+      sources; a matrix cannot spoof a different canonical player or fabricate independent evidence
+      the crosswalk never established.
+- [x] Identity-coverage selection leakage is tracked as a distinct dimension from evidence-class
+      leakage (§7, §16): every row records `identity_coverage_dependency`/
+      `identity_coverage_mechanism`, defaulting to `unproven`; no `pre_draft` controlled-experiment
+      design may open on less than full (48/48) identity resolution unless coverage independence
+      from post-draft outcomes is proven and cited, not merely asserted or inferred from an evidence
+      class — grounded in the concrete fact that the only identified GSIS-bearing source
+      (`player_season_coverage_v0.json`) is itself built from accrued-stats data.
 - [x] The positive decision opens only the two prerequisite issues (Decision section above).
 
 ## Non-goals confirmed
