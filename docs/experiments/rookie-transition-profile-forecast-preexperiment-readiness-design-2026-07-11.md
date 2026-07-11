@@ -669,8 +669,12 @@ full governed key `(source_repository, source_schema, source_player_id, source_s
     "full_resolution": false,
     "independent_complete_coverage_source": null,
     "independent_complete_coverage_verified": false,
+    "independent_dependency_count": 0,
+    "contingent_dependency_count": 0,
+    "unproven_dependency_count": 48,
+    "all_locked_identities_independent": false,
     "population_gate_status": "fail",
-    "blocking_reasons": ["full_resolution=false", "independent_complete_coverage_verified=false"]
+    "blocking_reasons": ["full_resolution=false", "independent_complete_coverage_verified=false", "all_locked_identities_independent=false"]
   },
   "rows": [
     {
@@ -692,7 +696,7 @@ full governed key `(source_repository, source_schema, source_player_id, source_s
       "phase_permission": "pre_draft_candidate",
       "leakage_status": "not_evaluated",
       "final_readiness_status": "excluded",
-      "blocking_reasons": ["identity_status=unresolved", "temporal_status=unresolved_no_availability_proof"]
+      "blocking_reasons": ["identity_status=unresolved", "temporal_status=unresolved_no_availability_proof", "identity_population_gate=fail"]
     }
   ]
 }
@@ -718,16 +722,33 @@ full governed key `(source_repository, source_schema, source_player_id, source_s
   | `full_resolution` | `true` iff `unique_source_identity_count == 48` **and** `resolved_count == 48` — i.e. every one of the 48 locked identities is `resolved`, with zero `unresolved`/`conflicting_evidence`/`blocked`. **`full_resolution` does not depend on any row's `identity_coverage_dependency` value** — if literally every identity is resolved, no row was excluded for being unresolvable, so no population-selection bias is possible regardless of *how* each row was resolved. (Row-level leakage from a specific outcome-derived evidence class, e.g. §16's §3.1 default-exclusion rule, is a separate, orthogonal check — see below.) |
   | `independent_complete_coverage_source` | `null`, or the exact `{repo, commit, path, schema_version, sha256}` of a pinned governed source cited as proof of complete, independent identity coverage. |
   | `independent_complete_coverage_verified` | `true` only if that cited source's own distinct full-key coverage is verified to equal the complete 48-key locked population **exactly** — no partial overlap, no extra keys, no missing keys — with independence from draft status, roster/game participation, target outcomes, and future performance proven and cited (§16), not merely asserted. |
-  | `population_gate_status` | `pass_full_resolution` (when `full_resolution` is `true`) \| `pass_independent_complete_coverage` (when `full_resolution` is `false` but `independent_complete_coverage_verified` is `true`) \| `fail` (otherwise). |
+  | `independent_dependency_count` / `contingent_dependency_count` / `unproven_dependency_count` | Counts of the **48 distinct dereferenced crosswalk identities** (never matrix field-rows) by `identity_coverage_dependency`: `independent_of_post_draft_outcome` / `contingent_on_post_draft_participation` / `unproven` respectively. Must sum to `unique_source_identity_count`. |
+  | `all_locked_identities_independent` | `true` iff `independent_dependency_count == 48` **and** `contingent_dependency_count == 0` **and** `unproven_dependency_count == 0` — i.e. every one of the 48 locked identities individually carries `identity_coverage_dependency: "independent_of_post_draft_outcome"`, not merely that some top-level source claims complete coverage. |
+  | `population_gate_status` | `pass_full_resolution` (when `full_resolution` is `true`) \| `pass_independent_complete_coverage` (when `full_resolution` is `false` but the four conditions below all hold) \| `fail` (otherwise). |
   | `blocking_reasons` | Non-empty whenever `population_gate_status` is `fail`; enumerates every failing condition, not just the first. |
 
   **Deterministic validation:**
   - All counts operate on distinct full governed source keys, never row-and-field records.
   - `pass_full_resolution` requires exactly 48 distinct locked keys and all 48 at `resolution_status:
     resolved` — nothing else qualifies.
-  - `pass_independent_complete_coverage` requires the cited source's distinct full-key coverage to
-    equal the complete 48-key locked population, with the independence proof re-verified (§17) — a
-    partial-overlap or extra/missing-key source fails closed to `fail`, never a partial pass.
+  - **`pass_independent_complete_coverage` requires ALL of the following, not `independent_complete_coverage_verified` alone:**
+    ```text
+    unique_source_identity_count == 48
+    independent_complete_coverage_verified == true
+    all_locked_identities_independent == true
+    independent_dependency_count == 48
+    contingent_dependency_count == 0
+    unproven_dependency_count == 0
+    ```
+    §16's branch (b) requires complete independent coverage **and that every row's**
+    `identity_coverage_dependency` be recorded as `independent_of_post_draft_outcome` — a top-level
+    `independent_complete_coverage_source` citation must never silently override contradictory
+    per-row `identity_coverage_mechanism`/`identity_coverage_dependency` values. A gate reporting
+    `pass_independent_complete_coverage` while any locked identity remains
+    `contingent_on_post_draft_participation` or `unproven` is invalid, regardless of what the
+    top-level source claims.
+  - A partial-overlap, extra-key, or missing-key independent-coverage source fails closed to `fail`,
+    never a partial pass.
   - Any other configuration is `fail`, and **no controlled-experiment design may open**.
   - **The population gate is separate from, and does not override, §16's §3.1 row-level leakage
     rule:** `population_gate_status: pass_full_resolution` (48/48 resolved) must **not** clear a row
@@ -753,14 +774,22 @@ full governed key `(source_repository, source_schema, source_player_id, source_s
   `source_identity` — the crosswalk's complete governed key `(source_repository, source_schema,
   source_player_id, source_season)` (§2) — never a partial key or an "equivalent" locked context. A
   matrix that is merely internally consistent, without matching all five fields against its cited
-  crosswalk byte-for-byte, must fail validation. The same full-key lookup and fail-closed cardinality
-  rule apply to `temporal_status` against `availability_evidence_source`: the row's `source_identity`
-  must also match exactly one row in the availability-evidence artifact. **Zero matches or multiple
-  matches on the governed key, against either source, fails closed** — a matrix row with no
+  crosswalk byte-for-byte, must fail validation.
+- **Availability dereferencing uses a different, five-field key — `source_identity` alone is
+  insufficient.** §13's availability-evidence artifact is keyed by `(source_repository,
+  source_schema, source_player_id, source_season, field_family)` — five rows per locked identity,
+  one per field family — not the crosswalk's four-field identity key. A matrix row's `temporal_status`
+  must be dereferenced by its `source_identity` **plus its own `field_family`**, requiring **exactly
+  one** matching availability-evidence row for that composite five-field key, and must equal that
+  row's exact `availability_status`. **The crosswalk lookup stays on the four-field identity key; the
+  two source artifacts intentionally have different grains, and neither substitutes for the other's
+  key.** Zero matches or multiple matches on the five-field key against the availability-evidence
+  artifact fails closed, exactly as for the crosswalk's four-field key — a matrix row with no
   corresponding crosswalk or availability-evidence row, or more than one, is invalid, never resolved
   by picking one candidate.
-- **Why the full key and all five fields, not a subset:** a partial key (e.g. `source_player_id`
-  alone) reintroduces exactly the cross-season collision risk §2 exists to prevent. Omitting
+- **Why the crosswalk's full four-field key and all five dereferenced status fields, not a subset:**
+  a partial key (e.g. `source_player_id` alone) reintroduces exactly the cross-season collision risk
+  §2 exists to prevent. Omitting
   `forecast_canonical_player_id` from the dereferencing check would let a matrix point a source row
   at a different canonical player while keeping otherwise-valid statuses; omitting
   `independent_resolution_evidence_class` would let a matrix flip it from `null` to a non-null value,
@@ -923,10 +952,14 @@ controlled-experiment design issue may open. That review must independently re-v
    labels it so, and never inferred from `resolution_evidence_class` alone.
 9. **`identity_population_gate` correctness (§15)** — independent recomputation of
    `unique_source_identity_count`/`resolved_count`/`unresolved_count`/`conflicting_evidence_count`/
-   `blocked_count` from the dereferenced crosswalk (never trusting the matrix's self-reported counts),
-   confirmation that `population_gate_status` follows deterministically from those counts and, where
-   claimed, an independently re-verified `independent_complete_coverage_source`, and confirmation that
-   no row's `final_readiness_status` is `eligible` while the population gate is `fail`.
+   `blocked_count`/`independent_dependency_count`/`contingent_dependency_count`/
+   `unproven_dependency_count` from the dereferenced crosswalk (never trusting the matrix's
+   self-reported counts), confirmation that `population_gate_status` follows deterministically from
+   those counts — including that `pass_independent_complete_coverage` requires all 48 locked
+   identities individually at `independent_of_post_draft_outcome`, not merely a top-level source
+   citation — where claimed, an independently re-verified `independent_complete_coverage_source`, and
+   confirmation that no row's `final_readiness_status` is `eligible` while the population gate is
+   `fail`.
 10. Confirmation that no experiment or production activation occurred during either prerequisite
     lane's own work (both lanes are themselves documentation/implementation-only until this review
     passes).
@@ -1050,6 +1083,15 @@ consumption, production binding, or activation.
       as the crosswalk and matrix, with grain/ordering/duplicate-prevention over the full key plus
       `field_family`, and fails closed on any missing, duplicated, or extra locked source key — so the
       matrix's full-key dereferencing (§15) can be satisfied exactly against this artifact too.
+- [x] Availability dereferencing (§15) uses its own five-field key (`source_identity` **plus
+      `field_family`**), distinct from the crosswalk's four-field identity key — since §13's grain
+      carries five rows per locked identity, a `source_identity`-only lookup would return multiple
+      rows and never satisfy the zero/multiple-match rule as written.
+- [x] `pass_independent_complete_coverage` (§15) mechanically enforces §16's *every-row* dependency
+      requirement — `independent_dependency_count == 48`, `contingent_dependency_count == 0`, and
+      `unproven_dependency_count == 0`, computed over the 48 distinct dereferenced identities — not
+      merely a top-level `independent_complete_coverage_verified` flag that a contradictory per-row
+      `identity_coverage_dependency` could otherwise silently override.
 - [x] The positive decision opens only the two prerequisite issues (Decision section above).
 
 ## Non-goals confirmed
