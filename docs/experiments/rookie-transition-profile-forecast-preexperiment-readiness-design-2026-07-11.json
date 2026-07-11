@@ -37,7 +37,7 @@
       "format_example": "00-0033873",
       "owning_repository": "external (nflverse); passed through, not owned, by TIBER-Data",
       "owning_artifact_class": "TIBER-Data promoted roster/production/outcome artifacts (e.g. exports/promoted/nfl/player_season_coverage_v0.json)",
-      "schema_version": "whatever TIBER-Data's specific promoted artifact declares at consumption time -- not Forecast-owned",
+      "schema_version": "no uniform schema_version envelope convention exists across TIBER-Data today (docs/governance/cross-repo-governance-v0.md names a promoted_artifact_envelope_v0 contract as future, not-yet-built work); where a promoted artifact self-declares one it must be cited exactly -- e.g. player_season_coverage_v0.json currently pins artifact_id=player_season_coverage_v0, spec_version=player_season_coverage_v0_promoted_v1, promoted_artifact_sha256=d45f612b207085df00b4b080e4f55ce1abbd060dcbf30b0bee777ff833ddd8ac, promotion_review=TIBER-Data#202; where no self-declared version exists (e.g. the 2026 rookies draft-result identity reference, nfl_draft_results_2026.json), the exact git commit SHA plus file path is the only durable citation -- whatever the artifact declares at consumption time is not itself a citation",
       "grain": "one gsis_id per real player, for their entire career",
       "season_scoping": "season_independent",
       "aliases_and_identity_changes": "not owned by this design; corrections are TIBER-Data's/nflverse's to publish, Forecast consumes as-of the cited commit and never reinterprets locally",
@@ -68,12 +68,25 @@
     "permitted_identity_evidence_classes": [
       {
         "class": "3.1_corroborated_overall_pick_chain",
-        "strength": "strongest",
+        "strength": "strongest when available; drafted rows only",
+        "current_status": "blocked_pending_second_leg_evidence",
         "applies_to": "drafted rows only (official_postdraft_outcome.value.overall_pick present, 47 of 48 in current mirror)",
-        "mechanism": "joins TIBER-Rookies official_postdraft_outcome.value.overall_pick against a TIBER-Data-governed promoted draft-results artifact carrying the same overall_pick, whose gsis_id is drawn from a separate governed TIBER-Data roster/production artifact -- never from TIBER-Rookies itself, never from the draft-results artifact's own player_id field",
-        "precedent": "TIBER-Data:data/raw/rookies/2026/2026_tiber_rookies_draft_result_id_reference_v0.json already resolves draft-result rows to TIBER-Rookies identity using overall_pick as the sole join key, explicitly not name-based (docs/data/nfl-draft-results-v1.md: player names are audit context only)",
-        "requirements": [
-          "exact repository/commit/path/schema/hash citation for both TIBER-Data artifacts used",
+        "mechanism": "joins TIBER-Rookies official_postdraft_outcome.value.overall_pick against a TIBER-Data-governed promoted draft-results artifact carrying the same overall_pick, whose gsis_id would be drawn from a separate governed TIBER-Data roster/production artifact -- never from TIBER-Rookies itself, never from the draft-results artifact's own player_id field",
+        "precedent_first_leg_only": "TIBER-Data:data/raw/rookies/2026/2026_tiber_rookies_draft_result_id_reference_v0.json already resolves draft-result rows to TIBER-Rookies identity using overall_pick as the sole join key, explicitly not name-based (docs/data/nfl-draft-results-v1.md: player names are audit context only) -- but this is only the first leg (source_player_id -> overall_pick -> draft-result row)",
+        "verified_second_leg_gap": {
+          "checked_on": "2026-07-11",
+          "checked_against": "Prometheus-Frameworks/TIBER-Data",
+          "finding": "no governed TIBER-Data artifact today joins a draft-results row (or the 2026 rookies reference row) to a gsis_id-bearing row",
+          "closest_candidate": "exports/promoted/nfl/player_season_coverage_v0.json (artifact_id=player_season_coverage_v0, spec_version=player_season_coverage_v0_promoted_v1) has both a 100%-conformant GSIS-format player_id and draft_pick/draft_round/draft_team/draft_year fields, but (a) has zero rows for draft_year=2026 (populated draft_year values run only through 2025), and (b) draft_pick is undeclared in either schemas/player_season_coverage_v0.schema.json or schemas/player_season_coverage_v0_promoted.schema.json -- it passes through only via additionalProperties:true and is independently audited at only ~67% population even historically (docs/reports/player-season-coverage-v0-2021-source-availability.md: 424/633 for 2021) -- an unaudited passthrough field, not a governed join column",
+          "other_artifacts_ruled_out": [
+            "exports/promoted/nfl_draft_results/nfl_draft_results_2026.json -- no GSIS-shaped field at all",
+            "exports/promoted/identity_crosswalk/tiber_identity_crosswalk_v1.json -- Sleeper-provider crosswalk only, supported_providers=[sleeper], no draft-pick field",
+            "exports/promoted/rookie-replay/historical_rookie_replay_v0.json -- has both draft_pick and player_id fields but rows are fixture-only (player_id=fixture_ashton_jeanty, source=offline_fixture:...), not real data"
+          ]
+        },
+        "activation_precondition": "class 3.1 must not be used by any future Lane A implementation until one of the following is satisfied and pinned by exact repository, commit, path, schema/spec_version, and hash: (1) a single governed TIBER-Data artifact whose row directly contains (draft_year, overall_pick, gsis_id) together with gsis_id declared as a governed/enforced column (not an additionalProperties passthrough); or (2) a fully governed, documented second-leg join key -- asserted as a contractual join key by TIBER-Data's own docs, never name/team/position inference. Until then, all 47 currently-drafted rows must be resolved (if at all) via 3.2, or remain unresolved. Class 3.1 is retained in this design only as the target contract a future artifact could satisfy.",
+        "requirements_once_available": [
+          "exact repository/commit/path/schema/hash citation for both TIBER-Data artifacts used (or the single combined artifact if precondition 1 is satisfied)",
           "join key is overall_pick alone; no secondary matching field required, but a drafting-team disagreement for the same overall_pick is itself a conflicting_evidence signal",
           "does not apply to udfa_signed rows (no overall_pick exists) -- those use 3.2",
           "single-source corroboration sufficient for this class specifically, because the join key is exact and the precedent has no known failure mode when both artifacts genuinely agree",
@@ -234,20 +247,20 @@
       },
       {
         "family": "age_at_entry",
-        "required_evidence": "a cited, dated source establishing the player's date of birth was publicly documented before cutoff X",
+        "required_evidence": "archived, dated evidence of BOTH (a) the player's exact source date of birth, AND (b) the governed reference date/formula used to compute the mirrored age_at_entry value itself (e.g. age as of the pinned pre-draft cutoff, per section 8), with both the DOB source and the reference-date/formula definition shown available before cutoff X -- proof that a DOB exists is necessary but not sufficient; the derivation basis for the specific mirrored value must also be provable pre-cutoff",
         "proof_granularity": "row-level",
         "season_generalizes": false
       },
       {
         "family": "athletic_testing",
-        "required_evidence": "a cited, dated record of the actual combine/pro-day/testing event the value derives from, proving that event occurred before cutoff X; genuine, real, unavailable-before date is the testing event itself",
-        "proof_granularity": "row-level (the specific test date)",
+        "required_evidence": "archived, dated evidence of the exact measurement/result value the mirror carries -- not merely that the testing event occurred -- showing that specific value was publicly available/published before cutoff X (e.g. an archived combine-results page or table containing the literal recorded number); proof of the event's occurrence alone is necessary but not sufficient",
+        "proof_granularity": "row-level (the specific measured value)",
         "season_generalizes": false
       },
       {
         "family": "college_production",
-        "required_evidence": "a cited, dated confirmation that the specific college season/stat-window the value reflects had closed before cutoff X (e.g. bowl-season completion date for that year)",
-        "proof_granularity": "row-level (varies by class year / games played)",
+        "required_evidence": "an archived, dated snapshot containing the exact stat value(s)/window the mirror carries, shown publicly available before cutoff X -- not merely evidence that the season/stat-window had closed; a season closing does not by itself prove the specific total was published, finalized, or free of later correction",
+        "proof_granularity": "row-level (the specific value, not just the closed window)",
         "season_generalizes": false
       },
       {
@@ -261,13 +274,14 @@
     "temporal_status_enum": {
       "values": ["eligible_at_cutoff", "ineligible_after_cutoff", "unresolved_no_availability_proof", "unavailable"],
       "definitions": {
-        "eligible_at_cutoff": "a cited available_at/event_time for this specific row+family is proven to precede the pinned cutoff",
-        "ineligible_after_cutoff": "the cited available_at/event_time is proven to be at or after the cutoff (or the family is official_postdraft_outcome in a pre_draft context, which is always this status)",
+        "eligible_at_cutoff": "an archived available_at citation directly containing the exact mirrored value for this specific row+family is proven to precede the pinned cutoff",
+        "ineligible_after_cutoff": "the cited available_at is proven to be at or after the cutoff (or the family is official_postdraft_outcome in a pre_draft context, which is always this status)",
         "unresolved_no_availability_proof": "no citation has yet been attempted or completed for this row+family; the default starting state today, for every family",
         "unavailable": "the underlying value itself is null/unavailable in the source mirror (a missingness fact, distinct from a timing fact)"
       },
-      "transition_rules": "identical discipline to the identity status enum: unresolved_no_availability_proof -> eligible_at_cutoff only via a completed citation per the cutoff/per-family-proof requirements; any status may move to ineligible_after_cutoff if new evidence proves the fact postdates the cutoff; unavailable is independent of the other three and checked first",
-      "origin_label_warning": "an origin label such as market_derived_proxy or official_draft_result is not itself availability proof -- restated verbatim from the issue because it is the single most likely shortcut a future implementation might be tempted to take"
+      "event_time_is_supporting_only": "event_time (a testing date, a season-close date, etc.) is supporting context only and never sufficient alone to establish eligible_at_cutoff -- it does not by itself prove the specific mirrored value was published, stable, or reproducible; eligible_at_cutoff requires an exact-value available_at citation (an archived snapshot directly containing the literal mirrored value), which event_time may corroborate but never substitute for. Applies to every family in the per-family table, including athletic_testing and college_production.",
+      "transition_rules": "identical discipline to the identity status enum: unresolved_no_availability_proof -> eligible_at_cutoff only via a completed exact-value citation per the cutoff/per-family-proof requirements; any status may move to ineligible_after_cutoff if new evidence proves the fact postdates the cutoff; unavailable is independent of the other three and checked first",
+      "origin_label_warning": "an origin label such as market_derived_proxy or official_draft_result is not itself availability proof, and neither is proof that the underlying event/window merely occurred or closed -- restated and extended verbatim from the issue because these are the shortcuts a future implementation is most likely to be tempted to take"
     },
     "historical_snapshot_integrity": {
       "immutable_source_snapshots": "any artifact cited as available_at/event-time evidence must be identified by exact repository + commit + path + hash -- never the current state of X",
@@ -301,9 +315,20 @@
       "populated_by_this_design": false,
       "kind": "rookie_transition_profile_v0_forecast_integrated_readiness_matrix",
       "schema_version": "1.0.0",
-      "grain": "(source_player_id, source_season, field_family)",
+      "artifact_scope": "one matrix artifact instance represents exactly one (season, requested_phase, cutoff_at) tuple; a comparison across two phases or two cutoffs is always two separate artifact instances, never two rows sharing one row-grain key",
+      "execution_context_required_fields": {
+        "requested_phase": "pre_draft | post_draft",
+        "season": "pinned season this artifact covers",
+        "cutoff_at": "pinned, cited ISO-8601 instant per section 8 -- null until cited",
+        "identity_crosswalk_source": "{repo, commit, path, schema_version, sha256} of the exact crosswalk artifact (section 7) this matrix was derived from",
+        "availability_evidence_source": "{repo, commit, path, schema_version, sha256} of the exact availability-evidence artifact (section 13) this matrix was derived from"
+      },
+      "execution_context_validation": "a validator must reject any matrix instance missing any of the five execution-context fields; a readiness decision that cannot say which phase/cutoff/crosswalk/evidence it was computed against is not reproducible and not valid",
+      "deterministic_dereferencing_requirement": "every row's identity_status and resolution_evidence_class must match what is found by dereferencing identity_crosswalk_source at its exact cited commit (not merely be internally self-consistent); the same applies to temporal_status against availability_evidence_source",
+      "grain": "(source_player_id, source_season, field_family) within one execution-context artifact instance",
       "closed_enums": {
         "identity_status": "resolved | unresolved | conflicting_evidence | blocked",
+        "resolution_evidence_class": "3.1_overall_pick_chain | 3.2_reviewed_mapping | 3.3_governed_artifact | null -- included directly in every row (mirroring the crosswalk's own field) so the 3.1 default-exclusion leakage rule can be evaluated row by row from the matrix alone",
         "temporal_status": "eligible_at_cutoff | ineligible_after_cutoff | unresolved_no_availability_proof | unavailable",
         "value_presence": "present | unavailable",
         "provenance_status": "intact | broken",
@@ -312,7 +337,7 @@
         "final_readiness_status": "eligible | excluded"
       },
       "deterministic_ordering": "(source_season, source_player_id, field_family) ascending",
-      "duplicate_prevention": "fail closed on any repeated (source_player_id, source_season, field_family) key",
+      "duplicate_prevention": "fail closed on any repeated (source_player_id, source_season, field_family) key within one execution-context artifact instance",
       "fail_closed_aggregation": "final_readiness_status: eligible requires every one of the six row-and-field conditions to independently hold; any single failing condition forces excluded, and blocking_reasons must enumerate every failing condition, not just the first one found -- partial credit is never given"
     },
     "leakage_controls": [
@@ -320,7 +345,8 @@
       "current/revised values being treated as historically known at an earlier cutoff",
       "refresh or generation timestamps (mirror_refreshed_at, generated_at) standing in for available_at",
       "identity resolution silently derived from target/outcome information without disclosure -- the one explicitly permitted exception is Lane A's bounded, fully-disclosed use of official_postdraft_outcome.value.overall_pick for drafted-row identity linkage (evidence class 3.1); that exception does not itself authorize using its result as an outcome-blind population or feature signal (see next rule); undisclosed uses of outcome information for identity resolution remain prohibited outright",
-      "using identity_status=resolved (or specifically 3.1-resolved rows, i.e. rows carrying resolution_evidence_class=3.1_overall_pick_chain) as an implicit population-inclusion or feature signal in any future experiment whose target is, or overlaps with, official_postdraft_outcome-derived information -- evidence class 3.1 is structurally available only for drafted rows (no overall_pick exists for udfa_signed rows), so filtering a population to identity-resolved rows would systematically bias it toward drafted players, leaking draft status through selection rather than a feature value; any such target-overlapping experiment must either build its population using only 3.2-resolved identities, or explicitly prove and document population-selection independence before treating a 3.1-resolved population as safe for that target",
+      "default exclusion of 3.1-resolved identities from every pre-draft experiment, not only outcome-targeting ones: any row carrying resolution_evidence_class=3.1_overall_pick_chain defaults to leakage_status=violation (and final_readiness_status=excluded) in any pre_draft-phase readiness matrix regardless of the experiment's specific target, because evidence class 3.1 is structurally available only for drafted rows (no overall_pick exists for udfa_signed rows) -- filtering any pre-draft population to identity-resolved rows systematically biases it toward drafted players, a selection-bias leak even for targets that never literally reference official_postdraft_outcome (e.g. a fantasy-performance target), because the resulting population itself already encodes drafted-vs-UDFA status",
+      "the only permitted exception, with a concrete checkable proof requirement recorded in the integrated readiness review, not asserted in prose: (1) the population-definition criterion is documented before any identity resolution is attempted and references nothing derived from official_postdraft_outcome/identity_status/resolution_evidence_class; (2) a reproducible comparison shows the documented population criterion yields the exact same row set (same count, same source_player_id membership) whether evaluated against the real crosswalk or a hypothetical crosswalk with every resolution_evidence_class forced to null; (3) the comparison's inputs and result are recorded as an explicit, re-verifiable item in the integrated readiness review -- any experiment failing any of the three must build its population using only 3.2-resolved identities for the affected rows, or exclude them",
       "availability proof sourced from later downstream artifacts (e.g. citing a post-draft summary article as proof a pre-draft value was known pre-draft)",
       "exclusions being silently converted to neutral/default values anywhere in the pipeline",
       "unresolved rows being dropped without audit accounting -- every excluded row/field must remain visible in the readiness matrix with its blocking_reasons, never quietly disappear"
@@ -332,8 +358,9 @@
         "full 48-row accounting -- every mirrored identity present in the crosswalk output with a real status, none silently dropped",
         "temporal proof at the exact pinned cutoff -- not a looser or later cutoff",
         "row-and-field matrix correctness -- spot-checked against the underlying evidence, not merely schema-valid",
-        "leakage exclusions actually enforced, not merely documented",
+        "leakage exclusions actually enforced, not merely documented -- including the 3.1-overall-pick-chain default-exclusion rule and, for any experiment claiming the population-selection-independence exception, independent re-verification of the required reproducible crosswalk comparison, not acceptance of the experiment's own claim",
         "unresolved and ineligible population counts -- reported explicitly, not implied",
+        "the matrix's execution context (requested_phase/season/cutoff_at/identity_crosswalk_source/availability_evidence_source) matches the actual crosswalk and availability-evidence artifacts used at their exact cited commits -- not merely internally self-consistent",
         "confirmation that no experiment or production activation occurred during either prerequisite lane's own work"
       ],
       "not_performed_here": true,
@@ -362,7 +389,10 @@
     "integrated readiness cannot pass with unresolved identity or unresolved timing -- the AND-rule and fail-closed aggregation both enforce this structurally",
     "no design path permits fuzzy/name-only resolution (prohibited methods list is exhaustive and binding)",
     "no timestamp substitution permits leakage (timestamp-meanings table and leakage controls both name this explicitly)",
-    "evidence class 3.1's use of official_postdraft_outcome-derived evidence for identity resolution is explicitly bounded and disclosed (resolution_evidence_class), with a corresponding leakage-controls rule preventing its leakage into any outcome-target experiment's population or features via selection bias",
+    "evidence class 3.1's use of official_postdraft_outcome-derived evidence for identity resolution is explicitly bounded and disclosed (resolution_evidence_class), with a corresponding leakage-controls rule defaulting it to excluded in every pre-draft experiment (not only outcome-targeting ones) unless a concrete, reproducible population-selection-independence proof is recorded",
+    "evidence class 3.1 is honestly marked blocked_pending_second_leg_evidence -- directly verified against TIBER-Data that no governed artifact today joins overall_pick to gsis_id, and the class may not be used until that gap is closed and cited by exact repo/commit/path/schema/hash",
+    "availability proof for athletic_testing, college_production, and age_at_entry requires the exact mirrored value to be shown published pre-cutoff, not merely that the underlying event or window occurred/closed",
+    "the future integrated readiness matrix records its execution context (requested_phase/season/cutoff_at/crosswalk and availability-evidence source citations) so a readiness decision is reproducible and distinguishable across phases/cutoffs",
     "the positive decision opens only the two prerequisite issues"
   ],
   "non_goals": [
