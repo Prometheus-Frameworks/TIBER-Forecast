@@ -51,9 +51,11 @@
       "data/fixtures/tiberRookies/ROOKIE_TRANSITION_PROFILE_V0_MIRROR_PROVENANCE.json"
     ],
     "payload_transformation": "none; byte-identical copy of JSON, CSV, and manifest",
-    "forecast_owned_wrapper_contents": ["source_lock", "mirror_refreshed_at", "identity_resolution_status_per_row", "phase_eligibility_tags", "governing_design_document_pointer"],
+    "forecast_owned_wrapper_contents": ["source_lock", "mirror_refreshed_at", "identity_resolution_status_per_row", "phase_eligibility_classification_pointer", "governing_design_document_pointer"],
     "permitted_differences_from_source": "none in mirrored payload bytes; wrapper is a wholly additive sibling file",
-    "parity_validation": "sha256 of each mirrored file must equal source_lock.artifact_hashes on every refresh"
+    "parity_validation": "sha256 of each mirrored file must equal source_lock.artifact_hashes on every refresh",
+    "only_artifact_form_authorized": true,
+    "no_phase_filtered_or_derived_projection_created": "the mirror-implementation issue produces exactly the four files above and nothing else; a file that physically omits a source field is a transformation, not a byte-identical mirror, and is out of scope for this stage -- any future phase-specific view is separate, later work (see temporal_eligibility.representation)"
   },
   "row_grain": {
     "grain": "(player_id, season, source_run_id, prediction_phase)",
@@ -75,16 +77,17 @@
   "field_classification": {
     "assumption": "all classifications assume identity resolution (row_grain) already succeeded for that row; an unresolved-identity row is audit-only regardless of field",
     "families": [
-      {"family": "draft_capital", "status": "mirrored_for_audit_only", "future_eligibility": "structurally could become eligible for controlled experimentation in a future, separate design (pre-draft-safe by nature)", "source_type": "market_derived_proxy"},
-      {"family": "age_at_entry", "status": "mirrored_for_audit_only", "future_eligibility": "structurally could become eligible in a future design (pre-draft-safe)", "source_type": "measured_identity_fact"},
-      {"family": "athletic_testing", "status": "mirrored_for_audit_only", "future_eligibility": "structurally could become eligible in a future design (pre-draft-safe)", "source_type": "measured_combine"},
-      {"family": "college_production", "status": "mirrored_for_audit_only", "future_eligibility": "structurally could become eligible in a future design (pre-draft-safe)", "source_type": "measured_production_stats"},
-      {"family": "official_postdraft_outcome", "status": "mirrored_for_audit_only", "future_eligibility": "blocked from any pre_draft-phase view permanently; eligibility in a post_draft context is separate future work, not authorized here", "source_type": "official_draft_result"},
+      {"family": "draft_capital", "status": "mirrored_for_audit_only", "temporal_eligibility": "unresolved", "future_eligibility": "conceptually pre-draft in origin but no governed as-of proof exists that a specific value was live at any cutoff -- big-board proxies change throughout the pre-draft cycle; NOT classified pre-draft-safe", "source_type": "market_derived_proxy"},
+      {"family": "age_at_entry", "status": "mirrored_for_audit_only", "temporal_eligibility": "unresolved", "future_eligibility": "no governed as-of availability proof recorded; NOT classified pre-draft-safe", "source_type": "measured_identity_fact"},
+      {"family": "athletic_testing", "status": "mirrored_for_audit_only", "temporal_eligibility": "unresolved", "future_eligibility": "combine-derived with a real unavailable-before date (the combine itself) not recorded per row; NOT classified pre-draft-safe", "source_type": "measured_combine"},
+      {"family": "college_production", "status": "mirrored_for_audit_only", "temporal_eligibility": "unresolved", "future_eligibility": "depends on season/stat-refresh close date not recorded per row; NOT classified pre-draft-safe", "source_type": "measured_production_stats"},
+      {"family": "official_postdraft_outcome", "status": "mirrored_for_audit_only", "temporal_eligibility": "permanently_ineligible_for_pre_draft", "future_eligibility": "definitionally post-draft information; no future proof could make it pre-draft-eligible; eligibility in a post_draft context is separate future work, not authorized here", "source_type": "official_draft_result"},
       {"family": "identity_fields", "status": "mirrored_for_join_resolution_only", "future_eligibility": "not a feature"},
       {"family": "provenance_subobjects", "status": "mirrored_losslessly_blocked_from_direct_model_use", "future_eligibility": "auditability and temporal-eligibility verification only"}
     ],
     "no_field_classified_experiment_eligible_by_this_design": true,
-    "governed_and_promoted_does_not_imply_predictively_useful": true
+    "no_field_classified_pre_draft_safe_by_this_design": true,
+    "governed_and_promoted_does_not_imply_predictively_useful_or_temporally_available": true
   },
   "temporal_eligibility": {
     "leakage_risk_named": "this promoted snapshot was itself generated (2026-07-10T12:00:00+00:00) after the 2026 draft concluded, commingling pre-draft-origin and post-draft-origin facts in one file; artifact generated_at must never be used as a proxy for per-field knowability",
@@ -100,22 +103,30 @@
       "must_not_be_backfilled_with_mirror_or_run_date": true,
       "conservative_assumption": "exact knowable-as-of date is unknown; any date-sensitive post_draft rehearsal must obtain an independently-sourced signing date or exclude this row from that specific analysis"
     },
+    "phase_definitions_revised": "pre_draft means a pinned as-of instant strictly before the 2026 draft BEGINS (Day 1 Round 1 Pick 1), not before it concludes -- a conclusion-based boundary is unsafe since it includes periods after early picks are already public. The exact draft-start instant is not pinned by this design and must come from a governed, cited source at the time a future rehearsal needs it.",
+    "availability_proof_required_before_pre_draft_eligibility": {
+      "draft_capital": "must prove the specific big_board_rank/proxy value used was the live value as of the simulated cutoff -- not proven by this artifact (no per-value as-of date recorded)",
+      "age_at_entry": "must prove date of birth was knowable as of the cutoff -- not proven (no governed as-of date recorded)",
+      "athletic_testing": "must prove the combine/testing event had occurred by the cutoff -- not proven (no combine date recorded per row)",
+      "college_production": "must prove the season/stat-refresh window had closed by the cutoff -- not proven (no season-close date recorded per row)",
+      "official_postdraft_outcome": "no proof could ever apply in a pre_draft context -- definitionally post-draft information"
+    },
     "phases": {
       "pre_draft": {
-        "definition": "as-of time strictly before the 2026 NFL draft's conclusion",
-        "draft_capital": "structurally eligible in principle",
-        "age_athletic_production": "structurally eligible in principle",
-        "official_postdraft_outcome": "must be excluded entirely -- physically absent from any pre_draft-tagged view, not merely nulled or flagged"
+        "definition": "as-of instant strictly before the 2026 NFL draft BEGINS; draft-start timestamp not pinned here, must be governed/cited by a future issue",
+        "draft_capital": "temporal eligibility unresolved; NOT structurally eligible until availability proof (see above) is established",
+        "age_athletic_production": "temporal eligibility unresolved; NOT structurally eligible until availability proof is established",
+        "official_postdraft_outcome": "must be excluded entirely from any feature-bearing pre_draft use -- but note the mirror itself is NOT phase-filtered (see mirror_form.no_phase_filtered_or_derived_projection_created); exclusion is enforced by a future phase-specific view this design does not construct"
       },
       "post_draft": {
-        "definition": "as-of time at or after the 2026 NFL draft's conclusion (and, for te-daequan-wright specifically, no earlier than an independently-sourced UDFA-signing date)",
+        "definition": "as-of time at or after the pinned draft-start boundary having fully elapsed through the relevant pick/signing (and, for te-daequan-wright specifically, no earlier than an independently-sourced UDFA-signing date)",
         "draft_capital": "eligible, subject to the audit-only ceiling in field_classification",
         "age_athletic_production": "eligible, subject to the same ceiling",
         "official_postdraft_outcome": "eligible, subject to the same ceiling"
       }
     },
-    "representation": "both structurally in the mirror schema (pre_draft view physically omits official_postdraft_outcome) AND documented in this design as a separate eligibility contract -- deliberately redundant",
-    "fails_closed_because": "ambiguous or unavailable timestamps default to exclusion, not inclusion-with-caveat; an excluded row/field can be added back once resolved, a leaked one cannot be un-leaked from a training run"
+    "representation": "documented in this design only (field_classification, this section) as a classification future stages must respect -- NOT built into the mirror itself; the mirror-implementation stage creates no phase-specific view (see mirror_form). Constructing any such view, and establishing the availability-proof table above, is explicitly future, separate controlled-experiment/adapter-design work.",
+    "fails_closed_because": "ambiguous or unavailable timestamps, or an unestablished availability proof, default to exclusion, not inclusion-with-caveat; an excluded row/field/family can be added back once resolved, a leaked one cannot be un-leaked from a training run"
   },
   "observed_vs_inferred": {
     "draft_capital": "inferred market-derived proxy; never overwritten by or merged with official_postdraft_outcome",
@@ -150,9 +161,10 @@
     "no duplicate or fuzzy identity resolution",
     "unavailable-value preservation, field-by-field",
     "observed/inferred provenance preservation with no cross-contamination",
-    "temporal-eligibility assertions (pre_draft view omits official_postdraft_outcome; te-daequan-wright last_verified_at stays null)",
+    "temporal-eligibility assertions (te-daequan-wright last_verified_at stays null; no phase-filtered/derived projection is created by this stage)",
     "source drift fails closed (simulated hash mismatch test)",
-    "no model or production imports reference the mirror (repo-wide import check)"
+    "no model or production imports reference the mirror (repo-wide import check)",
+    "no availability claim asserted (wrapper does not label any field pre_draft_safe/experiment_eligible or equivalent)"
   ],
   "lifecycle_placement": {
     "reference": "docs/capabilities/README.md governed capability path (eight stages; none compressed or skipped)",
@@ -161,7 +173,7 @@
     "validation_disjoint_origin_requirement": "at least TWO disjoint populations/seasons, evaluated independently with no averaging across origins, per docs/capabilities/README.md's validation-stage requirement -- a single disjoint origin is not sufficient",
     "future_issues_required": [
       "mirror implementation and validation",
-      "controlled experiment / rehearsal design",
+      "controlled experiment / rehearsal design (first establishes the per-family availability-proof table and pins the governed draft-start boundary from a cited source, before proposing any feature extraction)",
       "experiment execution across at least two disjoint populations/seasons",
       "threshold review (decides only whether a binding-review issue may be opened)",
       "binding review (production-path inventory + real leakage audit; decides only whether an implementation issue may be opened)",
@@ -178,12 +190,15 @@
     "no adapter created",
     "no feature code",
     "no fixture written under data/fixtures/tiberRookies/ (path proposed, not created)",
+    "no phase-filtered or otherwise derived projection defined or authorized (the only artifact form authorized is the full byte-identical mirror)",
     "no experiment",
     "no model training/tuning/evaluation",
     "no production import or configuration",
     "no claim that any field improves MAE, RMSE, calibration, or fantasy-point prediction",
+    "no claim that any field is available or safe to use at any specific pre-draft as-of cutoff (availability-proof table not satisfied for any of the four candidate families)",
     "no UI or downstream-consumption authorization",
     "no TIBER-Rookies change of any kind",
-    "no canonical player-ID crosswalk built (gap named, not closed)"
+    "no canonical player-ID crosswalk built (gap named, not closed)",
+    "no draft-start boundary timestamp pinned (requirement named, not satisfied)"
   ]
 }

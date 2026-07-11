@@ -136,6 +136,16 @@ Rejected alternatives:
   wholly additive (a sibling file, not an edit to the mirrored content).
 - **Byte/content parity validation:** SHA-256 of each mirrored file must equal §1's table, checked on
   every refresh before the wrapper is regenerated; a mismatch fails closed per §1.
+- **This is the only artifact this design authorizes.** The mirror-implementation issue produces
+  exactly the four files above — the full byte-identical JSON/CSV/manifest plus the wrapper — and
+  nothing else. It does **not** produce a `pre_draft`-filtered, phase-specific, or otherwise derived
+  projection of any kind. A file that physically omits a field the source artifact carries is a
+  transformation, not a byte-identical mirror, and transformation of any kind was already rejected
+  for this stage in Option C above. §5 defines phase eligibility as a **classification** future
+  stages must respect; it does not authorize this stage to build the view that classification implies.
+  Any future phase-specific view (§5, §10) is explicitly out-of-scope work for a later,
+  separately-reviewed controlled-experiment/adapter design, with its own path, schema, transformation
+  rule, provenance, and hash contract — not an implicit extension of this mirror form.
 
 ## 3. Row grain and identity
 
@@ -200,23 +210,27 @@ field can be safely joined to anything without a verified identity.
 
 | Family | Initial classification | Rationale |
 | --- | --- | --- |
-| `draft_capital` | Mirrored for audit only; **not yet** eligible for controlled experimentation | A pre-draft market-derived proxy (`source_type: market_derived_proxy`, fixed confidence 0.65). Structurally pre-draft-safe in principle (see §5), but this issue does not authorize experiment design — that is separate, later work per §10. |
-| `age_at_entry` | Mirrored for audit only; **not yet** eligible for controlled experimentation | A measured identity fact (date of birth → age), pre-draft-safe in principle, same reasoning as above. |
-| `athletic_testing` | Mirrored for audit only; **not yet** eligible for controlled experimentation | Combine-derived; pre-draft-safe in principle (combine predates the draft), same reasoning. |
-| `college_production` | Mirrored for audit only; **not yet** eligible for controlled experimentation | College production stats predate the draft; same reasoning. |
-| `official_postdraft_outcome` | Mirrored for audit only; **blocked from any pre-draft-phase view** (§5) | Observed post-draft fact (`source_type: official_draft_result`). Genuinely useful only in a `post_draft`-phase context, and even there, eligibility for experimentation is separate future work, not authorized here. |
+| `draft_capital` | Mirrored for audit only; temporal eligibility **unresolved** | A market-derived proxy (`source_type: market_derived_proxy`, fixed confidence 0.65) that is conceptually pre-draft in origin, but the artifact records no governed as-of date proving when this specific value was live — a big-board proxy can change throughout the pre-draft cycle. Not classified pre-draft-safe (see §5). |
+| `age_at_entry` | Mirrored for audit only; temporal eligibility **unresolved** | A measured identity fact (date of birth → age) that is stable once knowable, but "knowable" itself has no governed as-of proof in this artifact; see §5. |
+| `athletic_testing` | Mirrored for audit only; temporal eligibility **unresolved** | Combine-derived, and therefore has a real, specific unavailable-before date (the NFL combine) that this artifact does not record; assuming availability at an arbitrary pre-draft cutoff would be exactly the un-proven assumption §5 forbids. |
+| `college_production` | Mirrored for audit only; temporal eligibility **unresolved** | Depends on the college season/stat-refresh being complete, which has its own real cutoff not recorded in this artifact; same reasoning. |
+| `official_postdraft_outcome` | Mirrored for audit only; **permanently ineligible for any `pre_draft`-phase feature use** (§5) | Observed post-draft fact (`source_type: official_draft_result`). Unlike the four families above, this one is not merely unresolved — it is definitionally post-draft information, so no future as-of proof could ever make it pre-draft-eligible. |
 | Identity fields (`player_id`, `player_name`, `position`, `school`, `class_year`) | Mirrored for audit/join-resolution only | Required for the identity-resolution process in §3; not a feature. |
 | All `provenance` sub-objects (`source_type`, `source_name`, `source_url`, `confidence`,
   `confidence_band`, `last_verified_at`, `notes`) | Mirrored losslessly, blocked from direct model use | Retained per §8 for auditability and temporal-eligibility verification (§5); `confidence` in
   particular must never be treated as a predictive weight (§6). |
 
-No field is classified "eligible for later controlled experimentation" by this design. That
-classification requires its own future, separate experiment-design issue (per the capability path in
-§10) — this design intentionally stops at "structurally could be eligible in principle" (draft_capital,
-age_at_entry, athletic_testing, college_production, all pre-draft-safe by nature) vs. "must never be"
-(official_postdraft_outcome, in any pre-draft view) vs. "not a feature at all" (identity/provenance).
-Being governed and promoted does not, by itself, imply predictive usefulness — no such claim is made
-here for any field.
+No field is classified "eligible for later controlled experimentation" by this design, and no field
+is classified "pre-draft-safe" either. That would overclaim: being conceptually pre-draft in origin
+(draft_capital, age_at_entry, athletic_testing, college_production) is not the same as having a
+governed, dated proof that a specific value was actually knowable before a specific simulated
+cutoff — this artifact supplies no such proof for any of the four (§5). This design's classifications
+are therefore exactly three: "audit only, temporal eligibility unresolved" (the four pre-draft-origin
+families), "audit only, permanently post-draft-only" (`official_postdraft_outcome`), and "not a
+feature at all" (identity/provenance). Resolving the first category to "pre-draft-eligible at cutoff
+X" requires a future, separate source-availability audit (§5, §10) establishing that proof per
+family — it is not established here. Being governed and promoted does not, by itself, imply
+predictive usefulness or temporal availability — no such claim is made here for any field.
 
 ## 5. Temporal eligibility and leakage prevention
 
@@ -251,35 +265,57 @@ another when deciding whether a fact was knowable at a given as-of time:
    operational bookkeeping timestamp for when Forecast last pulled the artifact. Never usable to infer
    anything about the underlying facts' real-world knowability.
 
-**Explicit prediction phases:**
+**Phase definitions (revised — "begins," not "concludes"):**
 
-| Phase | Definition | `draft_capital` | `age_at_entry` / `athletic_testing` / `college_production` | `official_postdraft_outcome` |
-| --- | --- | --- | --- | --- |
-| `pre_draft` | As-of time strictly before the 2026 NFL draft's conclusion | Structurally eligible in principle (a genuine pre-draft-origin fact) | Structurally eligible in principle (all predate the draft) | **Must be excluded entirely** — not nulled, not flagged, physically absent from any `pre_draft`-tagged view (§2/§9) |
-| `post_draft` | As-of time at or after the 2026 NFL draft's conclusion, and — for `te-daequan-wright` specifically — no earlier than a documented, independently-sourced UDFA-signing date, since the artifact's own `last_verified_at` for that row is `null` and cannot supply one | Eligible (subject to §4's "audit only, not yet experiment-eligible" ceiling) | Eligible (subject to the same ceiling) | Eligible (subject to the same ceiling) |
+`pre_draft` must mean a pinned as-of instant **strictly before the 2026 NFL draft begins** (before
+Day 1, Round 1, Pick 1) — not "before its conclusion." A conclusion-based boundary is unsafe: it
+would include, e.g., the moment after Round 1's picks are already public but before Round 7 ends,
+during which `official_postdraft_outcome` is already partly knowable for many players — that is not
+a stable no-leakage boundary. The exact real-world instant the 2026 draft began is **not pinned by
+this design** and must come from a governed, cited source (e.g. the NFL's own published schedule) at
+the time a future rehearsal actually needs it — this document does not invent that timestamp.
 
-Because `te-daequan-wright`'s UDFA signing has no recorded verification timestamp, the **conservative,
-fail-closed assumption** is that its exact knowable-as-of date is unknown; any `post_draft`-phase
-rehearsal that needs a specific as-of date for that row (rather than "at or after the full draft class
-is known") must either obtain an independently-sourced signing date or exclude that row from
-date-sensitive analysis — it must never assume the artifact's `generated_at` date as a stand-in.
+`post_draft` means an as-of instant at or after that same pinned draft-start boundary having fully
+elapsed through the relevant pick/signing, subject to the per-family and per-row caveats below.
 
-**Where phase eligibility is represented:** both in the mirror schema and in a separate eligibility
-contract, deliberately redundant rather than relying on either alone:
+**No family is established as pre-draft-eligible by this design.** Being conceptually pre-draft in
+origin is necessary but not sufficient — this design requires, and does not itself supply, a governed
+per-family **`available_at` / source-snapshot-as-of proof** before any of the four "unresolved" (§4)
+families may be treated as usable at a specific `pre_draft` cutoff:
 
-- **Structurally, in the mirror**: the future mirror-implementation issue must produce a
-  `pre_draft`-tagged view that **physically omits** `official_postdraft_outcome` (not merely nulls it)
-  — an omitted field cannot be leaked by a careless read; a null-but-present field one line of code
-  away from being misread is a weaker control. The full byte-identical mirror (§2) remains available
-  only under the `post_draft` tag.
-- **Documented, in this design** (§4's table and this section): so a future consumer understands *why*
-  a field is absent, not just that it is — a schema-level omission with no rationale invites someone
-  to "fix" it by adding the field back.
+| Family | What availability proof would need to show | Currently proven by this artifact? |
+| --- | --- | --- |
+| `draft_capital` | The specific `big_board_rank` / `draft_capital_proxy_0_100` value being used was actually the live value as of the simulated cutoff — a big-board proxy is revised throughout the pre-draft cycle, so "some value existed" does not mean "this value existed then." | **No.** The artifact records no per-value as-of date, only the file's own `generated_at` (§0/this section), which is post-draft. |
+| `age_at_entry` | The player's date of birth was knowable as of the cutoff (generally true once public, but not asserted with a source date here). | **No governed as-of date recorded.** |
+| `athletic_testing` | The combine (or equivalent testing event) that produced this value had actually occurred by the cutoff — this field has a genuine, real-world unavailable-before date. | **No.** No combine date is recorded per row; assuming availability at an arbitrary pre-draft cutoff would itself be an unproven, potentially leaking assumption. |
+| `college_production` | The college season/stat-refresh window this production reflects had actually closed by the cutoff. | **No.** No season-close/stat-freeze date is recorded per row. |
 
-**Why this boundary fails closed:** if a future date-sensitive check is ambiguous or a required
-timestamp is unavailable (as with `te-daequan-wright`'s null `last_verified_at`), the design's default
-is exclusion, not inclusion-with-a-caveat. An omitted or excluded row/field can always be added back
-once resolved; a leaked one cannot be un-leaked from a training run that already used it.
+Until a future source-availability audit (§10) establishes this proof per family — and pins the exact
+draft-start boundary from a governed source — **all four families remain `audit only` with temporal
+eligibility unresolved, not "pre-draft-safe by nature," for any cutoff.** `official_postdraft_outcome`
+is the one family for which no such proof could ever apply in a `pre_draft` context, since it is
+definitionally post-draft information (§4).
+
+**`te-daequan-wright`'s null `last_verified_at`:** because this UDFA signing has no recorded
+verification timestamp, the **conservative, fail-closed assumption** is that its exact knowable-as-of
+date is unknown; any `post_draft`-phase rehearsal that needs a specific as-of date for that row must
+either obtain an independently-sourced signing date or exclude that row from date-sensitive analysis
+— it must never assume the artifact's `generated_at` date as a stand-in.
+
+**Where phase eligibility is represented:** in this design document only, as a documented
+classification (§4's table and this section) — **not** in the mirror itself. §2 already establishes
+that the mirror-implementation issue produces exactly one artifact form (the full byte-identical
+mirror plus wrapper) and authorizes no phase-filtered or otherwise derived projection. A future,
+separate controlled-experiment/adapter design (§10) is the stage responsible for both (a) resolving
+the availability-proof table above per family, and (b) — only once resolved — constructing whatever
+phase-specific consumable view is needed, with its own path, schema, deterministic transformation
+rule, provenance, and hash contract. This design does not pre-authorize that view's shape.
+
+**Why this boundary fails closed:** if a future date-sensitive check is ambiguous, a required
+timestamp is unavailable (as with `te-daequan-wright`'s null `last_verified_at`), or a family's
+availability proof (the table above) has not yet been established, the design's default is
+exclusion, not inclusion-with-a-caveat. An omitted or excluded row/field/family can always be added
+back once resolved; a leaked one cannot be un-leaked from a training run that already used it.
 
 ## 6. Observed versus inferred semantics
 
@@ -357,15 +393,21 @@ A future mirror-implementation issue must build and pass, at minimum:
 - **Observed/inferred provenance preservation** (§6, §8): `draft_capital.provenance.source_type`
   stays `market_derived_proxy` and `official_postdraft_outcome.provenance.source_type` stays
   `official_draft_result` for every row, with no cross-contamination.
-- **Temporal-eligibility assertions** (§5): a test proving the `pre_draft`-tagged view structurally
-  omits `official_postdraft_outcome`, and that `te-daequan-wright`'s `last_verified_at` remains `null`
-  (never backfilled with any run/refresh date) in every mirrored representation.
+- **Temporal-eligibility assertions** (§5): a test proving `te-daequan-wright`'s `last_verified_at`
+  remains `null` (never backfilled with any run/refresh date) in the mirrored representation, and a
+  test proving the mirror-implementation issue creates **no** phase-filtered, `pre_draft`-tagged, or
+  otherwise derived projection — the mirror is exactly the four files in §2, containing every field
+  the source artifact carries, unfiltered. Constructing and validating any phase-specific view is
+  explicitly out of scope for this validation contract (§5, §10).
 - **Source drift fails closed** (§1): a test simulating a changed upstream hash and asserting the
   refresh process refuses to proceed.
 - **No model or production imports reference the mirror**: a repository-wide check (grep or
   equivalent) confirming no file under `src/models/`, `src/services/`, or any production
   Forecast path imports anything from the proposed `data/fixtures/tiberRookies/` path — mirroring the
   same "inert by default" guarantee already proven for player-history's mirror stage.
+- **No availability claim asserted**: a check that the wrapper file does not label any field
+  `pre_draft_safe`, `experiment_eligible`, or equivalent — this stage classifies fields per §4/§5, it
+  does not certify their temporal availability.
 
 ## 10. Forecast lifecycle placement
 
@@ -381,9 +423,13 @@ inert Forecast mirror / wrapper            (future issue: implements §2/§9 exa
         ↓
 mirror validation and rehearsal            (future issue: proves §9's checks pass against real data)
         ↓
-separate controlled-experiment design      (future issue: proposes which §4 "audit only" fields, if
-                                             any, become "eligible for controlled experimentation",
-                                             and under what feature-extraction/null-handling rules —
+separate controlled-experiment design      (future issue: FIRST establishes the §5 per-family
+                                             availability-proof table and pins the governed draft-start
+                                             boundary from a cited source — required before any field
+                                             may be proposed for a pre_draft view at all — THEN proposes
+                                             which §4 "audit only" fields, if any, become "eligible for
+                                             controlled experimentation" at that proven cutoff, and
+                                             under what feature-extraction/null-handling rules,
                                              mirroring the player-history precedent's own separate
                                              experiment-design stage)
         ↓
@@ -420,9 +466,11 @@ aligned exactly with `docs/capabilities/README.md`'s eight-stage path — no sta
 skipped):
 
 1. Mirror implementation and validation (implements §2's mirror form and §9's validation contract).
-2. Controlled experiment / rehearsal design (proposes feature extraction and null-handling for any
-   field classified "structurally could be eligible" in §4 — resolves nothing about eligibility by
-   itself).
+2. Controlled experiment / rehearsal design — first establishes the §5 per-family availability-proof
+   table and pins the governed draft-start boundary from a cited source (required before any field
+   may be proposed for a `pre_draft` view), then proposes feature extraction and null-handling for
+   any field whose availability is thereby proven for a specific cutoff. Resolves nothing about
+   eligibility by itself until that proof step is done.
 3. Experiment execution — a real, shuffled-control, leakage-audited run, evaluated independently
    across at least **two** disjoint populations/seasons (per `docs/capabilities/README.md`'s
    validation-stage requirement; a single disjoint origin is not sufficient evidence to proceed).
@@ -456,11 +504,16 @@ of those remains gated behind its own future, separately-authorized issue per §
 ## Non-goals confirmed
 
 No Forecast mirror created. No adapter created. No feature code. No fixture written under
-`data/fixtures/tiberRookies/` (the path in §2 is proposed, not created). No experiment. No model
-training/tuning/evaluation. No production import or configuration. No claim that any field improves
-MAE, RMSE, calibration, or fantasy-point prediction. No UI or downstream-consumption authorization. No
+`data/fixtures/tiberRookies/` (the path in §2 is proposed, not created). No phase-filtered or
+otherwise derived projection defined or authorized (§2, §5 — the only artifact form this design
+authorizes is the full byte-identical mirror). No experiment. No model training/tuning/evaluation. No
+production import or configuration. No claim that any field improves MAE, RMSE, calibration, or
+fantasy-point prediction. **No claim that any field is available or safe to use at any specific
+pre-draft as-of cutoff** — §5 names the four candidate families and the proof each would require,
+none of which this artifact currently supplies. No UI or downstream-consumption authorization. No
 TIBER-Rookies change of any kind. No canonical player-ID crosswalk built (§3 names the gap; it does
-not close it).
+not close it). No draft-start boundary timestamp pinned (§5 names the requirement; a future issue
+must cite a governed source for it).
 
 ## Reproduce
 
