@@ -1,0 +1,296 @@
+{
+  "kind": "rookie_transition_profile_v0_forecast_mirror_provenance",
+  "schema_version": "1.0.0",
+  "issue": "TIBER-Forecast#151",
+  "governing_design": {
+    "consumption_design_issue": "TIBER-Forecast#149",
+    "consumption_design_pr": "TIBER-Forecast#150",
+    "consumption_design_merge_commit": "6c68b1691476f0d26f1b0270e32c199a3ee2f436",
+    "design_documents": [
+      "docs/experiments/rookie-transition-profile-forecast-consumption-design-2026-07-11.md",
+      "docs/experiments/rookie-transition-profile-forecast-consumption-design-2026-07-11.json"
+    ]
+  },
+  "source_lock": {
+    "repo": "Prometheus-Frameworks/TIBER-Rookies",
+    "commit": "2ef92faf9a9c91a393f53e9140428451529a1c48",
+    "promoted_path": "exports/promoted/rookie-transition-profile/",
+    "schema_version": "rookie-transition-profile-v0.2.0",
+    "season": 2026,
+    "generated_at": "2026-07-10T12:00:00+00:00",
+    "run_id": "rookie-transition-profile-2026-2026-07-10T12:00:00+00:00",
+    "row_count": 48,
+    "coverage_summary": {
+      "players_total": 48,
+      "players_with_draft_capital": 48,
+      "players_with_age_at_entry": 47,
+      "players_with_athletic_testing": 32,
+      "players_with_college_production": 48,
+      "players_with_official_postdraft_outcome": 48,
+      "players_with_all_families": 32
+    },
+    "artifact_hashes": {
+      "json": "c95b941c7855612daccfc2226fc51e0e34dbb2ebe8a2487596675d2522a22f37",
+      "csv": "3005bcd6ad4ffc87a312c6926e20c5e3658747012855aa9d8ccfa33d898545e6",
+      "manifest": "0acf361c6d2d8cc6f684026481a5aa279e9f7fa718256fad78da0366d5804413"
+    },
+    "source_manifest_input_hashes": {
+      "exports/promoted/rookie-alpha/2026_rookie_alpha_predraft_v0.json": "5a7c6c945ad477c1a54e61e7337e9f5bd6b5e69455669ca4700d7668fe9816e3",
+      "data/processed/2026_draft_capital_proxy.json": "5622f5ab86d8db812a3c98fd67b74960943d687fa323f7e9592533f8d058738f",
+      "data/processed/2026_college_production.json": "c4c15efd609fef982e417817148b1b7bc090f53896791eb2cb85cf1bf665fb0d",
+      "data/processed/2026_prospect_context.json": "bdf16633076bb5fb28e9451028fc476fadf6ff727dc06bdb106eb026e741de0e",
+      "data/processed/2026_draft_results.json": "ae6b037845f5b6bcd87e17185d1086a3de1cf6a915571f3da1d5d716965f01bd",
+      "data/processed/2026_day3_udfa_draft_result_profiles.json": "1f9b3a3c592bbc94f42c3d361461372b104f3f320fa9d11ebc5bcdb6511822ec"
+    }
+  },
+  "forecast_mirror": {
+    "paths": {
+      "mirror_json": "data/fixtures/tiberRookies/rookie_transition_profile_v0_2026.mirror.json",
+      "mirror_csv": "data/fixtures/tiberRookies/rookie_transition_profile_v0_2026.mirror.csv",
+      "mirror_manifest": "data/fixtures/tiberRookies/rookie_transition_profile_v0_2026.manifest.mirror.json",
+      "wrapper": "data/fixtures/tiberRookies/ROOKIE_TRANSITION_PROFILE_V0_MIRROR_PROVENANCE.json"
+    },
+    "mirrored_hashes": {
+      "mirror_json": "c95b941c7855612daccfc2226fc51e0e34dbb2ebe8a2487596675d2522a22f37",
+      "mirror_csv": "3005bcd6ad4ffc87a312c6926e20c5e3658747012855aa9d8ccfa33d898545e6",
+      "mirror_manifest": "0acf361c6d2d8cc6f684026481a5aa279e9f7fa718256fad78da0366d5804413"
+    },
+    "mirror_refreshed_at": "2026-07-11T00:00:00.000Z",
+    "mirror_refreshed_at_is_operational_timestamp_only_not_fact_availability": true
+  },
+  "identity_resolution": {
+    "crosswalk_status": "no_verified_crosswalk_exists",
+    "resolved_count": 0,
+    "unresolved_count": 48,
+    "rows": [
+      {
+        "player_id": "rb-jeremiyah-love",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "wr-kc-concepcion",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "wr-makai-lemon",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "wr-jordyn-tyson",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "wr-denzel-boston",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "qb-fernando-mendoza",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "qb-drew-allar",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "wr-carnell-tate",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "te-kenyon-sadiq",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "te-eli-stowers",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "te-sam-roush",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "wr-zachariah-branch",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "rb-jonah-coleman",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "wr-omar-cooper-jr",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "wr-chris-bell",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "wr-dezhaun-stribling",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "wr-antonio-williams",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "wr-ted-hurst",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "wr-germie-bernard",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "wr-elijah-sarratt",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "wr-chris-brazzell-ii",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "qb-garrett-nussmeier",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "te-nate-boerkircher",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "qb-ty-simpson",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "te-max-klare",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "rb-mike-washington-jr",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "te-daequan-wright",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "te-eli-raridon",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "rb-jadarian-price",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "te-justin-joly",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "rb-kaelon-black",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "wr-malachi-fields",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "qb-carson-beck",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "wr-brenen-thompson",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "te-marlin-klein",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "wr-kevin-coleman-jr",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "te-oscar-delp",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "rb-kaytron-allen",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "wr-deion-burks",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "wr-caleb-douglas",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "wr-jakobi-lane",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "rb-seth-mcgowan",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "wr-zavion-thomas",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "rb-nick-singleton",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "rb-emmett-johnson",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "te-will-kacmarek",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "wr-kendrick-law",
+        "status": "unresolved_to_forecast_population"
+      },
+      {
+        "player_id": "wr-barion-brown",
+        "status": "unresolved_to_forecast_population"
+      }
+    ],
+    "name_based_or_fuzzy_joins_performed": false,
+    "feature_bearing_join_authorized": false
+  },
+  "temporal_and_authorization_status": {
+    "all_field_families": "audit_only",
+    "pre_draft_temporal_eligibility": "unresolved",
+    "phase_specific_projection_created": false,
+    "experiment_eligibility_established": false,
+    "model_use_authorized": false,
+    "production_use_authorized": false
+  },
+  "population_and_outcome_parity": {
+    "unique_player_id_rows": 48,
+    "status_drafted_count": 47,
+    "status_udfa_signed_count": 1,
+    "udfa_row": {
+      "player_id": "te-daequan-wright",
+      "nfl_team": "PHI",
+      "is_udfa": true,
+      "draft_round": null,
+      "overall_pick": null,
+      "last_verified_at": null
+    }
+  },
+  "boundary": {
+    "no_transformation_of_upstream_bytes": true,
+    "no_phase_specific_projection": true,
+    "no_official_postdraft_outcome_removed": true,
+    "no_canonical_player_id_crosswalk_built": true,
+    "no_name_based_or_fuzzy_matching_performed": true,
+    "no_field_declared_temporally_eligible": true,
+    "no_predictive_experiment_run": true,
+    "no_model_ready_features_created": true,
+    "no_model_or_production_import": true,
+    "no_mae_rmse_calibration_or_fantasy_point_evaluation": true,
+    "no_downstream_consumption_production_binding_or_ui_activation_authorized": true
+  }
+}

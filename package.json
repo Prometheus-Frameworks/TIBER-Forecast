@@ -33,6 +33,7 @@
     "experiment:player-history-robustness": "tsx scripts/runPlayerHistoryRobustnessChecks.ts",
     "experiment:player-history-promoted-controlled-rerun": "tsx scripts/runPlayerHistoryPromotedControlledRerun.ts",
     "replay:player-history-contract-v0": "tsx scripts/runPlayerHistoryContractV0Replay.ts",
+    "refresh:rookie-transition-profile-mirror": "tsx scripts/refreshRookieTransitionProfileMirror.ts",
     "rerun:run2-comparison-full-coverage": "tsx scripts/runRun2ComparisonRerun.ts",
     "backtest:seasonal-ppr": "tsx scripts/runSeasonalPprBacktest.ts",
     "forecast:seasonal-ppr": "tsx scripts/runSeasonalPprBacktest.ts",
