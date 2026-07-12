@@ -45,6 +45,10 @@ export const IDENTITY_CROSSWALK_PATH =
 /** Canonical Forecast identity format (design §1): the NFL GSIS player identifier. */
 export const GSIS_ID_PATTERN = /^\d{2}-\d{7}$/;
 const SHA256_PATTERN = /^[0-9a-f]{64}$/;
+/** A citation's `commit` must be an immutable full 40-character git object ID -- never a mutable
+ * ref (`main`, `HEAD`, a branch/tag name) or an abbreviated SHA, which could point at different
+ * bytes later even if today's hash check happens to pass. */
+const GIT_COMMIT_SHA_PATTERN = /^[0-9a-f]{40}$/;
 
 // ---------------------------------------------------------------------------------------------
 // Closed enums (design §5, §7) -- any other token fails closed
@@ -180,11 +184,23 @@ export const DISQUALIFICATION_REASONS = [
 ] as const;
 export type DisqualificationReason = (typeof DISQUALIFICATION_REASONS)[number];
 
-/** The shape a `blocked` row's `resolution_evidence` entries must take -- a disqualified attempt. */
+/**
+ * The shape a `blocked` row's `resolution_evidence` entries must take -- a disqualified attempt.
+ * `disqualification_detail` is human prose ONLY: it is never scanned for prohibited-method markers
+ * and never itself treated as proof of anything -- an author could write any word into free text.
+ * `attempted_evidence` is the actual substantive payload of what was tried (e.g. the real
+ * corroborating-fact/description content a legitimate attempt would have carried); THAT is what
+ * `prohibited_method` verification scans, and it must be non-empty -- retaining enough of the real
+ * attempt to prove what method was actually used, not a bolted-on summary label.
+ */
 export interface DisqualifiedEvidenceEntry {
   evidence_class: ResolutionEvidenceClass;
   disqualification_reason: DisqualificationReason;
   disqualification_detail: string;
+  /** Required, non-empty for `prohibited_method`: the real attempted-evidence payload, scanned for markers. */
+  attempted_evidence?: Record<string, unknown> | null;
+  /** Required for `non_reproducible_or_fabricated_evidence`: the value the disqualified evidence claimed. */
+  claimed_value?: string | null;
   disqualified_citation?: ArchivedCitation | null;
 }
 
@@ -336,7 +352,8 @@ const isNonEmptyString = (value: unknown): value is string => typeof value === '
 const isValidCitation = (value: unknown): value is ArchivedCitation =>
   isPlainObject(value) &&
   isNonEmptyString(value.repo) &&
-  isNonEmptyString(value.commit) &&
+  typeof value.commit === 'string' &&
+  GIT_COMMIT_SHA_PATTERN.test(value.commit) &&
   isNonEmptyString(value.path) &&
   typeof value.sha256 === 'string' &&
   SHA256_PATTERN.test(value.sha256);
@@ -361,6 +378,43 @@ const findProhibitedMethodMarkers = (value: unknown): string[] => {
 const referencesOverallPickChain = (entry: unknown): boolean => {
   const serialized = JSON.stringify(entry).toLowerCase();
   return serialized.includes('overall_pick') || serialized.includes('official_postdraft_outcome');
+};
+
+type GovernedRowsParseResult =
+  | { kind: 'unparseable' }
+  | { kind: 'no_rows_array' }
+  | { kind: 'ok'; matches: Record<string, unknown>[]; parsed: unknown };
+
+/**
+ * Shared exact-key-matching parser used everywhere this module consumes an externally-cited
+ * governed artifact as proof (3.3 evidence, `governed_blocker_citation`, and the identity-coverage
+ * mechanism citation): deterministically JSON-parses `content` and extracts a rows array (a
+ * top-level array, or a `rows` array -- never any other key name), filtered to rows whose full
+ * four-field governed source key exactly matches `sourceIdentity`. Containing the right strings
+ * *somewhere* in the document is never sufficient; callers must require exactly one match.
+ */
+const parseGovernedRowsMatchingKey = (content: string, sourceIdentity: SourceIdentityKey): GovernedRowsParseResult => {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(content);
+  } catch {
+    return { kind: 'unparseable' };
+  }
+  const candidateRows: unknown[] | null = Array.isArray(parsed)
+    ? parsed
+    : isPlainObject(parsed) && Array.isArray(parsed.rows)
+      ? parsed.rows
+      : null;
+  if (candidateRows === null) return { kind: 'no_rows_array' };
+  const matches = candidateRows.filter(
+    (candidate): candidate is Record<string, unknown> =>
+      isPlainObject(candidate) &&
+      candidate.source_repository === sourceIdentity.source_repository &&
+      candidate.source_schema === sourceIdentity.source_schema &&
+      candidate.source_player_id === sourceIdentity.source_player_id &&
+      candidate.source_season === sourceIdentity.source_season,
+  );
+  return { kind: 'ok', matches, parsed };
 };
 
 interface EvidenceCheckOutcome {
@@ -429,36 +483,22 @@ const checkEvidenceEntry = (
     // The archive must be parsed deterministically and checked for exactly one row that maps the
     // FULL four-field governed source key to the claimed gsis_id. If it cannot be parsed
     // deterministically, 3.3 stays unusable for this citation -- there is no substring fallback.
-    let parsedArtifact: unknown;
-    try {
-      parsedArtifact = JSON.parse(archivedArtifactContent);
-    } catch {
+    const parseResult = parseGovernedRowsMatchingKey(archivedArtifactContent, sourceIdentity);
+    if (parseResult.kind === 'unparseable') {
       errors.push(
         `${where}: cited governed artifact could not be deterministically parsed as JSON -- 3.3 remains unusable ` +
           'for this citation (no substring-search fallback, design §3.3)',
       );
       return { structurallyComplete: false, resolvesTo };
     }
-    const candidateRows: unknown[] | null = Array.isArray(parsedArtifact)
-      ? parsedArtifact
-      : isPlainObject(parsedArtifact) && Array.isArray(parsedArtifact.rows)
-        ? parsedArtifact.rows
-        : null;
-    if (candidateRows === null) {
+    if (parseResult.kind === 'no_rows_array') {
       errors.push(
         `${where}: cited governed artifact does not expose a deterministic rows array (a top-level array, or a ` +
           '"rows" array) -- 3.3 remains unusable for this citation',
       );
       return { structurallyComplete: false, resolvesTo };
     }
-    const matches = candidateRows.filter(
-      (candidate): candidate is Record<string, unknown> =>
-        isPlainObject(candidate) &&
-        candidate.source_repository === sourceIdentity.source_repository &&
-        candidate.source_schema === sourceIdentity.source_schema &&
-        candidate.source_player_id === sourceIdentity.source_player_id &&
-        candidate.source_season === sourceIdentity.source_season,
-    );
+    const { matches, parsed: parsedArtifact } = parseResult;
     if (matches.length === 0) {
       errors.push(
         `${where}: cited governed artifact contains no row mapping the exact governed source key ` +
@@ -597,13 +637,14 @@ const checkEvidenceEntry = (
 
 /**
  * Verifies a `blocked` row's disqualified-evidence entry actually exhibits its declared
- * `disqualification_reason` -- a recognized `evidence_class` token plus arbitrary reviewer/notes is
- * NOT sufficient (that would let every unresolved row be relabeled `blocked` with a fabricated
- * disqualification and no real defect). Returns whether the claimed reason was verified; pushes an
- * error and returns `false` whenever it is not.
+ * `disqualification_reason` against something REAL and REPRODUCIBLE -- never the entry's own
+ * self-authored `disqualification_reason`/`disqualification_detail` prose, never a bare resolver
+ * failure treated as proof, and never an unrelated reproducible file. Returns whether the claimed
+ * reason was verified; pushes an error and returns `false` whenever it is not.
  */
 const checkDisqualifiedEvidenceEntry = (
   entry: Record<string, unknown>,
+  sourceIdentity: SourceIdentityKey,
   rowKey: string,
   entryIndex: number,
   resolveArchivedEvidence: ArchivedEvidenceResolver,
@@ -629,11 +670,22 @@ const checkDisqualifiedEvidenceEntry = (
   }
 
   if (reason === 'prohibited_method') {
-    const markers = findProhibitedMethodMarkers(entry);
+    // The marker must appear in the REAL attempted-evidence payload, never in the self-authored
+    // disqualification_reason/disqualification_detail prose -- otherwise any author can simply
+    // write a marker word into free text and "verify" a block that never actually happened.
+    const attemptedEvidence = entry.attempted_evidence;
+    if (!isPlainObject(attemptedEvidence) || Object.keys(attemptedEvidence).length === 0) {
+      errors.push(
+        `${where}: disqualification_reason=prohibited_method requires a non-empty attempted_evidence payload ` +
+          'documenting what was actually tried -- disqualification_detail alone is never accepted as proof',
+      );
+      return false;
+    }
+    const markers = findProhibitedMethodMarkers(attemptedEvidence);
     if (markers.length === 0) {
       errors.push(
         `${where}: disqualification_reason=prohibited_method claims a prohibited-method reliance, but no ` +
-          'prohibited-method marker (design §4) is actually present in this entry',
+          'prohibited-method marker (design §4) is actually present in attempted_evidence',
       );
       return false;
     }
@@ -641,29 +693,74 @@ const checkDisqualifiedEvidenceEntry = (
   }
 
   if (reason === 'non_reproducible_or_fabricated_evidence') {
+    // A bare resolver-null is NOT proof of fabrication -- it is equally consistent with an unknown
+    // repo, an unfetched commit, a path typo, or a CI environment missing a sibling checkout. Real
+    // proof requires the citation to actually reproduce, with the reproduced content demonstrably
+    // CONTRADICTING a specific claimed value (the same "claims X, archive says otherwise" pattern
+    // used to verify a legitimate resolution attempt) -- positive evidence, never absence of it.
     const cited = entry.disqualified_citation;
     if (!isValidCitation(cited)) {
       errors.push(`${where}: disqualification_reason=non_reproducible_or_fabricated_evidence requires a structurally complete disqualified_citation`);
       return false;
     }
-    if (resolveArchivedEvidence(cited as ArchivedCitation) !== null) {
+    const claimed = entry.claimed_value;
+    if (!isNonEmptyString(claimed)) {
       errors.push(
-        `${where}: disqualification_reason=non_reproducible_or_fabricated_evidence claims the cited evidence does ` +
-          'not reproduce, but it actually does -- the claimed defect is not real',
+        `${where}: disqualification_reason=non_reproducible_or_fabricated_evidence requires a non-empty claimed_value ` +
+          'to check the reproduced archive against',
+      );
+      return false;
+    }
+    const content = resolveArchivedEvidence(cited as ArchivedCitation);
+    if (content === null) {
+      errors.push(
+        `${where}: disqualification_reason=non_reproducible_or_fabricated_evidence requires the cited archive to ` +
+          'actually reproduce -- an unreproducible citation proves only unresolved availability, never fabrication',
+      );
+      return false;
+    }
+    if (content.includes(claimed)) {
+      errors.push(
+        `${where}: disqualification_reason=non_reproducible_or_fabricated_evidence claims the reproduced archive ` +
+          `contradicts ${JSON.stringify(claimed)}, but the archive actually contains it -- the claimed defect is not real`,
       );
       return false;
     }
     return true;
   }
 
-  // governed_blocker_citation -- a real, reproducible citation naming the authoritative reason.
+  // governed_blocker_citation -- must exact-match a real governed-blocker record for this row's
+  // full source key, not merely cite any reproducible file (which proves only that bytes exist).
   const cited = entry.disqualified_citation;
   if (!isValidCitation(cited)) {
     errors.push(`${where}: disqualification_reason=governed_blocker_citation requires a structurally complete disqualified_citation naming the blocker`);
     return false;
   }
-  if (resolveArchivedEvidence(cited as ArchivedCitation) === null) {
+  const content = resolveArchivedEvidence(cited as ArchivedCitation);
+  if (content === null) {
     errors.push(`${where}: disqualification_reason=governed_blocker_citation's cited evidence is not reproducible from its citation (design §12 fail-closed)`);
+    return false;
+  }
+  const parseResult = parseGovernedRowsMatchingKey(content, sourceIdentity);
+  if (parseResult.kind === 'unparseable') {
+    errors.push(`${where}: disqualification_reason=governed_blocker_citation's cited archive could not be deterministically parsed as JSON`);
+    return false;
+  }
+  if (parseResult.kind === 'no_rows_array') {
+    errors.push(`${where}: disqualification_reason=governed_blocker_citation's cited archive does not expose a deterministic rows array`);
+    return false;
+  }
+  if (parseResult.matches.length === 0) {
+    errors.push(`${where}: disqualification_reason=governed_blocker_citation's cited archive has no row matching this exact governed source key -- zero matches fails closed`);
+    return false;
+  }
+  if (parseResult.matches.length > 1) {
+    errors.push(`${where}: disqualification_reason=governed_blocker_citation's cited archive has ${parseResult.matches.length} rows matching this exact governed source key -- multiple matches fails closed (ambiguous)`);
+    return false;
+  }
+  const blockerRow = parseResult.matches[0];
+  if (!isNonEmptyString(blockerRow.blocker_reason) || !isNonEmptyString(blockerRow.blocker_detail)) {
+    errors.push(`${where}: disqualification_reason=governed_blocker_citation's matched row lacks a non-empty blocker_reason/blocker_detail`);
     return false;
   }
   return true;
@@ -787,6 +884,12 @@ export const validateRookieTransitionProfileIdentityCrosswalk = (
     if (seenKeys.has(fullKey)) errors.push(`${rowKey}: duplicate governed source key`);
     seenKeys.add(fullKey);
     seenPlayerIds.add(row.source_player_id);
+    const sourceIdentity: SourceIdentityKey = {
+      source_repository: String(row.source_repository),
+      source_schema: String(row.source_schema),
+      source_player_id: row.source_player_id,
+      source_season: Number(row.source_season),
+    };
 
     // Closed enums.
     const status = row.resolution_status;
@@ -819,19 +922,44 @@ export const validateRookieTransitionProfileIdentityCrosswalk = (
     }
     identityCoverageDependencyCounts[dependency as IdentityCoverageDependency] += 1;
 
-    // §16: an independence claim requires a non-null, citable mechanism that proves it --
-    // never a bare assertion or an evidence-class label.
+    // §16: an independence claim requires a non-null, citable mechanism that proves it -- never a
+    // bare assertion, an evidence-class label, or an unverified citation. The cited artifact must
+    // actually reproduce AND exact-match this row's full governed source key with a row that itself
+    // records independence -- a fabricated or unrelated-but-reproducible citation must not pass.
     if (dependency === 'independent_of_post_draft_outcome') {
       const mechanism = row.identity_coverage_mechanism;
-      if (
-        !isPlainObject(mechanism) ||
-        !isNonEmptyString(mechanism.description) ||
-        !isValidCitation(mechanism.citation)
-      ) {
+      if (!isPlainObject(mechanism) || !isNonEmptyString(mechanism.description) || !isValidCitation(mechanism.citation)) {
         errors.push(
           `${rowKey}: identity_coverage_dependency=independent_of_post_draft_outcome requires a non-null ` +
             'identity_coverage_mechanism with a citable proof (description + repo/commit/path/sha256 citation)',
         );
+      } else {
+        const mechanismContent = resolveArchivedEvidence(mechanism.citation as ArchivedCitation);
+        if (mechanismContent === null) {
+          errors.push(
+            `${rowKey}: identity_coverage_mechanism.citation is not reproducible from its citation (design §12/§16 fail-closed) -- ` +
+              'a fabricated or unfetchable citation can never prove independence',
+          );
+        } else {
+          const parseResult = parseGovernedRowsMatchingKey(mechanismContent, sourceIdentity);
+          if (parseResult.kind === 'unparseable') {
+            errors.push(`${rowKey}: identity_coverage_mechanism.citation could not be deterministically parsed as JSON`);
+          } else if (parseResult.kind === 'no_rows_array') {
+            errors.push(`${rowKey}: identity_coverage_mechanism.citation does not expose a deterministic rows array`);
+          } else if (parseResult.matches.length === 0) {
+            errors.push(`${rowKey}: identity_coverage_mechanism.citation has no row matching this exact governed source key -- zero matches fails closed`);
+          } else if (parseResult.matches.length > 1) {
+            errors.push(
+              `${rowKey}: identity_coverage_mechanism.citation has ${parseResult.matches.length} rows matching this exact governed ` +
+                'source key -- multiple matches fails closed (ambiguous)',
+            );
+          } else if (parseResult.matches[0].independent_of_post_draft_outcome !== true) {
+            errors.push(
+              `${rowKey}: identity_coverage_mechanism.citation's matched row does not itself record ` +
+                'independent_of_post_draft_outcome=true -- the cited artifact does not actually prove independence for this identity',
+            );
+          }
+        }
       }
     }
 
@@ -841,12 +969,6 @@ export const validateRookieTransitionProfileIdentityCrosswalk = (
       errors.push(`${rowKey}: resolution_evidence must be an array`);
       return;
     }
-    const sourceIdentity: SourceIdentityKey = {
-      source_repository: String(row.source_repository),
-      source_schema: String(row.source_schema),
-      source_player_id: row.source_player_id,
-      source_season: Number(row.source_season),
-    };
     // A `blocked` row documents a DISQUALIFIED attempt (design §4/§5) -- its entries must declare
     // and MECHANICALLY VERIFY a real disqualification_reason (checkDisqualifiedEvidenceEntry), never
     // just a recognized evidence_class token with arbitrary reviewer/notes. They never go through
@@ -860,7 +982,7 @@ export const validateRookieTransitionProfileIdentityCrosswalk = (
         return { structurallyComplete: false, resolvesTo: null };
       }
       if (status === 'blocked') {
-        const verified = checkDisqualifiedEvidenceEntry(entry, rowKey, entryIndex, resolveArchivedEvidence, errors);
+        const verified = checkDisqualifiedEvidenceEntry(entry, sourceIdentity, rowKey, entryIndex, resolveArchivedEvidence, errors);
         if (!verified) blockedEntriesAllVerified = false;
         return { structurallyComplete: false, resolvesTo: null };
       }

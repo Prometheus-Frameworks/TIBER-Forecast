@@ -28,7 +28,7 @@ against the upstream promotion).
 | Governed 48-row identity-crosswalk artifact (`kind: rookie_transition_profile_v0_forecast_identity_crosswalk`, `schema_version: 1.0.0`) | `data/experiments/rookieTransitionProfile/rookie_transition_profile_v0_forecast_identity_crosswalk.json` |
 | Pure fail-closed validator (deterministic; no I/O) | `src/rehearsal/rookieTransitionProfileIdentityCrosswalk.ts` |
 | Read-only audit CLI (`npm run audit:rookie-transition-profile-identity-crosswalk`) | `scripts/runRookieTransitionProfileIdentityCrosswalkAudit.ts` |
-| Positive + negative validation tests (60 tests) | `tests/rookieTransitionProfileIdentityCrosswalk.test.ts` |
+| Positive + negative validation tests (72 tests) | `tests/rookieTransitionProfileIdentityCrosswalk.test.ts` |
 | This audit report | `docs/experiments/rookie-transition-profile-forecast-identity-crosswalk-audit-2026-07-12.md` / `.json` |
 
 Every row carries all fourteen contract fields (`source_repository`, `source_schema`,
@@ -100,6 +100,41 @@ entry). The validator also checks the artifact's `issue` and `governing_design` 
   `governed_blocker_citation` (a real, reproducible citation naming the authoritative reason). A new
   `verifiedBlockedCount` result field, and an explicit decision-rule check, additionally require every
   blocked row to have a verified disposition before `blocked > 0` can ever contribute to `..._complete`.
+
+**Strengthened after independent review, round 3 (2026-07-12), before this PR merged:** round 2's
+three blocked-disposition reasons were each still self-manufacturable in a different way, plus two
+other load-bearing citations were checked for shape only, never resolved:
+
+- **`prohibited_method` was scanning the self-authored disposition prose, not real evidence.**
+  `disqualification_detail` is free text an author writes; finding a marker word there (e.g. writing
+  "relied on fuzzy matching") proved nothing actually happened. `DisqualifiedEvidenceEntry` now
+  requires a separate, non-empty `attempted_evidence` payload — the real substantive content of what
+  was tried — and the marker scan runs **only** over that payload, never over
+  `disqualification_reason`, `disqualification_detail`, `notes`, or `reviewer`.
+- **`non_reproducible_or_fabricated_evidence` treated any resolver `null` as proof of fabrication.**
+  A `null` is equally consistent with an unknown repo, an unfetched commit, a path typo, or a CI
+  environment missing a sibling checkout — none of which mean the evidence was fabricated, only that
+  availability is unresolved. The reason now requires the opposite: the citation **must** actually
+  reproduce, plus a `claimed_value` the entry asserts was bound, with the verifier confirming the
+  reproduced content does **not** actually contain it — positive proof of a contradiction, never
+  absence of proof.
+- **`governed_blocker_citation` only proved some reproducible bytes existed.** It now requires the
+  same exact-key-match discipline as 3.3: the cited archive is deterministically parsed for a `rows`
+  array, filtered to the row matching this identity's full four-field governed key (zero/multiple
+  matches fail closed), and that matched row must itself carry non-empty `blocker_reason`/
+  `blocker_detail` fields — an unrelated-but-reproducible file can no longer pass.
+- **`identity_coverage_mechanism.citation` was never actually resolved.** Only its shape (non-empty
+  description + syntactically valid citation) was checked — a fabricated citation could mark a row
+  `independent_of_post_draft_outcome` outright. It is now resolved, hash-verified, and exact-key-matched
+  against the row's full governed source key (the same shared parser used by 3.3 and
+  `governed_blocker_citation`), and the matched row must itself declare
+  `independent_of_post_draft_outcome: true` — never accepted from the citing row's own description
+  alone.
+- **Citation `commit` values now require an immutable full 40-character lowercase-hex git object ID**
+  (`GIT_COMMIT_SHA_PATTERN`), applied uniformly everywhere `isValidCitation` is used. A mutable ref
+  (`main`, `HEAD`), a branch/tag name, or an abbreviated SHA now fails citation validation outright —
+  the merged design's "exact repo/commit/path/hash" discipline can no longer be satisfied by a moving
+  target that happens to match today.
 
 ## 3. Evidence paths attempted, per the merged design
 
@@ -218,7 +253,7 @@ not a defect.
 ## 7. Validation and tests
 
 - `npm run build` — clean (`tsc --noEmit`).
-- `npm test` — full suite passes, including the 60 tests in `tests/rookieTransitionProfileIdentityCrosswalk.test.ts`
+- `npm test` — full suite passes, including the 72 tests in `tests/rookieTransitionProfileIdentityCrosswalk.test.ts`
   covering: the committed artifact passing validation; missing locked row; extra row; duplicate
   governed key; invalid status token; invalid evidence-class token; resolved row without GSIS-bearing
   evidence; claimed GSIS ID absent from archived content; non-reproducible archive (hash mismatch);
@@ -235,10 +270,17 @@ not a defect.
   `governed_blocker_citation`); a bare blocked row with no disposition/notes/evidence; the exact
   still-valid spoof the review identified (a recognized `evidence_class` with fabricated
   reviewer/notes but no real `disqualification_reason`) now rejected, both for one row and for all 48
-  relabeled that way; a `prohibited_method` claim with no marker actually present, and a
-  `non_reproducible_or_fabricated_evidence` claim whose citation actually reproduces, both rejected; a
-  blocked row missing only its human disposition; a prohibited-method marker inside a properly-disposed
-  blocked row correctly *not* tripping the resolved-row rejection; and the two inertness scans.
+  relabeled that way; a `prohibited_method` claim with no `attempted_evidence` at all, and one where
+  the marker appears only in `disqualification_detail` (both rejected, including the all-48 variant);
+  a `non_reproducible_or_fabricated_evidence` claim missing `claimed_value`, one whose citation cannot
+  reproduce at all (proving only unresolved availability, never fabrication), and one whose citation
+  reproduces and actually contains the claimed value (all three rejected); an `identity_coverage_mechanism`
+  citation that is fabricated/unreproducible, one with zero matching rows, and one whose matched row
+  does not itself record independence (all rejected, plus a passing exact-match control case); a
+  mutable ref (`main`), `HEAD`, and an abbreviated SHA all rejected as citation commits, with a full
+  40-hex SHA accepted; a blocked row missing only its human disposition; a prohibited-method marker
+  inside a properly-disposed blocked row correctly *not* tripping the resolved-row rejection; and the
+  two inertness scans.
 - `npm run audit:rookie-transition-profile-identity-crosswalk` — `valid: true` with the accounting
   in §4.
 

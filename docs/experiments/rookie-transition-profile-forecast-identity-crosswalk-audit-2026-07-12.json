@@ -126,7 +126,7 @@
   },
   "validation": {
     "build": "npm run build (tsc --noEmit) clean",
-    "tests": "npm test passing, including 60 crosswalk tests (positive, all required negative cases, 3.3 exact-key mapping verification, 3.2 corroborating-fact literal verification and independence, mechanically-verified blocked-row disposition, inertness scans)",
+    "tests": "npm test passing, including 72 crosswalk tests (positive, all required negative cases, 3.3 exact-key mapping verification, 3.2 corroborating-fact literal verification and independence, mechanically-verified blocked-row disposition with all three reasons individually spoof-tested, identity_coverage_mechanism exact-match verification, immutable-commit-SHA enforcement, inertness scans)",
     "audit_cli": "npm run audit:rookie-transition-profile-identity-crosswalk -> valid: true, verified_blocked_count 0/0"
   },
   "post_review_strengthening_2026_07_12_round_1": {
@@ -147,6 +147,18 @@
       "the CLI's production archived-evidence resolver now reads the exact pinned commit via 'git show <commit>:<path>' against every locally available sibling repo (TIBER-Data, TIBER-Rookies, TIBER-Teamstate, and Forecast itself), fixing the prior mutual incompatibility where the validator required an external 3.3 citation the CLI resolver could never actually read -- honestly scoped as a same-environment fix, not CI-portable until sibling checkouts are provisioned there too",
       "3.2 corroborating facts now require a verified expected_literal actually present in the archived content, not merely an archive that exists and hashes correctly",
       "blocked rows now require a mechanically-verified disqualification_reason (prohibited_method | non_reproducible_or_fabricated_evidence | governed_blocker_citation), each checked against the entry's own content -- a recognized evidence_class token with fabricated reviewer/notes alone (the exact spoof the review demonstrated) is now rejected, tracked via a new verifiedBlockedCount result field and an explicit decision-rule guard"
+    ],
+    "committed_artifact_unchanged": true,
+    "decision_unchanged": true
+  },
+  "post_review_strengthening_2026_07_12_round_3": {
+    "reviewer": "Prometheus-Frameworks (PR owner)",
+    "changes": [
+      "prohibited_method verification now scans only a separate, non-empty attempted_evidence payload for a marker -- never disqualification_reason, disqualification_detail, notes, or reviewer, closing the self-authored-prose loophole where writing the word 'fuzzy' into free text alone verified a block",
+      "non_reproducible_or_fabricated_evidence now requires positive proof: the cited archive must actually reproduce, plus a claimed_value the entry asserts was bound, with verification confirming the reproduced content does NOT contain it -- a bare resolver null (equally consistent with an unknown repo, unfetched commit, path typo, or missing sibling checkout in CI) no longer counts as fabrication proof",
+      "governed_blocker_citation now requires the same exact-key-match discipline as 3.3: the cited archive is deterministically parsed for a rows array, filtered to the row matching this identity's full four-field governed key (zero/multiple matches fail closed), and that row must itself carry non-empty blocker_reason/blocker_detail fields -- an unrelated-but-reproducible file can no longer pass",
+      "identity_coverage_mechanism.citation is now resolved, hash-verified, and exact-key-matched via the same shared parser used by 3.3 and governed_blocker_citation, with the matched row required to itself declare independent_of_post_draft_outcome: true -- previously only citation shape was checked, so a fabricated citation could mark a row independent outright",
+      "isValidCitation now requires an immutable full 40-character lowercase-hex git commit SHA everywhere it is used -- a mutable ref (main, HEAD), a branch/tag name, or an abbreviated SHA now fails citation validation"
     ],
     "committed_artifact_unchanged": true,
     "decision_unchanged": true

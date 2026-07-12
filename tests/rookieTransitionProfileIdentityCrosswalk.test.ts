@@ -133,6 +133,9 @@ const archiveResolver: ArchivedEvidenceResolver = (cited) => {
     GOVERNED_ARTIFACT_CONTENT_CROSS_ROW_COOCCURRENCE,
     GOVERNED_ARTIFACT_CONTENT_NO_ROWS_KEY,
     GOVERNED_ARTIFACT_CONTENT_SCHEMA_MISMATCH,
+    GOVERNED_BLOCKER_CONTENT,
+    COVERAGE_MECHANISM_CONTENT_INDEPENDENT,
+    COVERAGE_MECHANISM_CONTENT_NOT_INDEPENDENT,
   ]) {
     if (cited.sha256 === sha256(content)) return content;
   }
@@ -187,10 +190,36 @@ const withResolvedFirstRow = (mutate?: (row: IdentityCrosswalkRow) => void): Ide
   return artifact;
 };
 
+// Governed-blocker artifact fixtures (design §4/§5's "governed_blocker_citation" reason): a real
+// governed-blocker record for THIS row's exact source key, mirroring the 3.3 exact-match contract.
+const GOVERNED_BLOCKER_CONTENT = JSON.stringify({
+  rows: [
+    {
+      ...governedArtifactRow(),
+      blocker_reason: 'conflicting_governed_record',
+      blocker_detail: 'a separately governed record independently disqualifies this candidate mapping',
+    },
+  ],
+});
+
+// identity_coverage_mechanism.citation fixtures (design §16): a real governed record for THIS row's
+// exact source key that itself states whether coverage is independent of post-draft participation.
+const COVERAGE_MECHANISM_CONTENT_INDEPENDENT = JSON.stringify({
+  rows: [{ ...governedArtifactRow(), independent_of_post_draft_outcome: true }],
+});
+const COVERAGE_MECHANISM_CONTENT_NOT_INDEPENDENT = JSON.stringify({
+  rows: [{ ...governedArtifactRow(), independent_of_post_draft_outcome: false }],
+});
+
 const disqualifiedEvidence = (overrides: Partial<DisqualifiedEvidenceEntry> = {}): DisqualifiedEvidenceEntry => ({
   evidence_class: '3.2_reviewed_mapping',
   disqualification_reason: 'prohibited_method',
   disqualification_detail: 'the only candidate mapping found relied on fuzzy name matching against a roster page (design §4)',
+  // The REAL attempted-evidence payload -- what checkDisqualifiedEvidenceEntry actually scans for a
+  // prohibited-method marker. Shaped like a genuine (if disqualified) corroborating-fact attempt.
+  attempted_evidence: {
+    corroborating_facts: [{ fact: 'fuzzy name match against the roster page' }],
+  },
   ...overrides,
 });
 
@@ -718,13 +747,14 @@ describe('blocked-row disposition (#159 review: a recognized evidence_class toke
     expect(result.verifiedBlockedCount).toBe(1);
   });
 
-  it('accepts a well-formed blocked row disqualified via non_reproducible_or_fabricated_evidence', () => {
+  it('accepts a well-formed blocked row disqualified via non_reproducible_or_fabricated_evidence (archive reproduces but contradicts the claim)', () => {
     const artifact = withBlockedFirstRow((row) => {
       row.resolution_evidence = [
         disqualifiedEvidence({
           disqualification_reason: 'non_reproducible_or_fabricated_evidence',
-          disqualification_detail: 'the only candidate GSIS-bearing source cited turned out to be fabricated -- its archive does not reproduce',
-          disqualified_citation: { ...citation('bytes that were never actually archived', 'fabricated.txt') },
+          disqualification_detail: 'the candidate GSIS-bearing source was claimed to bind GSIS_B, but the archive it actually cites never states that id',
+          claimed_value: GSIS_B,
+          disqualified_citation: { ...citation(GSIS_ARCHIVE_CONTENT, 'actually_only_binds_gsis_a.txt') },
         }) as unknown as IdentityCrosswalkRow['resolution_evidence'][number],
       ];
     });
@@ -734,13 +764,13 @@ describe('blocked-row disposition (#159 review: a recognized evidence_class toke
     expect(result.verifiedBlockedCount).toBe(1);
   });
 
-  it('accepts a well-formed blocked row disqualified via a reproducible governed_blocker_citation', () => {
+  it('accepts a well-formed blocked row disqualified via a reproducible, exact-key-matched governed_blocker_citation', () => {
     const artifact = withBlockedFirstRow((row) => {
       row.resolution_evidence = [
         disqualifiedEvidence({
           disqualification_reason: 'governed_blocker_citation',
           disqualification_detail: 'a governed conflicting record rules out this candidate mapping',
-          disqualified_citation: { ...citation(GSIS_ARCHIVE_CONTENT, 'governed_blocker.txt') },
+          disqualified_citation: { ...citation(GOVERNED_BLOCKER_CONTENT, 'governed_blocker.json') },
         }) as unknown as IdentityCrosswalkRow['resolution_evidence'][number],
       ];
     });
@@ -779,10 +809,24 @@ describe('blocked-row disposition (#159 review: a recognized evidence_class toke
     expect(result.decision).not.toBe('rookie_transition_profile_forecast_identity_resolution_audit_complete');
   });
 
-  it('rejects a disqualification_reason=prohibited_method claim when no prohibited-method marker is actually present', () => {
+  it('rejects a disqualification_reason=prohibited_method claim with no attempted_evidence payload at all', () => {
     const artifact = withBlockedFirstRow((row) => {
       row.resolution_evidence = [
-        disqualifiedEvidence({ disqualification_detail: 'this text names no disqualifying method at all' }) as unknown as IdentityCrosswalkRow['resolution_evidence'][number],
+        disqualifiedEvidence({ attempted_evidence: null }) as unknown as IdentityCrosswalkRow['resolution_evidence'][number],
+      ];
+    });
+    const result = validate(artifact, archiveResolver);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('requires a non-empty attempted_evidence payload'))).toBe(true);
+  });
+
+  it('rejects a disqualification_reason=prohibited_method claim when the marker only appears in disqualification_detail, not attempted_evidence', () => {
+    const artifact = withBlockedFirstRow((row) => {
+      row.resolution_evidence = [
+        disqualifiedEvidence({
+          disqualification_detail: 'candidate relied on fuzzy matching', // marker here must NOT count
+          attempted_evidence: { corroborating_facts: [{ fact: 'this text names no disqualifying method at all' }] },
+        }) as unknown as IdentityCrosswalkRow['resolution_evidence'][number],
       ];
     });
     const result = validate(artifact, archiveResolver);
@@ -790,12 +834,67 @@ describe('blocked-row disposition (#159 review: a recognized evidence_class toke
     expect(result.errors.some((e) => e.includes('no prohibited-method marker'))).toBe(true);
   });
 
-  it('rejects a disqualification_reason=non_reproducible_or_fabricated_evidence claim when the cited evidence actually reproduces', () => {
+  it('never emits ..._complete when all 48 rows use prohibited_method with the marker appearing only in disqualification_detail', () => {
+    const artifact = clone();
+    artifact.rows.forEach((row) => {
+      row.resolution_status = 'blocked';
+      row.forecast_canonical_player_id = null;
+      row.resolution_evidence_class = null;
+      row.resolution_evidence = [
+        disqualifiedEvidence({
+          disqualification_detail: 'candidate relied on fuzzy matching',
+          attempted_evidence: { note: 'nothing disqualifying stated here' },
+        }) as unknown as IdentityCrosswalkRow['resolution_evidence'][number],
+      ];
+      row.reviewer = FIXTURE_REVIEWER;
+      row.reviewed_at = '2026-07-12';
+      row.notes = 'blocked for reasons';
+    });
+    artifact.status_counts = { resolved: 0, unresolved: 0, conflicting_evidence: 0, blocked: 48 };
+    const result = validate(artifact);
+    expect(result.valid).toBe(false);
+    expect(result.decision).not.toBe('rookie_transition_profile_forecast_identity_resolution_audit_complete');
+    expect(result.verifiedBlockedCount).toBe(0);
+  });
+
+  it('rejects a disqualification_reason=non_reproducible_or_fabricated_evidence claim with no claimed_value', () => {
     const artifact = withBlockedFirstRow((row) => {
       row.resolution_evidence = [
         disqualifiedEvidence({
           disqualification_reason: 'non_reproducible_or_fabricated_evidence',
           disqualification_detail: 'claims this citation does not reproduce',
+          disqualified_citation: { ...citation(GSIS_ARCHIVE_CONTENT, 'no_claimed_value.txt') },
+        }) as unknown as IdentityCrosswalkRow['resolution_evidence'][number],
+      ];
+    });
+    const result = validate(artifact, archiveResolver);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('requires a non-empty claimed_value'))).toBe(true);
+  });
+
+  it('rejects a disqualification_reason=non_reproducible_or_fabricated_evidence claim when the citation cannot be reproduced at all (unresolved availability is never proof)', () => {
+    const artifact = withBlockedFirstRow((row) => {
+      row.resolution_evidence = [
+        disqualifiedEvidence({
+          disqualification_reason: 'non_reproducible_or_fabricated_evidence',
+          disqualification_detail: 'claims this citation is fabricated because it cannot be fetched',
+          claimed_value: GSIS_A,
+          disqualified_citation: { ...citation('bytes nobody archived anywhere', 'unreachable.txt') },
+        }) as unknown as IdentityCrosswalkRow['resolution_evidence'][number],
+      ];
+    });
+    const result = validate(artifact, archiveResolver);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('proves only unresolved availability, never fabrication'))).toBe(true);
+  });
+
+  it('rejects a disqualification_reason=non_reproducible_or_fabricated_evidence claim when the cited evidence actually reproduces and contains the claimed value', () => {
+    const artifact = withBlockedFirstRow((row) => {
+      row.resolution_evidence = [
+        disqualifiedEvidence({
+          disqualification_reason: 'non_reproducible_or_fabricated_evidence',
+          disqualification_detail: 'claims this citation does not support the mapping',
+          claimed_value: GSIS_A,
           disqualified_citation: { ...citation(GSIS_ARCHIVE_CONTENT, 'actually_fine.txt') },
         }) as unknown as IdentityCrosswalkRow['resolution_evidence'][number],
       ];
@@ -853,6 +952,79 @@ describe('blocked-row disposition (#159 review: a recognized evidence_class toke
     // `resolved` rows.
     const result = validate(withBlockedFirstRow(), archiveResolver);
     expect(result.errors.some((e) => e.includes('relies on prohibited method marker'))).toBe(false);
+  });
+});
+
+describe('identity_coverage_mechanism verification (#159 review: resolve and exact-match the cited proof, never accept an unverified citation)', () => {
+  const withIndependenceClaim = (citationContent: string): IdentityCrosswalkArtifact => {
+    const artifact = clone();
+    artifact.rows[0].identity_coverage_dependency = 'independent_of_post_draft_outcome';
+    artifact.rows[0].identity_coverage_mechanism = {
+      description: 'sourced from a governed pre-draft registry independent of roster outcome',
+      citation: citation(citationContent, 'coverage_mechanism.json'),
+    };
+    return artifact;
+  };
+
+  it('accepts a reproducible, exact-key-matched citation whose row itself records independence (control case)', () => {
+    const result = validate(withIndependenceClaim(COVERAGE_MECHANISM_CONTENT_INDEPENDENT), archiveResolver);
+    expect(result.errors).toEqual([]);
+    expect(result.valid).toBe(true);
+    expect(result.identityCoverageDependencyCounts.independent_of_post_draft_outcome).toBe(1);
+  });
+
+  it('rejects a fabricated/unreproducible identity_coverage_mechanism citation even when the description claims independence', () => {
+    const artifact = withIndependenceClaim('bytes nobody archived for a coverage-independence claim');
+    const result = validate(artifact, archiveResolver);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('identity_coverage_mechanism.citation is not reproducible'))).toBe(true);
+  });
+
+  it('rejects a reproducible citation with no row matching this exact governed source key', () => {
+    const result = validate(withIndependenceClaim(GOVERNED_ARTIFACT_CONTENT_ZERO_MATCHES), archiveResolver);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('identity_coverage_mechanism.citation has no row matching'))).toBe(true);
+  });
+
+  it('rejects a reproducible, exact-key-matched citation whose row does not itself record independence', () => {
+    const result = validate(withIndependenceClaim(COVERAGE_MECHANISM_CONTENT_NOT_INDEPENDENT), archiveResolver);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('does not itself record'))).toBe(true);
+  });
+});
+
+describe('citation commit format (#159 review: an immutable full 40-hex SHA, never a mutable ref)', () => {
+  it('rejects a mutable ref (main) as a citation commit', () => {
+    const artifact = withResolvedFirstRow((row) => {
+      (row.resolution_evidence[0] as ReviewedMappingEvidence).gsis_bearing_evidence.archived_citation.commit = 'main';
+    });
+    const result = validate(artifact, archiveResolver);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('GSIS-bearing evidence'))).toBe(true);
+  });
+
+  it('rejects HEAD as a citation commit', () => {
+    const artifact = withResolvedFirstRow((row) => {
+      (row.resolution_evidence[0] as ReviewedMappingEvidence).gsis_bearing_evidence.archived_citation.commit = 'HEAD';
+    });
+    const result = validate(artifact, archiveResolver);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('GSIS-bearing evidence'))).toBe(true);
+  });
+
+  it('rejects an abbreviated SHA as a citation commit', () => {
+    const artifact = withResolvedFirstRow((row) => {
+      (row.resolution_evidence[0] as ReviewedMappingEvidence).gsis_bearing_evidence.archived_citation.commit = 'aaaaaaa';
+    });
+    const result = validate(artifact, archiveResolver);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('GSIS-bearing evidence'))).toBe(true);
+  });
+
+  it('accepts a full 40-character lowercase hex commit SHA (control case)', () => {
+    const result = validate(withResolvedFirstRow(), archiveResolver);
+    expect(result.errors).toEqual([]);
+    expect(result.valid).toBe(true);
   });
 });
 
