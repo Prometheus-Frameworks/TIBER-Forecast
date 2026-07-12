@@ -518,7 +518,7 @@ acceptable shortcut.
 | `age_at_entry` | Archived, dated evidence of **both** (a) the player's exact source date of birth, **and** (b) the governed reference date/formula used to compute the mirrored `age_at_entry` value itself (e.g. "age as of the pinned pre-draft cutoff," per §8) — with both the DOB source and the reference-date/formula definition shown available before cutoff X. Proof that a DOB exists somewhere is necessary but not sufficient; the derivation basis for *the specific mirrored value* must also be provable pre-cutoff, not merely the underlying birth fact. | Row-level | No |
 | `athletic_testing` | Archived, dated evidence of **the exact measurement/result value the mirror carries** — not merely that the testing event occurred — showing that specific value was publicly available/published before cutoff X (e.g. an archived combine-results page or table containing the literal recorded number). Proof of the testing event's occurrence alone is necessary but not sufficient; the numeric result itself must be shown published pre-cutoff. | Row-level (the specific measured value) | No — testing calendars shift every year |
 | `college_production` | An archived, dated snapshot containing **the exact stat value(s)/window the mirror carries**, shown publicly available before cutoff X — not merely evidence that the season/stat-window had closed. A season closing does not by itself prove the specific total was published, finalized, or free of later correction; the archived snapshot must directly contain the mirrored value. | Row-level (the specific value, not just the closed window) | No — season-close dates shift every year |
-| `official_postdraft_outcome` | **No proof could ever apply in a `pre_draft` context** — this family is definitionally post-draft information. Only `post_draft`-phase availability is meaningful for it, and even then requires an archived source containing the exact outcome value with its own sourced `available_at` — the same exact-value discipline as every other family. `ingested_at` may never substitute for this: per §9, it establishes only when TIBER-Data/TIBER-Rookies *ingested* the evidence, never when the outcome became publicly knowable, and citing it as availability proof would reintroduce the exact substitution §9 and §16 both prohibit. | N/A for `pre_draft`; row-level for `post_draft` | N/A |
+| `official_postdraft_outcome` | **No proof could ever apply in a `pre_draft` context** — this family is definitionally post-draft information. This design authorizes only `pre_draft` matrices (§15); it does not define, and does not claim to define, what availability proof would look like for this family under any future `post_draft` contract — that is explicitly out of scope here, left to a future, separate post-draft readiness design with its own as-of/cutoff contract. `ingested_at` may never substitute for availability proof of any kind: per §9, it establishes only when TIBER-Data/TIBER-Rookies *ingested* the evidence, never when the outcome became publicly knowable, and citing it as availability proof would reintroduce the exact substitution §9 and §16 both prohibit. | N/A under this design (`pre_draft` only) | N/A |
 
 For every family, updates discovered *after* the pinned cutoff (e.g. a big-board value later
 revised) must be detectable by comparing the cited `available_at`/event date against the cutoff —
@@ -762,12 +762,35 @@ six conditions evaluate.
 
 ## 15. Define the future integrated readiness matrix
 
-Not populated by this design. **One matrix artifact instance represents exactly one
-`(season, requested_phase, cutoff_at)` tuple** — a comparison across two phases (e.g. `pre_draft` vs
-`post_draft`) or two cutoffs is always two separate artifact instances, never two rows sharing one
-row-grain key. Future shape — one top-level execution context, and one row per the crosswalk's own
-full governed key `(source_repository, source_schema, source_player_id, source_season)` plus
-`field_family`, within that context:
+Not populated by this design. **This contract authorizes `requested_phase: "pre_draft"` only.**
+
+**`post_draft` is out of scope for this design and must not be constructed under this contract.** An
+earlier draft of this section allowed `requested_phase: "pre_draft" | "post_draft"` and assigned
+`official_postdraft_outcome` (and every other family) `phase_permission: "post_draft_candidate"` in a
+`post_draft` matrix. That was a real, unresolved contradiction: §8's cutoff contract requires
+**every** availability-evidence artifact's `cutoff_at` to satisfy `cutoff_at <
+published_draft_start_at` — i.e. strictly before the draft begins — regardless of which phase a
+matrix requests. Since §14's `eligible_at_cutoff` condition separately requires `available_at <
+cutoff_at`, and `official_postdraft_outcome`'s `available_at` is definitionally *after* the draft, no
+availability-evidence artifact this design permits could ever let that family (or, more generally,
+any fact first available at or after draft start) reach `eligible_at_cutoff` — making a declared
+`post_draft` phase incapable of admitting the very family it existed to support. Rather than hastily
+design a second, independently-archived post-draft cutoff contract in the middle of this document
+(a genuinely separate as-of/evidence problem — what counts as an authoritative "post-draft as-of
+instant," how it is archived and cited, and what changes about missingness/leakage once the draft
+outcome is already known), **this design restricts itself to `pre_draft` only**, matching the actual
+scope of Issue #155 (a pre-experiment readiness gate, not a post-draft one). A future,
+separate post-draft readiness design must define its own as-of/cutoff contract — distinct from §8's
+pre-draft-only cutoff — before any `post_draft` matrix may exist. Until then, `phase_permission:
+"post_draft_candidate"` is removed from this contract entirely (§10, §11, and this section no longer
+describe post-draft eligibility as meaningful here), and `official_postdraft_outcome` remains
+structurally `never_eligible` under every matrix this design authorizes.
+
+**One matrix artifact instance represents exactly one `(season, cutoff_at)` pair, always with
+`requested_phase: "pre_draft"`** — a comparison across two cutoffs is always two separate artifact
+instances, never two rows sharing one row-grain key. Future shape — one top-level execution context,
+and one row per the crosswalk's own full governed key `(source_repository, source_schema,
+source_player_id, source_season)` plus `field_family`, within that context:
 
 ```json
 {
@@ -865,31 +888,30 @@ full governed key `(source_repository, source_schema, source_player_id, source_s
   even when every other status passes — these are two of the seven load-bearing readiness
   conditions (§14) and may not be taken on the matrix's own word.
 - **`phase_permission` is computed from a closed, deterministic `(requested_phase, field_family)`
-  policy table, never self-declared:**
+  policy table, never self-declared. This design defines only the `pre_draft` row — `post_draft` is
+  out of scope (see this section's opening) and has no defined policy here:**
 
   | `requested_phase` | `field_family` | `phase_permission` |
   | --- | --- | --- |
   | `pre_draft` | `official_postdraft_outcome` | `never_eligible` |
   | `pre_draft` | `draft_capital` / `age_at_entry` / `athletic_testing` / `college_production` | `pre_draft_candidate` |
-  | `post_draft` | any of the five families | `post_draft_candidate` |
 
   A validator must compute `phase_permission` from this table and **reject any row whose declared
   `phase_permission` does not equal the computed value** — a matrix claiming
   `requested_phase: "pre_draft"`, `field_family: "official_postdraft_outcome"`,
   `phase_permission: "pre_draft_candidate"` is invalid regardless of any other row condition.
-  `official_postdraft_outcome` in a `pre_draft` matrix must remain `final_readiness_status:
-  "excluded"` **regardless of temporal evidence** — even a (structurally impossible, but
-  defense-in-depth) `eligible_at_cutoff` temporal status can never override `never_eligible` — with
-  `"phase_permission=never_eligible"` enumerated in `blocking_reasons`. This is the mechanism that
-  actually enforces the prohibition Lane B's now-phase-neutral model deliberately moved here (§11,
-  §13) — the integrated readiness review (§17) must recompute this table for every row, not
-  spot-check the string value.
-- **`identity_population_gate` is a required top-level object for every `pre_draft` matrix instance**
-  (optional/`null` for `post_draft`, since the population-selection concern below is specific to a
-  purported pre-draft evaluation) — a machine-readable encoding of §16's population-level identity
-  coverage rule, distinct from any individual row's `leakage_status`. A row-level check alone cannot
-  prove the population-level condition, because matrix rows repeat once per `field_family` (48
-  identities × 5 families = 240 rows), so a naive row count is not an identity count.
+  `official_postdraft_outcome` must remain `final_readiness_status: "excluded"` **regardless of
+  temporal evidence** — even a (structurally impossible, but defense-in-depth) `eligible_at_cutoff`
+  temporal status can never override `never_eligible` — with `"phase_permission=never_eligible"`
+  enumerated in `blocking_reasons`. This is the mechanism that actually enforces the prohibition
+  Lane B's phase-neutral model moved here (§11, §13) — the integrated readiness review (§17) must
+  recompute this table for every row, not spot-check the string value.
+- **`identity_population_gate` is a required top-level object for every matrix instance** (this
+  contract has only one authorized `requested_phase`, `pre_draft`) — a machine-readable encoding of
+  §16's population-level identity coverage rule, distinct from any individual row's
+  `leakage_status`. A row-level check alone cannot prove the population-level condition, because
+  matrix rows repeat once per `field_family` (48 identities × 5 families = 240 rows), so a naive row
+  count is not an identity count.
 
   | Field | Meaning |
   | --- | --- |
@@ -988,8 +1010,9 @@ full governed key `(source_repository, source_schema, source_player_id, source_s
   `identity_coverage_dependency` (`independent_of_post_draft_outcome |
   contingent_on_post_draft_participation | unproven`), `temporal_status` (§11), `value_presence`
   (`present` | `unavailable`), `provenance_status` (`intact` | `broken`), `phase_permission`
-  (`pre_draft_candidate` | `post_draft_candidate` | `never_eligible` — the last reserved for
-  `official_postdraft_outcome` in a pre-draft context per §10), `leakage_status`
+  (`pre_draft_candidate` | `never_eligible` — the last reserved for `official_postdraft_outcome`;
+  `post_draft_candidate` is not a valid value under this contract, which authorizes `pre_draft` only
+  — see this section's opening), `leakage_status`
   (`clear` | `violation` | `not_evaluated`), `final_readiness_status`
   (`eligible` | `excluded`).
 - **Deterministic ordering:** `(source_season, source_repository, source_schema, source_player_id,
@@ -1329,6 +1352,13 @@ consumption, production binding, or activation.
       policy table (§15), never self-declared — `pre_draft` + `official_postdraft_outcome` always
       computes to `never_eligible` with `final_readiness_status: excluded` regardless of temporal
       evidence; a validator rejects any row whose declared value doesn't match the computed one.
+- [x] `requested_phase` is restricted to `"pre_draft"` only (§15) — an earlier draft's `post_draft`
+      support was a real, unresolved contradiction: §8's cutoff contract requires `cutoff_at` strictly
+      before draft start for every artifact regardless of phase, so no fact first available at or
+      after draft start (most of all `official_postdraft_outcome`) could ever reach
+      `eligible_at_cutoff` in a declared `post_draft` matrix. `post_draft_candidate` is removed from
+      the `phase_permission` enum entirely; a future, separate post-draft readiness design must define
+      its own as-of/cutoff contract before any `post_draft` matrix may exist.
 - [x] The positive decision opens only the two prerequisite issues (Decision section above).
 
 ## Non-goals confirmed
@@ -1340,6 +1370,9 @@ temporally eligible. No populated readiness matrix. No pre-draft or post-draft p
 No adapter or model-ready feature table. No predictive experiment. No MAE/RMSE/calibration/
 fantasy-point evaluation. No model or production import. No downstream consumption, production
 binding, UI activation, or model-use authorization. No claim of predictive usefulness for any field.
+**No `post_draft` readiness contract defined or authorized** — this design's matrix, cutoff, and
+availability-evidence contracts (§8, §13, §15) support `requested_phase: "pre_draft"` only; a
+`post_draft` as-of/cutoff contract is explicitly future, separate work, not sketched or implied here.
 
 ## Reproduce
 
