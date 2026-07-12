@@ -531,9 +531,11 @@ defaults to `unresolved_no_availability_proof` (§11), never to an assumed-avail
 eligible_at_cutoff             -- an archived available_at citation directly containing the exact
                                    mirrored value for this specific row+family is proven to precede
                                    the pinned cutoff
-ineligible_after_cutoff        -- the cited available_at is proven to be at or after the cutoff (or
-                                   the family is official_postdraft_outcome in a pre_draft context,
-                                   which is always this status)
+ineligible_after_cutoff        -- the cited available_at is proven to be at or after the cutoff.
+                                   Evidence-relative timing only -- this artifact is phase-neutral
+                                   and carries no requested_phase; official_postdraft_outcome's
+                                   permanent pre-draft ineligibility is enforced by the matrix's
+                                   phase_permission=never_eligible (§15), never by this enum alone
 unresolved_no_availability_proof -- no citation has yet been attempted or completed for this
                                    row+family; the default starting state today, for every family
 unavailable                    -- the underlying value itself is null/unavailable in the source
@@ -588,6 +590,18 @@ Not populated by this design. Future shape:
   "schema_version": "1.0.0",
   "season": 2026,
   "cutoff_at": "<pinned, cited ISO-8601 instant per §8 -- null until cited>",
+  "cutoff_evidence_source": {
+    "repo": "<archive repo>", "commit": "<exact sha>", "path": "<archived-copy path>",
+    "sha256": "<exact hash of the archived content>", "original_url": "<live source URL -- metadata only>",
+    "retrieved_at": "<ISO-8601 retrieval date>", "reviewer": "<named human reviewer>",
+    "reviewed_at": "<ISO-8601 sign-off date>", "source_timezone_or_offset": "<archived timezone/offset>",
+    "published_draft_start_at": "<fully-qualified ISO-8601 instant, as stated in the archived content>"
+  },
+  "mirror_source": {
+    "repo": "Prometheus-Frameworks/TIBER-Forecast", "commit": "<exact sha>",
+    "manifest_path": "<the committed mirror manifest path, e.g. data/fixtures/tiberRookies/rookie_transition_profile_v0_2026.manifest.mirror.json>",
+    "schema_version": "1.0.0", "sha256": "<exact hash of the manifest -- identifies all four committed mirror files per the #151 wrapper contract>"
+  },
   "rows": [
     {
       "field_family": "draft_capital",
@@ -615,35 +629,69 @@ Not populated by this design. Future shape:
   three-field or partial subset. This is the identical key §2 defines and §15 requires the matrix to
   dereference against; a three-field key here would make the matrix's full-key lookup against this
   artifact impossible to satisfy exactly.
-- **Required fields:** `season`, `cutoff_at`, `field_family`, the complete `source_identity` object,
-  `availability_status` (§11 enum), `available_at`, `source_snapshot_as_of`, evidence
-  repository/commit/path/hash, notes, and `review_decision`.
+- **`cutoff_evidence_source` is a required top-level field, not prose-only:** the §8 cutoff-evidence
+  contract must be bound directly into this artifact — a `cutoff_at` with no accompanying
+  `cutoff_evidence_source` is invalid. A validator must independently verify `season`/`cutoff_at`
+  against this exact source: the archived content's stated season matches this artifact's `season`,
+  `published_draft_start_at` is reproducible from the archived bytes, and `cutoff_at <
+  published_draft_start_at`. A future artifact declaring a valid-looking `cutoff_at` without this
+  citation, or whose citation fails to reproduce, is invalid.
+- **`mirror_source` is a required top-level field, pinning the exact committed mirror this artifact's
+  `value_presence`/missingness claims are checked against** — `{repo, commit, manifest_path,
+  schema_version, sha256}` of the committed mirror manifest (the single governed manifest already
+  identifies all four `#151`-implemented mirror files under one hash). No `unavailable`
+  `availability_status` may be claimed without this pin to check it against.
+- **Required fields:** `season`, `cutoff_at`, `cutoff_evidence_source`, `mirror_source`,
+  `field_family`, the complete `source_identity` object, `availability_status` (§11 enum),
+  `available_at`, `source_snapshot_as_of`, evidence repository/commit/path/**schema_version (or an
+  explicit `null`/`not_applicable` with a stated reason where no schema/spec_version applies, per
+  §1's schema/version discipline)**/hash, notes, and `review_decision`.
 - **Grain:** `(source_repository, source_schema, source_player_id, source_season, field_family)`
   within one `(season, cutoff_at)` artifact instance — the same governed key as the crosswalk (§7)
   and matrix (§15), plus `field_family`.
 - **Validation:** fail closed if `cutoff_at` is null but any row claims `eligible_at_cutoff`; fail
-  closed if any `eligible_at_cutoff` row lacks a full evidence citation; deterministic ordering by
-  `(source_season, source_repository, source_schema, source_player_id, field_family)` ascending;
-  duplicate prevention on the full `(source_repository, source_schema, source_player_id,
-  source_season, field_family)` key; **reject the artifact if any row's `source_identity` does not
-  correspond to exactly one of the 48 locked source keys, or if any of the 48 locked keys is missing
-  a row for any of the five field families** — no duplicate, missing, or extra locked source key is
-  permitted, fail-closed.
+  closed if any `eligible_at_cutoff` row lacks a full evidence citation; fail closed if `cutoff_at` is
+  non-null but `cutoff_evidence_source` is missing, or if the cited archive does not reproduce
+  `season`/`published_draft_start_at`/`cutoff_at < published_draft_start_at`; fail closed if
+  `mirror_source` is missing or its cited hash does not match the actual committed mirror manifest;
+  deterministic ordering by `(source_season, source_repository, source_schema, source_player_id,
+  field_family)` ascending; duplicate prevention on the full `(source_repository, source_schema,
+  source_player_id, source_season, field_family)` key; **reject the artifact if any row's
+  `source_identity` does not correspond to exactly one of the 48 locked source keys, or if any of the
+  48 locked keys is missing a row for any of the five field families** — no duplicate, missing, or
+  extra locked source key is permitted, fail-closed.
 - **Deterministic validation of the §11 temporal-status enum — stated as binding rules, not left for
   a future implementer to infer from prose:**
   - `eligible_at_cutoff` requires **all** of: a non-null, parseable, offset-bearing `available_at`;
     an exact-value archived evidence citation (per §10's per-family requirements); and
     `available_at < cutoff_at`. Any one missing or failing fails the row closed to
     `unresolved_no_availability_proof`.
-  - `ineligible_after_cutoff` requires **either** `available_at >= cutoff_at`, **or** the explicit
-    structural case `field_family: "official_postdraft_outcome"` with `requested_phase: "pre_draft"`
-    (§10) — no other basis qualifies.
+  - **`ineligible_after_cutoff` requires `available_at >= cutoff_at` — evidence-relative timing
+    only, with no phase-dependent structural case at this artifact's level.** An earlier draft of
+    this section additionally permitted an "explicit structural case
+    (`field_family: official_postdraft_outcome` with `requested_phase: pre_draft`)" — but the
+    availability-evidence artifact is scoped only by `(season, cutoff_at)` and carries no
+    `requested_phase` field, so its own validator could never evaluate that rule (a validator cannot
+    check a condition against a field the validated artifact does not possess). **This design adopts
+    the phase-neutral model:** the availability artifact reports only evidence-relative timing
+    (`eligible_at_cutoff` / `ineligible_after_cutoff` / `unresolved_no_availability_proof` /
+    `unavailable`), never a phase-aware judgment. `official_postdraft_outcome`'s permanent pre-draft
+    ineligibility is enforced **exclusively** by the matrix (§15), which *does* carry
+    `requested_phase` in its execution context, via `phase_permission: "never_eligible"` and §16's
+    leakage controls — never by the availability artifact's own `temporal_status`. This loses no
+    correctness: `official_postdraft_outcome`'s `available_at`, whenever proven, is definitionally
+    after the draft occurred and therefore after any pre-draft cutoff, so the evidence-relative rule
+    alone already yields `ineligible_after_cutoff` once proven, or `unresolved_no_availability_proof`
+    if not — either way §14's AND-rule excludes it from `pre_draft` use, with the matrix's
+    `phase_permission` providing the authoritative, structural guarantee.
   - `unresolved_no_availability_proof` must **never** carry a validator-accepted eligibility
     citation — it is the fail-closed default whenever exact timing cannot be proven, not a state a
     row can hold while also satisfying `eligible_at_cutoff`'s conditions.
   - `unavailable` is valid **only** when the corresponding locked mirror value is actually
     null/unavailable in the source artifact — it must never be used as a substitute for missing
-    timing evidence on a value that is actually present.
+    timing evidence on a value that is actually present. **`unavailable` must agree with
+    `value_presence: "unavailable"` (§15) — a present mirrored value can never be marked temporally
+    unavailable**, checked against the pinned `mirror_source` (below).
   - **Agreement requirement:** `available_at`, the archived evidence's content, and the literal
     mirrored value must all agree — a timestamp attached to evidence for a *different* revision or
     value than the one actually mirrored fails closed to `unresolved_no_availability_proof`, never
@@ -705,7 +753,8 @@ full governed key `(source_repository, source_schema, source_player_id, source_s
     "season": 2026,
     "cutoff_at": "<pinned, cited ISO-8601 instant per §8 -- null until cited>",
     "identity_crosswalk_source": { "repo": "Prometheus-Frameworks/TIBER-Forecast", "commit": "<exact sha>", "path": "<crosswalk artifact path, §7>", "schema_version": "1.0.0", "sha256": "<exact hash>" },
-    "availability_evidence_source": { "repo": "Prometheus-Frameworks/TIBER-Forecast", "commit": "<exact sha>", "path": "<availability-evidence artifact path, §13>", "schema_version": "1.0.0", "sha256": "<exact hash>" }
+    "availability_evidence_source": { "repo": "Prometheus-Frameworks/TIBER-Forecast", "commit": "<exact sha>", "path": "<availability-evidence artifact path, §13>", "schema_version": "1.0.0", "sha256": "<exact hash>" },
+    "mirror_source": { "repo": "Prometheus-Frameworks/TIBER-Forecast", "commit": "<exact sha>", "manifest_path": "<committed mirror manifest path>", "schema_version": "1.0.0", "sha256": "<exact hash of the manifest>" }
   },
   "identity_population_gate": {
     "locked_identity_count": 48,
@@ -751,10 +800,32 @@ full governed key `(source_repository, source_schema, source_player_id, source_s
 ```
 
 - **Execution context is required, not optional:** `requested_phase`, `season`, `cutoff_at`,
-  `identity_crosswalk_source`, and `availability_evidence_source` must all be present at the top
-  level of every matrix artifact instance. A validator must reject any matrix lacking one of these —
-  a readiness decision that cannot say which phase/cutoff/crosswalk/evidence it was computed against
-  is not reproducible and not valid.
+  `identity_crosswalk_source`, `availability_evidence_source`, and `mirror_source` must all be
+  present at the top level of every matrix artifact instance. A validator must reject any matrix
+  lacking one of these — a readiness decision that cannot say which
+  phase/cutoff/crosswalk/evidence/mirror it was computed against is not reproducible and not valid.
+- **The cutoff-evidence relationship is recomputed, never trusted from a copied `cutoff_at`:** a
+  validator must dereference `availability_evidence_source`, confirm it itself carries a
+  `cutoff_evidence_source` satisfying §13's validation (archived season match, reproducible
+  `published_draft_start_at`, `cutoff_at < published_draft_start_at`), and confirm the matrix's own
+  `cutoff_at` equals that dereferenced value. The matrix does not need its own separate
+  `cutoff_evidence_source` field — duplicating it would only create a second copy that could drift
+  from the availability artifact's own — but it must never accept a `cutoff_at` the availability
+  artifact's citation cannot reproduce. The integrated readiness review (§17) must independently
+  recompute this relationship, not trust either artifact's self-report.
+- **`value_presence` and `provenance_status` are deterministically checked against the pinned
+  `mirror_source`, not self-declared:** a validator must dereference the row's `source_identity` +
+  `field_family` against the exact committed mirror artifact(s) `mirror_source` cites (the single
+  governed manifest identifies all four `#151`-implemented files under one hash) and confirm:
+  - `value_presence` equals the locked value's actual null/present state in that exact mirror.
+  - `provenance_status: "intact"` requires the exact `{value, provenance}` structure and checksums
+    the committed mirror contract (`#151`) requires for that field; missing, mismatched, or
+    unverifiable provenance is `"broken"`.
+  - `temporal_status: "unavailable"` must agree with `value_presence: "unavailable"` — a present
+    mirrored value can never be marked temporally unavailable (§11/§13).
+  A matrix claiming `"present"`/`"intact"` that does not match the pinned mirror must be rejected,
+  even when every other status passes — these are two of the seven load-bearing readiness
+  conditions (§14) and may not be taken on the matrix's own word.
 - **`identity_population_gate` is a required top-level object for every `pre_draft` matrix instance**
   (optional/`null` for `post_draft`, since the population-selection concern below is specific to a
   purported pre-draft evaluation) — a machine-readable encoding of §16's population-level identity
@@ -1008,7 +1079,16 @@ controlled-experiment design issue may open. That review must independently re-v
    citation — where claimed, an independently re-verified `independent_complete_coverage_source`, and
    confirmation that no row's `final_readiness_status` is `eligible` while the population gate is
    `fail`.
-10. Confirmation that no experiment or production activation occurred during either prerequisite
+10. **Cutoff-evidence relationship recomputation (§8, §13, §15)** — independent reproduction of the
+    cited `cutoff_evidence_source`'s archived bytes, confirmation of season agreement, and
+    recomputation that `cutoff_at < published_draft_start_at` — never trusting either the
+    availability artifact's or the matrix's self-reported `cutoff_at` as sufficient on its own.
+11. **`value_presence`/`provenance_status` re-verification against the pinned `mirror_source` (§15)**
+    — independent dereferencing of each spot-checked row's `source_identity` + `field_family` against
+    the actual committed mirror bytes, confirming `value_presence` and `provenance_status` match, and
+    that `temporal_status: "unavailable"` agrees with `value_presence: "unavailable"` — not accepted
+    merely because the matrix's own fields look internally consistent.
+12. Confirmation that no experiment or production activation occurred during either prerequisite
     lane's own work (both lanes are themselves documentation/implementation-only until this review
     passes).
 
@@ -1152,6 +1232,21 @@ consumption, production binding, or activation.
       `resolution_evidence_class`/`independent_resolution_evidence_class` (`3.1_overall_pick_chain |
       3.2_reviewed_mapping | 3.3_governed_artifact`), with descriptive names carried separately in a
       `label` field — a validator compares only the canonical token.
+- [x] `cutoff_evidence_source` is a required, bound top-level field of the availability-evidence
+      artifact (§13), not prose-only — its validator independently verifies season agreement,
+      reproduces `published_draft_start_at`, and checks `cutoff_at < published_draft_start_at`; the
+      matrix (§15) and integrated review (§17) recompute this relationship rather than trust a copied
+      `cutoff_at`.
+- [x] The availability-evidence artifact is phase-neutral (§11, §13): `ineligible_after_cutoff` is
+      evidence-relative timing only, with no structural case referencing a `requested_phase` field
+      the artifact does not possess; `official_postdraft_outcome`'s pre-draft ineligibility is
+      enforced exclusively by the matrix's `phase_permission: never_eligible`, which does carry
+      `requested_phase` — no correctness is lost, since a proven post-draft `available_at` is
+      definitionally after any pre-draft cutoff.
+- [x] `value_presence`/`provenance_status` are deterministically checked against a required, pinned
+      `mirror_source` (§15) — the exact committed mirror manifest by repo/commit/path/schema/hash —
+      not self-declared matrix fields; `temporal_status: unavailable` must agree with
+      `value_presence: unavailable`.
 - [x] The positive decision opens only the two prerequisite issues (Decision section above).
 
 ## Non-goals confirmed
