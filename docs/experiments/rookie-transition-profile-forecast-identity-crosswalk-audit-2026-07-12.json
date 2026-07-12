@@ -126,8 +126,19 @@
   },
   "validation": {
     "build": "npm run build (tsc --noEmit) clean",
-    "tests": "npm test passing, including 30 new crosswalk tests (positive, all required negative cases, inertness scans)",
+    "tests": "npm test passing, including 47 crosswalk tests (positive, all required negative cases, 3.3 source-binding and schema-version verification, 3.2 corroborating-fact independence, blocked-row disposition, inertness scans)",
     "audit_cli": "npm run audit:rookie-transition-profile-identity-crosswalk -> valid: true"
+  },
+  "post_review_strengthening_2026_07_12": {
+    "reviewer": "Prometheus-Frameworks (PR owner) + chatgpt-codex-connector[bot]",
+    "changes": [
+      "3.3_governed_artifact evidence now requires the dereferenced archive to contain both the claimed gsis_id and the row's exact source_player_id, plus schema_version agreement where the archive itself declares one",
+      "3.2 corroborating facts now have their archived citations independently resolved and hash-verified, and must be materially distinct (no shared archive hash/location/fact text/original_url)",
+      "blocked rows now require a machine-verifiable disposition (non-null reviewer/reviewed_at, non-empty notes, at least one resolution_evidence entry) so a bare blocked label can never inflate the decision to ..._complete",
+      "the validator now checks the artifact's issue and governing_design fields against the pinned constants, not only source_lock"
+    ],
+    "committed_artifact_unchanged": true,
+    "decision_unchanged": true
   },
   "decision": "rookie_transition_profile_forecast_identity_resolution_audit_requires_followup",
   "decision_rationale": "the governed Lane A artifact, fail-closed validator, tests, and full 48-row accounting are complete and passing, but all 48 identities remain unresolved: §3.2 cannot produce a resolved row without archived GSIS-bearing evidence and an explicit named-human sign-off (which has not occurred), and no governed §3.1/§3.3 evidence exists yet",

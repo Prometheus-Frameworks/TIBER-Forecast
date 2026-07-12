@@ -324,6 +324,7 @@ interface EvidenceCheckOutcome {
 
 const checkEvidenceEntry = (
   entry: Record<string, unknown>,
+  sourcePlayerId: string,
   rowKey: string,
   entryIndex: number,
   resolveArchivedEvidence: ArchivedEvidenceResolver,
@@ -372,6 +373,44 @@ const checkEvidenceEntry = (
       );
       return { structurallyComplete: false, resolvesTo };
     }
+    const archivedArtifactContent = resolveArchivedEvidence(citation as ArchivedCitation);
+    if (archivedArtifactContent === null) {
+      errors.push(`${where}: 3.3 governed_artifact_citation is not reproducible from its citation (design §3.3/§12 fail-closed)`);
+      return { structurallyComplete: false, resolvesTo };
+    }
+    if (!archivedArtifactContent.includes(resolvesTo)) {
+      errors.push(`${where}: cited governed artifact does not actually contain the claimed gsis_id ${resolvesTo}`);
+      return { structurallyComplete: false, resolvesTo };
+    }
+    // The citation discipline alone only proves SOME reproducible bytes exist; it does not prove
+    // those bytes actually map THIS source identity to the claimed gsis_id. Requiring the archived
+    // content to also mention the exact source_player_id is a minimal, schema-agnostic proxy for
+    // that binding (a real governed artifact's row for this player will name it).
+    if (!archivedArtifactContent.includes(sourcePlayerId)) {
+      errors.push(
+        `${where}: cited governed artifact does not appear to reference source identity ${sourcePlayerId} -- ` +
+          'a citation alone does not prove the artifact maps this exact source identity to the claimed gsis_id',
+      );
+      return { structurallyComplete: false, resolvesTo };
+    }
+    // Where the archived content is itself JSON declaring a schema/spec version, it must agree with
+    // the citation's own declared schema_version -- never accepted merely because both are present.
+    let parsedArtifact: unknown = null;
+    try {
+      parsedArtifact = JSON.parse(archivedArtifactContent);
+    } catch {
+      parsedArtifact = null;
+    }
+    if (isPlainObject(parsedArtifact)) {
+      const declaredVersion = parsedArtifact.schema_version ?? parsedArtifact.spec_version;
+      if (typeof declaredVersion === 'string' && declaredVersion !== (citation as ArchivedCitation).schema_version) {
+        errors.push(
+          `${where}: cited governed artifact declares schema_version/spec_version ${JSON.stringify(declaredVersion)}, ` +
+            `citation claims ${JSON.stringify((citation as ArchivedCitation).schema_version)}`,
+        );
+        return { structurallyComplete: false, resolvesTo };
+      }
+    }
     return { structurallyComplete: true, resolvesTo };
   }
 
@@ -410,6 +449,13 @@ const checkEvidenceEntry = (
     errors.push(`${where}: 3.2 entry requires at least two independent corroborating facts, found ${Array.isArray(facts) ? facts.length : 0}`);
     complete = false;
   } else {
+    // `facts.length >= 2` alone does not prove independence -- two entries citing the same archive,
+    // the same fact text, or the same URL are not two independent corroborating facts (design §3.2:
+    // "at least two independent corroborating facts", never merely two array entries).
+    const seenHashes = new Set<string>();
+    const seenCitationKeys = new Set<string>();
+    const seenFactTexts = new Set<string>();
+    const seenUrls = new Set<string>();
     facts.forEach((fact, factIndex) => {
       if (
         !isPlainObject(fact) ||
@@ -420,7 +466,37 @@ const checkEvidenceEntry = (
       ) {
         errors.push(`${where}: corroborating_facts[${factIndex}] lacks fact/archived_citation/original_url/retrieved_at`);
         complete = false;
+        return;
       }
+      if (resolveArchivedEvidence(fact.archived_citation as ArchivedCitation) === null) {
+        errors.push(`${where}: corroborating_facts[${factIndex}]'s archived citation is not reproducible from its citation (design §3.2/§12 fail-closed)`);
+        complete = false;
+        return;
+      }
+      const citation = fact.archived_citation as ArchivedCitation;
+      const citationKey = `${citation.repo}|${citation.commit}|${citation.path}`;
+      const factText = fact.fact.trim().toLowerCase();
+      const url = fact.original_url.trim().toLowerCase();
+      if (seenHashes.has(citation.sha256)) {
+        errors.push(`${where}: corroborating_facts[${factIndex}] shares its archived content hash with another corroborating fact -- not independent (design §3.2)`);
+        complete = false;
+      }
+      if (seenCitationKeys.has(citationKey)) {
+        errors.push(`${where}: corroborating_facts[${factIndex}] cites the same archived location (repo/commit/path) as another corroborating fact -- not independent (design §3.2)`);
+        complete = false;
+      }
+      if (seenFactTexts.has(factText)) {
+        errors.push(`${where}: corroborating_facts[${factIndex}] repeats another corroborating fact's text verbatim -- not independent (design §3.2)`);
+        complete = false;
+      }
+      if (seenUrls.has(url)) {
+        errors.push(`${where}: corroborating_facts[${factIndex}] repeats another corroborating fact's original_url -- not independent (design §3.2)`);
+        complete = false;
+      }
+      seenHashes.add(citation.sha256);
+      seenCitationKeys.add(citationKey);
+      seenFactTexts.add(factText);
+      seenUrls.add(url);
     });
   }
   return { structurallyComplete: complete, resolvesTo };
@@ -459,6 +535,35 @@ export const validateRookieTransitionProfileIdentityCrosswalk = (
   if (artifact.kind !== IDENTITY_CROSSWALK_KIND) errors.push(`kind must be ${IDENTITY_CROSSWALK_KIND}, found ${JSON.stringify(artifact.kind)}`);
   if (artifact.schema_version !== IDENTITY_CROSSWALK_SCHEMA_VERSION) {
     errors.push(`schema_version must be ${IDENTITY_CROSSWALK_SCHEMA_VERSION}, found ${JSON.stringify(artifact.schema_version)}`);
+  }
+
+  // ---- Governing-design pins (issue #158 "Pin those contracts...for this work") -------------------
+  if (artifact.issue !== IDENTITY_CROSSWALK_IMPLEMENTATION_ISSUE) {
+    errors.push(`issue must be ${IDENTITY_CROSSWALK_IMPLEMENTATION_ISSUE}, found ${JSON.stringify(artifact.issue)}`);
+  }
+  const governingDesign = artifact.governing_design as Record<string, unknown> | undefined;
+  if (!isPlainObject(governingDesign)) {
+    errors.push('governing_design is missing');
+  } else {
+    if (governingDesign.readiness_design_issue !== READINESS_DESIGN_ISSUE) {
+      errors.push(
+        `governing_design.readiness_design_issue must be ${READINESS_DESIGN_ISSUE}, found ${JSON.stringify(governingDesign.readiness_design_issue)}`,
+      );
+    }
+    if (governingDesign.readiness_design_pr !== READINESS_DESIGN_PR) {
+      errors.push(`governing_design.readiness_design_pr must be ${READINESS_DESIGN_PR}, found ${JSON.stringify(governingDesign.readiness_design_pr)}`);
+    }
+    if (governingDesign.readiness_design_merge_commit !== READINESS_DESIGN_MERGE_COMMIT) {
+      errors.push(
+        `governing_design.readiness_design_merge_commit must be ${READINESS_DESIGN_MERGE_COMMIT}, ` +
+          `found ${JSON.stringify(governingDesign.readiness_design_merge_commit)}`,
+      );
+    }
+    const docs = governingDesign.design_documents;
+    const expectedDocs = READINESS_DESIGN_DOCUMENTS as readonly string[];
+    if (!Array.isArray(docs) || docs.length !== expectedDocs.length || !expectedDocs.every((d, i) => docs[i] === d)) {
+      errors.push(`governing_design.design_documents must be exactly ${JSON.stringify(expectedDocs)}, found ${JSON.stringify(docs)}`);
+    }
   }
 
   // ---- Exact source-lock agreement (issue #158 "Preserve these locks exactly") --------------------
@@ -567,17 +672,35 @@ export const validateRookieTransitionProfileIdentityCrosswalk = (
       errors.push(`${rowKey}: resolution_evidence must be an array`);
       return;
     }
-    const outcomes = evidence.map((entry, entryIndex) => {
+    // A `blocked` row documents a DISQUALIFIED attempt (design §4/§5) -- its entries are EXPECTED to
+    // fail the resolving-quality checks below (that is the entire reason they are blocked), so they
+    // get only a light shape check here, never the strict per-class/prohibited-method gauntlet that
+    // gates a `resolved` row. Without this split, a genuinely disqualified 3.2/name-only attempt
+    // could never be recorded on a blocked row at all -- the prohibited-method scan would itself
+    // reject the artifact.
+    const outcomes: EvidenceCheckOutcome[] = evidence.map((entry, entryIndex) => {
       if (!isPlainObject(entry)) {
         errors.push(`${rowKey} resolution_evidence[${entryIndex}]: not an object`);
-        return { structurallyComplete: false, resolvesTo: null } satisfies EvidenceCheckOutcome;
+        return { structurallyComplete: false, resolvesTo: null };
       }
-      return checkEvidenceEntry(entry, rowKey, entryIndex, resolveArchivedEvidence, errors);
+      if (status === 'blocked') {
+        const evClass = entry.evidence_class;
+        if (typeof evClass !== 'string' || !(RESOLUTION_EVIDENCE_CLASSES as readonly string[]).includes(evClass)) {
+          errors.push(`${rowKey} resolution_evidence[${entryIndex}]: blocked row's disqualified-evidence entry must still declare a recognized evidence_class`);
+          return { structurallyComplete: false, resolvesTo: null };
+        }
+        const blockedResolvesTo =
+          typeof entry.resolves_to_forecast_canonical_player_id === 'string' ? entry.resolves_to_forecast_canonical_player_id : null;
+        return { structurallyComplete: false, resolvesTo: blockedResolvesTo };
+      }
+      return checkEvidenceEntry(entry, String(row.source_player_id), rowKey, entryIndex, resolveArchivedEvidence, errors);
     });
 
-    // Conflicting candidates produce conflicting_evidence -- never a silent pick (§6).
+    // Conflicting candidates produce conflicting_evidence -- never a silent pick (§6). A blocked
+    // row's disqualified attempts may legitimately have surfaced multiple different candidates
+    // (part of why it was disqualified), so `blocked` is exempt from this specific signal.
     const distinctTargets = new Set(outcomes.map((o) => o.resolvesTo).filter((v): v is string => v !== null));
-    if (distinctTargets.size > 1 && status !== 'conflicting_evidence') {
+    if (distinctTargets.size > 1 && status !== 'conflicting_evidence' && status !== 'blocked') {
       errors.push(`${rowKey}: evidence entries resolve to ${distinctTargets.size} distinct gsis_ids -- status must be conflicting_evidence`);
     }
     if (status === 'conflicting_evidence' && distinctTargets.size < 2) {
@@ -619,9 +742,28 @@ export const validateRookieTransitionProfileIdentityCrosswalk = (
         canonicalIdToSourceKeys.set(canonicalId, keys);
       }
     } else {
-      // Unresolved rows are retained, never dropped -- and never carry a mapping or class.
+      // Unresolved/conflicting/blocked rows are retained, never dropped -- and never carry a mapping or class.
       if (canonicalId !== null) errors.push(`${rowKey}: ${status} row must carry a null forecast_canonical_player_id`);
       if (evidenceClass !== null) errors.push(`${rowKey}: ${status} row must carry a null resolution_evidence_class`);
+
+      if (status === 'blocked') {
+        // A bare `blocked` token with empty evidence and no review must fail validation -- otherwise
+        // every unresolved row could be silently relabeled `blocked` with zero investigation, and the
+        // decision rule would dishonestly report `..._complete` (design §5: blocked "requires human
+        // intervention before any further automated re-evaluation is attempted").
+        if (!isNonEmptyString(row.reviewer) || !isNonEmptyString(row.reviewed_at)) {
+          errors.push(
+            `${rowKey}: blocked row requires an attributable human disposition (non-null reviewer and reviewed_at) -- ` +
+              'who found the disqualifying reliance/evidence, and when',
+          );
+        }
+        if (!isNonEmptyString(row.notes)) {
+          errors.push(`${rowKey}: blocked row requires non-empty notes recording why it was blocked`);
+        }
+        if (evidence.length === 0) {
+          errors.push(`${rowKey}: blocked row requires at least one resolution_evidence entry documenting the disqualified attempt`);
+        }
+      }
     }
 
     // Independent-evidence checks (§7 rules 1-4).

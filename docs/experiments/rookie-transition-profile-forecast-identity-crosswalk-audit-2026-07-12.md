@@ -28,7 +28,7 @@ against the upstream promotion).
 | Governed 48-row identity-crosswalk artifact (`kind: rookie_transition_profile_v0_forecast_identity_crosswalk`, `schema_version: 1.0.0`) | `data/experiments/rookieTransitionProfile/rookie_transition_profile_v0_forecast_identity_crosswalk.json` |
 | Pure fail-closed validator (deterministic; no I/O) | `src/rehearsal/rookieTransitionProfileIdentityCrosswalk.ts` |
 | Read-only audit CLI (`npm run audit:rookie-transition-profile-identity-crosswalk`) | `scripts/runRookieTransitionProfileIdentityCrosswalkAudit.ts` |
-| Positive + negative validation tests (30 tests) | `tests/rookieTransitionProfileIdentityCrosswalk.test.ts` |
+| Positive + negative validation tests (47 tests) | `tests/rookieTransitionProfileIdentityCrosswalk.test.ts` |
 | This audit report | `docs/experiments/rookie-transition-profile-forecast-identity-crosswalk-audit-2026-07-12.md` / `.json` |
 
 Every row carries all fourteen contract fields (`source_repository`, `source_schema`,
@@ -54,6 +54,24 @@ entry resolving to the same `gsis_id`; that an `independent_of_post_draft_outcom
 non-null, citable `identity_coverage_mechanism`; and that a 3.3 citation attributed to
 TIBER-Forecast itself is rejected (Forecast may consume, never originate, a canonical-identity
 artifact).
+
+**Strengthened after independent review (2026-07-12), before this PR merged:** a `3.3_governed_artifact`
+entry's cited archive is now dereferenced and checked to actually contain both the claimed `gsis_id`
+*and* the row's exact `source_player_id` (a schema-agnostic proxy proving the artifact binds this
+specific source identity, not merely that some reproducible bytes exist), and, where the archived
+content is itself JSON declaring a `schema_version`/`spec_version`, that value must agree with the
+citation's own declared `schema_version`. Every `3.2_reviewed_mapping` corroborating fact's archived
+citation is now independently resolved and hash-verified (previously only its shape was checked), and
+corroborating facts must be materially distinct from one another — sharing an archive hash, archive
+location, fact text, or `original_url` between two "independent" facts now fails validation. A
+`blocked` row now requires a machine-verifiable disposition (non-null `reviewer`/`reviewed_at`,
+non-empty `notes`, and at least one `resolution_evidence` entry documenting the disqualified attempt)
+so that a bare `blocked` label can never substitute for a real investigation and inflate the decision
+to `..._complete`; blocked-row evidence entries are exempt from the strict per-class/prohibited-method
+checks that gate a `resolved` row, since a disqualified attempt is expected to fail those checks (that
+is why it is disqualified). The validator also now checks the artifact's `issue` and
+`governing_design` fields (readiness-design issue/PR/merge-commit/document paths) against the pinned
+constants, not just `source_lock`.
 
 ## 3. Evidence paths attempted, per the merged design
 
@@ -172,14 +190,22 @@ not a defect.
 ## 7. Validation and tests
 
 - `npm run build` — clean (`tsc --noEmit`).
-- `npm test` — full suite passes, including the 30 new tests covering: the committed artifact
-  passing validation; missing locked row; extra row; duplicate governed key; invalid status token;
-  invalid evidence-class token; resolved row without GSIS-bearing evidence; claimed GSIS ID absent
-  from archived content; non-reproducible archive (hash mismatch); fewer than two corroborating
-  facts; missing human sign-off; independent evidence resolving to a different GSIS ID; unbacked
-  independent-evidence claim; unsupported 3.1 usage; prohibited-method contamination; self-attributed
-  3.3 artifact; unsupported independence claim; tampered status counts; out-of-order rows; tampered
-  source lock; a passing structurally-complete 3.2 control case; and the two inertness scans.
+- `npm test` — full suite passes, including the 47 tests in `tests/rookieTransitionProfileIdentityCrosswalk.test.ts`
+  covering: the committed artifact passing validation; missing locked row; extra row; duplicate
+  governed key; invalid status token; invalid evidence-class token; resolved row without GSIS-bearing
+  evidence; claimed GSIS ID absent from archived content; non-reproducible archive (hash mismatch);
+  fewer than two corroborating facts; missing human sign-off; independent evidence resolving to a
+  different GSIS ID; unbacked independent-evidence claim; unsupported 3.1 usage; prohibited-method
+  contamination; self-attributed 3.3 artifact; unsupported independence claim; tampered status counts;
+  out-of-order rows; tampered source lock; tampered issue/governing-design pins; a passing
+  structurally-complete 3.2 control case; a passing structurally-complete, source-bound 3.3 control
+  case; 3.3 evidence that resolves but never references the source identity; 3.3 evidence whose
+  archived schema_version disagrees with its citation; corroborating facts that share an archive
+  hash, location, fact text, or URL (not independent); a non-reproducible corroborating-fact archive;
+  a well-formed blocked row with a real disposition; a bare blocked row with no disposition/notes/
+  evidence; a blocked row missing only its human disposition; all 48 rows relabeled bare `blocked`
+  never producing `..._complete`; a prohibited-method marker inside a properly-disposed blocked row
+  correctly *not* tripping the resolved-row rejection; and the two inertness scans.
 - `npm run audit:rookie-transition-profile-identity-crosswalk` — `valid: true` with the accounting
   in §4.
 
