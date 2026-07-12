@@ -31,6 +31,7 @@
     }
   },
   "lane_a_identity_resolution": {
+    "canonicalization_note": "permitted_identity_evidence_classes[].class uses the exact same canonical machine tokens as the resolution_evidence_class/independent_resolution_evidence_class closed enums (3.1_overall_pick_chain | 3.2_reviewed_mapping | 3.3_governed_artifact) -- a validator must compare only this canonical token, never a descriptive variant; the human-readable name is carried separately in each entry's label field",
     "canonical_identity_selection": {
       "selected": "NFL GSIS player identifier",
       "field_name": "gsis_id",
@@ -67,7 +68,8 @@
     },
     "permitted_identity_evidence_classes": [
       {
-        "class": "3.1_corroborated_overall_pick_chain",
+        "class": "3.1_overall_pick_chain",
+        "label": "Corroborated overall-pick chain",
         "strength": "strongest when available; drafted rows only",
         "current_status": "blocked_pending_second_leg_evidence",
         "applies_to": "drafted rows only (official_postdraft_outcome.value.overall_pick present, 47 of 48 in current mirror)",
@@ -97,7 +99,8 @@
         ]
       },
       {
-        "class": "3.2_explicit_reviewed_mapping_with_documentary_evidence",
+        "class": "3.2_reviewed_mapping",
+        "label": "Explicit reviewed mapping with documentary evidence",
         "strength": "required for udfa rows; fallback for unresolved drafted rows; currently the only available path since 3.1 remains blocked",
         "mechanism": "a named human reviewer records a one-off mapping backed by two distinct evidence roles, never merely two generic corroborating facts: (1) GSIS-bearing evidence (mandatory) -- at least one source that directly exposes/binds the exact target gsis_id value to a specific, named real player; a team roster/transactions page that never states or links to the GSIS ID does not qualify, no matter how official, and can only serve role (2); (2) corroborating facts (at least two, independent, never name-only) that bind the GSIS-bearing record to the TIBER-Rookies source player",
         "requirements": [
@@ -111,7 +114,8 @@
         ]
       },
       {
-        "class": "3.3_existing_governed_alias_identity_artifact",
+        "class": "3.3_governed_artifact",
+        "label": "Existing governed alias/identity artifact",
         "strength": "conditional; not created by this design",
         "mechanism": "if TIBER-Data (or another governed repository) ever publishes its own reviewed, promoted TIBER-Rookies-to-gsis_id crosswalk artifact, Forecast may consume it under the same repo/commit/path/schema/hash citation discipline as 3.1",
         "constraint": "Forecast must not construct such an artifact itself and attribute it to TIBER-Data; Forecast may only consume, never originate, a canonical-identity artifact"
@@ -184,10 +188,24 @@
       "definition": "a pinned as-of instant strictly before Day 1, Round 1, Pick 1 begins -- never before the draft concludes",
       "authoritative_source": "the NFL's own officially published draft schedule (external to both TIBER-Rookies and TIBER-Forecast)",
       "governed_artifact_check": "no governed, promoted TIBER-Data artifact currently records this schedule (no draft_schedule-class artifact exists in TIBER-Data's docs/, schemas/, or exports/ as of this design)",
-      "interim_requirement": "until such an artifact exists, the cutoff timestamp for a given season must be attached to a directly cited, dated, external source (e.g. an nfl.com schedule page), retrieved and cited by a named human reviewer with URL and retrieval date -- same discipline as identity evidence class 3.2, applied to a temporal fact",
+      "interim_requirement": "until such an artifact exists, the cutoff must be backed by a machine-readable cutoff_evidence_source object -- an archived, immutable copy, not a live URL/retrieval-date pair -- per the same discipline evidence class 3.2 and section 12 already require for identity and availability evidence (a live citation alone was an earlier, now-corrected gap in this same section)",
+      "cutoff_evidence_source_shape": {
+        "repo": "<archive repo>",
+        "commit": "<exact sha>",
+        "path": "<archived-copy path>",
+        "sha256": "<exact hash of the archived content>",
+        "original_url": "<live source URL -- metadata only, never the sole evidence>",
+        "retrieved_at": "<ISO-8601 retrieval date>",
+        "reviewer": "<named human reviewer>",
+        "reviewed_at": "<ISO-8601 sign-off date>",
+        "source_timezone_or_offset": "<the timezone/offset the archived source itself states>",
+        "published_draft_start_at": "<fully-qualified ISO-8601 instant, as stated in the archived content>"
+      },
+      "archived_content_requirement": "the archived content itself must state the applicable season's Day 1/Round 1 start time and timezone/offset -- a reviewer's paraphrase or transcription is not sufficient; the value must be independently re-derivable from the archived bytes",
+      "cutoff_at_relationship": "the chosen cutoff_at must be a fully-qualified ISO-8601 instant strictly earlier than the archived published_draft_start_at -- never equal to or derived by assumption; original_url/retrieved_at remain useful metadata alongside the archive, never the load-bearing proof on their own",
       "timezone_representation": "fully-qualified, offset-bearing ISO-8601 instant; never a bare date or a locally-assumed timezone",
-      "per_season_pinning": "each season's cutoff is cited and pinned independently; a 2026 cutoff citation never applies to any other season",
-      "fail_closed_treatment": "if no citation exists for the season in question, that season's pre_draft eligibility is unresolved_no_availability_proof for every family -- never assumed from the artifact's own generated_at or any other convenience timestamp"
+      "per_season_pinning": "each season's cutoff is cited and pinned independently via its own cutoff_evidence_source; a 2026 cutoff citation never applies to any other season",
+      "fail_closed_treatment": "if the archived bytes, season, time, or timezone cannot be reproduced from the cited cutoff_evidence_source for the season in question, the cutoff is invalid and that season's pre_draft eligibility is unresolved_no_availability_proof for every family -- never assumed from the artifact's own generated_at or any other convenience timestamp"
     },
     "timestamp_meanings": [
       {
@@ -309,7 +327,15 @@
       "source_identity_completeness": "source_identity carries the same complete, four-field governed key as the crosswalk and matrix -- source_repository, source_schema, source_player_id, source_season -- never a three-field or partial subset; this is the identical key section 2 defines and section 15 requires the matrix to dereference against",
       "required_fields": ["season", "cutoff_at", "field_family", "source_identity (source_repository, source_schema, source_player_id, source_season)", "availability_status", "available_at", "source_snapshot_as_of", "evidence_source (repo/commit/path/hash)", "notes", "review_decision"],
       "grain": "(source_repository, source_schema, source_player_id, source_season, field_family) within one (season, cutoff_at) artifact instance -- the same governed key as the crosswalk and matrix, plus field_family",
-      "validation": "fail closed if cutoff_at is null but any row claims eligible_at_cutoff; fail closed if any eligible_at_cutoff row lacks a full evidence citation; deterministic ordering by (source_season, source_repository, source_schema, source_player_id, field_family) ascending; duplicate prevention on the full (source_repository, source_schema, source_player_id, source_season, field_family) key; reject the artifact if any row's source_identity does not correspond to exactly one of the 48 locked source keys, or if any of the 48 locked keys is missing a row for any of the five field families -- no duplicate, missing, or extra locked source key is permitted, fail-closed"
+      "validation": "fail closed if cutoff_at is null but any row claims eligible_at_cutoff; fail closed if any eligible_at_cutoff row lacks a full evidence citation; deterministic ordering by (source_season, source_repository, source_schema, source_player_id, field_family) ascending; duplicate prevention on the full (source_repository, source_schema, source_player_id, source_season, field_family) key; reject the artifact if any row's source_identity does not correspond to exactly one of the 48 locked source keys, or if any of the 48 locked keys is missing a row for any of the five field families -- no duplicate, missing, or extra locked source key is permitted, fail-closed",
+      "temporal_status_enum_deterministic_validation": {
+        "eligible_at_cutoff": "requires ALL of: a non-null, parseable, offset-bearing available_at; an exact-value archived evidence citation (per section 10's per-family requirements); and available_at < cutoff_at. Any one missing or failing fails the row closed to unresolved_no_availability_proof",
+        "ineligible_after_cutoff": "requires EITHER available_at >= cutoff_at, OR the explicit structural case field_family=official_postdraft_outcome with requested_phase=pre_draft -- no other basis qualifies",
+        "unresolved_no_availability_proof": "must never carry a validator-accepted eligibility citation -- it is the fail-closed default whenever exact timing cannot be proven, not a state a row can hold while also satisfying eligible_at_cutoff's conditions",
+        "unavailable": "valid only when the corresponding locked mirror value is actually null/unavailable in the source artifact -- must never be used as a substitute for missing timing evidence on a value that is actually present",
+        "agreement_requirement": "available_at, the archived evidence's content, and the literal mirrored value must all agree -- a timestamp attached to evidence for a different revision or value than the one actually mirrored fails closed to unresolved_no_availability_proof, never treated as if it applied",
+        "binding_on_matrix": "the matrix (section 15) must reject a temporal_status copied from an availability-evidence row that violates any of the above, even if the string value itself matches -- dereferencing a syntactically-equal but substantively-invalid status is not sufficient"
+      }
     }
   },
   "integrated_readiness": {
@@ -458,6 +484,9 @@
     "the availability-evidence artifact carries the same complete four-field source_identity as the crosswalk and matrix, with grain/ordering/duplicate-prevention over the full key plus field_family, and fails closed on any missing, duplicated, or extra locked source key -- so the matrix's full-key dereferencing can be satisfied exactly against this artifact too",
     "availability dereferencing uses its own five-field key (source_identity plus field_family), distinct from the crosswalk's four-field identity key, since the availability grain carries five rows per locked identity -- a source_identity-only lookup would return multiple rows and never satisfy the zero/multiple-match rule as written",
     "pass_independent_complete_coverage mechanically enforces the every-row dependency requirement -- independent_dependency_count=48, contingent_dependency_count=0, unproven_dependency_count=0, computed over the 48 distinct dereferenced identities -- not merely a top-level independent_complete_coverage_verified flag that a contradictory per-row identity_coverage_dependency could otherwise silently override",
+    "the pre-draft cutoff citation is reproducible, not a live URL/date pair: a machine-readable cutoff_evidence_source (archived repo/commit/path/SHA-256, plus reviewer/sign-off/timezone/published_draft_start_at) is required, with cutoff_at strictly earlier than the archived published_draft_start_at -- matching the same archive-first discipline evidence class 3.2/section 12 already require",
+    "the availability-evidence temporal enum has deterministic, machine-checkable validation rules -- not merely prose definitions -- tying availability_status to available_at, cutoff_at, the archived exact value, and source missingness, binding on the matrix's own dereferenced temporal_status too",
+    "JSON evidence-class identifiers are canonicalized to the same tokens used by resolution_evidence_class/independent_resolution_evidence_class (3.1_overall_pick_chain | 3.2_reviewed_mapping | 3.3_governed_artifact), with descriptive names carried separately in a label field -- a validator compares only the canonical token",
     "the positive decision opens only the two prerequisite issues"
   ],
   "non_goals": [

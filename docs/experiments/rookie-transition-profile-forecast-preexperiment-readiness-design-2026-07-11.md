@@ -457,16 +457,41 @@ as-of instant **strictly before Day 1, Round 1, Pick 1 begins** — never "befor
   schedule (external to both TIBER-Rookies and TIBER-Forecast). Checked: no governed, promoted
   TIBER-Data artifact currently records this schedule (no `draft_schedule`-class artifact exists in
   TIBER-Data's `docs/`, `schemas/`, or `exports/` as of this design). Until one exists, the cutoff
-  timestamp for a given season must be attached to a directly cited, dated, external source (e.g. an
-  nfl.com schedule page), retrieved and cited by a **named human reviewer** with URL and retrieval
-  date — the same discipline §3.2 requires for identity evidence, applied here to a temporal fact.
+  must be backed by a machine-readable `cutoff_evidence_source` object — **an archived, immutable
+  copy, not a live URL/retrieval-date pair**, per the same discipline §3.2 and §12 already require
+  for identity and availability evidence (a live citation alone was an earlier, now-corrected gap in
+  this same section; §3.2's mandatory-archive requirement supersedes it here too):
+
+  ```json
+  {
+    "repo": "<archive repo>",
+    "commit": "<exact sha>",
+    "path": "<archived-copy path>",
+    "sha256": "<exact hash of the archived content>",
+    "original_url": "<live source URL -- metadata only, never the sole evidence>",
+    "retrieved_at": "<ISO-8601 retrieval date>",
+    "reviewer": "<named human reviewer>",
+    "reviewed_at": "<ISO-8601 sign-off date>",
+    "source_timezone_or_offset": "<the timezone/offset the archived source itself states>",
+    "published_draft_start_at": "<fully-qualified ISO-8601 instant, as stated in the archived content>"
+  }
+  ```
+
+  - The **archived content itself** must state the applicable season's Day 1/Round 1 start time and
+    timezone/offset — a reviewer's paraphrase or transcription is not sufficient; the value must be
+    independently re-derivable from the archived bytes.
+  - The chosen `cutoff_at` must be a fully-qualified ISO-8601 instant **strictly earlier** than the
+    archived `published_draft_start_at` — never equal to or derived by assumption.
+  - `original_url`/`retrieved_at` remain useful metadata alongside the archive, never the load-bearing
+    proof on their own.
 - **Timezone / representation:** the cutoff must be recorded as a fully-qualified, offset-bearing
   ISO-8601 instant (never a bare date or a locally-assumed timezone).
-- **Per-season pinning:** each season's cutoff is cited and pinned independently; a 2026 cutoff
-  citation never applies to any other season.
-- **Fail-closed treatment:** if no such citation exists for the season in question, that season's
-  `pre_draft` eligibility is `unresolved_no_availability_proof` (§11) for every family — never
-  assumed from the artifact's own `generated_at` or any other convenience timestamp.
+- **Per-season pinning:** each season's cutoff is cited and pinned independently via its own
+  `cutoff_evidence_source`; a 2026 cutoff citation never applies to any other season.
+- **Fail-closed treatment:** if the archived bytes, season, time, or timezone cannot be reproduced
+  from the cited `cutoff_evidence_source` for the season in question, the cutoff is invalid and that
+  season's `pre_draft` eligibility is `unresolved_no_availability_proof` (§11) for every family —
+  never assumed from the artifact's own `generated_at` or any other convenience timestamp.
 
 ## 9. Separate timestamp meanings
 
@@ -604,6 +629,29 @@ Not populated by this design. Future shape:
   correspond to exactly one of the 48 locked source keys, or if any of the 48 locked keys is missing
   a row for any of the five field families** — no duplicate, missing, or extra locked source key is
   permitted, fail-closed.
+- **Deterministic validation of the §11 temporal-status enum — stated as binding rules, not left for
+  a future implementer to infer from prose:**
+  - `eligible_at_cutoff` requires **all** of: a non-null, parseable, offset-bearing `available_at`;
+    an exact-value archived evidence citation (per §10's per-family requirements); and
+    `available_at < cutoff_at`. Any one missing or failing fails the row closed to
+    `unresolved_no_availability_proof`.
+  - `ineligible_after_cutoff` requires **either** `available_at >= cutoff_at`, **or** the explicit
+    structural case `field_family: "official_postdraft_outcome"` with `requested_phase: "pre_draft"`
+    (§10) — no other basis qualifies.
+  - `unresolved_no_availability_proof` must **never** carry a validator-accepted eligibility
+    citation — it is the fail-closed default whenever exact timing cannot be proven, not a state a
+    row can hold while also satisfying `eligible_at_cutoff`'s conditions.
+  - `unavailable` is valid **only** when the corresponding locked mirror value is actually
+    null/unavailable in the source artifact — it must never be used as a substitute for missing
+    timing evidence on a value that is actually present.
+  - **Agreement requirement:** `available_at`, the archived evidence's content, and the literal
+    mirrored value must all agree — a timestamp attached to evidence for a *different* revision or
+    value than the one actually mirrored fails closed to `unresolved_no_availability_proof`, never
+    treated as if it applied.
+  - **Binding on the matrix, not just this artifact:** the matrix (§15) must reject a `temporal_status`
+    copied from an availability-evidence row that violates any of the above, even if the string value
+    itself matches — dereferencing a syntactically-equal but substantively-invalid status is not
+    sufficient.
 
 ## 14. Define the row-and-field readiness rule
 
@@ -1092,6 +1140,18 @@ consumption, production binding, or activation.
       `unproven_dependency_count == 0`, computed over the 48 distinct dereferenced identities — not
       merely a top-level `independent_complete_coverage_verified` flag that a contradictory per-row
       `identity_coverage_dependency` could otherwise silently override.
+- [x] The pre-draft cutoff citation (§8) is reproducible, not a live URL/date pair: a machine-readable
+      `cutoff_evidence_source` (archived repo/commit/path/SHA-256, plus reviewer/sign-off/timezone/
+      `published_draft_start_at`) is required, with `cutoff_at` strictly earlier than the archived
+      `published_draft_start_at` — matching the same archive-first discipline §3.2/§12 already require.
+- [x] The availability-evidence temporal enum (§11/§13) has deterministic, machine-checkable
+      validation rules — not merely prose definitions — tying `availability_status` to `available_at`,
+      `cutoff_at`, the archived exact value, and source missingness, binding on the matrix's own
+      dereferenced `temporal_status` too.
+- [x] JSON evidence-class identifiers (§3) are canonicalized to the same tokens used by
+      `resolution_evidence_class`/`independent_resolution_evidence_class` (`3.1_overall_pick_chain |
+      3.2_reviewed_mapping | 3.3_governed_artifact`), with descriptive names carried separately in a
+      `label` field — a validator compares only the canonical token.
 - [x] The positive decision opens only the two prerequisite issues (Decision section above).
 
 ## Non-goals confirmed
