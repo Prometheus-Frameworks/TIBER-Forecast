@@ -1265,8 +1265,10 @@ consumption, production binding, or activation.
 - [x] Availability proof for `athletic_testing`, `college_production`, and `age_at_entry` requires the
       exact mirrored value to be shown published pre-cutoff, not merely that the underlying event or
       window occurred/closed (§10, §11).
-- [x] `official_postdraft_outcome`'s post-draft availability proof requires an archived source with
-      its own sourced `available_at`; `ingested_at` is never treated as availability proof anywhere,
+- [x] `ingested_at` never proves availability anywhere in this design — for
+      `official_postdraft_outcome` or any other family, under this contract or any future one. Any
+      future post-draft contract would need its own exact-value `available_at` evidence, which this
+      design does not define; `ingested_at` is never treated as availability proof anywhere,
       including via `last_verified_at` for drafted rows (§9, §10 both now say `No` uniformly).
 - [x] `independent_resolution_evidence_class` is validated against a real, structurally complete
       evidence entry of the matching class — resolving to the same `forecast_canonical_player_id`
@@ -1278,7 +1280,7 @@ consumption, production binding, or activation.
       never accepted as the sole citation.
 - [x] The future integrated readiness matrix (§15) records its execution context
       (`requested_phase`/`season`/`cutoff_at`/crosswalk and availability-evidence source citations)
-      so a readiness decision is reproducible and distinguishable across phases/cutoffs.
+      so a readiness decision is reproducible and distinguishable across seasons/cutoffs.
 - [x] Matrix dereferencing (§15) requires ALL FIVE crosswalk-derived fields —
       `forecast_canonical_player_id`, `identity_status`, `resolution_evidence_class`,
       `independent_resolution_evidence_class`, and `identity_coverage_dependency` — to match the
