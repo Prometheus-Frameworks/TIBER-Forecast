@@ -599,8 +599,9 @@ Not populated by this design. Future shape:
   },
   "mirror_source": {
     "repo": "Prometheus-Frameworks/TIBER-Forecast", "commit": "<exact sha>",
-    "manifest_path": "<the committed mirror manifest path, e.g. data/fixtures/tiberRookies/rookie_transition_profile_v0_2026.manifest.mirror.json>",
-    "schema_version": "1.0.0", "sha256": "<exact hash of the manifest -- identifies all four committed mirror files per the #151 wrapper contract>"
+    "wrapper_path": "data/fixtures/tiberRookies/ROOKIE_TRANSITION_PROFILE_V0_MIRROR_PROVENANCE.json",
+    "kind": "rookie_transition_profile_v0_forecast_mirror_provenance", "schema_version": "1.0.0",
+    "sha256": "<exact hash of the wrapper file itself>"
   },
   "rows": [
     {
@@ -636,11 +637,32 @@ Not populated by this design. Future shape:
   `published_draft_start_at` is reproducible from the archived bytes, and `cutoff_at <
   published_draft_start_at`. A future artifact declaring a valid-looking `cutoff_at` without this
   citation, or whose citation fails to reproduce, is invalid.
-- **`mirror_source` is a required top-level field, pinning the exact committed mirror this artifact's
-  `value_presence`/missingness claims are checked against** — `{repo, commit, manifest_path,
-  schema_version, sha256}` of the committed mirror manifest (the single governed manifest already
-  identifies all four `#151`-implemented mirror files under one hash). No `unavailable`
-  `availability_status` may be claimed without this pin to check it against.
+- **`mirror_source` is a required top-level field, pinning the exact committed mirror provenance
+  wrapper this artifact's `value_presence`/missingness claims are checked against** —
+  `{repo, commit, wrapper_path, kind, schema_version, sha256}` of the committed
+  `ROOKIE_TRANSITION_PROFILE_V0_MIRROR_PROVENANCE.json` wrapper. **This is deliberately not the
+  `.manifest.mirror.json` file** — that file is the byte-identical upstream promotion manifest
+  (`schema_version: "rookie-transition-profile-v0.2.0"`, `output_files` pointing at TIBER-Rookies'
+  own export paths); it does not enumerate the Forecast-owned local files. The wrapper
+  (`schema_version: "1.0.0"`, `kind:
+  "rookie_transition_profile_v0_forecast_mirror_provenance"`) is the artifact that actually lists all
+  four local paths (`forecast_mirror.paths`) and pins the JSON/CSV/mirrored-manifest hashes
+  (`forecast_mirror.mirrored_hashes`); pinning the wrapper itself by its own SHA-256 closes the
+  fourth-file loop. No `unavailable` `availability_status` may be claimed without this pin to check
+  it against.
+  - **Validation:** the wrapper's `forecast_mirror.paths` must list exactly the four authorized
+    local files, and its `mirrored_hashes` must match the actual committed JSON/CSV/mirrored-manifest
+    bytes — a validator must recompute these hashes, never trust the wrapper's own self-report alone.
+  - **Source-lock agreement:** the wrapper's `source_lock` (`repo`, `commit`, `schema_version`,
+    `season`, `row_count`) must match this design's locked starting point (§0) before any row lookup
+    proceeds.
+  - **Row lookup is two-step, because the mirror rows themselves do not carry all four source-key
+    fields** (the mirror JSON's rows carry only `player_id`; `schema_version`/`season` are top-level
+    artifact fields, not per-row): (1) validate the wrapper's top-level `source_lock` against the
+    row's `source_identity` (`source_repository`, `source_schema`, `source_season`); (2) locate the
+    row in the mirror JSON by `source_player_id`; (3) select the `field_family` key within that row
+    (e.g. `row.draft_capital.value`/`row.draft_capital.provenance`) to check `value_presence` and
+    `provenance_status`.
 - **Required fields:** `season`, `cutoff_at`, `cutoff_evidence_source`, `mirror_source`,
   `field_family`, the complete `source_identity` object, `availability_status` (§11 enum),
   `available_at`, `source_snapshot_as_of`, evidence repository/commit/path/**schema_version (or an
@@ -653,7 +675,10 @@ Not populated by this design. Future shape:
   closed if any `eligible_at_cutoff` row lacks a full evidence citation; fail closed if `cutoff_at` is
   non-null but `cutoff_evidence_source` is missing, or if the cited archive does not reproduce
   `season`/`published_draft_start_at`/`cutoff_at < published_draft_start_at`; fail closed if
-  `mirror_source` is missing or its cited hash does not match the actual committed mirror manifest;
+  `mirror_source` is missing, its cited wrapper hash does not match the actual committed
+  `ROOKIE_TRANSITION_PROFILE_V0_MIRROR_PROVENANCE.json`, its `forecast_mirror.mirrored_hashes` do not
+  match the actual JSON/CSV/mirrored-manifest bytes, or its `source_lock` does not match this
+  design's locked starting point (§0);
   deterministic ordering by `(source_season, source_repository, source_schema, source_player_id,
   field_family)` ascending; duplicate prevention on the full `(source_repository, source_schema,
   source_player_id, source_season, field_family)` key; **reject the artifact if any row's
@@ -754,7 +779,7 @@ full governed key `(source_repository, source_schema, source_player_id, source_s
     "cutoff_at": "<pinned, cited ISO-8601 instant per §8 -- null until cited>",
     "identity_crosswalk_source": { "repo": "Prometheus-Frameworks/TIBER-Forecast", "commit": "<exact sha>", "path": "<crosswalk artifact path, §7>", "schema_version": "1.0.0", "sha256": "<exact hash>" },
     "availability_evidence_source": { "repo": "Prometheus-Frameworks/TIBER-Forecast", "commit": "<exact sha>", "path": "<availability-evidence artifact path, §13>", "schema_version": "1.0.0", "sha256": "<exact hash>" },
-    "mirror_source": { "repo": "Prometheus-Frameworks/TIBER-Forecast", "commit": "<exact sha>", "manifest_path": "<committed mirror manifest path>", "schema_version": "1.0.0", "sha256": "<exact hash of the manifest>" }
+    "mirror_source": { "repo": "Prometheus-Frameworks/TIBER-Forecast", "commit": "<exact sha>", "wrapper_path": "data/fixtures/tiberRookies/ROOKIE_TRANSITION_PROFILE_V0_MIRROR_PROVENANCE.json", "kind": "rookie_transition_profile_v0_forecast_mirror_provenance", "schema_version": "1.0.0", "sha256": "<exact hash of the wrapper file itself -- must equal availability_evidence_source's own dereferenced mirror_source, byte-for-byte>" }
   },
   "identity_population_gate": {
     "locked_identity_count": 48,
@@ -813,10 +838,23 @@ full governed key `(source_repository, source_schema, source_player_id, source_s
   from the availability artifact's own — but it must never accept a `cutoff_at` the availability
   artifact's citation cannot reproduce. The integrated readiness review (§17) must independently
   recompute this relationship, not trust either artifact's self-report.
+- **The matrix's `mirror_source` must equal the availability artifact's own `mirror_source`,
+  byte-for-byte — two independently supplied citations may not drift.** A validator must dereference
+  `availability_evidence_source`, confirm it itself carries a `mirror_source`, and require that
+  citation's `repo`/`commit`/`wrapper_path`/`schema_version`/`sha256` to equal the matrix execution
+  context's own `mirror_source` exactly. Without this, an availability audit could be computed
+  against one mirror generation while the matrix's own `value_presence`/`provenance_status` checks
+  ran against a *different*, later-refreshed generation — an internally-valid but incoherent matrix
+  that silently imports stale temporal decisions alongside newer value/provenance checks. A mismatch
+  fails closed **before any row-level readiness evaluation begins.** The matrix's `season` and every
+  row's `source_identity`/source-lock agreement must also match this same wrapper (§13's row-lookup
+  discipline applies identically here). The integrated readiness review (§17) must independently
+  re-verify this equality, not accept two matching-looking citations at face value.
 - **`value_presence` and `provenance_status` are deterministically checked against the pinned
   `mirror_source`, not self-declared:** a validator must dereference the row's `source_identity` +
-  `field_family` against the exact committed mirror artifact(s) `mirror_source` cites (the single
-  governed manifest identifies all four `#151`-implemented files under one hash) and confirm:
+  `field_family` against the exact committed mirror provenance wrapper `mirror_source` cites (per
+  §13's row-lookup discipline: validate the wrapper's `source_lock`, locate the row by
+  `source_player_id` in the mirror JSON, then select the `field_family` key) and confirm:
   - `value_presence` equals the locked value's actual null/present state in that exact mirror.
   - `provenance_status: "intact"` requires the exact `{value, provenance}` structure and checksums
     the committed mirror contract (`#151`) requires for that field; missing, mismatched, or
@@ -826,6 +864,26 @@ full governed key `(source_repository, source_schema, source_player_id, source_s
   A matrix claiming `"present"`/`"intact"` that does not match the pinned mirror must be rejected,
   even when every other status passes — these are two of the seven load-bearing readiness
   conditions (§14) and may not be taken on the matrix's own word.
+- **`phase_permission` is computed from a closed, deterministic `(requested_phase, field_family)`
+  policy table, never self-declared:**
+
+  | `requested_phase` | `field_family` | `phase_permission` |
+  | --- | --- | --- |
+  | `pre_draft` | `official_postdraft_outcome` | `never_eligible` |
+  | `pre_draft` | `draft_capital` / `age_at_entry` / `athletic_testing` / `college_production` | `pre_draft_candidate` |
+  | `post_draft` | any of the five families | `post_draft_candidate` |
+
+  A validator must compute `phase_permission` from this table and **reject any row whose declared
+  `phase_permission` does not equal the computed value** — a matrix claiming
+  `requested_phase: "pre_draft"`, `field_family: "official_postdraft_outcome"`,
+  `phase_permission: "pre_draft_candidate"` is invalid regardless of any other row condition.
+  `official_postdraft_outcome` in a `pre_draft` matrix must remain `final_readiness_status:
+  "excluded"` **regardless of temporal evidence** — even a (structurally impossible, but
+  defense-in-depth) `eligible_at_cutoff` temporal status can never override `never_eligible` — with
+  `"phase_permission=never_eligible"` enumerated in `blocking_reasons`. This is the mechanism that
+  actually enforces the prohibition Lane B's now-phase-neutral model deliberately moved here (§11,
+  §13) — the integrated readiness review (§17) must recompute this table for every row, not
+  spot-check the string value.
 - **`identity_population_gate` is a required top-level object for every `pre_draft` matrix instance**
   (optional/`null` for `post_draft`, since the population-selection concern below is specific to a
   purported pre-draft evaluation) — a machine-readable encoding of §16's population-level identity
@@ -1085,10 +1143,22 @@ controlled-experiment design issue may open. That review must independently re-v
     availability artifact's or the matrix's self-reported `cutoff_at` as sufficient on its own.
 11. **`value_presence`/`provenance_status` re-verification against the pinned `mirror_source` (§15)**
     — independent dereferencing of each spot-checked row's `source_identity` + `field_family` against
-    the actual committed mirror bytes, confirming `value_presence` and `provenance_status` match, and
-    that `temporal_status: "unavailable"` agrees with `value_presence: "unavailable"` — not accepted
-    merely because the matrix's own fields look internally consistent.
-12. Confirmation that no experiment or production activation occurred during either prerequisite
+    the actual committed mirror provenance wrapper (per §13's two-step row-lookup discipline:
+    validate `source_lock`, locate by `source_player_id`, select `field_family`), confirming
+    `value_presence` and `provenance_status` match, and that `temporal_status: "unavailable"` agrees
+    with `value_presence: "unavailable"` — not accepted merely because the matrix's own fields look
+    internally consistent.
+12. **`mirror_source` equality (§15)** — independent confirmation that the matrix's `mirror_source`
+    and the dereferenced `availability_evidence_source`'s own `mirror_source` are byte-for-byte
+    identical (`repo`/`commit`/`wrapper_path`/`schema_version`/`sha256`), not two matching-looking
+    citations accepted at face value — a mismatch means the availability audit and the
+    value/provenance checks ran against different mirror generations.
+13. **`phase_permission` recomputation (§15)** — independent recomputation of every row's
+    `phase_permission` from the closed `(requested_phase, field_family)` policy table, confirming
+    `official_postdraft_outcome` in a `pre_draft` matrix is always `never_eligible` with
+    `final_readiness_status: "excluded"` regardless of temporal evidence — not a spot-check of the
+    string value alone.
+14. Confirmation that no experiment or production activation occurred during either prerequisite
     lane's own work (both lanes are themselves documentation/implementation-only until this review
     passes).
 
@@ -1244,9 +1314,21 @@ consumption, production binding, or activation.
       `requested_phase` — no correctness is lost, since a proven post-draft `available_at` is
       definitionally after any pre-draft cutoff.
 - [x] `value_presence`/`provenance_status` are deterministically checked against a required, pinned
-      `mirror_source` (§15) — the exact committed mirror manifest by repo/commit/path/schema/hash —
-      not self-declared matrix fields; `temporal_status: unavailable` must agree with
-      `value_presence: unavailable`.
+      `mirror_source` (§15) — the actual committed provenance wrapper, `ROOKIE_TRANSITION_PROFILE_V0_
+      MIRROR_PROVENANCE.json` (verified against the real committed files: the `.manifest.mirror.json`
+      is the byte-identical *upstream* manifest with `schema_version: rookie-transition-profile-v0.2.0`
+      and TIBER-Rookies export paths, not the Forecast wrapper) — not self-declared matrix fields;
+      `temporal_status: unavailable` must agree with `value_presence: unavailable`; row lookup is the
+      verified two-step path (validate `source_lock`, locate by `source_player_id`, select
+      `field_family`), since the mirror's own rows carry only `player_id`.
+- [x] The matrix's `mirror_source` must equal the availability artifact's own `mirror_source`
+      byte-for-byte (§15) — a validator dereferences `availability_evidence_source` and requires exact
+      equality before any row-level readiness evaluation, preventing an availability audit and
+      value/provenance checks from silently running against two different mirror generations.
+- [x] `phase_permission` is computed from a closed, deterministic `(requested_phase, field_family)`
+      policy table (§15), never self-declared — `pre_draft` + `official_postdraft_outcome` always
+      computes to `never_eligible` with `final_readiness_status: excluded` regardless of temporal
+      evidence; a validator rejects any row whose declared value doesn't match the computed one.
 - [x] The positive decision opens only the two prerequisite issues (Decision section above).
 
 ## Non-goals confirmed
