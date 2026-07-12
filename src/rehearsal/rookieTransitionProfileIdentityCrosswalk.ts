@@ -130,6 +130,13 @@ export interface GsisBearingEvidence {
 
 export interface CorroboratingFact {
   fact: string;
+  /**
+   * A specific token/phrase that MUST be independently verified to appear in the archived content
+   * (design §3.2: corroborating facts must "bind the GSIS-bearing record to the source player",
+   * not merely cite an archive that exists). `fact` alone is unverifiable free text; this field is
+   * the machine-checkable claim the validator actually confirms against the archived bytes.
+   */
+  expected_literal: string;
   archived_citation: ArchivedCitation;
   original_url: string;
   retrieved_at: string;
@@ -159,9 +166,39 @@ export interface OverallPickChainEvidence {
 
 export type ResolutionEvidenceEntry = ReviewedMappingEvidence | GovernedArtifactEvidence | OverallPickChainEvidence;
 
+/**
+ * Closed set of machine-verifiable reasons a row may be `blocked` (design §4/§5: "evidence was
+ * found to rely on a prohibited method... was fabricated... or was otherwise disqualified").
+ * A recognized `evidence_class` token alone is never sufficient evidence of an actual disqualifying
+ * defect -- each reason below is independently verified against the entry's own content, never
+ * accepted as a bare self-declared label.
+ */
+export const DISQUALIFICATION_REASONS = [
+  'prohibited_method',
+  'non_reproducible_or_fabricated_evidence',
+  'governed_blocker_citation',
+] as const;
+export type DisqualificationReason = (typeof DISQUALIFICATION_REASONS)[number];
+
+/** The shape a `blocked` row's `resolution_evidence` entries must take -- a disqualified attempt. */
+export interface DisqualifiedEvidenceEntry {
+  evidence_class: ResolutionEvidenceClass;
+  disqualification_reason: DisqualificationReason;
+  disqualification_detail: string;
+  disqualified_citation?: ArchivedCitation | null;
+}
+
 export interface IdentityCoverageMechanism {
   description: string;
   citation: ArchivedCitation | null;
+}
+
+/** The full governed source key (design §2/§7) -- never a subset, never `source_player_id` alone. */
+export interface SourceIdentityKey {
+  source_repository: string;
+  source_schema: string;
+  source_player_id: string;
+  source_season: number;
 }
 
 export interface IdentityCrosswalkRow {
@@ -175,7 +212,7 @@ export interface IdentityCrosswalkRow {
   independent_resolution_evidence_class: IndependentResolutionEvidenceClass | null;
   identity_coverage_dependency: IdentityCoverageDependency;
   identity_coverage_mechanism: IdentityCoverageMechanism | null;
-  resolution_evidence: ResolutionEvidenceEntry[];
+  resolution_evidence: (ResolutionEvidenceEntry | DisqualifiedEvidenceEntry)[];
   reviewer: string | null;
   reviewed_at: string | null;
   notes: string | null;
@@ -255,9 +292,16 @@ export type IdentityCrosswalkAuditDecision = (typeof IDENTITY_CROSSWALK_AUDIT_DE
 export const decideIdentityCrosswalkAudit = (
   valid: boolean,
   statusCounts: IdentityCrosswalkStatusCounts,
+  verifiedBlockedCount: number,
 ): IdentityCrosswalkAuditDecision => {
   if (!valid) return 'rookie_transition_profile_forecast_identity_resolution_audit_blocked';
   if (statusCounts.unresolved > 0) return 'rookie_transition_profile_forecast_identity_resolution_audit_requires_followup';
+  // Defense-in-depth, restating explicitly what row-level validation already enforces: `blocked`
+  // may only contribute to a `..._complete` decision when EVERY blocked row has a machine-verified
+  // disposition, never a bare recognized-class label (design §5).
+  if (statusCounts.blocked > 0 && verifiedBlockedCount !== statusCounts.blocked) {
+    return 'rookie_transition_profile_forecast_identity_resolution_audit_requires_followup';
+  }
   return 'rookie_transition_profile_forecast_identity_resolution_audit_complete';
 };
 
@@ -279,6 +323,8 @@ export interface IdentityCrosswalkValidationResult {
   statusCounts: IdentityCrosswalkStatusCounts;
   evidenceClassCounts: Record<string, number>;
   identityCoverageDependencyCounts: Record<IdentityCoverageDependency, number>;
+  /** Count of `blocked` rows whose disposition (reviewer/notes/evidence + reason) was mechanically verified. */
+  verifiedBlockedCount: number;
   decision: IdentityCrosswalkAuditDecision;
 }
 
@@ -324,7 +370,7 @@ interface EvidenceCheckOutcome {
 
 const checkEvidenceEntry = (
   entry: Record<string, unknown>,
-  sourcePlayerId: string,
+  sourceIdentity: SourceIdentityKey,
   rowKey: string,
   entryIndex: number,
   resolveArchivedEvidence: ArchivedEvidenceResolver,
@@ -378,29 +424,64 @@ const checkEvidenceEntry = (
       errors.push(`${where}: 3.3 governed_artifact_citation is not reproducible from its citation (design §3.3/§12 fail-closed)`);
       return { structurallyComplete: false, resolvesTo };
     }
-    if (!archivedArtifactContent.includes(resolvesTo)) {
-      errors.push(`${where}: cited governed artifact does not actually contain the claimed gsis_id ${resolvesTo}`);
+    // Containing both strings somewhere in the document is not proof of a mapping -- a multi-row
+    // artifact could contain the source identity in one row and the gsis_id in an unrelated one.
+    // The archive must be parsed deterministically and checked for exactly one row that maps the
+    // FULL four-field governed source key to the claimed gsis_id. If it cannot be parsed
+    // deterministically, 3.3 stays unusable for this citation -- there is no substring fallback.
+    let parsedArtifact: unknown;
+    try {
+      parsedArtifact = JSON.parse(archivedArtifactContent);
+    } catch {
+      errors.push(
+        `${where}: cited governed artifact could not be deterministically parsed as JSON -- 3.3 remains unusable ` +
+          'for this citation (no substring-search fallback, design §3.3)',
+      );
       return { structurallyComplete: false, resolvesTo };
     }
-    // The citation discipline alone only proves SOME reproducible bytes exist; it does not prove
-    // those bytes actually map THIS source identity to the claimed gsis_id. Requiring the archived
-    // content to also mention the exact source_player_id is a minimal, schema-agnostic proxy for
-    // that binding (a real governed artifact's row for this player will name it).
-    if (!archivedArtifactContent.includes(sourcePlayerId)) {
+    const candidateRows: unknown[] | null = Array.isArray(parsedArtifact)
+      ? parsedArtifact
+      : isPlainObject(parsedArtifact) && Array.isArray(parsedArtifact.rows)
+        ? parsedArtifact.rows
+        : null;
+    if (candidateRows === null) {
       errors.push(
-        `${where}: cited governed artifact does not appear to reference source identity ${sourcePlayerId} -- ` +
-          'a citation alone does not prove the artifact maps this exact source identity to the claimed gsis_id',
+        `${where}: cited governed artifact does not expose a deterministic rows array (a top-level array, or a ` +
+          '"rows" array) -- 3.3 remains unusable for this citation',
+      );
+      return { structurallyComplete: false, resolvesTo };
+    }
+    const matches = candidateRows.filter(
+      (candidate): candidate is Record<string, unknown> =>
+        isPlainObject(candidate) &&
+        candidate.source_repository === sourceIdentity.source_repository &&
+        candidate.source_schema === sourceIdentity.source_schema &&
+        candidate.source_player_id === sourceIdentity.source_player_id &&
+        candidate.source_season === sourceIdentity.source_season,
+    );
+    if (matches.length === 0) {
+      errors.push(
+        `${where}: cited governed artifact contains no row mapping the exact governed source key ` +
+          '(source_repository/source_schema/source_player_id/source_season) -- zero matches fails closed',
+      );
+      return { structurallyComplete: false, resolvesTo };
+    }
+    if (matches.length > 1) {
+      errors.push(
+        `${where}: cited governed artifact contains ${matches.length} rows mapping the exact governed source key ` +
+          '-- multiple matches fails closed (ambiguous)',
+      );
+      return { structurallyComplete: false, resolvesTo };
+    }
+    if (matches[0].gsis_id !== resolvesTo) {
+      errors.push(
+        `${where}: cited governed artifact maps this exact source identity to ${JSON.stringify(matches[0].gsis_id)}, ` +
+          `not the claimed ${resolvesTo} -- target mismatch fails closed`,
       );
       return { structurallyComplete: false, resolvesTo };
     }
     // Where the archived content is itself JSON declaring a schema/spec version, it must agree with
     // the citation's own declared schema_version -- never accepted merely because both are present.
-    let parsedArtifact: unknown = null;
-    try {
-      parsedArtifact = JSON.parse(archivedArtifactContent);
-    } catch {
-      parsedArtifact = null;
-    }
     if (isPlainObject(parsedArtifact)) {
       const declaredVersion = parsedArtifact.schema_version ?? parsedArtifact.spec_version;
       if (typeof declaredVersion === 'string' && declaredVersion !== (citation as ArchivedCitation).schema_version) {
@@ -460,16 +541,28 @@ const checkEvidenceEntry = (
       if (
         !isPlainObject(fact) ||
         !isNonEmptyString(fact.fact) ||
+        !isNonEmptyString(fact.expected_literal) ||
         !isValidCitation(fact.archived_citation) ||
         !isNonEmptyString(fact.original_url) ||
         !isNonEmptyString(fact.retrieved_at)
       ) {
-        errors.push(`${where}: corroborating_facts[${factIndex}] lacks fact/archived_citation/original_url/retrieved_at`);
+        errors.push(`${where}: corroborating_facts[${factIndex}] lacks fact/expected_literal/archived_citation/original_url/retrieved_at`);
         complete = false;
         return;
       }
-      if (resolveArchivedEvidence(fact.archived_citation as ArchivedCitation) === null) {
+      const factArchiveContent = resolveArchivedEvidence(fact.archived_citation as ArchivedCitation);
+      if (factArchiveContent === null) {
         errors.push(`${where}: corroborating_facts[${factIndex}]'s archived citation is not reproducible from its citation (design §3.2/§12 fail-closed)`);
+        complete = false;
+        return;
+      }
+      // Archive existence alone does not prove the fact binds the GSIS-bearing record to the
+      // source player -- the archived bytes must actually contain the specific asserted literal.
+      if (!factArchiveContent.includes(fact.expected_literal)) {
+        errors.push(
+          `${where}: corroborating_facts[${factIndex}]'s archived content does not actually contain its claimed ` +
+            `expected_literal ${JSON.stringify(fact.expected_literal)}`,
+        );
         complete = false;
         return;
       }
@@ -502,6 +595,80 @@ const checkEvidenceEntry = (
   return { structurallyComplete: complete, resolvesTo };
 };
 
+/**
+ * Verifies a `blocked` row's disqualified-evidence entry actually exhibits its declared
+ * `disqualification_reason` -- a recognized `evidence_class` token plus arbitrary reviewer/notes is
+ * NOT sufficient (that would let every unresolved row be relabeled `blocked` with a fabricated
+ * disqualification and no real defect). Returns whether the claimed reason was verified; pushes an
+ * error and returns `false` whenever it is not.
+ */
+const checkDisqualifiedEvidenceEntry = (
+  entry: Record<string, unknown>,
+  rowKey: string,
+  entryIndex: number,
+  resolveArchivedEvidence: ArchivedEvidenceResolver,
+  errors: string[],
+): boolean => {
+  const where = `${rowKey} resolution_evidence[${entryIndex}]`;
+  const evidenceClass = entry.evidence_class;
+  if (typeof evidenceClass !== 'string' || !(RESOLUTION_EVIDENCE_CLASSES as readonly string[]).includes(evidenceClass)) {
+    errors.push(`${where}: blocked row's disqualified-evidence entry must still declare a recognized evidence_class`);
+    return false;
+  }
+  const reason = entry.disqualification_reason;
+  if (typeof reason !== 'string' || !(DISQUALIFICATION_REASONS as readonly string[]).includes(reason)) {
+    errors.push(
+      `${where}: blocked row's disqualified-evidence entry must declare a recognized disqualification_reason ` +
+        '(design §4/§5) -- a recognized evidence_class token alone is not proof of an actual disqualifying defect',
+    );
+    return false;
+  }
+  if (!isNonEmptyString(entry.disqualification_detail)) {
+    errors.push(`${where}: blocked row's disqualified-evidence entry requires non-empty disqualification_detail explaining the defect`);
+    return false;
+  }
+
+  if (reason === 'prohibited_method') {
+    const markers = findProhibitedMethodMarkers(entry);
+    if (markers.length === 0) {
+      errors.push(
+        `${where}: disqualification_reason=prohibited_method claims a prohibited-method reliance, but no ` +
+          'prohibited-method marker (design §4) is actually present in this entry',
+      );
+      return false;
+    }
+    return true;
+  }
+
+  if (reason === 'non_reproducible_or_fabricated_evidence') {
+    const cited = entry.disqualified_citation;
+    if (!isValidCitation(cited)) {
+      errors.push(`${where}: disqualification_reason=non_reproducible_or_fabricated_evidence requires a structurally complete disqualified_citation`);
+      return false;
+    }
+    if (resolveArchivedEvidence(cited as ArchivedCitation) !== null) {
+      errors.push(
+        `${where}: disqualification_reason=non_reproducible_or_fabricated_evidence claims the cited evidence does ` +
+          'not reproduce, but it actually does -- the claimed defect is not real',
+      );
+      return false;
+    }
+    return true;
+  }
+
+  // governed_blocker_citation -- a real, reproducible citation naming the authoritative reason.
+  const cited = entry.disqualified_citation;
+  if (!isValidCitation(cited)) {
+    errors.push(`${where}: disqualification_reason=governed_blocker_citation requires a structurally complete disqualified_citation naming the blocker`);
+    return false;
+  }
+  if (resolveArchivedEvidence(cited as ArchivedCitation) === null) {
+    errors.push(`${where}: disqualification_reason=governed_blocker_citation's cited evidence is not reproducible from its citation (design §12 fail-closed)`);
+    return false;
+  }
+  return true;
+};
+
 export const validateRookieTransitionProfileIdentityCrosswalk = (
   candidate: unknown,
   lockedSourcePlayerIds: readonly string[],
@@ -516,6 +683,7 @@ export const validateRookieTransitionProfileIdentityCrosswalk = (
     contingent_on_post_draft_participation: 0,
     unproven: 0,
   };
+  let verifiedBlockedCount = 0;
 
   const fail = (): IdentityCrosswalkValidationResult => ({
     valid: false,
@@ -523,7 +691,8 @@ export const validateRookieTransitionProfileIdentityCrosswalk = (
     statusCounts,
     evidenceClassCounts,
     identityCoverageDependencyCounts,
-    decision: decideIdentityCrosswalkAudit(false, statusCounts),
+    verifiedBlockedCount,
+    decision: decideIdentityCrosswalkAudit(false, statusCounts, verifiedBlockedCount),
   });
 
   if (!isPlainObject(candidate)) {
@@ -672,28 +841,30 @@ export const validateRookieTransitionProfileIdentityCrosswalk = (
       errors.push(`${rowKey}: resolution_evidence must be an array`);
       return;
     }
-    // A `blocked` row documents a DISQUALIFIED attempt (design §4/§5) -- its entries are EXPECTED to
-    // fail the resolving-quality checks below (that is the entire reason they are blocked), so they
-    // get only a light shape check here, never the strict per-class/prohibited-method gauntlet that
-    // gates a `resolved` row. Without this split, a genuinely disqualified 3.2/name-only attempt
-    // could never be recorded on a blocked row at all -- the prohibited-method scan would itself
-    // reject the artifact.
+    const sourceIdentity: SourceIdentityKey = {
+      source_repository: String(row.source_repository),
+      source_schema: String(row.source_schema),
+      source_player_id: row.source_player_id,
+      source_season: Number(row.source_season),
+    };
+    // A `blocked` row documents a DISQUALIFIED attempt (design §4/§5) -- its entries must declare
+    // and MECHANICALLY VERIFY a real disqualification_reason (checkDisqualifiedEvidenceEntry), never
+    // just a recognized evidence_class token with arbitrary reviewer/notes. They never go through
+    // checkEvidenceEntry's resolving-quality gauntlet -- that gauntlet is what a legitimate attempt
+    // must pass, and a disqualified attempt is expected to fail it, not repeat it.
+    let blockedEntriesAllVerified = evidence.length > 0;
     const outcomes: EvidenceCheckOutcome[] = evidence.map((entry, entryIndex) => {
       if (!isPlainObject(entry)) {
         errors.push(`${rowKey} resolution_evidence[${entryIndex}]: not an object`);
+        if (status === 'blocked') blockedEntriesAllVerified = false;
         return { structurallyComplete: false, resolvesTo: null };
       }
       if (status === 'blocked') {
-        const evClass = entry.evidence_class;
-        if (typeof evClass !== 'string' || !(RESOLUTION_EVIDENCE_CLASSES as readonly string[]).includes(evClass)) {
-          errors.push(`${rowKey} resolution_evidence[${entryIndex}]: blocked row's disqualified-evidence entry must still declare a recognized evidence_class`);
-          return { structurallyComplete: false, resolvesTo: null };
-        }
-        const blockedResolvesTo =
-          typeof entry.resolves_to_forecast_canonical_player_id === 'string' ? entry.resolves_to_forecast_canonical_player_id : null;
-        return { structurallyComplete: false, resolvesTo: blockedResolvesTo };
+        const verified = checkDisqualifiedEvidenceEntry(entry, rowKey, entryIndex, resolveArchivedEvidence, errors);
+        if (!verified) blockedEntriesAllVerified = false;
+        return { structurallyComplete: false, resolvesTo: null };
       }
-      return checkEvidenceEntry(entry, String(row.source_player_id), rowKey, entryIndex, resolveArchivedEvidence, errors);
+      return checkEvidenceEntry(entry, sourceIdentity, rowKey, entryIndex, resolveArchivedEvidence, errors);
     });
 
     // Conflicting candidates produce conflicting_evidence -- never a silent pick (§6). A blocked
@@ -750,19 +921,26 @@ export const validateRookieTransitionProfileIdentityCrosswalk = (
         // A bare `blocked` token with empty evidence and no review must fail validation -- otherwise
         // every unresolved row could be silently relabeled `blocked` with zero investigation, and the
         // decision rule would dishonestly report `..._complete` (design §5: blocked "requires human
-        // intervention before any further automated re-evaluation is attempted").
+        // intervention before any further automated re-evaluation is attempted"). Beyond the bare
+        // label, `blockedEntriesAllVerified` (above) additionally requires every recorded entry's
+        // declared disqualification_reason to be mechanically verified against its own content.
+        let rowVerified = blockedEntriesAllVerified;
         if (!isNonEmptyString(row.reviewer) || !isNonEmptyString(row.reviewed_at)) {
           errors.push(
             `${rowKey}: blocked row requires an attributable human disposition (non-null reviewer and reviewed_at) -- ` +
               'who found the disqualifying reliance/evidence, and when',
           );
+          rowVerified = false;
         }
         if (!isNonEmptyString(row.notes)) {
           errors.push(`${rowKey}: blocked row requires non-empty notes recording why it was blocked`);
+          rowVerified = false;
         }
         if (evidence.length === 0) {
           errors.push(`${rowKey}: blocked row requires at least one resolution_evidence entry documenting the disqualified attempt`);
+          rowVerified = false;
         }
+        if (rowVerified) verifiedBlockedCount += 1;
       }
     }
 
@@ -847,6 +1025,7 @@ export const validateRookieTransitionProfileIdentityCrosswalk = (
     statusCounts,
     evidenceClassCounts,
     identityCoverageDependencyCounts,
-    decision: decideIdentityCrosswalkAudit(valid, statusCounts),
+    verifiedBlockedCount,
+    decision: decideIdentityCrosswalkAudit(valid, statusCounts, verifiedBlockedCount),
   };
 };

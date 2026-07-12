@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
-import { MIRROR_JSON_PATH, SOURCE_COMMIT } from '../src/rehearsal/rookieTransitionProfileMirror.js';
+import { MIRROR_JSON_PATH, SOURCE_COMMIT, SOURCE_REPO, SOURCE_SCHEMA_VERSION, SOURCE_SEASON } from '../src/rehearsal/rookieTransitionProfileMirror.js';
 import {
   IDENTITY_CROSSWALK_AUDIT_DECISIONS,
   IDENTITY_CROSSWALK_KIND,
@@ -23,6 +23,8 @@ import {
   validateRookieTransitionProfileIdentityCrosswalk,
   type ArchivedCitation,
   type ArchivedEvidenceResolver,
+  type DisqualifiedEvidenceEntry,
+  type GovernedArtifactEvidence,
   type IdentityCrosswalkArtifact,
   type IdentityCrosswalkRow,
   type ReviewedMappingEvidence,
@@ -62,21 +64,54 @@ const FACT_ARCHIVE_CONTENT_TEAM = 'transaction log archive: signing team PHI, si
 // rows[0] of the committed crosswalk (alphabetically first of the 48 locked identities).
 const ROW_0_SOURCE_PLAYER_ID = 'qb-carson-beck';
 const GOVERNED_ARTIFACT_SCHEMA_VERSION = '1.0.0';
+
+/** One row of a hypothetical governed 3.3 artifact, matching the FULL four-field governed key. */
+const governedArtifactRow = (overrides: Partial<{ source_player_id: string; gsis_id: string }> = {}) => ({
+  source_repository: SOURCE_REPO,
+  source_schema: SOURCE_SCHEMA_VERSION,
+  source_player_id: ROW_0_SOURCE_PLAYER_ID,
+  source_season: SOURCE_SEASON,
+  gsis_id: GSIS_A,
+  ...overrides,
+});
+
 const GOVERNED_ARTIFACT_CONTENT = JSON.stringify({
   schema_version: GOVERNED_ARTIFACT_SCHEMA_VERSION,
-  mappings: [{ source_player_id: ROW_0_SOURCE_PLAYER_ID, gsis_id: GSIS_A }],
+  rows: [governedArtifactRow()],
 });
-// Reproducible, and contains the claimed gsis_id -- but never mentions the source identity, so it
-// cannot prove this specific artifact maps THIS player to that id.
-const GOVERNED_ARTIFACT_CONTENT_MISSING_PLAYER = JSON.stringify({
+// Reproducible JSON with a `rows` array -- but no row's full governed key matches this source
+// identity at all (zero matches), so the mapping cannot be proven for THIS player.
+const GOVERNED_ARTIFACT_CONTENT_ZERO_MATCHES = JSON.stringify({
   schema_version: GOVERNED_ARTIFACT_SCHEMA_VERSION,
-  mappings: [{ source_player_id: 'someone-else-entirely', gsis_id: GSIS_A }],
+  rows: [governedArtifactRow({ source_player_id: 'someone-else-entirely' })],
+});
+// Two rows both matching the same full governed key -- ambiguous, ought never be picked arbitrarily.
+const GOVERNED_ARTIFACT_CONTENT_MULTIPLE_MATCHES = JSON.stringify({
+  schema_version: GOVERNED_ARTIFACT_SCHEMA_VERSION,
+  rows: [governedArtifactRow(), governedArtifactRow()],
+});
+// Matches the full governed key exactly once -- but that row's own gsis_id disagrees with the claim.
+const GOVERNED_ARTIFACT_CONTENT_TARGET_MISMATCH = JSON.stringify({
+  schema_version: GOVERNED_ARTIFACT_SCHEMA_VERSION,
+  rows: [governedArtifactRow({ gsis_id: GSIS_B })],
+});
+// The exact cross-row co-occurrence scenario a naive substring check would wrongly accept: one row
+// names the right player with the WRONG id, a different row carries the RIGHT id for someone else.
+const GOVERNED_ARTIFACT_CONTENT_CROSS_ROW_COOCCURRENCE = JSON.stringify({
+  schema_version: GOVERNED_ARTIFACT_SCHEMA_VERSION,
+  rows: [governedArtifactRow({ gsis_id: GSIS_B }), governedArtifactRow({ source_player_id: 'someone-else-entirely', gsis_id: GSIS_A })],
+});
+// Valid JSON, but no top-level array and no "rows" array -- not deterministically parseable per the
+// contract this validator enforces (wrong/unsupported key name).
+const GOVERNED_ARTIFACT_CONTENT_NO_ROWS_KEY = JSON.stringify({
+  schema_version: GOVERNED_ARTIFACT_SCHEMA_VERSION,
+  mappings: [governedArtifactRow()],
 });
 // Reproducible and correctly bound -- but the archived bytes declare a different schema_version
 // than the citation claims.
 const GOVERNED_ARTIFACT_CONTENT_SCHEMA_MISMATCH = JSON.stringify({
   schema_version: '2.0.0',
-  mappings: [{ source_player_id: ROW_0_SOURCE_PLAYER_ID, gsis_id: GSIS_A }],
+  rows: [governedArtifactRow()],
 });
 
 const citation = (content: string, pathSuffix: string): ArchivedCitation => ({
@@ -92,7 +127,11 @@ const archiveResolver: ArchivedEvidenceResolver = (cited) => {
     FACT_ARCHIVE_CONTENT_JERSEY,
     FACT_ARCHIVE_CONTENT_TEAM,
     GOVERNED_ARTIFACT_CONTENT,
-    GOVERNED_ARTIFACT_CONTENT_MISSING_PLAYER,
+    GOVERNED_ARTIFACT_CONTENT_ZERO_MATCHES,
+    GOVERNED_ARTIFACT_CONTENT_MULTIPLE_MATCHES,
+    GOVERNED_ARTIFACT_CONTENT_TARGET_MISMATCH,
+    GOVERNED_ARTIFACT_CONTENT_CROSS_ROW_COOCCURRENCE,
+    GOVERNED_ARTIFACT_CONTENT_NO_ROWS_KEY,
     GOVERNED_ARTIFACT_CONTENT_SCHEMA_MISMATCH,
   ]) {
     if (cited.sha256 === sha256(content)) return content;
@@ -118,12 +157,14 @@ const makeReviewedMappingEvidence = (resolvesTo: string): ReviewedMappingEvidenc
   corroborating_facts: [
     {
       fact: 'jersey number 11 matches the archived signing announcement',
+      expected_literal: 'jersey number 11',
       archived_citation: citation(FACT_ARCHIVE_CONTENT_JERSEY, 'fact_jersey.txt'),
       original_url: 'https://example.test/signing',
       retrieved_at: '2026-07-12',
     },
     {
-      fact: 'signing team PHI and signing date match the archived transaction log',
+      fact: 'signing team PHI matches the archived transaction log',
+      expected_literal: 'signing team PHI',
       archived_citation: citation(FACT_ARCHIVE_CONTENT_TEAM, 'fact_team.txt'),
       original_url: 'https://example.test/transactions',
       retrieved_at: '2026-07-12',
@@ -146,35 +187,21 @@ const withResolvedFirstRow = (mutate?: (row: IdentityCrosswalkRow) => void): Ide
   return artifact;
 };
 
-/** Rewrites the first row into a hypothetically blocked row with a real, attributable disposition. */
+const disqualifiedEvidence = (overrides: Partial<DisqualifiedEvidenceEntry> = {}): DisqualifiedEvidenceEntry => ({
+  evidence_class: '3.2_reviewed_mapping',
+  disqualification_reason: 'prohibited_method',
+  disqualification_detail: 'the only candidate mapping found relied on fuzzy name matching against a roster page (design §4)',
+  ...overrides,
+});
+
+/** Rewrites the first row into a hypothetically blocked row with a real, verified disposition. */
 const withBlockedFirstRow = (mutate?: (row: IdentityCrosswalkRow) => void): IdentityCrosswalkArtifact => {
   const artifact = clone();
   const row = artifact.rows[0];
   row.resolution_status = 'blocked';
   row.forecast_canonical_player_id = null;
   row.resolution_evidence_class = null;
-  row.resolution_evidence = [
-    {
-      evidence_class: '3.2_reviewed_mapping',
-      resolves_to_forecast_canonical_player_id: GSIS_A,
-      reviewer: FIXTURE_REVIEWER,
-      reviewed_at: '2026-07-12',
-      gsis_bearing_evidence: {
-        description: 'attempted GSIS-bearing source that turned out to rely on fuzzy name matching',
-        archived_citation: citation(GSIS_ARCHIVE_CONTENT, 'disqualified_gsis_bearing.txt'),
-        original_url: 'https://example.test/roster',
-        retrieved_at: '2026-07-12',
-      },
-      corroborating_facts: [
-        {
-          fact: 'fuzzy name match against the roster page',
-          archived_citation: citation(FACT_ARCHIVE_CONTENT_JERSEY, 'disqualified_fact.txt'),
-          original_url: 'https://example.test/signing',
-          retrieved_at: '2026-07-12',
-        },
-      ],
-    },
-  ];
+  row.resolution_evidence = [disqualifiedEvidence() as unknown as IdentityCrosswalkRow['resolution_evidence'][number]];
   row.reviewer = FIXTURE_REVIEWER;
   row.reviewed_at = '2026-07-12';
   row.notes = 'blocked: the only candidate evidence found relied on fuzzy name matching (design §4); discovered during #158 audit fixture';
@@ -459,28 +486,6 @@ describe('fail-closed validator negative cases (#158 required test list)', () =>
     expect(result.errors.some((e) => e.includes('governed_artifact_citation is not reproducible'))).toBe(true);
   });
 
-  it('rejects 3.3 evidence whose reproduced archive does not actually contain the claimed gsis_id', () => {
-    const artifact = withResolvedFirstRow((row) => {
-      row.resolution_evidence_class = '3.3_governed_artifact';
-      row.resolution_evidence = [
-        {
-          evidence_class: '3.3_governed_artifact',
-          resolves_to_forecast_canonical_player_id: GSIS_A,
-          governed_artifact_citation: {
-            repo: 'Prometheus-Frameworks/TIBER-Data',
-            commit: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
-            path: 'exports/promoted/identity_crosswalk/tiber_identity_crosswalk_v1.json',
-            schema_version: 'v1',
-            sha256: sha256(FACT_ARCHIVE_CONTENT_JERSEY), // reproducible, but never mentions GSIS_A
-          },
-        },
-      ];
-    });
-    const result = validate(artifact, archiveResolver);
-    expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes('does not actually contain the claimed gsis_id'))).toBe(true);
-  });
-
   it('rejects an unsupported independence claim (no citable mechanism)', () => {
     const artifact = clone();
     artifact.rows[0].identity_coverage_dependency = 'independent_of_post_draft_outcome';
@@ -539,67 +544,108 @@ describe('fail-closed validator negative cases (#158 required test list)', () =>
   });
 });
 
-describe('3.3_governed_artifact verification (#159 review: reject unverified governed-artifact evidence)', () => {
-  it('accepts a structurally complete, archive-verified, source-bound 3.3 resolution (control case)', () => {
+describe('3.3_governed_artifact verification (#159 review: exact governed-key mapping, not substring co-occurrence)', () => {
+  const make3_3Evidence = (contentSha256: string, resolvesTo: string = GSIS_A): GovernedArtifactEvidence => ({
+    evidence_class: '3.3_governed_artifact',
+    resolves_to_forecast_canonical_player_id: resolvesTo,
+    governed_artifact_citation: {
+      repo: 'Prometheus-Frameworks/TIBER-Data',
+      commit: 'cccccccccccccccccccccccccccccccccccccccc',
+      path: 'exports/promoted/identity_crosswalk/tiber_identity_crosswalk_v2.json',
+      schema_version: GOVERNED_ARTIFACT_SCHEMA_VERSION,
+      sha256: contentSha256,
+    },
+  });
+
+  it('accepts a structurally complete, archive-verified, exact-key-matched 3.3 resolution (control case)', () => {
     const artifact = withResolvedFirstRow((row) => {
       row.resolution_evidence_class = '3.3_governed_artifact';
-      row.resolution_evidence = [
-        {
-          evidence_class: '3.3_governed_artifact',
-          resolves_to_forecast_canonical_player_id: GSIS_A,
-          governed_artifact_citation: {
-            repo: 'Prometheus-Frameworks/TIBER-Data',
-            commit: 'cccccccccccccccccccccccccccccccccccccccc',
-            path: 'exports/promoted/identity_crosswalk/tiber_identity_crosswalk_v2.json',
-            schema_version: GOVERNED_ARTIFACT_SCHEMA_VERSION,
-            sha256: sha256(GOVERNED_ARTIFACT_CONTENT),
-          },
-        },
-      ];
+      row.resolution_evidence = [make3_3Evidence(sha256(GOVERNED_ARTIFACT_CONTENT))];
     });
     const result = validate(artifact, archiveResolver);
     expect(result.errors).toEqual([]);
     expect(result.valid).toBe(true);
   });
 
-  it('rejects 3.3 evidence whose reproduced archive contains the gsis_id but never references the source identity', () => {
+  it('rejects 3.3 evidence whose citation cannot be reproduced from its archive', () => {
     const artifact = withResolvedFirstRow((row) => {
       row.resolution_evidence_class = '3.3_governed_artifact';
-      row.resolution_evidence = [
-        {
-          evidence_class: '3.3_governed_artifact',
-          resolves_to_forecast_canonical_player_id: GSIS_A,
-          governed_artifact_citation: {
-            repo: 'Prometheus-Frameworks/TIBER-Data',
-            commit: 'cccccccccccccccccccccccccccccccccccccccc',
-            path: 'exports/promoted/identity_crosswalk/tiber_identity_crosswalk_v2.json',
-            schema_version: GOVERNED_ARTIFACT_SCHEMA_VERSION,
-            sha256: sha256(GOVERNED_ARTIFACT_CONTENT_MISSING_PLAYER),
-          },
-        },
-      ];
+      row.resolution_evidence = [make3_3Evidence(sha256('bytes nobody archived'))];
     });
     const result = validate(artifact, archiveResolver);
     expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes('does not appear to reference source identity'))).toBe(true);
+    expect(result.errors.some((e) => e.includes('governed_artifact_citation is not reproducible'))).toBe(true);
+  });
+
+  it('rejects 3.3 evidence whose cited archive cannot be deterministically parsed as JSON (no substring-search fallback)', () => {
+    const artifact = withResolvedFirstRow((row) => {
+      row.resolution_evidence_class = '3.3_governed_artifact';
+      // FACT_ARCHIVE_CONTENT_JERSEY is plain text, not JSON, even though it literally contains
+      // neither GSIS_A nor a rows array -- the point is the parse failure itself, not content.
+      row.resolution_evidence = [make3_3Evidence(sha256(FACT_ARCHIVE_CONTENT_JERSEY))];
+    });
+    const result = validate(artifact, archiveResolver);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('could not be deterministically parsed as JSON'))).toBe(true);
+  });
+
+  it('rejects 3.3 evidence whose cited archive has no deterministic rows array', () => {
+    const artifact = withResolvedFirstRow((row) => {
+      row.resolution_evidence_class = '3.3_governed_artifact';
+      row.resolution_evidence = [make3_3Evidence(sha256(GOVERNED_ARTIFACT_CONTENT_NO_ROWS_KEY))];
+    });
+    const result = validate(artifact, archiveResolver);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('does not expose a deterministic rows array'))).toBe(true);
+  });
+
+  it('rejects 3.3 evidence whose cited archive has zero rows matching the full governed source key', () => {
+    const artifact = withResolvedFirstRow((row) => {
+      row.resolution_evidence_class = '3.3_governed_artifact';
+      row.resolution_evidence = [make3_3Evidence(sha256(GOVERNED_ARTIFACT_CONTENT_ZERO_MATCHES))];
+    });
+    const result = validate(artifact, archiveResolver);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('zero matches fails closed'))).toBe(true);
+  });
+
+  it('rejects 3.3 evidence whose cited archive has multiple rows matching the full governed source key (ambiguous)', () => {
+    const artifact = withResolvedFirstRow((row) => {
+      row.resolution_evidence_class = '3.3_governed_artifact';
+      row.resolution_evidence = [make3_3Evidence(sha256(GOVERNED_ARTIFACT_CONTENT_MULTIPLE_MATCHES))];
+    });
+    const result = validate(artifact, archiveResolver);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('multiple matches fails closed'))).toBe(true);
+  });
+
+  it('rejects 3.3 evidence whose single matching row maps this source identity to a different gsis_id (target mismatch)', () => {
+    const artifact = withResolvedFirstRow((row) => {
+      row.resolution_evidence_class = '3.3_governed_artifact';
+      row.resolution_evidence = [make3_3Evidence(sha256(GOVERNED_ARTIFACT_CONTENT_TARGET_MISMATCH))];
+    });
+    const result = validate(artifact, archiveResolver);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('target mismatch fails closed'))).toBe(true);
+  });
+
+  it('rejects 3.3 evidence via cross-row string co-occurrence -- one row names the player, a DIFFERENT row carries the claimed id', () => {
+    // The exact regression the review required: a naive substring scan over the whole document
+    // would have wrongly accepted this (both strings appear somewhere in the file). The exact-key
+    // match must instead find the ONE row for this player and see it maps to a different gsis_id.
+    const artifact = withResolvedFirstRow((row) => {
+      row.resolution_evidence_class = '3.3_governed_artifact';
+      row.resolution_evidence = [make3_3Evidence(sha256(GOVERNED_ARTIFACT_CONTENT_CROSS_ROW_COOCCURRENCE))];
+    });
+    const result = validate(artifact, archiveResolver);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('target mismatch fails closed'))).toBe(true);
   });
 
   it("rejects 3.3 evidence whose cited schema_version disagrees with the archived content's own declared schema_version", () => {
     const artifact = withResolvedFirstRow((row) => {
       row.resolution_evidence_class = '3.3_governed_artifact';
-      row.resolution_evidence = [
-        {
-          evidence_class: '3.3_governed_artifact',
-          resolves_to_forecast_canonical_player_id: GSIS_A,
-          governed_artifact_citation: {
-            repo: 'Prometheus-Frameworks/TIBER-Data',
-            commit: 'cccccccccccccccccccccccccccccccccccccccc',
-            path: 'exports/promoted/identity_crosswalk/tiber_identity_crosswalk_v2.json',
-            schema_version: GOVERNED_ARTIFACT_SCHEMA_VERSION,
-            sha256: sha256(GOVERNED_ARTIFACT_CONTENT_SCHEMA_MISMATCH),
-          },
-        },
-      ];
+      row.resolution_evidence = [make3_3Evidence(sha256(GOVERNED_ARTIFACT_CONTENT_SCHEMA_MISMATCH))];
     });
     const result = validate(artifact, archiveResolver);
     expect(result.valid).toBe(false);
@@ -607,13 +653,34 @@ describe('3.3_governed_artifact verification (#159 review: reject unverified gov
   });
 });
 
-describe('3.2 corroborating-fact independence (#159 review: reject non-independent facts)', () => {
+describe('3.2 corroborating-fact verification (#159 review: verify claimed facts against archived bytes, and require independence)', () => {
+  it('rejects a corroborating fact missing its expected_literal field', () => {
+    const artifact = withResolvedFirstRow((row) => {
+      const evidence = row.resolution_evidence[0] as ReviewedMappingEvidence;
+      delete (evidence.corroborating_facts[0] as unknown as Record<string, unknown>).expected_literal;
+    });
+    const result = validate(artifact, archiveResolver);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('lacks fact/expected_literal/archived_citation'))).toBe(true);
+  });
+
+  it('rejects a corroborating fact whose archived content does not actually contain its claimed expected_literal', () => {
+    const artifact = withResolvedFirstRow((row) => {
+      const evidence = row.resolution_evidence[0] as ReviewedMappingEvidence;
+      evidence.corroborating_facts[0].expected_literal = 'a phrase the archive never states';
+    });
+    const result = validate(artifact, archiveResolver);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('does not actually contain its claimed'))).toBe(true);
+  });
+
   it('rejects corroborating facts that share the same archived content hash', () => {
     const artifact = withResolvedFirstRow((row) => {
       const evidence = row.resolution_evidence[0] as ReviewedMappingEvidence;
       evidence.corroborating_facts[1] = {
         ...evidence.corroborating_facts[1],
         archived_citation: evidence.corroborating_facts[0].archived_citation,
+        expected_literal: evidence.corroborating_facts[0].expected_literal,
       };
     });
     const result = validate(artifact, archiveResolver);
@@ -642,12 +709,45 @@ describe('3.2 corroborating-fact independence (#159 review: reject non-independe
   });
 });
 
-describe('blocked-row disposition (#159 review: a bare blocked token must not be invented)', () => {
-  it('accepts a well-formed blocked row carrying an attributable disposition and disqualified evidence', () => {
+describe('blocked-row disposition (#159 review: a recognized evidence_class token alone must not manufacture a verified block)', () => {
+  it('accepts a well-formed blocked row whose prohibited_method disqualification is mechanically verified', () => {
     const result = validate(withBlockedFirstRow(), archiveResolver);
     expect(result.errors).toEqual([]);
     expect(result.valid).toBe(true);
     expect(result.statusCounts.blocked).toBe(1);
+    expect(result.verifiedBlockedCount).toBe(1);
+  });
+
+  it('accepts a well-formed blocked row disqualified via non_reproducible_or_fabricated_evidence', () => {
+    const artifact = withBlockedFirstRow((row) => {
+      row.resolution_evidence = [
+        disqualifiedEvidence({
+          disqualification_reason: 'non_reproducible_or_fabricated_evidence',
+          disqualification_detail: 'the only candidate GSIS-bearing source cited turned out to be fabricated -- its archive does not reproduce',
+          disqualified_citation: { ...citation('bytes that were never actually archived', 'fabricated.txt') },
+        }) as unknown as IdentityCrosswalkRow['resolution_evidence'][number],
+      ];
+    });
+    const result = validate(artifact, archiveResolver);
+    expect(result.errors).toEqual([]);
+    expect(result.valid).toBe(true);
+    expect(result.verifiedBlockedCount).toBe(1);
+  });
+
+  it('accepts a well-formed blocked row disqualified via a reproducible governed_blocker_citation', () => {
+    const artifact = withBlockedFirstRow((row) => {
+      row.resolution_evidence = [
+        disqualifiedEvidence({
+          disqualification_reason: 'governed_blocker_citation',
+          disqualification_detail: 'a governed conflicting record rules out this candidate mapping',
+          disqualified_citation: { ...citation(GSIS_ARCHIVE_CONTENT, 'governed_blocker.txt') },
+        }) as unknown as IdentityCrosswalkRow['resolution_evidence'][number],
+      ];
+    });
+    const result = validate(artifact, archiveResolver);
+    expect(result.errors).toEqual([]);
+    expect(result.valid).toBe(true);
+    expect(result.verifiedBlockedCount).toBe(1);
   });
 
   it('rejects a bare blocked row with no attributable disposition, no notes, and no evidence', () => {
@@ -660,6 +760,49 @@ describe('blocked-row disposition (#159 review: a bare blocked token must not be
     expect(result.errors.some((e) => e.includes('attributable human disposition'))).toBe(true);
     expect(result.errors.some((e) => e.includes('non-empty notes'))).toBe(true);
     expect(result.errors.some((e) => e.includes('at least one resolution_evidence entry'))).toBe(true);
+  });
+
+  it("rejects the exact still-valid spoof the review identified: a recognized evidence_class with fabricated reviewer/notes but no real disqualification_reason", () => {
+    const artifact = clone();
+    const row = artifact.rows[0];
+    row.resolution_status = 'blocked';
+    row.forecast_canonical_player_id = null;
+    row.resolution_evidence_class = null;
+    row.resolution_evidence = [{ evidence_class: '3.2_reviewed_mapping' } as unknown as IdentityCrosswalkRow['resolution_evidence'][number]];
+    row.reviewer = FIXTURE_REVIEWER;
+    row.reviewed_at = '2026-07-12';
+    row.notes = 'blocked for reasons';
+    artifact.status_counts = { resolved: 0, unresolved: 47, conflicting_evidence: 0, blocked: 1 };
+    const result = validate(artifact);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('must declare a recognized disqualification_reason'))).toBe(true);
+    expect(result.decision).not.toBe('rookie_transition_profile_forecast_identity_resolution_audit_complete');
+  });
+
+  it('rejects a disqualification_reason=prohibited_method claim when no prohibited-method marker is actually present', () => {
+    const artifact = withBlockedFirstRow((row) => {
+      row.resolution_evidence = [
+        disqualifiedEvidence({ disqualification_detail: 'this text names no disqualifying method at all' }) as unknown as IdentityCrosswalkRow['resolution_evidence'][number],
+      ];
+    });
+    const result = validate(artifact, archiveResolver);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('no prohibited-method marker'))).toBe(true);
+  });
+
+  it('rejects a disqualification_reason=non_reproducible_or_fabricated_evidence claim when the cited evidence actually reproduces', () => {
+    const artifact = withBlockedFirstRow((row) => {
+      row.resolution_evidence = [
+        disqualifiedEvidence({
+          disqualification_reason: 'non_reproducible_or_fabricated_evidence',
+          disqualification_detail: 'claims this citation does not reproduce',
+          disqualified_citation: { ...citation(GSIS_ARCHIVE_CONTENT, 'actually_fine.txt') },
+        }) as unknown as IdentityCrosswalkRow['resolution_evidence'][number],
+      ];
+    });
+    const result = validate(artifact, archiveResolver);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('the claimed defect is not real'))).toBe(true);
   });
 
   it('rejects a blocked row missing only its human disposition (reviewer/reviewed_at)', () => {
@@ -684,12 +827,32 @@ describe('blocked-row disposition (#159 review: a bare blocked token must not be
     expect(result.decision).toBe('rookie_transition_profile_forecast_identity_resolution_audit_blocked');
   });
 
+  it('never emits ..._complete when every row is converted to blocked with a recognized-class-but-unverified spoof (reviewer/notes/evidence all present)', () => {
+    // The review's precise concern: reviewer/reviewed_at/notes present, evidence non-empty, and a
+    // recognized evidence_class -- but with no real, verified disqualification_reason anywhere.
+    const artifact = clone();
+    artifact.rows.forEach((row) => {
+      row.resolution_status = 'blocked';
+      row.forecast_canonical_player_id = null;
+      row.resolution_evidence_class = null;
+      row.resolution_evidence = [{ evidence_class: '3.2_reviewed_mapping' } as unknown as IdentityCrosswalkRow['resolution_evidence'][number]];
+      row.reviewer = FIXTURE_REVIEWER;
+      row.reviewed_at = '2026-07-12';
+      row.notes = 'blocked for reasons';
+    });
+    artifact.status_counts = { resolved: 0, unresolved: 0, conflicting_evidence: 0, blocked: 48 };
+    const result = validate(artifact);
+    expect(result.valid).toBe(false);
+    expect(result.decision).not.toBe('rookie_transition_profile_forecast_identity_resolution_audit_complete');
+    expect(result.verifiedBlockedCount).toBe(0);
+  });
+
   it('permits a prohibited-method marker inside a properly disposed blocked row (that is the point of the disqualification)', () => {
-    // The disqualified evidence entry legitimately contains "fuzzy name match" -- the very reason
+    // The disqualified evidence entry legitimately names "fuzzy name matching" -- the very reason
     // the row is blocked. It must not itself trip the prohibited-method rejection that gates
     // `resolved` rows.
     const result = validate(withBlockedFirstRow(), archiveResolver);
-    expect(result.errors.some((e) => e.includes('prohibited method marker'))).toBe(false);
+    expect(result.errors.some((e) => e.includes('relies on prohibited method marker'))).toBe(false);
   });
 });
 

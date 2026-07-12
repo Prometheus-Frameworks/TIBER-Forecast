@@ -28,7 +28,7 @@ against the upstream promotion).
 | Governed 48-row identity-crosswalk artifact (`kind: rookie_transition_profile_v0_forecast_identity_crosswalk`, `schema_version: 1.0.0`) | `data/experiments/rookieTransitionProfile/rookie_transition_profile_v0_forecast_identity_crosswalk.json` |
 | Pure fail-closed validator (deterministic; no I/O) | `src/rehearsal/rookieTransitionProfileIdentityCrosswalk.ts` |
 | Read-only audit CLI (`npm run audit:rookie-transition-profile-identity-crosswalk`) | `scripts/runRookieTransitionProfileIdentityCrosswalkAudit.ts` |
-| Positive + negative validation tests (47 tests) | `tests/rookieTransitionProfileIdentityCrosswalk.test.ts` |
+| Positive + negative validation tests (60 tests) | `tests/rookieTransitionProfileIdentityCrosswalk.test.ts` |
 | This audit report | `docs/experiments/rookie-transition-profile-forecast-identity-crosswalk-audit-2026-07-12.md` / `.json` |
 
 Every row carries all fourteen contract fields (`source_repository`, `source_schema`,
@@ -55,23 +55,51 @@ non-null, citable `identity_coverage_mechanism`; and that a 3.3 citation attribu
 TIBER-Forecast itself is rejected (Forecast may consume, never originate, a canonical-identity
 artifact).
 
-**Strengthened after independent review (2026-07-12), before this PR merged:** a `3.3_governed_artifact`
-entry's cited archive is now dereferenced and checked to actually contain both the claimed `gsis_id`
-*and* the row's exact `source_player_id` (a schema-agnostic proxy proving the artifact binds this
-specific source identity, not merely that some reproducible bytes exist), and, where the archived
-content is itself JSON declaring a `schema_version`/`spec_version`, that value must agree with the
-citation's own declared `schema_version`. Every `3.2_reviewed_mapping` corroborating fact's archived
-citation is now independently resolved and hash-verified (previously only its shape was checked), and
-corroborating facts must be materially distinct from one another — sharing an archive hash, archive
-location, fact text, or `original_url` between two "independent" facts now fails validation. A
-`blocked` row now requires a machine-verifiable disposition (non-null `reviewer`/`reviewed_at`,
-non-empty `notes`, and at least one `resolution_evidence` entry documenting the disqualified attempt)
-so that a bare `blocked` label can never substitute for a real investigation and inflate the decision
-to `..._complete`; blocked-row evidence entries are exempt from the strict per-class/prohibited-method
-checks that gate a `resolved` row, since a disqualified attempt is expected to fail those checks (that
-is why it is disqualified). The validator also now checks the artifact's `issue` and
-`governing_design` fields (readiness-design issue/PR/merge-commit/document paths) against the pinned
-constants, not just `source_lock`.
+**Strengthened after independent review, round 1 (2026-07-12), before this PR merged:** every
+`3.2_reviewed_mapping` corroborating fact's archived citation is independently resolved and
+hash-verified (previously only its shape was checked), and corroborating facts must be materially
+distinct from one another — sharing an archive hash, archive location, fact text, or `original_url`
+between two "independent" facts now fails validation. A `blocked` row requires a bare-minimum
+disposition (non-null `reviewer`/`reviewed_at`, non-empty `notes`, at least one `resolution_evidence`
+entry). The validator also checks the artifact's `issue` and `governing_design` fields
+(readiness-design issue/PR/merge-commit/document paths) against the pinned constants, not just
+`source_lock`.
+
+**Strengthened after independent review, round 2 (2026-07-12), before this PR merged:**
+
+- **3.3 exact-mapping verification, not substring co-occurrence.** A `3.3_governed_artifact` citation's
+  archived content is now deterministically JSON-parsed (a top-level array, or a `rows` array; no
+  substring-search fallback if it cannot be parsed) and required to contain **exactly one** row whose
+  full four-field governed key (`source_repository`/`source_schema`/`source_player_id`/`source_season`)
+  matches this row, with that row's own `gsis_id` equal to the claimed value. Zero matches, multiple
+  matches, or a target mismatch all fail closed — including the specific cross-row co-occurrence case
+  where one row names the right player with the wrong id and a different row carries the right id for
+  someone else (a naive whole-document substring check would have wrongly accepted this).
+- **3.3/CLI resolver compatibility.** The committed CLI's production resolver previously could only
+  read Forecast's own repo, while the validator requires 3.3 citations to name an *external* governed
+  repo — meaning no real 3.3 evidence could ever pass through the actual CLI, only through unit tests
+  using a synthetic resolver. The resolver now reads the exact pinned commit via `git show
+  <commit>:<path>` against each of this multi-repo project's locally available sibling checkouts
+  (TIBER-Data, TIBER-Rookies, TIBER-Teamstate, in addition to Forecast itself), recomputing SHA-256
+  before trusting the content. This is honestly a same-environment fix, not a CI-portable one: a
+  single-repo GitHub Actions checkout of TIBER-Forecast alone would not have these sibling checkouts
+  present, and a real cross-repo 3.3 citation would still fail closed there until CI provisions them
+  (or a different fetch mechanism is added) — correctly inert, never a false pass.
+- **3.2 corroborating facts now carry a verified `expected_literal`.** Archive existence and hash
+  verification alone proved only that a distinct file exists, not that its content substantiates the
+  claimed fact. Each corroborating fact now requires an `expected_literal` string, and the validator
+  requires the archived content to actually contain it — the free-text `fact` field remains for human
+  audit readability but is no longer the thing being verified.
+- **Blocked rows now require a mechanically-verified `disqualification_reason`, not a bare recognized
+  `evidence_class` token.** The prior round's fix still let `{ evidence_class: "3.2_reviewed_mapping" }`
+  alone, combined with a fabricated reviewer/date/notes, pass as a "verified" block — every unresolved
+  row could have been relabeled this way, reaching `..._complete` with zero real investigation. Each
+  disqualified-evidence entry must now declare one of three closed, mechanically-checked reasons:
+  `prohibited_method` (a real prohibited-method marker must be present in the entry),
+  `non_reproducible_or_fabricated_evidence` (the cited evidence must genuinely fail to reproduce), or
+  `governed_blocker_citation` (a real, reproducible citation naming the authoritative reason). A new
+  `verifiedBlockedCount` result field, and an explicit decision-rule check, additionally require every
+  blocked row to have a verified disposition before `blocked > 0` can ever contribute to `..._complete`.
 
 ## 3. Evidence paths attempted, per the merged design
 
@@ -190,22 +218,27 @@ not a defect.
 ## 7. Validation and tests
 
 - `npm run build` — clean (`tsc --noEmit`).
-- `npm test` — full suite passes, including the 47 tests in `tests/rookieTransitionProfileIdentityCrosswalk.test.ts`
+- `npm test` — full suite passes, including the 60 tests in `tests/rookieTransitionProfileIdentityCrosswalk.test.ts`
   covering: the committed artifact passing validation; missing locked row; extra row; duplicate
   governed key; invalid status token; invalid evidence-class token; resolved row without GSIS-bearing
   evidence; claimed GSIS ID absent from archived content; non-reproducible archive (hash mismatch);
   fewer than two corroborating facts; missing human sign-off; independent evidence resolving to a
   different GSIS ID; unbacked independent-evidence claim; unsupported 3.1 usage; prohibited-method
   contamination; self-attributed 3.3 artifact; unsupported independence claim; tampered status counts;
-  out-of-order rows; tampered source lock; tampered issue/governing-design pins; a passing
-  structurally-complete 3.2 control case; a passing structurally-complete, source-bound 3.3 control
-  case; 3.3 evidence that resolves but never references the source identity; 3.3 evidence whose
-  archived schema_version disagrees with its citation; corroborating facts that share an archive
-  hash, location, fact text, or URL (not independent); a non-reproducible corroborating-fact archive;
-  a well-formed blocked row with a real disposition; a bare blocked row with no disposition/notes/
-  evidence; a blocked row missing only its human disposition; all 48 rows relabeled bare `blocked`
-  never producing `..._complete`; a prohibited-method marker inside a properly-disposed blocked row
-  correctly *not* tripping the resolved-row rejection; and the two inertness scans.
+  out-of-order rows; tampered source lock; tampered issue/governing-design pins; a passing 3.2 control
+  case; a passing, exact-key-matched 3.3 control case; 3.3 evidence with a non-reproducible citation,
+  an unparseable archive, a missing rows array, zero/multiple/mismatched key matches, the specific
+  cross-row string-co-occurrence regression, and a schema_version disagreement; a corroborating fact
+  missing `expected_literal`, one whose archive doesn't actually contain it, and facts sharing an
+  archive hash/location/text/URL (not independent); a well-formed blocked row verified via each of the
+  three disqualification reasons (`prohibited_method`, `non_reproducible_or_fabricated_evidence`,
+  `governed_blocker_citation`); a bare blocked row with no disposition/notes/evidence; the exact
+  still-valid spoof the review identified (a recognized `evidence_class` with fabricated
+  reviewer/notes but no real `disqualification_reason`) now rejected, both for one row and for all 48
+  relabeled that way; a `prohibited_method` claim with no marker actually present, and a
+  `non_reproducible_or_fabricated_evidence` claim whose citation actually reproduces, both rejected; a
+  blocked row missing only its human disposition; a prohibited-method marker inside a properly-disposed
+  blocked row correctly *not* tripping the resolved-row rejection; and the two inertness scans.
 - `npm run audit:rookie-transition-profile-identity-crosswalk` — `valid: true` with the accounting
   in §4.
 

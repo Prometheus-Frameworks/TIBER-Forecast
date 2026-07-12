@@ -126,16 +126,27 @@
   },
   "validation": {
     "build": "npm run build (tsc --noEmit) clean",
-    "tests": "npm test passing, including 47 crosswalk tests (positive, all required negative cases, 3.3 source-binding and schema-version verification, 3.2 corroborating-fact independence, blocked-row disposition, inertness scans)",
-    "audit_cli": "npm run audit:rookie-transition-profile-identity-crosswalk -> valid: true"
+    "tests": "npm test passing, including 60 crosswalk tests (positive, all required negative cases, 3.3 exact-key mapping verification, 3.2 corroborating-fact literal verification and independence, mechanically-verified blocked-row disposition, inertness scans)",
+    "audit_cli": "npm run audit:rookie-transition-profile-identity-crosswalk -> valid: true, verified_blocked_count 0/0"
   },
-  "post_review_strengthening_2026_07_12": {
+  "post_review_strengthening_2026_07_12_round_1": {
     "reviewer": "Prometheus-Frameworks (PR owner) + chatgpt-codex-connector[bot]",
     "changes": [
       "3.3_governed_artifact evidence now requires the dereferenced archive to contain both the claimed gsis_id and the row's exact source_player_id, plus schema_version agreement where the archive itself declares one",
       "3.2 corroborating facts now have their archived citations independently resolved and hash-verified, and must be materially distinct (no shared archive hash/location/fact text/original_url)",
       "blocked rows now require a machine-verifiable disposition (non-null reviewer/reviewed_at, non-empty notes, at least one resolution_evidence entry) so a bare blocked label can never inflate the decision to ..._complete",
       "the validator now checks the artifact's issue and governing_design fields against the pinned constants, not only source_lock"
+    ],
+    "committed_artifact_unchanged": true,
+    "decision_unchanged": true
+  },
+  "post_review_strengthening_2026_07_12_round_2": {
+    "reviewer": "Prometheus-Frameworks (PR owner)",
+    "changes": [
+      "3.3 evidence now requires exact structured matching: the cited archive is deterministically JSON-parsed (top-level array or a rows array, no substring fallback) and must contain exactly one row whose full four-field governed source key matches this row, with that row's own gsis_id equal to the claim -- zero/multiple/mismatched matches all fail closed, including the specific cross-row string-co-occurrence regression the review required",
+      "the CLI's production archived-evidence resolver now reads the exact pinned commit via 'git show <commit>:<path>' against every locally available sibling repo (TIBER-Data, TIBER-Rookies, TIBER-Teamstate, and Forecast itself), fixing the prior mutual incompatibility where the validator required an external 3.3 citation the CLI resolver could never actually read -- honestly scoped as a same-environment fix, not CI-portable until sibling checkouts are provisioned there too",
+      "3.2 corroborating facts now require a verified expected_literal actually present in the archived content, not merely an archive that exists and hashes correctly",
+      "blocked rows now require a mechanically-verified disqualification_reason (prohibited_method | non_reproducible_or_fabricated_evidence | governed_blocker_citation), each checked against the entry's own content -- a recognized evidence_class token with fabricated reviewer/notes alone (the exact spoof the review demonstrated) is now rejected, tracked via a new verifiedBlockedCount result field and an explicit decision-rule guard"
     ],
     "committed_artifact_unchanged": true,
     "decision_unchanged": true
