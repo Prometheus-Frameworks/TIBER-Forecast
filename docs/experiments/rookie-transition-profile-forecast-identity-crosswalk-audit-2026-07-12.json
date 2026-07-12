@@ -1,0 +1,145 @@
+{
+  "report_id": "rookie-transition-profile-forecast-identity-crosswalk-audit-2026-07-12",
+  "status": "lane_a_implementation_and_audit_only_no_lane_b_no_matrix_no_experiment_no_activation",
+  "issue": "TIBER-Forecast#158",
+  "date": "2026-07-12",
+  "predecessors": ["TIBER-Forecast#155", "TIBER-Forecast#156"],
+  "governing_design": {
+    "documents": [
+      "docs/experiments/rookie-transition-profile-forecast-preexperiment-readiness-design-2026-07-11.md",
+      "docs/experiments/rookie-transition-profile-forecast-preexperiment-readiness-design-2026-07-11.json"
+    ],
+    "pinned_merge_commit": "73834c2a30743c2587b32742c4e5c98320e33dfe"
+  },
+  "locked_identities": {
+    "forecast_mirror_wrapper": {
+      "path": "data/fixtures/tiberRookies/ROOKIE_TRANSITION_PROFILE_V0_MIRROR_PROVENANCE.json",
+      "kind": "rookie_transition_profile_v0_forecast_mirror_provenance",
+      "schema_version": "1.0.0",
+      "sha256": "2639d5acb11e8d77400700e814ad9c50dba9bf0a46f3f80413e4f0d51860aaa6"
+    },
+    "tiber_rookies_source_lock": {
+      "repo": "Prometheus-Frameworks/TIBER-Rookies",
+      "commit": "2ef92faf9a9c91a393f53e9140428451529a1c48",
+      "schema_version": "rookie-transition-profile-v0.2.0",
+      "season": 2026,
+      "row_count": 48,
+      "refreshed_or_reinterpreted": false
+    }
+  },
+  "deliverables": {
+    "crosswalk_artifact": {
+      "path": "data/experiments/rookieTransitionProfile/rookie_transition_profile_v0_forecast_identity_crosswalk.json",
+      "kind": "rookie_transition_profile_v0_forecast_identity_crosswalk",
+      "schema_version": "1.0.0",
+      "rows": 48,
+      "all_fourteen_contract_fields_on_every_row": true,
+      "deterministic_ordering": "(source_season, source_player_id) ascending",
+      "duplicate_prevention_key": "(source_repository, source_schema, source_player_id, source_season)"
+    },
+    "validator_module": "src/rehearsal/rookieTransitionProfileIdentityCrosswalk.ts",
+    "audit_cli": {
+      "path": "scripts/runRookieTransitionProfileIdentityCrosswalkAudit.ts",
+      "npm_script": "audit:rookie-transition-profile-identity-crosswalk",
+      "read_only": true
+    },
+    "tests": "tests/rookieTransitionProfileIdentityCrosswalk.test.ts",
+    "archived_evidence_artifacts": {
+      "required_by_accepted_resolutions": 0,
+      "note": "no resolution was accepted, so no archived evidence artifact is required; the validator verifies archived GSIS-bearing content (with SHA-256 recomputation) for any future resolved row"
+    }
+  },
+  "evidence_paths_attempted": {
+    "3.1_overall_pick_chain": {
+      "status": "blocked_pending_second_leg_evidence",
+      "reverified_at": "2026-07-12",
+      "reverified_against": {
+        "repo": "Prometheus-Frameworks/TIBER-Data",
+        "commit": "d9a5beaacf12e3fbd74becd02db3d2ac39e48905"
+      },
+      "findings": {
+        "player_season_coverage_v0_draft_year_2026_rows": 0,
+        "player_season_coverage_v0_max_populated_draft_year": 2025,
+        "nfl_draft_results_2026_gsis_format_values": 0,
+        "governed_artifact_joining_draft_year_overall_pick_to_gsis_id_exists": false
+      },
+      "validator_behavior": "any 3.1 evidence entry is rejected outright",
+      "udfa_row_note": "te-daequan-wright is additionally structurally inapplicable (no overall_pick)"
+    },
+    "3.3_governed_artifact": {
+      "status": "unavailable",
+      "reverified_artifact": "exports/promoted/identity_crosswalk/tiber_identity_crosswalk_v1.json",
+      "findings": {
+        "supported_providers": ["sleeper"],
+        "record_count": 25,
+        "coverage": "seeded_operator_verified_mappings_only_not_full_player_universe",
+        "contains_tiber_rookies_to_gsis_mapping": false
+      },
+      "forecast_originated_substitute_created": false
+    },
+    "3.2_reviewed_mapping": {
+      "status": "not_completed",
+      "reason": "requires archived GSIS-bearing evidence plus an explicit, attributable named-human sign-off, which has not occurred during this automated implementation",
+      "candidate_gsis_ids_recorded": false,
+      "candidate_note": "deliberately none, so no name/team/position-derived candidate could be mistaken for evidence"
+    }
+  },
+  "accounting": {
+    "status_counts": { "resolved": 0, "unresolved": 48, "conflicting_evidence": 0, "blocked": 0 },
+    "status_counts_sum": 48,
+    "evidence_class_counts": {
+      "3.1_overall_pick_chain": 0,
+      "3.2_reviewed_mapping": 0,
+      "3.3_governed_artifact": 0,
+      "null": 48
+    },
+    "identity_coverage_dependency_counts": {
+      "independent_of_post_draft_outcome": 0,
+      "contingent_on_post_draft_participation": 0,
+      "unproven": 48
+    },
+    "conflicting_evidence_rows": [],
+    "blocked_rows": [],
+    "unresolved_rows": "all 48 locked source identities (enumerated in the markdown report and in the artifact itself)",
+    "unresolved_shared_reason": "3.1 blocked pending second-leg evidence; 3.3 governed artifact does not exist; 3.2 mandatory named-human review has not occurred"
+  },
+  "identity_coverage_dependency_audit": {
+    "per_row_value": "unproven",
+    "per_row_mechanism": null,
+    "rationale": "no gsis_id was resolved, so no discoverability mechanism can honestly be recorded per row",
+    "known_source_context": "the only identified GSIS-bearing governed source (player_season_coverage_v0.json) is built from accrued NFL statistics; any future resolution sourced from it must record contingent_on_post_draft_participation"
+  },
+  "confirmations": {
+    "no_prohibited_matching_method_used": true,
+    "no_runtime_model_production_downstream_ui_import_introduced": true,
+    "tiber_rookies_unmodified": true,
+    "tiber_data_unmodified": true,
+    "four_committed_mirror_files_unmodified": true,
+    "mirror_and_source_locks_preserved_exactly": true,
+    "no_lane_b_work_performed": true,
+    "no_field_declared_temporally_eligible": true,
+    "no_readiness_matrix_populated": true,
+    "no_experiment_opened_or_run": true,
+    "no_adapter_or_feature_table_created": true,
+    "no_predictive_evaluation_performed": true,
+    "no_human_review_claimed": true
+  },
+  "validation": {
+    "build": "npm run build (tsc --noEmit) clean",
+    "tests": "npm test passing, including 30 new crosswalk tests (positive, all required negative cases, inertness scans)",
+    "audit_cli": "npm run audit:rookie-transition-profile-identity-crosswalk -> valid: true"
+  },
+  "decision": "rookie_transition_profile_forecast_identity_resolution_audit_requires_followup",
+  "decision_rationale": "the governed Lane A artifact, fail-closed validator, tests, and full 48-row accounting are complete and passing, but all 48 identities remain unresolved: §3.2 cannot produce a resolved row without archived GSIS-bearing evidence and an explicit named-human sign-off (which has not occurred), and no governed §3.1/§3.3 evidence exists yet",
+  "decision_authorizes": [],
+  "decision_does_not_authorize": [
+    "lane_b_source_availability_audit",
+    "integrated_readiness_review",
+    "controlled_experiment_design_or_implementation",
+    "feature_use_or_predictive_evaluation",
+    "downstream_consumption",
+    "production_binding",
+    "ui_activation",
+    "model_use"
+  ]
+}
