@@ -1,0 +1,319 @@
+{
+  "report_id": "rookie-transition-profile-forecast-availability-evidence-schema-v2-design-2026-07-13",
+  "status": "design_only_no_implementation_no_evidence_population",
+  "issue": "TIBER-Forecast#163",
+  "parent_issue_stays_open": "TIBER-Forecast#160",
+  "date": "2026-07-13",
+  "governing_contract": {
+    "prior_merged_design": { "issue": "TIBER-Forecast#155", "pr": "TIBER-Forecast#156", "merge_commit": "73834c2a30743c2587b32742c4e5c98320e33dfe" },
+    "prior_merged_v1_implementation": { "pr": "TIBER-Forecast#161", "merge_commit": "478489b565a97a1179d6010ebf9b1b4326a50c04", "schema_version": "1.0.0", "immutable": true },
+    "real_source_repo_inventoried": { "repo": "Prometheus-Frameworks/TIBER-Rookies", "commit": "2ef92faf9a9c91a393f53e9140428451529a1c48" },
+    "real_source_repo_checked_for_draft_schedule_data": "Prometheus-Frameworks/TIBER-Data"
+  },
+  "mission": "Design (not implement) a record-bound, subject-bound, semantically-typed availability-evidence schema v2 that proves one exact archived source record binds one locked source identity to one field family to the exact mirrored value and to a typed public-availability timestamp. Prohibits document-wide substring co-occurrence, reviewer prose, self-declared timestamps, event/retrieval/generation/ingestion timestamps, generic archive existence, and name-only/fuzzy subject matching.",
+  "source_inventory": {
+    "cross_cutting_finding": "The six upstream files compute_rookie_transition_profile.py reads are TIBER-Rookies' own internal pipeline artifacts, not the original public record for most fields; v2 evidence packages must generally reach past them to the actual original public source.",
+    "families": {
+      "draft_capital": {
+        "mirror_value_shape": "{ big_board_rank: int, draft_capital_proxy_0_100: number }",
+        "direct_or_derived": "direct pass-through of the score (verified byte-identical across all 48 rows); big_board_rank is a direct player_id lookup",
+        "upstream_files": ["exports/promoted/rookie-alpha/{season}_rookie_alpha_predraft_v0.json", "data/processed/{season}_draft_capital_proxy.json"],
+        "source_record_grain": "one row per player_id, 101 rows (data/processed/{season}_draft_capital_proxy.json), broader than the 48-player modeled population",
+        "source_player_id_present_directly": true,
+        "derivation_code_path": "build_draft_capital_field(), scripts/compute_rookie_transition_profile.py:123-172; band table DRAFT_CAPITAL_RANK_BANDS lines 101-110",
+        "rounding_normalization": "documented rank-band conversion through 76-100=45 (docs/export-contract.md:152-168); the 101-150/151+ bands exist only in code -- UNCERTAIN, not found documented elsewhere",
+        "cohort_dependency": "none",
+        "current_timestamp_fields": "provenance.last_verified_at = generator run date, always",
+        "timestamps_operational_only": true,
+        "missing_evidence": "a real, archived, original big-board publication naming this player at this rank, dated"
+      },
+      "age_at_entry": {
+        "mirror_value_shape": "integer age, or null with source_type unavailable",
+        "direct_or_derived": "derived deterministically from dob via age_from_dob(dob, season)",
+        "derivation_formula": "season_start = date(season, 9, 1); age = season_start.year - born.year - (1 if (season_start.month, season_start.day) < (born.month, born.day) else 0)",
+        "upstream_files": ["data/processed/{season}_prospect_context.json"],
+        "source_record_grain": "one row per player_id, 100 rows, broader than the 48-player modeled population",
+        "source_player_id_present_directly": true,
+        "derivation_code_path": "build_age_field(), scripts/compute_rookie_transition_profile.py:175-195; formula in age_from_dob(), lines 68-80 (verbatim copy of scripts/compute_breakout_age.py)",
+        "rounding_normalization": "none on the age integer; exact calendar arithmetic",
+        "cohort_dependency": "none on the computation, but dob's own real provenance is heterogeneous and largely undocumented per-row: 17/48 players sourced from an undocumented 'manual_seed_2026' label (reliability UNCERTAIN), only 1/48 from an actual identifiable public source (2026 NFL Combine results, ESPN/NFL.com)",
+        "current_timestamp_fields": "provenance.last_verified_at = generator run date, always",
+        "timestamps_operational_only": true,
+        "missing_evidence": "a real, archived, original public record stating the DOB (e.g. a combine bio) with its own genuine publish date"
+      },
+      "athletic_testing": {
+        "mirror_value_shape": "{ athletic_score_0_100: number, athletic_source: string }, or null/unavailable when Rookie Alpha's athletic_source is absent or the NEUTRAL_DEFAULT placeholder",
+        "direct_or_derived": "pass-through from Rookie Alpha's scores block, with NEUTRAL_DEFAULT (a placeholder default of 50.0) intentionally converted to unavailable rather than copied",
+        "upstream_files": ["exports/promoted/rookie-alpha/{season}_rookie_alpha_predraft_v0.json (scores block only -- not one of the six nominal files); ultimate raw source data/raw/{season}_combine_results.json is two hops upstream and never read directly"],
+        "source_record_grain": "Rookie Alpha players[], one row per player_id, matches the 48-player population exactly",
+        "source_player_id_present_directly": true,
+        "derivation_code_path": "build_athletic_testing_field(), scripts/compute_rookie_transition_profile.py:198-229; real formula owned by scripts/compute_rookie_alpha.py (outside the six inventoried files)",
+        "derivation_formula": "within-class z-score: 50 + 16.6667*z, clamped [0,100], computed against the same season's data/raw/{season}_combine_results.json cohort (docs/athletic-score-normalization-audit.md:7-11)",
+        "rounding_normalization": "cohort-relative (same-season combine class); not commensurable across draft classes per the audit doc",
+        "cohort_dependency": "the entire same-season combine-cohort population is a required input; confidence/confidence_band is the one family that is genuinely per-row rather than a fixed constant",
+        "current_timestamp_fields": "provenance.last_verified_at = generator run date, always",
+        "timestamps_operational_only": true,
+        "missing_evidence": "the archived combine testing-event record(s) with a genuine public-release date, plus the complete pinned same-season cohort population snapshot, plus the pinned z-score/clamp formula citation"
+      },
+      "college_production": {
+        "mirror_value_shape": "{ production_score_0_100: number }",
+        "direct_or_derived": "NOT a simple pass-through of the file the source_name implies -- copies Rookie Alpha's own scores.production_0_100; 47 of 48 rows differ from data/processed/{season}_college_production.json's own raw production_score_0_100 (examples: 90.0 vs 75.0; 87.6 vs 69.0; 55.94 vs 81.2)",
+        "upstream_files": ["exports/promoted/rookie-alpha/{season}_rookie_alpha_predraft_v0.json (final value)", "data/processed/{season}_college_production.json (label text only, 48 rows matching population exactly)"],
+        "layered_true_pipeline": "raw same-season/same-position CFBD z-score (scripts/compute_production_scores.py) blended 0.60/0.40 with a separate age-adjusted score, then WR translation penalties (screen-yard-share, deep-yard-share, slot-contested-rate; up to -8.0 combined) or RB missed-tackle-forced/YAC-consistency penalty (-2.5 to -5)",
+        "source_player_id_present_directly": true,
+        "join_note": "a fuzzy name+school join with an explicit PLAYER_NAME_ALIASES table is used one hop further upstream in compute_production_scores.py; already resolved by the time player_id exists in the file this design inventoried",
+        "derivation_code_path": "scripts/compute_rookie_alpha.py:900-1166 and scripts/compute_production_scores.py:294-333",
+        "derivation_formula_recovered": "population construction with per-position eligibility floors (e.g. RB >= 50 carries), per-metric z-scoring, position-weighted composite (RB: 0.45*YPC_z + 0.35*TD_rate_z + 0.20*receiving_yards_z), z_to_score(z) = clamp(0,100, round(50+15z,1))",
+        "rounding_normalization": "population/cohort-relative at the raw stage, then blended with an age-adjusted score and position-specific penalty-adjusted",
+        "cohort_dependency": "full same-season/same-position eligibility-filtered population snapshot required at the raw stage",
+        "open_cross_family_dependency": "UNCERTAIN, flagged not resolved: the age-adjusted blend component appears to depend on the player's age (the age_at_entry family's own value); exact age-adjustment formula not fully recovered in this pass",
+        "current_timestamp_fields": "provenance.last_verified_at = generator run date, always; notes is null",
+        "timestamps_operational_only": true,
+        "missing_evidence": "archived raw per-player CFBD stat record(s), archived population snapshot, pinned raw z-score formula, the under-specified age-adjustment formula and its inputs, pinned WR/RB penalty formulas"
+      },
+      "official_postdraft_outcome": {
+        "mirror_value_shape_drafted": "{ status: drafted, nfl_team, draft_round, overall_pick, is_udfa: false, source_status: external_verified, upstream_provenance_status }",
+        "mirror_value_shape_udfa": "{ status: udfa_signed, nfl_team, draft_round: null, overall_pick: null, is_udfa: true, source_status: external_verified, upstream_provenance_status: null }",
+        "direct_or_derived": "priority-ordered lookup (draft_results.json checked first, requires source_status == external_verified; falls back to day3_udfa_draft_result_profiles.json, same gate); status/is_udfa read from the row's own fields, never hard-coded",
+        "upstream_files": ["data/processed/{season}_draft_results.json (81 rows, one per player_id; traces to TIBER-Data's nfl_draft_results v1 contract)", "data/processed/{season}_day3_udfa_draft_result_profiles.json (8 rows, an explicitly narrow gap-filler subset)"],
+        "coverage_in_promoted_artifact": "47 drafted / 1 udfa_signed / 0 unavailable across the 48 mirrored players",
+        "source_player_id_present_directly": true,
+        "data_quality_finding": "one player's player_name is spelled two different ways across two upstream files ('Jeremiah Love' vs 'Jeremiyah Love'); the join still resolves correctly because it is keyed on player_id, not name -- direct evidence a name-based join would silently fail here",
+        "derivation_code_path": "build_official_postdraft_outcome_field()/_postdraft_outcome_from_row(), scripts/compute_rookie_transition_profile.py:261-329; confidence is a fixed constant (0.95) for the whole family, documented as 'a deliberate simplification for v0, not a discovered fact'",
+        "rounding_normalization": "none -- fact carry-through, no scoring",
+        "cohort_dependency": "none",
+        "current_timestamp_fields": "drafted path: last_verified_at = source row's own ingested_at (an ingestion/pipeline stamp traced to TIBER-Data's nfl_draft_results generated_at), falling back to generator run date. udfa path: last_verified_at explicitly null, no timestamp field of any kind exists in the source file",
+        "timestamps_operational_only": true,
+        "genuine_public_date_location": "only as unstructured free text inside provenance.source_name for the drafted path (e.g. 'published 2026-04-25'), three weeks before the ingestion stamp; absent entirely for the udfa path",
+        "missing_evidence": "an actual archived copy of the cited public source (draft tracker page, team press release) with a machine-extractable publish date and a deterministic record locator naming this specific player"
+      }
+    },
+    "timestamps_cross_cutting_conclusion": "Every last_verified_at value in the current pipeline is either the generator's own run date or an ingestion/pipeline timestamp one hop upstream. No field anywhere in the six upstream files or the mirror itself is a genuine, structured public-release timestamp for any family. This is the empirical confirmation of the gap PR #161's hard-rejection decision was based on.",
+    "proxy_placeholder_callouts": [
+      "draft_capital documented as a temporary pre-draft proxy, 'explicitly not equivalent to realized NFL draft capital' (docs/export-contract.md:152-154)",
+      "NEUTRAL_DEFAULT (fixed 50.0 athletic-score placeholder) explicitly called 'not a measurement' and deliberately excluded",
+      "athletic_score_0_100 documented as potentially misleadingly named -- 'not the Kent Lee Platte RAS percentile most readers would assume' (docs/athletic-score-normalization-audit.md:7-9)",
+      "upstream draft_capital_proxy_source free-text field explicitly distrusted in code ('has been found to drift from the actual data')",
+      "fixed non-per-row confidence constants for draft_capital (0.65), college_production (0.85), official_postdraft_outcome (0.95) documented as 'a deliberate simplification for v0, not a discovered fact'",
+      "a route-level college-production sub-family excluded from v0 because most backing files could not be verified as genuinely CFBD-observed vs manually estimated (docs/rookie-transition-profile-v0-design.md:312)"
+    ],
+    "draft_schedule_data_check": {
+      "result": "confirmed absent in both TIBER-Rookies and TIBER-Data",
+      "detail": "no schedule/start-time/broadcast-time field found in either repo; TIBER-Data's nfl_draft_results v1 contract fields are draft_year/player_id/player_name/position/team/round/pick_in_round/overall_pick/source/source_url/generated_at/provenance_status -- no time-of-day, schedule, or broadcast field",
+      "consequence": "the cutoff contract must be evidenced entirely from an external, independently archived source, not from anything in either repo"
+    }
+  },
+  "artifact_contract_v2": {
+    "kind": "rookie_transition_profile_v0_forecast_availability_evidence",
+    "schema_version": "2.0.0",
+    "top_level_fields": [
+      "kind", "schema_version", "issue", "governing_design", "generated_at",
+      "generated_at_is_operational_timestamp_only_not_fact_availability", "season",
+      "mirror_source", "cutoff_contract", "derivation_contracts", "evidence_packages",
+      "rows", "status_counts", "status_counts_by_family", "decision"
+    ],
+    "governed_row_key": ["source_repository", "source_schema", "source_player_id", "source_season", "field_family"],
+    "row_population": "48 locked identities x 5 field families = 240 rows; zero/multiple/missing/extra matches fail closed",
+    "row_fields": [
+      "source_identity", "field_family", "mirror_value_literal", "availability_status",
+      "evidence_package_ids", "computed_available_at", "review_decision", "notes"
+    ],
+    "row_field_notes": {
+      "mirror_value_literal": "cross-checked by the validator against the real pinned mirror value, never trusted from the row alone (schema 1.0.0's proactive self-certification fix, carried forward)",
+      "availability_status": "validator-computed output, never author-declared input",
+      "computed_available_at": "validator-computed output, never author-declared input",
+      "evidence_package_ids": "empty for unavailable/unresolved_no_availability_proof rows; non-empty only for validator-accepted eligible_at_cutoff/ineligible_after_cutoff rows"
+    },
+    "mirror_source": "reuses schema 1.0.0's pinned-commit dereferencing contract unchanged (git show/git ls-tree, never the live worktree; source_lock including commit, forecast_mirror.paths, mirrored_hashes all recomputed)"
+  },
+  "evidence_package_contract": {
+    "archive_citation_fields": ["repo", "commit", "path", "sha256", "media_type", "schema_version_or_not_applicable_reason", "original_url", "retrieved_at"],
+    "commit_format": "full 40-character lowercase hex SHA; never a mutable ref",
+    "record_locators": {
+      "closed_set": ["json_array_exact_match", "json_object_key", "json_pointer", "csv_primary_key_match", "governed_text_record_range"],
+      "json_array_exact_match": { "use_case": "one row in a JSON array by exact field equality -- the shape of all six current TIBER-Rookies processed files", "required_fields": ["array_path (JSON Pointer to the array)", "match_fields (ordered {field, expected_value} pairs, exact equality)"], "cardinality": "exactly 1 match required; 0 or >=2 fails closed" },
+      "json_object_key": { "use_case": "one value by exact string key within a JSON object (not an array)", "required_fields": ["object_path", "key"], "cardinality": "key must exist exactly once; absent key fails closed" },
+      "json_pointer": { "use_case": "a fixed RFC 6901 pointer directly to one value, only for frozen exact-commit archives", "required_fields": ["pointer"], "cardinality": "must resolve to exactly one value; any failure fails closed" },
+      "csv_primary_key_match": { "use_case": "one row in a CSV file by exact column match", "required_fields": ["key_column", "expected_value"], "cardinality": "exactly 1 matching row required; 0 or >=2 fails closed" },
+      "governed_text_record_range": { "use_case": "unstructured HTML/text (press releases, draft-tracker pages) -- the only locator usable for official_postdraft_outcome's real evidence today", "required_fields": ["extraction_selector (deterministic CSS selector/XPath/byte range against the archived snapshot)", "extracted_text", "extracted_text_sha256"], "cardinality": "selector must resolve to exactly the archived extracted_text, hash-verified; reviewer transcription alone insufficient" }
+    },
+    "record_canonicalization_and_hash": "every locator requires a deterministic canonicalization rule (e.g. sorted-key json.dumps) and a SHA-256 record hash, making the located record itself an immutable, independently verifiable fact",
+    "ocr_derived_evidence": "not authorized under any locator in schema 2.0.0",
+    "derivation_contracts": {
+      "citation_style": "pinned by (repo, commit, path, function reference, sha256) rather than transcribed formula text, so the design never drifts from the real code",
+      "fully_recovered_and_pinnable_now": {
+        "age_at_entry": "age_from_dob(dob, season): season_start = date(season,9,1); age = season_start.year - born.year, minus 1 if (season_start.month, season_start.day) < (born.month, born.day); cited to scripts/compute_rookie_transition_profile.py::age_from_dob (== scripts/compute_breakout_age.py::age_from_dob)",
+        "draft_capital": "DRAFT_CAPITAL_RANK_BANDS: (1,10)->95, (11,20)->85, (21,32)->75, (33,50)->65, (51,75)->55, (76,100)->45, (101,150)->35, (151,inf)->25; cited to scripts/compute_rookie_transition_profile.py::expected_band_score; open item: 101-150/151+ bands undocumented outside code, resolve before implementation"
+      },
+      "citation_only_pending_full_recovery": {
+        "athletic_testing": "within-class z-score 50+16.6667*z clamped [0,100]; owner scripts/compute_rookie_alpha.py -- exact commit/function pin deferred to implementation issue",
+        "college_production": "raw z-score composite + 0.60/0.40 age-adjusted blend + WR/RB penalty adjustments; owner scripts/compute_rookie_alpha.py and scripts/compute_production_scores.py -- exact coefficients and the age_at_entry cross-family dependency deferred to implementation issue, deliberately not transcribed here to avoid governance-doc drift from the real code"
+      }
+    }
+  },
+  "subject_binding": {
+    "closed_methods": [
+      { "method": "exact_source_player_id", "when_usable": "the archived record itself carries a player_id/equivalent field byte-for-byte equal to source_identity.source_player_id", "proves": "exact identity match, no inference" },
+      { "method": "exact_governed_source_record_id", "when_usable": "the archived record carries a different stable identifier proven equal via a separately governed, TIBER-Rookies-owned crosswalk (not Lane A's Forecast-side GSIS crosswalk); no such crosswalk currently found to exist for any of the six inventoried files -- flagged as an unfilled gap", "proves": "identity via an independently governed alias mapping" },
+      { "method": "pinned_governed_alias_artifact", "when_usable": "the archived record identifies its subject only by name/team/position/school (the common case for real external evidence)", "proves": "a governed, attributable, one-time human identity decision, cited immutably" }
+    ],
+    "prohibited_unconditionally": [
+      "name-only matching", "normalized-name equality", "fuzzy matching", "position+name", "school+name",
+      "first-match/best-effort", "confidence-score-alone", "reviewer assertion alone"
+    ],
+    "grounding_finding": "one real player's player_name is spelled two different ways across two TIBER-Rookies upstream files; the join only works because it is player_id-based, not name-based -- direct evidence for why name-only binding is prohibited outright",
+    "fallback_on_failure": "row remains unresolved_no_availability_proof"
+  },
+  "availability_time_semantics": {
+    "closed_availability_time_kind_enum": ["source_record_published_at", "governed_snapshot_public_release_at", "official_release_manifest_at"],
+    "prohibited_substitutes_for_available_at": [
+      "event_time", "retrieved_at", "archive_capture_at", "generated_at", "ingested_at",
+      "last_verified_at", "mirror_refreshed_at", "file modification time", "git author date", "reviewed_at"
+    ],
+    "grounding_finding": "every structured timestamp in the current pipeline is exactly one of these prohibited kinds (last_verified_at, ingested_at) -- confirming no existing field could ever satisfy available_at under this contract",
+    "required_assertion_fields": [
+      "availability_time_kind", "record locator or source-field selector (must resolve from the SAME record as the bound value)",
+      "exact extracted timestamp", "source_timezone_or_offset (numeric only, Z or +-HH:MM)",
+      "normalization_rule", "machine-verifiable proof the timestamp belongs to the same record as the bound value and subject"
+    ],
+    "available_at_computation": "computed by the validator from the evidence assertion(s); never accepted as an independent author-supplied claim",
+    "bare_dates": "no midnight-in-assumed-timezone manufacturing; schema 2.0.0 does not fully design interval semantics for this case -- prefer unresolved_no_availability_proof until interval handling is designed separately"
+  },
+  "cutoff_contract": {
+    "evidence_source": "must be an independent external archive (e.g. league draft-day schedule announcement); no draft-schedule data exists in TIBER-Rookies or TIBER-Data",
+    "required_bound_facts": ["season = 2026", "event = NFL Draft Day 1 / Round 1 start", "published_draft_start_at", "source timezone or offset (numeric only)"],
+    "cutoff_policy": "one_second_before_published_round1_start",
+    "cutoff_at_formula": "cutoff_at = published_draft_start_at - PT1S",
+    "recomputation_requirement": "the artifact may store the computed cutoff_at, but the validator must independently recompute it and reject disagreement",
+    "human_review_requirement": "attributable human sign-off required after machine validation; review cannot substitute for archive-and-record proof"
+  },
+  "status_computation": {
+    "rules": [
+      "mirror value is null -> unavailable",
+      "mirror value is present and no complete accepted evidence package exists -> unresolved_no_availability_proof",
+      "mirror value is present and complete accepted evidence exists and computed_available_at < computed_cutoff_at -> eligible_at_cutoff",
+      "mirror value is present and complete accepted evidence exists and computed_available_at >= computed_cutoff_at -> ineligible_after_cutoff"
+    ],
+    "official_postdraft_outcome_restriction": "may never resolve to eligible_at_cutoff; complete evidence yields only ineligible_after_cutoff, incomplete yields unresolved_no_availability_proof",
+    "fail_closed_behavior": "contradictory, incomplete, or multiple competing evidence packages fail closed to unresolved_no_availability_proof with an explicit blocking reason; the validator never selects a best timestamp among disagreeing candidates",
+    "computed_available_at_rule": "max(all required source-record public-availability timestamps, all required derivation-contract availability timestamps, all required cohort/context snapshot availability timestamps); every input actually used to reproduce the exact mirrored value must be included",
+    "computed_available_at_by_family": {
+      "draft_capital": "max(big-board snapshot, band-table derivation contract)",
+      "age_at_entry": "max(DOB record, reference-date contract, age-formula contract)",
+      "athletic_testing": "max(testing record, cohort-population snapshot, z-score formula contract)",
+      "college_production": "max(raw stat record(s), population snapshot, raw-formula contract, age-adjustment inputs [including age_at_entry's own computed_available_at if confirmed dependent], blend-weight contract, penalty-formula contract)",
+      "official_postdraft_outcome": "the single bound outcome record's public-release time (no derivation contract; fact carry-through, not a computed score)"
+    }
+  },
+  "family_specific_contracts": {
+    "draft_capital": {
+      "requires": ["exact player-specific big-board snapshot record", "exact big_board_rank", "source_record_published_at assertion", "pinned proxy-band derivation contract"],
+      "validator_recomputes": "draft_capital_proxy_0_100 from the archived rank and pinned band formula",
+      "hypothetical_valid_example": "governed_text_record_range locator over an archived big-board publication page, extracting a hash-pinned substring naming the rank, bound via pinned_governed_alias_artifact, with source_record_published_at from the same page's dateline",
+      "hypothetical_invalid_example": "correct big_board_rank from one page, but a public-release date sourced from a different page about a different player's ranking -- fails closed on cross-record binding"
+    },
+    "age_at_entry": {
+      "requires": ["exact DOB source record", "exact source-identity binding", "source_record_published_at (or equivalent) for the DOB record", "pinned reference date", "pinned age-computation algorithm", "rounding/calendar rules"],
+      "validator_recomputes": "the mirrored age from the archived DOB and pinned formula",
+      "leap_day_handling": "ordinary calendar-date arithmetic; no special case needed since comparison is on (month, day) tuples",
+      "hypothetical_valid_example": "governed_text_record_range locator over an archived official combine bio page stating a DOB for the bound player, source_record_published_at from the same page",
+      "hypothetical_invalid_example": "DOB correctly extracted from one player's bio, but available_at copied from a different player's bio release date -- fails closed"
+    },
+    "athletic_testing": {
+      "requires": ["exact player-specific testing record and all raw measurements", "measurement names/units/normalization", "event/source record", "source_record_published_at", "derivation/composite-score formula citation", "rounding rules", "complete same-season cohort/context snapshot if normalized"],
+      "hypothetical_valid_example": "json_array_exact_match locator over an archived official combine results export naming exact measurements for the bound player, plus a second package for the archived same-season cohort snapshot",
+      "hypothetical_invalid_example": "correct measurements for this player, but a different season's cohort snapshot used for the z-score -- fails closed on cohort mismatch"
+    },
+    "college_production": {
+      "requires": ["exact player-specific raw stat record(s)", "season and stat window", "games/sample definition", "position-specific inputs", "source_record_published_at per required source record", "pinned formula", "pinned normalization cohort/context", "rounding rules"],
+      "validator_recomputes": "the mirrored score deterministically",
+      "population_dependency": "if the score depends on a full population distribution, the entire pinned population snapshot is part of the evidence contract",
+      "hypothetical_valid_example": "json_array_exact_match locator over an archived official CFBD season-stats export for the bound player, plus a separate package for the archived same-season/same-position population snapshot, plus derivation-contract citations",
+      "hypothetical_invalid_example": "correct raw per-player stats, but a population snapshot drawn from a different position group -- fails closed on cohort mismatch"
+    },
+    "official_postdraft_outcome": {
+      "drafted_requires": ["draft year", "team", "round", "overall pick", "official release timestamp"],
+      "udfa_requires": ["signing team", "transaction or announcement record", "official public-release timestamp"],
+      "status_restriction": "always post-cutoff; can only become ineligible_after_cutoff or unresolved_no_availability_proof, never eligible_at_cutoff",
+      "prohibited_timestamps": "ingested_at, last_verified_at, or any later mirror-generation timestamp is never the official outcome's availability time",
+      "hypothetical_valid_example": "governed_text_record_range locator over an archived team press-release page naming the bound player as a signed UDFA, source_record_published_at from the same page",
+      "hypothetical_invalid_example": "the correct outcome record for one player, but an availability timestamp extracted from a different team's unrelated announcement page -- fails closed"
+    }
+  },
+  "human_review_contract": {
+    "canonical_object": "one row-level review object, not duplicated across the row and each evidence package",
+    "enum": ["accepted", "rejected", "needs_followup"],
+    "required_chronology": "reviewed_at >= retrieved_at",
+    "review_cannot_override_machine_validation": true,
+    "required_fields_covered_by_review": ["selected record", "subject binding", "value reconstruction", "availability-time semantic role", "computed status"]
+  },
+  "migration_from_v1": {
+    "v1_immutable": true,
+    "no_automatic_row_upgrade": true,
+    "v2_artifact_separately_generated": true,
+    "v1_unavailable_rows_must_be_regenerated_not_copied": "17 rows",
+    "v1_unresolved_rows_remain_unresolved_until_v2_evidence_passes": "223 rows",
+    "no_inherited_evidence_from_prior_pr_or_narrative": true
+  },
+  "required_future_validator_tests": [
+    "value and timestamp in different records",
+    "timestamp from a different player",
+    "value from a different player",
+    "correct player but wrong field family",
+    "primitive incidental-value match",
+    "zero record matches",
+    "multiple record matches",
+    "name-only subject binding",
+    "wrong source season",
+    "archive hash mismatch",
+    "record hash mismatch",
+    "typed timestamp role missing",
+    "event_time substituted for available_at",
+    "retrieved_at substituted for available_at",
+    "bare date coerced to midnight",
+    "cutoff record is not Day 1 / Round 1 start",
+    "cutoff timezone mismatch",
+    "derived field missing one input",
+    "derived field formula mismatch",
+    "derived field rounding mismatch",
+    "normalization cohort mismatch",
+    "computed_available_at omits a later dependency",
+    "row status disagrees with recomputed status",
+    "official_postdraft_outcome marked eligible",
+    "review accepted before machine validation",
+    "review timestamp before retrieval",
+    "missing/extra/duplicate 240-row key",
+    "runtime/model/UI import"
+  ],
+  "lifecycle": [
+    "v2 evidence-contract design (this issue/PR)",
+    "separate v2 implementation issue",
+    "empty/migrated v2 scaffold and validator",
+    "cutoff evidence population and review",
+    "small row-family evidence batches",
+    "full 240-row Lane B audit",
+    "Lane B terminal review"
+  ],
+  "hard_boundaries_not_done_by_this_pr": [
+    "modify the schema 1.0.0 artifact",
+    "modify the current 1.0.0 validator or CLI",
+    "pin a real cutoff",
+    "archive real player evidence",
+    "populate any eligible or ineligible row",
+    "perform human sign-off",
+    "modify TIBER-Rookies or TIBER-Data",
+    "populate the integrated readiness matrix",
+    "run an experiment",
+    "create a feature adapter",
+    "evaluate MAE, RMSE, calibration, or predictive usefulness",
+    "authorize runtime, production, downstream, or UI use",
+    "close Issue #160"
+  ],
+  "decision": "may_open_rookie_transition_profile_forecast_availability_evidence_v2_implementation_issue",
+  "decision_rationale": "The required source-and-derivation inventory is complete for draft_capital and age_at_entry (fully pinnable now) and official_postdraft_outcome (structurally fully understood, evidence-source gap remaining), and partially complete for athletic_testing and college_production (real cohort-relative shape confirmed; exact formula coefficients and one cross-family dependency explicitly deferred to the implementation issue rather than guessed). Every family has a proposed record-bound, subject-bound, semantically-typed evidence contract; the cutoff, common archive/locator/subject-binding/availability-time contracts, status-computation rules, human-review contract, migration rules, and negative-test matrix are all specified.",
+  "decision_authorizes": ["a separate implementation issue for schema 2.0.0 and its validator"],
+  "decision_does_not_authorize": [
+    "evidence population", "Lane B completion", "the integrated readiness review",
+    "experiment design", "feature use", "production binding", "activation", "closing issue #160"
+  ]
+}
