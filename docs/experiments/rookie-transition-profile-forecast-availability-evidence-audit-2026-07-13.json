@@ -1,6 +1,6 @@
 {
   "report_id": "rookie-transition-profile-forecast-availability-evidence-audit-2026-07-13",
-  "status": "lane_b_implementation_and_audit_only_no_integrated_readiness_review_no_experiment_no_activation",
+  "status": "lane_b_implementation_and_audit_only_hard_blocked_pending_per_family_evidence_contract",
   "issue": "TIBER-Forecast#160",
   "date": "2026-07-13",
   "predecessors": ["TIBER-Forecast#155", "TIBER-Forecast#156", "TIBER-Forecast#158", "TIBER-Forecast#159"],
@@ -22,10 +22,10 @@
       "kind": "rookie_transition_profile_v0_forecast_mirror_provenance",
       "schema_version": "1.0.0"
     },
-    "mirror_source_commit_pinned_in_artifact": {
+    "mirror_source_commit_pin": {
       "repo": "Prometheus-Frameworks/TIBER-Forecast",
       "commit": "53731cbfa4701aa9861ead4b2fb73c2c29afe89b",
-      "note": "the commit that merged PR #159 (Lane A)"
+      "note": "MIRROR_SOURCE_COMMIT_PIN -- the commit that merged PR #159 (Lane A); the CLI dereferences the wrapper, mirror files, and mirror directory listing at exactly this commit via git show/git ls-tree, never the current worktree"
     },
     "tiber_rookies_source_lock_dereferenced_through_wrapper": {
       "repo": "Prometheus-Frameworks/TIBER-Rookies",
@@ -56,135 +56,52 @@
     "audit_cli": "scripts/runRookieTransitionProfileAvailabilityAudit.ts",
     "npm_script": "audit:rookie-transition-profile-availability-evidence",
     "test_file": "tests/rookieTransitionProfileAvailabilityEvidence.test.ts",
-    "test_count": 92
+    "test_count": 59
   },
+  "hard_rejection_decision": {
+    "decided": "after two independent review rounds on PR #161, following a user decision to hard-block rather than design full per-field_family structured evidence contracts now",
+    "what_is_hard_rejected": [
+      "any row's availability_status of eligible_at_cutoff or ineligible_after_cutoff, unconditionally, regardless of how well-evidenced",
+      "any row's available_at, evidence_source, or review_decision being non-null",
+      "any row's source_snapshot_as_of being non-null (no reproducible snapshot-evidence contract exists)",
+      "the artifact's cutoff_at or cutoff_evidence_source being non-null (they exist solely to support the two hard-rejected statuses)"
+    ],
+    "why": [
+      "record-level binding gap: proving a row's claimed value and timestamp come from the SAME source record for THIS player/field_family (not just two independent substrings found somewhere in a reproduced archive) requires per-field_family structured evidence contracts, and for derived families (age_at_entry, college_production) deterministic recomputation from underlying raw data -- none of which is designed yet",
+      "semantic-role gap: a string match proves a timestamp appears in an archive, not that it specifically means 'this fact became publicly knowable' as opposed to an event/retrieval/unrelated timestamp; the cutoff proof has the analogous gap for 'this is the 2026 Day 1/Round 1 start'"
+    ],
+    "precedent": "mirrors how Lane A ultimately hard-rejected its own unverifiable 3.3_governed_artifact evidence class (#159) rather than continuing to accept mechanically-plausible-but-unauthoritative citations",
+    "practical_consequence": "..._complete is not reachable for this population under schema 1.0.0, since every row with a present mirror value is permanently unresolved_no_availability_proof until a future schema version designs and lifts this hard-rejection",
+    "follow_up": "tracked under issue #160: design a per-field_family structured evidence contract (with deterministic recomputation for derived families) as separate follow-up work, then lift the hard-rejection in a future schema version"
+  },
+  "design_history_superseded_by_hard_block": [
+    "proactive self-certification fix (before any review): mirrored_value_literal cross-checked against the real pinned mirror value, not just the row's own cited archive",
+    "automated review pass: available_at bound into the archive-content check; wrapper source_lock comparison included commit",
+    "owner review round 1: same-archive-different-timestamp-same-side and bare-date-archive regressions; mirror_source.commit dereferenced via git show rather than shape-checked; wrapper forecast_mirror.paths checked exactly; cutoff timezone/instant rigor; top-level schema closure",
+    "owner review round 2: mirror directory listing dereferenced at the pinned commit via git ls-tree; source_timezone_or_offset closed to numeric offsets only; source_snapshot_as_of hard-rejected as non-null; nested schema closure; temporal chronology (retrieval/review/availability ordering)",
+    "each round closed a real gap and is preserved in the module's git history, but each was also shown to still be a mechanical proxy for record-level/semantic proof rather than the genuine thing -- this directly informed the conclusion that a fundamentally different evidence contract, not a further-hardened generic one, is what closing eligible_at_cutoff/ineligible_after_cutoff honestly requires"
+  ],
   "validator_enforcement": {
-    "contract_pins": "kind/schema_version/issue/governing_design (readiness-design issue/PR/merge-commit/document paths)/season match pinned constants exactly; top-level artifact fields must be exactly an enumerated closed set",
-    "mirror_dereferencing": "mirror_source repo/pinned-commit-exact-match (MIRROR_SOURCE_COMMIT_PIN, dereferenced by the CLI via git show rather than trusted off the current worktree)/path/kind/schema_version checked, sha256 must equal the recomputed hash of the actual wrapper file at that commit (never the wrapper's self-report); the dereferenced wrapper's source_lock (including commit, not just repo/schema_version/season/row_count), declared forecast_mirror.paths (exact match, no missing/extra/substituted keys), and mirrored_hashes are all independently recomputed and matched; the authorized-mirror-filenames listing is now derived via `git ls-tree --name-only <MIRROR_SOURCE_COMMIT_PIN>` at the pinned commit, not a live-directory readdir",
-    "cutoff_validation": "cutoff_at/cutoff_evidence_source null together or both present; non-null requires named reviewer/parseable reviewed_at, a numeric-offset-only source_timezone_or_offset (named zones like 'ET'/'America/New_York' are rejected -- no deterministic DST-aware conversion is defined in schema 1.0.0), and a published_draft_start_at that is itself hard-required to be a parseable offset-bearing instant; citation must reproduce (hash-verified); archive must state the season and contain the claimed published_draft_start_at; source_timezone_or_offset must agree with the offset actually embedded in published_draft_start_at; cutoff_at must be strictly earlier than that draft start; cutoff_evidence_source.reviewed_at must not be earlier than its own retrieved_at",
+    "contract_pins": "kind/schema_version/issue/governing_design (readiness-design issue/PR/merge-commit/document paths)/season match pinned constants exactly; top-level artifact fields, and every nested object (source_identity, mirror_source, governing_design, status_counts, status_counts_by_family), must match an exact closed field set",
+    "mirror_dereferencing": "mirror_source repo/pinned-commit-exact-match (MIRROR_SOURCE_COMMIT_PIN)/path/kind/schema_version checked, sha256 must equal the recomputed hash of the actual wrapper file at that commit; the dereferenced wrapper's source_lock (including commit), declared forecast_mirror.paths (exact match), the pinned-commit mirror directory listing (via git ls-tree, not a live-worktree readdir), and mirrored_hashes are all independently recomputed and matched",
     "value_presence_agreement": "availability_status is unavailable iff the real pinned mirror value for (player, field_family) is null, checked directly against the mirror JSON",
-    "official_postdraft_outcome_restriction": "may never be eligible_at_cutoff -- definitionally post-draft information",
-    "unavailable_or_unresolved_row_shape": "must carry null available_at, null evidence_source, and null review_decision (the last previously unchecked)",
-    "eligible_or_ineligible_row_requirements": [
-      "validly pinned cutoff_at",
-      "parseable, offset-bearing available_at",
-      "structurally complete evidence_source (exactly nine contract fields) with non-empty mirrored_value_literal",
-      "citation reproduces (hash-verified)",
-      "reproduced archive actually contains the claimed literal",
-      "reproduced archive actually contains the claimed available_at itself, not just the value -- and not merely a bare date the artifact silently converted to an exact instant",
-      "claimed literal equals the REAL pinned mirror value for (player, field_family), recomputed directly from the committed mirror JSON",
-      "non-null review_decision (exactly reviewer and reviewed_at) with named reviewer and parseable reviewed_at",
-      "available_at correctly ordered against cutoff_at for the claimed status",
-      "evidence_source.retrieved_at not earlier than available_at, and review_decision.reviewed_at not earlier than evidence_source.retrieved_at"
-    ],
     "population_accounting": "exactly 240 distinct governed (identity, family) keys; every locked identity has all 5 families; no extra identity or family; declared status_counts and status_counts_by_family recomputed and must match, summing to 240/48 respectively",
-    "top_level_schema_closure": "artifact top-level fields must match an exact enumerated set (AVAILABILITY_EVIDENCE_TOP_LEVEL_FIELDS); generated_at must be a parseable offset-bearing instant; generated_at_is_operational_timestamp_only_not_fact_availability must be exactly true; source_snapshot_as_of is hard-rejected as non-null outright in schema 1.0.0 (no reproducible snapshot-evidence contract exists yet)",
-    "nested_schema_closure": "source_identity, mirror_source, governing_design, cutoff_evidence_source, row evidence_source, review_decision, status_counts, and status_counts_by_family (outer and each per-family entry) must each carry exactly their contract fields; notes must be string | null"
-  },
-  "self_certification_hardening": {
-    "when": "during implementation, before this PR was reviewed",
-    "gap_identified": "mirrored_value_literal was validated only against the row's own cited archive, never against the real pinned mirror value -- the same self-certification shape Lane A's independent review took five rounds to close",
-    "fix": "MirrorVerificationContext gained mirrorValueLiterals, recomputed by the CLI directly from the committed mirror JSON (never trusted from the artifact or its cited archive); every eligible/ineligible row's mirrored_value_literal must now equal this real value exactly",
-    "proactive": true,
-    "note": "identified and closed by the implementing agent before any independent review occurred, applying the lesson already learned on Lane A rather than waiting for a review round to find it"
-  },
-  "post_review_strengthening_2026_07_13_automated_review": {
-    "when": "after PR #161 was opened, from an automated Codex review, before any human/repo-owner review",
-    "findings_addressed": [
-      {
-        "priority": "P1",
-        "gap_identified": "available_at was compared to cutoff_at without ever being checked against the reproduced archive -- a row could self-declare an available_at that made it eligible while citing content that only proved the value existed, never that it was available on that date",
-        "fix": "the reproduced archive must now also contain the exact claimed available_at string before it is compared against cutoff_at; added regression tests for an undated archive and for a self-declared available_at the archive never states"
-      },
-      {
-        "priority": "P2",
-        "gap_identified": "the dereferenced wrapper's source_lock comparison omitted commit, so a wrapper/artifact pair could in principle advance the pinned upstream TIBER-Rookies commit while keeping repo/schema_version/season/row_count and mirror hashes consistent, and the check would still report a match",
-        "fix": "the comparison now requires lock.commit === SOURCE_COMMIT as well; added a regression test tampering only source_lock.commit"
-      }
-    ]
-  },
-  "post_review_strengthening_2026_07_13_owner_review": {
-    "when": "after a full independent review by the repo owner on PR #161, before this PR merged",
-    "pr_lifecycle_correction": "PR body changed from 'Closes #160' to 'Refs #160' and reframed as the Lane B scaffold plus unresolved baseline, not a claim that Lane B itself is complete -- issue #160 stays open after merge",
-    "findings_addressed": [
-      {
-        "priority": "central Lane B claim",
-        "gap_identified": "the automated pass's available_at-archive-binding fix was necessary but the owner requested the specific regression it should prevent: the same real, reproducing archive for a genuine eligible/ineligible snapshot paired with a DIFFERENT self-declared available_at that still lands on the same side of the cutoff, plus a source that only ever states a bare date being silently treated as midnight in some chosen timezone",
-        "fix": "added regression tests for the same-archive-different-timestamp-same-side case for both eligible and ineligible variants, and a bare-date-only archive case, all rejected via the existing archive-binding check (archive must contain the exact, fully-qualified available_at literal, not a derived approximation)"
-      },
-      {
-        "priority": "cutoff timezone/instant rigor",
-        "gap_identified": "published_draft_start_at was only checked for parseability inside the strict-ordering comparison, which simply skipped itself with no error when the value failed to parse (e.g. an archive stating 'not-a-timestamp'); source_timezone_or_offset was checked only for non-emptiness, never for agreement with the offset actually embedded in published_draft_start_at",
-        "fix": "published_draft_start_at is now hard-required to itself be a parseable offset-bearing instant as an independent check; source_timezone_or_offset must now agree with the offset extracted from published_draft_start_at (both normalized, Z treated as +00:00)"
-      },
-      {
-        "priority": "mirror/source lock pinning (3 sub-findings)",
-        "gap_identified": "(A) the wrapper source_lock comparison omitted commit -- addressed together with the automated-review P2 fix above; (B) the wrapper's declared forecast_mirror.paths were never checked, only the live directory's filenames and the recomputed content hashes, so a wrapper could declare a substituted or missing path entry and still pass; (C) mirror_source.commit was only shape-checked (looks like a 40-hex SHA), never dereferenced -- the CLI read wrapper/mirror bytes straight off the current worktree regardless of what commit the artifact claimed, so any other well-formed 40-hex value would still validate",
-        "fix": "(B) forecast_mirror.paths must now match the four authorized local paths exactly (no missing/extra/substituted keys); (C) mirror_source.commit is now checked against a single pinned exact value (MIRROR_SOURCE_COMMIT_PIN, the commit that merged Lane A, PR #159), and the CLI now dereferences the wrapper and all three mirror files at exactly that commit via `git show <commit>:<path>` rather than trusting the working tree to be at it -- the live mirror-directory listing remains a separate hygiene check against the real worktree"
-      },
-      {
-        "priority": "top-level schema closure",
-        "gap_identified": "rows had an exact-field check but the top-level artifact did not -- the committed JSON already carried generated_at_is_operational_timestamp_only_not_fact_availability, a field absent from the prior TypeScript contract and silently ignored by validation; generated_at and non-null source_snapshot_as_of/retrieved_at/reviewed_at were checked only as non-empty strings, not for their declared timestamp semantics",
-        "fix": "added AVAILABILITY_EVIDENCE_TOP_LEVEL_FIELDS as an exact, enumerated closed set for the artifact; generated_at must be a parseable offset-bearing instant; generated_at_is_operational_timestamp_only_not_fact_availability must be exactly true; non-null source_snapshot_as_of must be a parseable offset-bearing instant; retrieved_at (citations) and reviewed_at (cutoff evidence source, row review_decision) must be parseable dates, not merely non-empty strings"
-      }
-    ]
-  },
-  "post_review_strengthening_2026_07_13_owner_review_round_2": {
-    "when": "after a second full independent review by the repo owner on PR #161, before this PR merged",
-    "findings_addressed": [
-      {
-        "finding": "3 -- mirror directory listing from worktree, not pinned commit",
-        "gap_identified": "the CLI used git show for the wrapper and three mirror files but still populated actualMirrorDirFilenames via readdirSync against the current worktree, not MIRROR_SOURCE_COMMIT_PIN -- a later unrelated commit adding a stray file would retroactively fail this immutable audit, and removing a file from the current checkout could conceal one that existed at the cited commit",
-        "fix": "the CLI (and the test fixture, which must mirror it exactly) now derive this listing via `git ls-tree --name-only <MIRROR_SOURCE_COMMIT_PIN> -- <dir>/`, reproducible solely from the artifact's pinned commit"
-      },
-      {
-        "finding": "2 (partial) -- numeric-offset-only timezone",
-        "gap_identified": "source_timezone_or_offset was checked only for non-emptiness; no deterministic DST-aware conversion contract exists for named zones, so accepting them (e.g. 'ET', 'America/New_York') would make named-zone evidence silently unusable or inconsistently interpreted",
-        "fix": "source_timezone_or_offset must now match Z or +HH:MM/-HH:MM exactly; named zones are rejected outright in schema 1.0.0"
-      },
-      {
-        "finding": "4 -- source_snapshot_as_of governance",
-        "gap_identified": "a non-null source_snapshot_as_of only had to parse as an offset instant; no reproducible snapshot-evidence contract exists to support even a well-formed timing claim",
-        "fix": "source_snapshot_as_of is now hard-rejected as non-null outright in schema 1.0.0"
-      },
-      {
-        "finding": "4 -- nested schema closure and review_decision leak",
-        "gap_identified": "source_identity, mirror_source, governing_design, cutoff_evidence_source, row evidence_source, review_decision, status_counts, and status_counts_by_family all accepted undeclared extra keys; notes was never type-checked; and an unresolved/unavailable row could carry an arbitrary non-null review_decision because that branch returned before validating it",
-        "fix": "added exact-key closure (hasExactKeys) for all listed nested objects and per-family status-count entries; notes must be string | null; unresolved/unavailable rows must now carry a null review_decision"
-      },
-      {
-        "finding": "4 -- chronology",
-        "gap_identified": "retrieved_at/reviewed_at fields were independently well-formed but no ordering was enforced between them",
-        "fix": "evidence_source.retrieved_at must not be earlier than available_at; review_decision.reviewed_at must not be earlier than evidence_source.retrieved_at; cutoff_evidence_source.reviewed_at must not be earlier than its own retrieved_at"
-      }
-    ],
-    "known_open_gaps_not_closed_this_round": [
-      {
-        "finding": "1 -- row evidence is whole-document string co-occurrence, not proof of one bound record",
-        "gap": "the validator confirms the archive reproduces and contains both the claimed mirrored_value_literal and the claimed available_at, but not that the two facts occur in the SAME source record for THIS player/field_family specifically. A multi-record archive could in principle satisfy both checks from two unrelated rows",
-        "status": "acknowledged, not closed -- closing this properly requires per-field_family structured evidence contracts (and, for derived families like age_at_entry, deterministic recomputation from the underlying DOB/formula) that do not exist as a design yet",
-        "not_currently_exploitable": "the committed artifact still has 0 eligible/0 ineligible rows, so no real evidence exists yet for this gap to act on"
-      },
-      {
-        "finding": "2 -- available_at and cutoff timestamps have no typed semantic role",
-        "gap": "the archive binding proves a string match, not that the matched timestamp specifically means 'this fact became publicly knowable' as opposed to an event/retrieval/other timestamp elsewhere in the document; the cutoff proof has the analogous gap for 'this is the 2026 Day 1/Round 1 start'",
-        "status": "acknowledged, not closed -- an open design question (typed time-assertion roles vs. hard-blocking eligible_at_cutoff/ineligible_after_cutoff outright in schema 1.0.0 until a proper contract exists, mirroring Lane A's eventual hard-rejection of its own unverifiable 3.3 evidence class) tracked as follow-up under issue #160, not resolved silently in either direction by this PR",
-        "not_currently_exploitable": "the committed artifact still has 0 eligible/0 ineligible rows, so no real evidence exists yet for this gap to act on"
-      }
-    ]
+    "eligible_ineligible_hard_rejection": "any row claiming eligible_at_cutoff or ineligible_after_cutoff is rejected outright, unconditionally -- see hard_rejection_decision",
+    "row_field_nullability": "available_at, evidence_source, review_decision, and source_snapshot_as_of must be null on every row; notes must be string | null",
+    "artifact_field_nullability": "cutoff_at and cutoff_evidence_source must be null on the artifact"
   },
   "evidence_paths_attempted": {
     "cutoff_section_8": {
-      "status": "not_pinned",
-      "detail": "no archived, dated NFL draft-schedule evidence was assembled, and no human review of a cutoff candidate occurred during this implementation. cutoff_at and cutoff_evidence_source remain null."
+      "status": "not_pinned_and_not_currently_possible",
+      "detail": "no archived, dated NFL draft-schedule evidence was assembled, and no human review of a cutoff candidate occurred. cutoff_at and cutoff_evidence_source are hard-required null in schema 1.0.0 regardless."
     },
     "per_row_exact_value_evidence_sections_10_12": {
-      "status": "not_attempted",
-      "detail": "with no pinned cutoff, no row can honestly claim eligible_at_cutoff or ineligible_after_cutoff (both require a validly pinned cutoff_at as a hard precondition). no archived dated snapshot evidence was assembled for any of the 240 pairs."
+      "status": "not_attempted_and_hard_rejected_if_claimed",
+      "detail": "no archived dated snapshot evidence was assembled for any of the 240 pairs. even if it had been, eligible_at_cutoff/ineligible_after_cutoff are hard-rejected outright in schema 1.0.0."
     },
     "missingness_vs_timing_section_11": {
       "status": "17_rows_honestly_unavailable",
-      "detail": "17 (player, field_family) pairs carry a null value in the committed mirror itself -- a missingness fact, independent of any timing question. the remaining 223 pairs have a non-null pinned value but no availability-timing evidence, recorded unresolved_no_availability_proof."
+      "detail": "17 (player, field_family) pairs carry a null value in the committed mirror itself -- a missingness fact, independent of any timing question. the remaining 223 pairs have a non-null pinned value but no availability-timing evidence (and no timing status is currently usable regardless), recorded unresolved_no_availability_proof."
     }
   },
   "accounting": {
@@ -205,7 +122,7 @@
   },
   "confirmations": {
     "no_guessed_or_defaulted_claim": true,
-    "no_human_review_claimed": "review_decision is null on every row; cutoff_at/cutoff_evidence_source are null; no reviewer name or review date appears anywhere in the committed artifact",
+    "no_human_review_claimed_or_claimable": "review_decision, available_at, evidence_source, and source_snapshot_as_of are hard-required null on every row; cutoff_at/cutoff_evidence_source are hard-required null on the artifact",
     "lane_independence_maintained": true,
     "no_runtime_model_production_downstream_ui_import": true,
     "upstream_and_mirror_files_unmodified": true,
@@ -213,11 +130,11 @@
   },
   "validation": {
     "build": "npm run build -- clean (tsc --noEmit)",
-    "tests": "npm test -- full suite passes (1293 tests across the repo), including 92 in tests/rookieTransitionProfileAvailabilityEvidence.test.ts",
+    "tests": "npm test -- full suite passes (1260 tests across the repo), including 59 in tests/rookieTransitionProfileAvailabilityEvidence.test.ts",
     "test_coverage_summary": [
       "committed artifact passes validation against the real, pinned-commit-dereferenced mirror",
       "kind/schema/design pins",
-      "exact 240-row population, no claimed human review, eight-field row contract",
+      "exact 240-row population, every timing/evidence field null, eight-field row contract",
       "requires_followup decision and full accounting",
       "missing identity (all five rows for a locked player removed)",
       "missing single family for an otherwise-present identity",
@@ -228,38 +145,22 @@
       "out-of-order rows",
       "tampered status_counts / status_counts_by_family",
       "tampered issue reference and governing-design merge commit",
+      "eligible_at_cutoff/ineligible_after_cutoff hard-rejected: for a row with a present real mirror value even with every other field properly null, for both statuses, for official_postdraft_outcome specifically, and confirming ..._complete is never reachable if every row is relabeled eligible",
+      "non-null timing/evidence fields hard-rejected: available_at, evidence_source, review_decision (any row, not only unavailable/unresolved), cutoff_at, cutoff_evidence_source, any non-null source_snapshot_as_of",
       "value-presence agreement in both directions, with a real-null-value control case",
-      "official_postdraft_outcome rejected as eligible_at_cutoff even with otherwise-complete evidence",
-      "full cutoff-validation matrix including an unparseable published_draft_start_at, a source_timezone_or_offset/embedded-offset mismatch, and a clean control case",
-      "real-mirror-matched eligible_at_cutoff and ineligible_after_cutoff control cases",
-      "eligible claim with no cutoff pinned",
-      "unparseable available_at",
-      "missing evidence_source",
-      "empty mirrored_value_literal",
-      "non-reproducible row citation",
-      "archive that doesn't actually contain the claimed literal",
-      "archive-binding regressions: undated archive, self-declared available_at the archive never states, same-archive-different-timestamp-same-side-of-cutoff for both eligible and ineligible variants, and a bare-date-only archive (available_at may never be silently treated as midnight in a chosen timezone)",
-      "self-certification-gap regression: mirrored_value_literal the archive faithfully contains but that does not match the real pinned mirror value",
-      "missing or incomplete review_decision",
-      "unavailable/unresolved rows carrying a non-null available_at or evidence_source",
-      "timestamp-substitution rejections for both eligible_at_cutoff and ineligible_after_cutoff",
-      "a valid eligible row still only reaching requires_followup while other rows remain unresolved",
-      "mirror-wrapper dereferencing checks (tampered sha256, wrong/substituted-but-well-formed commit, wrong repo, mismatched recomputed hashes, unauthorized extra mirror file, tampered source_lock including a moved commit, and substituted/missing forecast_mirror.paths entries, with a control case)",
-      "top-level schema closure: extra/missing top-level field, unparseable generated_at, generated_at_is_operational_timestamp_only_not_fact_availability not exactly true, any non-null source_snapshot_as_of (now hard-rejected outright), with a control case",
-      "nested schema closure: extra key on governing_design, mirror_source, source_identity, status_counts (outer and per-family), cutoff_evidence_source, row evidence_source, and review_decision; a non-string/non-null notes; an unresolved/unavailable row carrying a non-null review_decision",
-      "temporal chronology: evidence_source.retrieved_at earlier than available_at, review_decision.reviewed_at earlier than evidence_source.retrieved_at, cutoff_evidence_source.reviewed_at earlier than its own retrieved_at, with a control case",
-      "a named timezone (America/New_York) rejected in place of a numeric offset",
-      "mirror directory listing dereferenced at the pinned commit via git ls-tree, not the live worktree (exercised by every mirror-wrapper test)",
+      "nested schema closure: extra key on governing_design, mirror_source, source_identity, status_counts (outer and per-family), and a non-string/non-null notes",
+      "top-level schema closure: extra/missing top-level field, unparseable generated_at, generated_at_is_operational_timestamp_only_not_fact_availability not exactly true, with a control case",
+      "mirror-wrapper dereferencing checks (tampered sha256, wrong/substituted-but-well-formed commit, wrong repo, mismatched recomputed hashes, unauthorized extra mirror file via the pinned-commit git ls-tree listing, tampered source_lock including a moved commit, substituted/missing forecast_mirror.paths entries, with a control case)",
       "malformed locked-population size",
       "two inertness scans"
     ],
-    "audit_cli": "npm run audit:rookie-transition-profile-availability-evidence -- valid: true with the accounting above, now built by dereferencing the wrapper and mirror files at the exact pinned Forecast commit via git show"
+    "audit_cli": "npm run audit:rookie-transition-profile-availability-evidence -- valid: true with the accounting above, built by dereferencing the wrapper, mirror files, and mirror directory listing at the exact pinned Forecast commit via git show/git ls-tree"
   },
   "decision": "rookie_transition_profile_forecast_source_availability_audit_requires_followup",
-  "decision_rationale": "The governed Lane B artifact, fail-closed validator, tests, and full 240-row accounting are in place and passing, but 223 of 240 (player, field_family) pairs remain unresolved_no_availability_proof: no pre-draft cutoff has been pinned (requires archived NFL draft-schedule evidence and an explicit, attributable human review, which has not occurred), and no archived exact-value snapshot evidence has been assembled for any pair.",
+  "decision_rationale": "The governed Lane B artifact, fail-closed validator, tests, and full 240-row accounting are in place and passing. 223 of 240 (player, field_family) pairs are honestly unresolved_no_availability_proof and the remaining 17 are honestly unavailable; no row claims eligible_at_cutoff or ineligible_after_cutoff, both of which are hard-rejected outright in schema 1.0.0 pending a per-field_family structured evidence contract. ..._complete is not reachable for this population until that follow-up design exists and a future schema version lifts the hard-rejection.",
   "decision_authorizes": [
-    "a separate follow-up to pin a real, reviewed pre-draft cutoff",
-    "a separate follow-up to assemble archived, dated snapshot evidence per (player, field_family) pair, each with the required human review"
+    "a separate follow-up under issue #160 to design a per-field_family structured evidence contract (with deterministic recomputation for derived families) and a typed semantic role for availability/cutoff timestamps",
+    "a future schema version lifting the eligible_at_cutoff/ineligible_after_cutoff hard-rejection once that contract exists"
   ],
   "decision_does_not_authorize": [
     "the integrated readiness review",

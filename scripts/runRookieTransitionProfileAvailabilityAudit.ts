@@ -1,10 +1,10 @@
 /**
  * Lane B source-availability audit CLI (Forecast #160): validates the committed governed
  * availability-evidence artifact (`data/experiments/rookieTransitionProfile/...`) against the
- * committed rookie_transition_profile_v0.2.0 mirror's locked population and provenance wrapper, using
- * the pure fail-closed validator in `src/rehearsal/rookieTransitionProfileAvailabilityEvidence.ts`,
- * then prints the audit accounting (status counts overall and by field family) and exactly one
- * required decision.
+ * committed rookie_transition_profile_v0.2.0 mirror's locked population and provenance wrapper,
+ * dereferenced at the exact pinned Forecast commit, using the pure fail-closed validator in
+ * `src/rehearsal/rookieTransitionProfileAvailabilityEvidence.ts`, then prints the audit accounting
+ * (status counts overall and by field family) and exactly one required decision.
  *
  * Read-only: this script never writes, refreshes, or repairs anything. A validation failure exits
  * non-zero with every collected error -- fail-closed, never best-effort.
@@ -23,7 +23,6 @@ import {
   MIRROR_SOURCE_COMMIT_PIN,
   validateRookieTransitionProfileAvailabilityEvidence,
   type AvailabilityEvidenceArtifact,
-  type EvidenceCitation,
   type FieldFamily,
   type MirrorVerificationContext,
 } from '../src/rehearsal/rookieTransitionProfileAvailabilityEvidence.js';
@@ -32,36 +31,13 @@ const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..
 const repoPath = (rel: string): string => path.join(REPO_ROOT, rel);
 const sha256OfBytes = (bytes: Buffer): string => createHash('sha256').update(bytes).digest('hex');
 
-/** Same multi-repo git-show resolver used by the Lane A CLI (independent implementation, same discipline). */
-const KNOWN_REPO_CHECKOUTS: Record<string, string> = {
-  'Prometheus-Frameworks/TIBER-Forecast': REPO_ROOT,
-  'Prometheus-Frameworks/TIBER-Data': path.resolve(REPO_ROOT, '../TIBER-Data'),
-  'Prometheus-Frameworks/TIBER-Rookies': path.resolve(REPO_ROOT, '../TIBER-Rookies'),
-  'Prometheus-Frameworks/TIBER-Teamstate': path.resolve(REPO_ROOT, '../TIBER-Teamstate'),
-};
-
-const resolveArchivedEvidence = (citation: EvidenceCitation): string | null => {
-  const checkoutDir = KNOWN_REPO_CHECKOUTS[citation.repo];
-  if (checkoutDir === undefined) return null;
-  try {
-    const bytes = execFileSync('git', ['show', `${citation.commit}:${citation.path}`], {
-      cwd: checkoutDir,
-      maxBuffer: 10 * 1024 * 1024,
-    });
-    const digest = sha256OfBytes(bytes);
-    return digest === citation.sha256 ? bytes.toString('utf-8') : null;
-  } catch {
-    return null;
-  }
-};
-
 // ---- Build the real mirror-verification context (file I/O lives here; the validator stays pure) ----
 
 /**
  * Dereferences a Forecast-repo path at the exact pinned `MIRROR_SOURCE_COMMIT_PIN`, never the current
  * worktree state. Reading straight off disk would prove nothing about which commit the bytes actually
  * came from -- an artifact could claim any 40-hex `mirror_source.commit` and still validate against
- * whatever happens to be checked out locally (owner review on PR #161, finding 4C).
+ * whatever happens to be checked out locally.
  */
 const resolveOwnRepoFileAtPin = (relPath: string): Buffer =>
   execFileSync('git', ['show', `${MIRROR_SOURCE_COMMIT_PIN}:${relPath}`], {
@@ -75,7 +51,7 @@ const resolveOwnRepoFileAtPin = (relPath: string): Buffer =>
  * the CLI runs, not what existed at `MIRROR_SOURCE_COMMIT_PIN`. A later unrelated commit adding a
  * stray file to this directory must not retroactively fail this immutable, pinned-commit audit, and
  * removing a file from the current checkout must not be able to conceal one that existed at the cited
- * commit (owner review on PR #161, finding 3).
+ * commit.
  */
 const resolveOwnRepoDirFilenamesAtPin = (relDir: string): string[] =>
   execFileSync('git', ['ls-tree', '--name-only', MIRROR_SOURCE_COMMIT_PIN, '--', `${relDir}/`], {
@@ -106,13 +82,6 @@ for (const row of mirrorJson.rows) {
   >;
 }
 
-const mirrorValueLiterals: MirrorVerificationContext['mirrorValueLiterals'] = {};
-for (const row of mirrorJson.rows) {
-  mirrorValueLiterals[row.player_id] = Object.fromEntries(
-    FIELD_FAMILIES.map((family) => [family, row[family].value !== null ? JSON.stringify(row[family].value) : null]),
-  ) as Record<FieldFamily, string | null>;
-}
-
 const mirrorContext: MirrorVerificationContext = {
   wrapper,
   wrapperSha256: sha256OfBytes(wrapperBytes),
@@ -123,12 +92,11 @@ const mirrorContext: MirrorVerificationContext = {
   },
   actualMirrorDirFilenames: resolveOwnRepoDirFilenamesAtPin(MIRROR_DIR),
   valuePresence,
-  mirrorValueLiterals,
 };
 
 const artifact = JSON.parse(readFileSync(repoPath(AVAILABILITY_EVIDENCE_PATH), 'utf-8')) as AvailabilityEvidenceArtifact;
 
-const result = validateRookieTransitionProfileAvailabilityEvidence(artifact, lockedSourcePlayerIds, mirrorContext, resolveArchivedEvidence);
+const result = validateRookieTransitionProfileAvailabilityEvidence(artifact, lockedSourcePlayerIds, mirrorContext);
 
 console.log('rookie_transition_profile_v0 Forecast source-availability audit (TIBER-Forecast#160)');
 console.log(`artifact: ${AVAILABILITY_EVIDENCE_PATH}`);

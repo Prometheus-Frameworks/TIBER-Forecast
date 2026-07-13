@@ -1,13 +1,15 @@
 /**
  * Governed Forecast source-availability evidence for the committed rookie_transition_profile_v0.2.0
- * mirror (Lane B of the pre-experiment readiness design; Forecast #160), implementing exactly §8-§13
+ * mirror (Lane B of the pre-experiment readiness design; Forecast #160), implementing design §8-§13
  * of the merged design pinned at commit `73834c2a30743c2587b32742c4e5c98320e33dfe`
- * (`docs/experiments/rookie-transition-profile-forecast-preexperiment-readiness-design-2026-07-11.md`).
+ * (`docs/experiments/rookie-transition-profile-forecast-preexperiment-readiness-design-2026-07-11.md`)
+ * to the extent schema 1.0.0 supports.
  *
  * This module is PURE (no I/O): it validates a candidate availability-evidence artifact against the
  * pinned mirror/source locks and the merged design's fail-closed rules. The CLI
- * (`scripts/runRookieTransitionProfileAvailabilityAudit.ts`) does the file I/O (reading the committed
- * mirror files, recomputing hashes, listing the mirror directory) and calls this module.
+ * (`scripts/runRookieTransitionProfileAvailabilityAudit.ts`) does the file I/O (dereferencing the
+ * committed mirror files at the pinned commit, recomputing hashes, listing the mirror directory) and
+ * calls this module.
  *
  * Lane B is independent of Lane A (#158/#159): this module never reads, imports, or depends on the
  * identity crosswalk, and never uses identity-resolution status to infer availability.
@@ -16,12 +18,22 @@
  * preferable to an assumed-eligible claim. Every check below collects an error rather than repairing,
  * defaulting, or dropping anything.
  *
- * Self-certification discipline (learned from Lane A's independent review, #159): `eligible_at_cutoff`
- * and `ineligible_after_cutoff` require real archived exact-value evidence AND an explicit,
- * attributable human review decision -- exactly the same discipline design §3.2 already required of
- * Lane A's identity evidence. This module enforces the structural/mechanical half of that; the
- * human-review half can never be satisfied by this implementing agent itself. No row in the artifact
- * this module ships with claims a review that did not occur.
+ * `eligible_at_cutoff`/`ineligible_after_cutoff` are HARD-REJECTED in schema 1.0.0 (decision made in
+ * response to a repo-owner review of #161): a two-round independent review established that proving
+ * either status honestly requires (a) binding a row's claimed value and timestamp to one exact source
+ * record for that player/field_family, not merely finding both strings somewhere in a reproduced
+ * archive, and (b) a typed semantic role proving a matched timestamp specifically means "this fact
+ * became publicly knowable," not an event/retrieval/other timestamp. Both require per-field_family
+ * structured evidence contracts (with deterministic recomputation for derived families such as
+ * `age_at_entry`) that do not exist as a design yet. Rather than continue layering narrower mechanical
+ * proxies for genuine record-level and semantic proof, this module hard-rejects the two statuses
+ * outright -- mirroring how Lane A ultimately hard-rejected its own unverifiable `3.3_governed_artifact`
+ * evidence class (#159) rather than accept mechanically-plausible-but-unauthoritative citations.
+ * `cutoff_at`/`cutoff_evidence_source` exist solely to support those two statuses, so both are also
+ * hard-required to stay `null` in schema 1.0.0 -- keeping them "technically settable but never
+ * consumed" would itself be exactly the unused speculative schema this decision means to avoid.
+ * A future schema version may lift this once a real per-field_family evidence contract is designed
+ * and pinned as separate follow-up work under issue #160.
  */
 
 import {
@@ -58,14 +70,16 @@ export const FORECAST_REPO = 'Prometheus-Frameworks/TIBER-Forecast' as const;
 /**
  * The exact Forecast commit this artifact's `mirror_source` must cite (the commit that merged Lane A,
  * #159). Pinned so `mirror_source.commit` cannot be silently swapped for any other 40-hex value while
- * the CLI still validates against whatever bytes happen to sit in the current worktree (owner review
- * on PR #161, finding 4C) -- the CLI dereferences the wrapper/mirror files at exactly this commit via
- * `git show`, rather than trusting the working tree to actually be at this commit.
+ * the CLI still validates against whatever bytes happen to sit in the current worktree -- the CLI
+ * dereferences the wrapper/mirror files (and the mirror directory listing) at exactly this commit via
+ * `git show`/`git ls-tree`, never trusting the working tree to actually be at this commit.
  */
 export const MIRROR_SOURCE_COMMIT_PIN = '53731cbfa4701aa9861ead4b2fb73c2c29afe89b' as const;
 
 // ---------------------------------------------------------------------------------------------
-// Closed enums (design §8, §11) -- any other token fails closed
+// Closed enums (design §8, §11) -- any other token fails closed. `eligible_at_cutoff` and
+// `ineligible_after_cutoff` remain recognized tokens (this is the full domain vocabulary) but are
+// hard-rejected for any row in schema 1.0.0 -- see module doc comment.
 // ---------------------------------------------------------------------------------------------
 
 export const FIELD_FAMILIES = [
@@ -85,31 +99,12 @@ export const AVAILABILITY_STATUSES = [
 ] as const;
 export type AvailabilityStatus = (typeof AVAILABILITY_STATUSES)[number];
 
-const GIT_COMMIT_SHA_PATTERN = /^[0-9a-f]{40}$/;
-const SHA256_PATTERN = /^[0-9a-f]{64}$/;
+/** Statuses usable by a row in schema 1.0.0 -- `eligible_at_cutoff`/`ineligible_after_cutoff` are hard-rejected. */
+const HARD_REJECTED_STATUSES = ['eligible_at_cutoff', 'ineligible_after_cutoff'] as const;
 
 // ---------------------------------------------------------------------------------------------
 // Artifact shape (design §13)
 // ---------------------------------------------------------------------------------------------
-
-export interface EvidenceCitation {
-  repo: string;
-  commit: string;
-  path: string;
-  /** Non-null only where a schema/spec_version applies; otherwise null with schema_not_applicable_reason. */
-  schema_version: string | null;
-  schema_not_applicable_reason: string | null;
-  sha256: string;
-  original_url: string;
-  retrieved_at: string;
-}
-
-export interface CutoffEvidenceSource extends EvidenceCitation {
-  reviewer: string;
-  reviewed_at: string;
-  source_timezone_or_offset: string;
-  published_draft_start_at: string;
-}
 
 export interface MirrorSourceReference {
   repo: string;
@@ -127,25 +122,19 @@ export interface SourceIdentityKey {
   source_season: number;
 }
 
-export interface RowEvidenceSource extends EvidenceCitation {
-  /** The exact literal string the archived content must be shown to contain (design §10/§12). */
-  mirrored_value_literal: string;
-}
-
-export interface ReviewDecision {
-  reviewer: string;
-  reviewed_at: string;
-}
-
 export interface AvailabilityEvidenceRow {
   field_family: FieldFamily;
   source_identity: SourceIdentityKey;
   availability_status: AvailabilityStatus;
-  available_at: string | null;
-  source_snapshot_as_of: string | null;
-  evidence_source: RowEvidenceSource | null;
+  /** Always null in schema 1.0.0 -- reserved for a future schema version's evidence contract. */
+  available_at: null;
+  /** Always null in schema 1.0.0 -- no reproducible snapshot-evidence contract exists yet. */
+  source_snapshot_as_of: null;
+  /** Always null in schema 1.0.0 -- reserved for a future schema version's evidence contract. */
+  evidence_source: null;
   notes: string | null;
-  review_decision: ReviewDecision | null;
+  /** Always null in schema 1.0.0 -- reserved for a future schema version's evidence contract. */
+  review_decision: null;
 }
 
 export const AVAILABILITY_EVIDENCE_ROW_FIELDS = [
@@ -160,8 +149,8 @@ export const AVAILABILITY_EVIDENCE_ROW_FIELDS = [
 ] as const;
 
 // ---------------------------------------------------------------------------------------------
-// Exact, closed nested field sets (owner review on PR #161, finding 4) -- no nested object may
-// carry an undeclared extra key any more than a row or the top-level artifact may.
+// Exact, closed nested field sets -- no nested object may carry an undeclared extra key any more
+// than a row or the top-level artifact may.
 // ---------------------------------------------------------------------------------------------
 
 export const SOURCE_IDENTITY_FIELDS = ['source_repository', 'source_schema', 'source_player_id', 'source_season'] as const;
@@ -172,25 +161,6 @@ export const GOVERNING_DESIGN_FIELDS = [
   'readiness_design_merge_commit',
   'design_documents',
 ] as const;
-export const EVIDENCE_CITATION_FIELDS = [
-  'repo',
-  'commit',
-  'path',
-  'schema_version',
-  'schema_not_applicable_reason',
-  'sha256',
-  'original_url',
-  'retrieved_at',
-] as const;
-export const CUTOFF_EVIDENCE_SOURCE_FIELDS = [
-  ...EVIDENCE_CITATION_FIELDS,
-  'reviewer',
-  'reviewed_at',
-  'source_timezone_or_offset',
-  'published_draft_start_at',
-] as const;
-export const ROW_EVIDENCE_SOURCE_FIELDS = [...EVIDENCE_CITATION_FIELDS, 'mirrored_value_literal'] as const;
-export const REVIEW_DECISION_FIELDS = ['reviewer', 'reviewed_at'] as const;
 
 export interface AvailabilityStatusCounts {
   eligible_at_cutoff: number;
@@ -219,15 +189,17 @@ export interface AvailabilityEvidenceArtifact {
   generated_at: string;
   generated_at_is_operational_timestamp_only_not_fact_availability: true;
   season: number;
-  cutoff_at: string | null;
-  cutoff_evidence_source: CutoffEvidenceSource | null;
+  /** Always null in schema 1.0.0 -- exists solely to support eligible_at_cutoff/ineligible_after_cutoff, which are hard-rejected. */
+  cutoff_at: null;
+  /** Always null in schema 1.0.0 -- see cutoff_at. */
+  cutoff_evidence_source: null;
   mirror_source: MirrorSourceReference;
   status_counts: AvailabilityStatusCounts;
   status_counts_by_family: Record<FieldFamily, AvailabilityStatusCounts>;
   rows: AvailabilityEvidenceRow[];
 }
 
-/** The exact, closed set of top-level artifact fields (owner review on PR #161, finding 5) -- no undeclared claim may be added silently. */
+/** The exact, closed set of top-level artifact fields -- no undeclared claim may be added silently. */
 export const AVAILABILITY_EVIDENCE_TOP_LEVEL_FIELDS = [
   'kind',
   'schema_version',
@@ -260,9 +232,12 @@ export type AvailabilityAuditDecision = (typeof AVAILABILITY_AUDIT_DECISIONS)[nu
  * - `blocked`: the artifact fails any fail-closed validation check.
  * - `requires_followup`: the artifact is valid but at least one row remains
  *   `unresolved_no_availability_proof`.
- * - `complete`: the artifact is valid and no row remains `unresolved_no_availability_proof`. Per
- *   issue #160, `complete` does NOT mean every row is eligible -- honest `ineligible_after_cutoff`
- *   and `unavailable` rows are terminal audit outcomes that do not block `complete`.
+ * - `complete`: the artifact is valid and no row remains `unresolved_no_availability_proof`. In
+ *   schema 1.0.0, since `eligible_at_cutoff`/`ineligible_after_cutoff` are hard-rejected, this is
+ *   only reachable if every locked (player, field_family) pair's real pinned mirror value is null --
+ *   i.e. every row is honestly `unavailable`. This is not currently the case (223 of 240 pairs have a
+ *   present value), so `complete` is not reachable for this population until a future schema version
+ *   lifts the hard-rejection.
  */
 export const decideAvailabilityAudit = (valid: boolean, statusCounts: AvailabilityStatusCounts): AvailabilityAuditDecision => {
   if (!valid) return 'rookie_transition_profile_forecast_source_availability_audit_blocked';
@@ -276,39 +251,28 @@ export const decideAvailabilityAudit = (valid: boolean, statusCounts: Availabili
 // Validation
 // ---------------------------------------------------------------------------------------------
 
-/** Resolves an archived-evidence citation to its content, or null if not reproducible. Injected so this module stays pure. */
-export type ArchivedEvidenceResolver = (citation: EvidenceCitation) => string | null;
-
 /**
  * Everything this validator needs to know about the real, committed mirror -- computed by the CLI
  * (which does the actual file I/O) so this module stays pure. `recomputedHashes`/`wrapperSha256` must
- * be computed from the ACTUAL bytes on disk at validation time, never trusted from the wrapper's own
+ * be computed from the ACTUAL bytes at the pinned commit, never trusted from the wrapper's own
  * self-report.
  */
 export interface MirrorVerificationContext {
-  /** Parsed content of the committed ROOKIE_TRANSITION_PROFILE_V0_MIRROR_PROVENANCE.json wrapper. */
+  /** Parsed content of the committed ROOKIE_TRANSITION_PROFILE_V0_MIRROR_PROVENANCE.json wrapper, dereferenced at MIRROR_SOURCE_COMMIT_PIN. */
   wrapper: {
     kind: string;
     schema_version: string;
     source_lock: { repo: string; commit: string; schema_version: string; season: number; row_count: number };
     forecast_mirror: { paths: Record<string, string>; mirrored_hashes: Record<string, string> };
   };
-  /** SHA-256 of the wrapper file's own actual bytes, recomputed -- never the wrapper's self-report. */
+  /** SHA-256 of the wrapper file's own actual bytes at the pinned commit, recomputed -- never the wrapper's self-report. */
   wrapperSha256: string;
-  /** SHA-256 of the actual mirror_json/mirror_csv/mirror_manifest bytes on disk, recomputed. */
+  /** SHA-256 of the actual mirror_json/mirror_csv/mirror_manifest bytes at the pinned commit, recomputed. */
   recomputedMirrorHashes: { mirror_json: string; mirror_csv: string; mirror_manifest: string };
-  /** Real directory listing of the mirror directory at validation time. */
+  /** Directory listing of the mirror directory at the pinned commit (via `git ls-tree`), not the live worktree. */
   actualMirrorDirFilenames: string[];
   /** Whether the pinned mirror value is present (non-null) for (source_player_id, field_family), derived from the actual mirror JSON. */
   valuePresence: Record<string, Record<FieldFamily, boolean>>;
-  /**
-   * Canonical `JSON.stringify` form of the REAL pinned mirror value for (source_player_id,
-   * field_family), or null when the value itself is null. A row's `mirrored_value_literal` must
-   * match this exactly (design §10/§12) -- otherwise a row could claim eligibility for a
-   * self-declared literal unrelated to what the mirror actually carries, verified only against an
-   * archive the same author also controls. Never accepted on the archive check alone.
-   */
-  mirrorValueLiterals: Record<string, Record<FieldFamily, string | null>>;
 }
 
 export interface AvailabilityEvidenceValidationResult {
@@ -324,44 +288,11 @@ const isPlainObject = (value: unknown): value is Record<string, unknown> =>
 
 const isNonEmptyString = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
 
-const isValidCitation = (value: unknown): value is EvidenceCitation => {
-  if (!isPlainObject(value)) return false;
-  if (!isNonEmptyString(value.repo) || !isNonEmptyString(value.path)) return false;
-  if (typeof value.commit !== 'string' || !GIT_COMMIT_SHA_PATTERN.test(value.commit)) return false;
-  if (typeof value.sha256 !== 'string' || !SHA256_PATTERN.test(value.sha256)) return false;
-  if (!isNonEmptyString(value.original_url) || !isParseableDateOrInstant(value.retrieved_at)) return false;
-  const hasSchema = isNonEmptyString(value.schema_version);
-  const hasReason = isNonEmptyString(value.schema_not_applicable_reason);
-  if (value.schema_version === null) {
-    if (!hasReason) return false;
-  } else if (!hasSchema || value.schema_not_applicable_reason !== null) {
-    return false;
-  }
-  return true;
-};
-
 const isParseableOffsetInstant = (value: unknown): value is string => {
   if (typeof value !== 'string') return false;
   if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/.test(value)) return false;
   return !Number.isNaN(Date.parse(value));
 };
-
-/** Looser than isParseableOffsetInstant: accepts audit-trail bookkeeping dates like reviewed_at/retrieved_at, which may be a bare date, not necessarily a fully-qualified instant. */
-const isParseableDateOrInstant = (value: unknown): value is string =>
-  typeof value === 'string' && value.trim().length > 0 && !Number.isNaN(Date.parse(value));
-
-/** Extracts and normalizes the trailing offset (`Z` or `+HH:MM`/`-HH:MM`) of an offset-bearing instant string, or null if absent. `Z` normalizes to `+00:00`. */
-const extractOffsetSuffix = (instant: string): string | null => {
-  const match = /(Z|[+-]\d{2}:\d{2})$/.exec(instant);
-  if (!match) return null;
-  return match[1] === 'Z' ? '+00:00' : match[1];
-};
-
-const normalizeOffset = (offset: string): string => (offset === 'Z' ? '+00:00' : offset);
-
-const NUMERIC_OFFSET_PATTERN = /^(Z|[+-]\d{2}:\d{2})$/;
-/** Schema 1.0.0 is closed to numeric offsets only (`Z` or `+HH:MM`/`-HH:MM`) -- a named zone (`ET`, `America/New_York`) has no deterministic, DST-aware conversion contract defined and must fail closed rather than be silently accepted. */
-const isNumericOffset = (value: unknown): value is string => typeof value === 'string' && NUMERIC_OFFSET_PATTERN.test(value);
 
 /** True iff `value`'s own keys are exactly `keys` (no missing, extra, or substituted key). */
 const hasExactKeys = (value: Record<string, unknown>, keys: readonly string[]): boolean => {
@@ -374,7 +305,6 @@ export const validateRookieTransitionProfileAvailabilityEvidence = (
   candidate: unknown,
   lockedSourcePlayerIds: readonly string[],
   mirrorContext: MirrorVerificationContext,
-  resolveArchivedEvidence: ArchivedEvidenceResolver,
 ): AvailabilityEvidenceValidationResult => {
   const errors: string[] = [];
   const statusCounts = zeroStatusCounts();
@@ -496,8 +426,8 @@ export const validateRookieTransitionProfileAvailabilityEvidence = (
     }
 
     // The wrapper must declare exactly the four authorized local paths -- a substituted or missing
-    // path entry must not be able to pass just because the live directory happens to contain the
-    // expected filenames (owner review on PR #161, finding 4B).
+    // path entry must not be able to pass just because the directory happens to contain the expected
+    // filenames.
     const declaredPaths = wrapper.forecast_mirror?.paths;
     const expectedPaths: Record<string, string> = {
       mirror_json: MIRROR_JSON_PATH,
@@ -517,79 +447,11 @@ export const validateRookieTransitionProfileAvailabilityEvidence = (
     }
   }
 
-  // ---- Cutoff (design §8) -------------------------------------------------------------------------
-  const cutoffAt = artifact.cutoff_at ?? null;
-  const cutoffSource = artifact.cutoff_evidence_source ?? null;
-  if (cutoffAt === null) {
-    if (cutoffSource !== null) errors.push('cutoff_evidence_source must be null while cutoff_at is null');
-  } else {
-    if (!isParseableOffsetInstant(cutoffAt)) {
-      errors.push('cutoff_at must be a fully-qualified, offset-bearing ISO-8601 instant');
-    }
-    if (!isValidCitation(cutoffSource)) {
-      errors.push('cutoff_at is non-null but cutoff_evidence_source is missing or structurally incomplete');
-    } else {
-      const source = cutoffSource as CutoffEvidenceSource;
-      if (!hasExactKeys(source as unknown as Record<string, unknown>, CUTOFF_EVIDENCE_SOURCE_FIELDS)) {
-        errors.push(`cutoff_evidence_source fields must be exactly ${JSON.stringify(CUTOFF_EVIDENCE_SOURCE_FIELDS)}, found [${Object.keys(source).join(', ')}]`);
-      }
-      if (!isNonEmptyString(source.reviewer) || !isParseableDateOrInstant(source.reviewed_at)) {
-        errors.push('cutoff_evidence_source requires a named human reviewer and a parseable dated sign-off');
-      }
-      // Schema 1.0.0 is closed to numeric offsets only -- a named zone (`ET`, `America/New_York`)
-      // has no deterministic, DST-aware conversion contract defined here and must fail closed rather
-      // than be silently accepted (owner review on PR #161, finding 2).
-      if (!isNumericOffset(source.source_timezone_or_offset)) {
-        errors.push('cutoff_evidence_source.source_timezone_or_offset must be a numeric offset (Z or +HH:MM/-HH:MM) -- named timezones are not supported in schema 1.0.0');
-      }
-      if (!isNonEmptyString(source.published_draft_start_at)) {
-        errors.push('cutoff_evidence_source requires published_draft_start_at');
-      }
-      // Retrieval cannot precede the review that depends on it; and the citation retrieval cannot
-      // itself be antedated relative to the human sign-off that reviewed it.
-      if (isParseableDateOrInstant(source.retrieved_at) && isParseableDateOrInstant(source.reviewed_at)) {
-        if (Date.parse(source.reviewed_at) < Date.parse(source.retrieved_at)) {
-          errors.push('cutoff_evidence_source.reviewed_at must not be earlier than retrieved_at (review cannot precede retrieval)');
-        }
-      }
-      // published_draft_start_at must itself be a parseable offset instant as a hard, independent
-      // requirement -- previously this was only implicitly required by the strict-ordering check
-      // below, which simply skipped itself (no error at all) when the value failed to parse, letting
-      // an unparseable string like "not-a-timestamp" bypass the cutoff-vs-draft-start comparison
-      // entirely (owner review on PR #161, finding 3).
-      if (isNonEmptyString(source.published_draft_start_at) && !isParseableOffsetInstant(source.published_draft_start_at)) {
-        errors.push('cutoff_evidence_source.published_draft_start_at must be a fully-qualified, offset-bearing ISO-8601 instant');
-      }
-      const content = resolveArchivedEvidence(source);
-      if (content === null) {
-        errors.push('cutoff_evidence_source is not reproducible from its citation (design §8/§12 fail-closed)');
-      } else {
-        if (!content.includes(String(SOURCE_SEASON))) errors.push('cutoff_evidence_source archive does not state the locked season');
-        if (isNonEmptyString(source.published_draft_start_at) && !content.includes(source.published_draft_start_at)) {
-          errors.push('cutoff_evidence_source archive does not contain the claimed published_draft_start_at');
-        }
-        if (isNumericOffset(source.source_timezone_or_offset) && !content.includes(source.source_timezone_or_offset)) {
-          errors.push('cutoff_evidence_source archive does not state the claimed source_timezone_or_offset');
-        }
-      }
-      // The claimed source_timezone_or_offset must agree with the offset actually embedded in
-      // published_draft_start_at -- otherwise the two fields could disagree with each other while each
-      // individually looks plausible (owner review on PR #161, finding 3).
-      if (isParseableOffsetInstant(source.published_draft_start_at) && isNumericOffset(source.source_timezone_or_offset)) {
-        const embeddedOffset = extractOffsetSuffix(source.published_draft_start_at);
-        if (embeddedOffset !== normalizeOffset(source.source_timezone_or_offset)) {
-          errors.push('cutoff_evidence_source.source_timezone_or_offset does not agree with the offset embedded in published_draft_start_at');
-        }
-      }
-      if (
-        isParseableOffsetInstant(cutoffAt) &&
-        isParseableOffsetInstant(source.published_draft_start_at) &&
-        !(Date.parse(cutoffAt) < Date.parse(source.published_draft_start_at))
-      ) {
-        errors.push('cutoff_at must be strictly earlier than the archived published_draft_start_at');
-      }
-    }
-  }
+  // ---- Cutoff: hard-required null in schema 1.0.0 -----------------------------------------------
+  // cutoff_at/cutoff_evidence_source exist solely to support eligible_at_cutoff/ineligible_after_cutoff,
+  // which are hard-rejected below -- so both must stay null. See module doc comment.
+  if (artifact.cutoff_at !== null) errors.push('cutoff_at must be null in schema 1.0.0');
+  if (artifact.cutoff_evidence_source !== null) errors.push('cutoff_evidence_source must be null in schema 1.0.0');
 
   // ---- Rows (design §10-§13) -----------------------------------------------------------------------
   const rows = artifact.rows;
@@ -649,14 +511,22 @@ export const validateRookieTransitionProfileAvailabilityEvidence = (
     statusCounts[status as AvailabilityStatus] += 1;
     statusCountsByFamily[family as FieldFamily][status as AvailabilityStatus] += 1;
 
-    // source_snapshot_as_of is hard-rejected as non-null in schema 1.0.0: no reproducible
-    // snapshot-evidence contract exists yet to support a factual timestamp claim here, and allowing
-    // an arbitrary non-null value (even a well-formed instant) would be an unsourced timing claim
-    // parallel to the one available_at's archive-binding check exists to prevent (owner review on
-    // PR #161, finding 4).
-    if (row.source_snapshot_as_of !== null) {
-      errors.push(`${rowKey}: source_snapshot_as_of must be null in schema 1.0.0 -- no reproducible snapshot-evidence contract exists yet to support a non-null claim`);
+    // eligible_at_cutoff / ineligible_after_cutoff are hard-rejected in schema 1.0.0 regardless of
+    // how well-evidenced the row claims to be -- see module doc comment. This mirrors how Lane A
+    // ultimately hard-rejected its own unverifiable 3.3_governed_artifact evidence class (#159).
+    if ((HARD_REJECTED_STATUSES as readonly string[]).includes(status)) {
+      errors.push(
+        `${rowKey}: ${status} is hard-rejected in schema 1.0.0 pending a per-field_family structured evidence contract (design follow-up under issue #160) -- no row may claim this status yet, however well-evidenced`,
+      );
+      return;
     }
+
+    if (row.source_snapshot_as_of !== null) {
+      errors.push(`${rowKey}: source_snapshot_as_of must be null in schema 1.0.0`);
+    }
+    if (row.available_at !== null) errors.push(`${rowKey}: available_at must be null in schema 1.0.0`);
+    if (row.evidence_source !== null) errors.push(`${rowKey}: evidence_source must be null in schema 1.0.0`);
+    if (row.review_decision !== null) errors.push(`${rowKey}: review_decision must be null in schema 1.0.0`);
 
     if (row.notes !== null && typeof row.notes !== 'string') {
       errors.push(`${rowKey}: notes must be null or a string`);
@@ -670,99 +540,6 @@ export const validateRookieTransitionProfileAvailabilityEvidence = (
       errors.push(`${rowKey}: the pinned mirror value is actually null for this player/family, but status is not 'unavailable'`);
     } else if (presence === true && status === 'unavailable') {
       errors.push(`${rowKey}: status is 'unavailable' but the pinned mirror value is actually present -- a present value can never be marked unavailable`);
-    }
-
-    // official_postdraft_outcome is definitionally post-draft; it may never be pre-draft-eligible here.
-    if (family === 'official_postdraft_outcome' && status === 'eligible_at_cutoff') {
-      errors.push(`${rowKey}: official_postdraft_outcome may never be eligible_at_cutoff (design §10) -- this is definitionally post-draft information`);
-    }
-
-    if (status === 'unavailable' || status === 'unresolved_no_availability_proof') {
-      if (row.available_at !== null) errors.push(`${rowKey}: ${status} row must carry a null available_at`);
-      if (row.evidence_source !== null) errors.push(`${rowKey}: ${status} row must carry a null evidence_source`);
-      if (row.review_decision !== null) errors.push(`${rowKey}: ${status} row must carry a null review_decision -- only a human-reviewed eligible/ineligible row may claim one`);
-      return;
-    }
-
-    // eligible_at_cutoff / ineligible_after_cutoff both require real, reproduced, exact-value evidence
-    // AND an explicit attributable human review decision -- never self-certified.
-    if (cutoffAt === null || !isParseableOffsetInstant(cutoffAt)) {
-      errors.push(`${rowKey}: ${status} requires a validly pinned cutoff_at, which is not present`);
-      return;
-    }
-    const availableAt = row.available_at;
-    if (!isParseableOffsetInstant(availableAt)) {
-      errors.push(`${rowKey}: ${status} requires a non-null, parseable, offset-bearing available_at`);
-      return;
-    }
-    const evidenceSource = row.evidence_source;
-    if (
-      !isValidCitation(evidenceSource) ||
-      !hasExactKeys(evidenceSource as unknown as Record<string, unknown>, ROW_EVIDENCE_SOURCE_FIELDS) ||
-      !isNonEmptyString((evidenceSource as RowEvidenceSource).mirrored_value_literal)
-    ) {
-      errors.push(`${rowKey}: ${status} requires a structurally complete evidence_source (exactly the nine contract fields) with a non-empty mirrored_value_literal`);
-      return;
-    }
-    const content = resolveArchivedEvidence(evidenceSource as RowEvidenceSource);
-    if (content === null) {
-      errors.push(`${rowKey}: evidence_source is not reproducible from its citation (design §12 fail-closed)`);
-      return;
-    }
-    if (!content.includes((evidenceSource as RowEvidenceSource).mirrored_value_literal)) {
-      errors.push(`${rowKey}: archived evidence does not actually contain the claimed mirrored_value_literal`);
-      return;
-    }
-    // Bind the claimed available_at to the archive too -- checking the archive for the value alone
-    // would let a row cite content that proves the value existed SOMEWHERE while self-declaring an
-    // arbitrary available_at date the archive never actually states, certifying a timing claim the
-    // evidence never supports.
-    if (!content.includes(availableAt)) {
-      errors.push(`${rowKey}: archived evidence does not actually contain the claimed available_at -- a dated snapshot must state the date it was taken, not just the value`);
-      return;
-    }
-    // Cross-check against the REAL pinned mirror value, not just the self-archived evidence -- a row
-    // must not be able to claim eligibility for a self-declared literal unrelated to what the mirror
-    // actually carries, verified only against an archive the same author also controls.
-    const realLiteral = mirrorContext.mirrorValueLiterals[playerId]?.[family as FieldFamily];
-    if (realLiteral === undefined) {
-      errors.push(`${rowKey}: no real pinned mirror value-literal fact is available to cross-check against (unknown player/family)`);
-      return;
-    }
-    if (realLiteral === null || realLiteral !== (evidenceSource as RowEvidenceSource).mirrored_value_literal) {
-      errors.push(`${rowKey}: mirrored_value_literal does not match the real pinned mirror value for this player/field_family`);
-      return;
-    }
-    const reviewDecision = row.review_decision;
-    if (
-      !isPlainObject(reviewDecision) ||
-      !hasExactKeys(reviewDecision, REVIEW_DECISION_FIELDS) ||
-      !isNonEmptyString(reviewDecision.reviewer) ||
-      !isParseableDateOrInstant(reviewDecision.reviewed_at)
-    ) {
-      errors.push(`${rowKey}: ${status} requires an explicit, attributable human review_decision (exactly reviewer and a parseable reviewed_at)`);
-      return;
-    }
-    // Retrieval cannot precede the fact it retrieves evidence of, and review cannot precede the
-    // retrieval it reviews -- a coherent chronology, not merely independently well-formed dates.
-    const evidenceRetrievedAt = (evidenceSource as RowEvidenceSource).retrieved_at;
-    if (isParseableDateOrInstant(evidenceRetrievedAt) && Date.parse(evidenceRetrievedAt) < Date.parse(availableAt)) {
-      errors.push(`${rowKey}: evidence_source.retrieved_at must not be earlier than available_at (cannot retrieve evidence of a fact before it existed)`);
-    }
-    if (
-      isParseableDateOrInstant(evidenceRetrievedAt) &&
-      isParseableDateOrInstant(reviewDecision.reviewed_at) &&
-      Date.parse(reviewDecision.reviewed_at) < Date.parse(evidenceRetrievedAt)
-    ) {
-      errors.push(`${rowKey}: review_decision.reviewed_at must not be earlier than evidence_source.retrieved_at (review cannot precede retrieval)`);
-    }
-    const availableAtMs = Date.parse(availableAt);
-    const cutoffMs = Date.parse(cutoffAt);
-    if (status === 'eligible_at_cutoff' && !(availableAtMs < cutoffMs)) {
-      errors.push(`${rowKey}: eligible_at_cutoff requires available_at < cutoff_at`);
-    }
-    if (status === 'ineligible_after_cutoff' && !(availableAtMs >= cutoffMs)) {
-      errors.push(`${rowKey}: ineligible_after_cutoff requires available_at >= cutoff_at`);
     }
   });
 
