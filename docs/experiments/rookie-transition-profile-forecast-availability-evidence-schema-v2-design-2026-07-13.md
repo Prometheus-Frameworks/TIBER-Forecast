@@ -258,6 +258,7 @@ Every one of the 48 locked identities must have exactly one decision row for eve
   "mirror_value_literal": "{\"big_board_rank\":2,\"draft_capital_proxy_0_100\":95.0}",
   "availability_status": "unresolved_no_availability_proof",
   "evidence_package_ids": [],
+  "blocking_reason": null,
   "computed_available_at": null,
   "review_decision": null,
   "notes": null
@@ -268,9 +269,24 @@ Every one of the 48 locked identities must have exactly one decision row for eve
 validator against the real pinned mirror value, never trusted from the row alone — the gap closed
 proactively before any `1.0.0` review). `availability_status` and `computed_available_at` are
 **validator-computed outputs**, never author-declared inputs (§9); a candidate row may propose
-`evidence_package_ids` and let the validator derive everything else. `evidence_package_ids` is empty
-for `unavailable`/`unresolved_no_availability_proof` rows (nothing to cite) and non-empty only for
-rows the validator accepts as `eligible_at_cutoff`/`ineligible_after_cutoff`.
+`evidence_package_ids` and let the validator derive everything else.
+
+**`evidence_package_ids`/`blocking_reason` reconciliation** (fixed after review: the original draft
+required `evidence_package_ids` to be empty for every `unresolved_no_availability_proof` row, which
+made it impossible to record *why* an attempted evidence package was rejected — exactly the
+diagnostic §12 requires for contradictory/incomplete/competing evidence. The corrected rule:
+
+- `unavailable`: `evidence_package_ids` must be empty and `blocking_reason` must be `null` — the
+  mirror value itself is null, so no evidence attempt is meaningful here at all.
+- `unresolved_no_availability_proof`: `evidence_package_ids` **may** be non-empty, referencing one or
+  more attempted-but-rejected packages (zero or more attempts are both honest states — schema
+  `1.0.0`'s baseline, where no attempt was ever made, remains a valid special case with an empty
+  list). Whenever `evidence_package_ids` is non-empty, `blocking_reason` must be one of the closed
+  reasons in §12.1, explaining why the cited attempt did not resolve the row; whenever
+  `evidence_package_ids` is empty, `blocking_reason` must be `null` (nothing was attempted, so there
+  is nothing to explain).
+- `eligible_at_cutoff`/`ineligible_after_cutoff`: `evidence_package_ids` must be non-empty (the
+  accepted evidence) and `blocking_reason` must be `null` (nothing blocked it).
 
 ## 7. Common evidence-package contract
 
@@ -481,6 +497,29 @@ only `ineligible_after_cutoff` or (incomplete proof) `unresolved_no_availability
 incomplete, or multiple competing evidence packages for one row fail closed to
 `unresolved_no_availability_proof` with an explicit blocking reason recorded — the validator never
 selects a "best" timestamp among disagreeing candidates.
+
+### 12.1 Closed `blocking_reason` enum
+
+Recorded on a row (§6) whenever `evidence_package_ids` is non-empty but the row still resolves to
+`unresolved_no_availability_proof` — i.e., evidence was attempted and mechanically rejected, and the
+reason is itself part of the governed, auditable record, not narrative prose:
+
+```text
+zero_record_matches
+multiple_record_matches
+cross_record_mismatch                          # value/timestamp/subject bound to different records
+prohibited_subject_binding_method
+availability_time_kind_missing_or_prohibited
+contradictory_evidence
+incomplete_evidence
+cohort_or_population_mismatch
+derivation_contract_mismatch
+archive_or_record_hash_mismatch
+other_explicit_reason                          # requires a non-null `notes` explanation
+```
+
+`null` whenever `evidence_package_ids` is empty (nothing attempted) or the row is `unavailable`
+(nothing to evidence) or `eligible_at_cutoff`/`ineligible_after_cutoff` (nothing blocked it).
 
 ## 13. Derived-value availability rule
 

@@ -116,13 +116,14 @@
     "row_population": "48 locked identities x 5 field families = 240 rows; zero/multiple/missing/extra matches fail closed",
     "row_fields": [
       "source_identity", "field_family", "mirror_value_literal", "availability_status",
-      "evidence_package_ids", "computed_available_at", "review_decision", "notes"
+      "evidence_package_ids", "blocking_reason", "computed_available_at", "review_decision", "notes"
     ],
     "row_field_notes": {
       "mirror_value_literal": "cross-checked by the validator against the real pinned mirror value, never trusted from the row alone (schema 1.0.0's proactive self-certification fix, carried forward)",
       "availability_status": "validator-computed output, never author-declared input",
       "computed_available_at": "validator-computed output, never author-declared input",
-      "evidence_package_ids": "empty for unavailable/unresolved_no_availability_proof rows; non-empty only for validator-accepted eligible_at_cutoff/ineligible_after_cutoff rows"
+      "evidence_package_ids": "fixed after review (evidence_package_ids/blocking_reason reconciliation): empty and blocking_reason null for unavailable rows (nothing to evidence); MAY be non-empty for unresolved_no_availability_proof rows to reference attempted-but-rejected packages, paired with a required non-null blocking_reason (empty is also valid here, meaning no attempt was ever made -- schema 1.0.0's baseline case); must be non-empty with blocking_reason null for validator-accepted eligible_at_cutoff/ineligible_after_cutoff rows",
+      "blocking_reason": "closed enum recorded whenever evidence was attempted but the row still resolves to unresolved_no_availability_proof -- see status_computation.blocking_reason_enum"
     },
     "mirror_source": "reuses schema 1.0.0's pinned-commit dereferencing contract unchanged (git show/git ls-tree, never the live worktree; source_lock including commit, forecast_mirror.paths, mirrored_hashes all recomputed)"
   },
@@ -196,6 +197,23 @@
     ],
     "official_postdraft_outcome_restriction": "may never resolve to eligible_at_cutoff; complete evidence yields only ineligible_after_cutoff, incomplete yields unresolved_no_availability_proof",
     "fail_closed_behavior": "contradictory, incomplete, or multiple competing evidence packages fail closed to unresolved_no_availability_proof with an explicit blocking reason; the validator never selects a best timestamp among disagreeing candidates",
+    "blocking_reason_enum": {
+      "fixed_after_review": "the original draft required evidence_package_ids empty for every unresolved_no_availability_proof row, making it impossible to record why an attempted package was rejected; unresolved rows may now reference attempted-but-rejected packages, paired with one of these closed reasons",
+      "closed_set": [
+        "zero_record_matches",
+        "multiple_record_matches",
+        "cross_record_mismatch",
+        "prohibited_subject_binding_method",
+        "availability_time_kind_missing_or_prohibited",
+        "contradictory_evidence",
+        "incomplete_evidence",
+        "cohort_or_population_mismatch",
+        "derivation_contract_mismatch",
+        "archive_or_record_hash_mismatch",
+        "other_explicit_reason (requires a non-null notes explanation)"
+      ],
+      "null_when": "evidence_package_ids is empty (nothing attempted), or the row is unavailable, or the row is eligible_at_cutoff/ineligible_after_cutoff (nothing blocked it)"
+    },
     "computed_available_at_rule": "max(all required source-record public-availability timestamps, all required derivation-contract availability timestamps, all required cohort/context snapshot availability timestamps); every input actually used to reproduce the exact mirrored value must be included",
     "computed_available_at_by_family": {
       "draft_capital": "max(big-board snapshot, band-table derivation contract)",
