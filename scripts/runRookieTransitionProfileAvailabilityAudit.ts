@@ -1,0 +1,118 @@
+/**
+ * Lane B source-availability audit CLI (Forecast #160): validates the committed governed
+ * availability-evidence artifact (`data/experiments/rookieTransitionProfile/...`) against the
+ * committed rookie_transition_profile_v0.2.0 mirror's locked population and provenance wrapper,
+ * dereferenced at the exact pinned Forecast commit, using the pure fail-closed validator in
+ * `src/rehearsal/rookieTransitionProfileAvailabilityEvidence.ts`, then prints the audit accounting
+ * (status counts overall and by field family) and exactly one required decision.
+ *
+ * Read-only: this script never writes, refreshes, or repairs anything. A validation failure exits
+ * non-zero with every collected error -- fail-closed, never best-effort.
+ */
+
+import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import { MIRROR_DIR, MIRROR_CSV_PATH, MIRROR_JSON_PATH, MIRROR_MANIFEST_PATH, MIRROR_PROVENANCE_PATH } from '../src/rehearsal/rookieTransitionProfileMirror.js';
+import {
+  AVAILABILITY_EVIDENCE_PATH,
+  FIELD_FAMILIES,
+  MIRROR_SOURCE_COMMIT_PIN,
+  validateRookieTransitionProfileAvailabilityEvidence,
+  type AvailabilityEvidenceArtifact,
+  type FieldFamily,
+  type MirrorVerificationContext,
+} from '../src/rehearsal/rookieTransitionProfileAvailabilityEvidence.js';
+
+const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const repoPath = (rel: string): string => path.join(REPO_ROOT, rel);
+const sha256OfBytes = (bytes: Buffer): string => createHash('sha256').update(bytes).digest('hex');
+
+// ---- Build the real mirror-verification context (file I/O lives here; the validator stays pure) ----
+
+/**
+ * Dereferences a Forecast-repo path at the exact pinned `MIRROR_SOURCE_COMMIT_PIN`, never the current
+ * worktree state. Reading straight off disk would prove nothing about which commit the bytes actually
+ * came from -- an artifact could claim any 40-hex `mirror_source.commit` and still validate against
+ * whatever happens to be checked out locally.
+ */
+const resolveOwnRepoFileAtPin = (relPath: string): Buffer =>
+  execFileSync('git', ['show', `${MIRROR_SOURCE_COMMIT_PIN}:${relPath}`], {
+    cwd: REPO_ROOT,
+    maxBuffer: 10 * 1024 * 1024,
+  });
+
+/**
+ * Lists a directory's entries at the exact pinned commit via `git ls-tree`, never the live worktree
+ * listing -- `readdirSync` on the current checkout describes whatever files happen to be present when
+ * the CLI runs, not what existed at `MIRROR_SOURCE_COMMIT_PIN`. A later unrelated commit adding a
+ * stray file to this directory must not retroactively fail this immutable, pinned-commit audit, and
+ * removing a file from the current checkout must not be able to conceal one that existed at the cited
+ * commit.
+ */
+const resolveOwnRepoDirFilenamesAtPin = (relDir: string): string[] =>
+  execFileSync('git', ['ls-tree', '--name-only', MIRROR_SOURCE_COMMIT_PIN, '--', `${relDir}/`], {
+    cwd: REPO_ROOT,
+    maxBuffer: 10 * 1024 * 1024,
+  })
+    .toString('utf-8')
+    .split('\n')
+    .filter((line) => line.length > 0)
+    .map((line) => path.basename(line));
+
+const wrapperBytes = resolveOwnRepoFileAtPin(MIRROR_PROVENANCE_PATH);
+const wrapper = JSON.parse(wrapperBytes.toString('utf-8')) as MirrorVerificationContext['wrapper'];
+const mirrorJsonBytes = resolveOwnRepoFileAtPin(MIRROR_JSON_PATH);
+const mirrorCsvBytes = resolveOwnRepoFileAtPin(MIRROR_CSV_PATH);
+const mirrorManifestBytes = resolveOwnRepoFileAtPin(MIRROR_MANIFEST_PATH);
+const mirrorJson = JSON.parse(mirrorJsonBytes.toString('utf-8')) as {
+  rows: Array<{ player_id: string } & Record<FieldFamily, { value: unknown }>>;
+};
+
+const lockedSourcePlayerIds = mirrorJson.rows.map((r) => r.player_id);
+
+const valuePresence: MirrorVerificationContext['valuePresence'] = {};
+for (const row of mirrorJson.rows) {
+  valuePresence[row.player_id] = Object.fromEntries(FIELD_FAMILIES.map((family) => [family, row[family].value !== null])) as Record<
+    FieldFamily,
+    boolean
+  >;
+}
+
+const mirrorContext: MirrorVerificationContext = {
+  wrapper,
+  wrapperSha256: sha256OfBytes(wrapperBytes),
+  recomputedMirrorHashes: {
+    mirror_json: sha256OfBytes(mirrorJsonBytes),
+    mirror_csv: sha256OfBytes(mirrorCsvBytes),
+    mirror_manifest: sha256OfBytes(mirrorManifestBytes),
+  },
+  actualMirrorDirFilenames: resolveOwnRepoDirFilenamesAtPin(MIRROR_DIR),
+  valuePresence,
+};
+
+const artifact = JSON.parse(readFileSync(repoPath(AVAILABILITY_EVIDENCE_PATH), 'utf-8')) as AvailabilityEvidenceArtifact;
+
+const result = validateRookieTransitionProfileAvailabilityEvidence(artifact, lockedSourcePlayerIds, mirrorContext);
+
+console.log('rookie_transition_profile_v0 Forecast source-availability audit (TIBER-Forecast#160)');
+console.log(`artifact: ${AVAILABILITY_EVIDENCE_PATH}`);
+console.log(`valid: ${result.valid}`);
+console.log(`status_counts: ${JSON.stringify(result.statusCounts)}`);
+console.log(`status_counts_by_family: ${JSON.stringify(result.statusCountsByFamily)}`);
+
+const unresolvedByFamily = FIELD_FAMILIES.map(
+  (family) => `${family}: ${result.statusCountsByFamily[family].unresolved_no_availability_proof}`,
+).join(', ');
+console.log(`unresolved_no_availability_proof by family: ${unresolvedByFamily}`);
+
+if (!result.valid) {
+  console.error(`\nvalidation errors (${result.errors.length}):`);
+  for (const error of result.errors) console.error(`- ${error}`);
+}
+
+console.log(`\ndecision: ${result.decision}`);
+process.exit(result.valid ? 0 : 1);

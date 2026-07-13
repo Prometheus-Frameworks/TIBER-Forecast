@@ -1,0 +1,175 @@
+{
+  "report_id": "rookie-transition-profile-forecast-availability-evidence-audit-2026-07-13",
+  "status": "lane_b_implementation_and_audit_only_hard_blocked_pending_per_family_evidence_contract",
+  "issue": "TIBER-Forecast#160",
+  "date": "2026-07-13",
+  "predecessors": ["TIBER-Forecast#155", "TIBER-Forecast#156", "TIBER-Forecast#158", "TIBER-Forecast#159"],
+  "independent_of": {
+    "lane_a_identity_crosswalk_issue": "TIBER-Forecast#158",
+    "lane_a_identity_crosswalk_pr": "TIBER-Forecast#159",
+    "note": "This module never imports or reads the identity-crosswalk module or artifact, and no availability status is conditioned on identity-resolution status."
+  },
+  "governing_design": {
+    "documents": [
+      "docs/experiments/rookie-transition-profile-forecast-preexperiment-readiness-design-2026-07-11.md",
+      "docs/experiments/rookie-transition-profile-forecast-preexperiment-readiness-design-2026-07-11.json"
+    ],
+    "pinned_merge_commit": "73834c2a30743c2587b32742c4e5c98320e33dfe"
+  },
+  "locked_identities": {
+    "forecast_mirror_wrapper": {
+      "path": "data/fixtures/tiberRookies/ROOKIE_TRANSITION_PROFILE_V0_MIRROR_PROVENANCE.json",
+      "kind": "rookie_transition_profile_v0_forecast_mirror_provenance",
+      "schema_version": "1.0.0"
+    },
+    "mirror_source_commit_pin": {
+      "repo": "Prometheus-Frameworks/TIBER-Forecast",
+      "commit": "53731cbfa4701aa9861ead4b2fb73c2c29afe89b",
+      "note": "MIRROR_SOURCE_COMMIT_PIN -- the commit that merged PR #159 (Lane A); the CLI dereferences the wrapper, mirror files, and mirror directory listing at exactly this commit via git show/git ls-tree, never the current worktree"
+    },
+    "tiber_rookies_source_lock_dereferenced_through_wrapper": {
+      "repo": "Prometheus-Frameworks/TIBER-Rookies",
+      "schema_version": "rookie-transition-profile-v0.2.0",
+      "season": 2026,
+      "row_count": 48,
+      "refreshed_or_reinterpreted": false
+    }
+  },
+  "deliverables": {
+    "availability_evidence_artifact": {
+      "path": "data/experiments/rookieTransitionProfile/rookie_transition_profile_v0_forecast_availability_evidence.json",
+      "kind": "rookie_transition_profile_v0_forecast_availability_evidence",
+      "schema_version": "1.0.0",
+      "row_count": 240,
+      "row_fields": [
+        "field_family",
+        "source_identity",
+        "availability_status",
+        "available_at",
+        "source_snapshot_as_of",
+        "evidence_source",
+        "notes",
+        "review_decision"
+      ]
+    },
+    "validator_module": "src/rehearsal/rookieTransitionProfileAvailabilityEvidence.ts",
+    "audit_cli": "scripts/runRookieTransitionProfileAvailabilityAudit.ts",
+    "npm_script": "audit:rookie-transition-profile-availability-evidence",
+    "test_file": "tests/rookieTransitionProfileAvailabilityEvidence.test.ts",
+    "test_count": 59
+  },
+  "hard_rejection_decision": {
+    "decided": "after two independent review rounds on PR #161, following a user decision to hard-block rather than design full per-field_family structured evidence contracts now",
+    "what_is_hard_rejected": [
+      "any row's availability_status of eligible_at_cutoff or ineligible_after_cutoff, unconditionally, regardless of how well-evidenced",
+      "any row's available_at, evidence_source, or review_decision being non-null",
+      "any row's source_snapshot_as_of being non-null (no reproducible snapshot-evidence contract exists)",
+      "the artifact's cutoff_at or cutoff_evidence_source being non-null (they exist solely to support the two hard-rejected statuses)"
+    ],
+    "why": [
+      "record-level binding gap: proving a row's claimed value and timestamp come from the SAME source record for THIS player/field_family (not just two independent substrings found somewhere in a reproduced archive) requires per-field_family structured evidence contracts, and for derived families (age_at_entry, college_production) deterministic recomputation from underlying raw data -- none of which is designed yet",
+      "semantic-role gap: a string match proves a timestamp appears in an archive, not that it specifically means 'this fact became publicly knowable' as opposed to an event/retrieval/unrelated timestamp; the cutoff proof has the analogous gap for 'this is the 2026 Day 1/Round 1 start'"
+    ],
+    "precedent": "mirrors how Lane A ultimately hard-rejected its own unverifiable 3.3_governed_artifact evidence class (#159) rather than continuing to accept mechanically-plausible-but-unauthoritative citations",
+    "practical_consequence": "..._complete is not reachable for this population under schema 1.0.0, since every row with a present mirror value is permanently unresolved_no_availability_proof until a future schema version designs and lifts this hard-rejection",
+    "follow_up": "tracked under issue #160: design a per-field_family structured evidence contract (with deterministic recomputation for derived families) as separate follow-up work, then lift the hard-rejection in a future schema version"
+  },
+  "design_history_superseded_by_hard_block": [
+    "proactive self-certification fix (before any review): mirrored_value_literal cross-checked against the real pinned mirror value, not just the row's own cited archive",
+    "automated review pass: available_at bound into the archive-content check; wrapper source_lock comparison included commit",
+    "owner review round 1: same-archive-different-timestamp-same-side and bare-date-archive regressions; mirror_source.commit dereferenced via git show rather than shape-checked; wrapper forecast_mirror.paths checked exactly; cutoff timezone/instant rigor; top-level schema closure",
+    "owner review round 2: mirror directory listing dereferenced at the pinned commit via git ls-tree; source_timezone_or_offset closed to numeric offsets only; source_snapshot_as_of hard-rejected as non-null; nested schema closure; temporal chronology (retrieval/review/availability ordering)",
+    "each round closed a real gap and is preserved in the module's git history, but each was also shown to still be a mechanical proxy for record-level/semantic proof rather than the genuine thing -- this directly informed the conclusion that a fundamentally different evidence contract, not a further-hardened generic one, is what closing eligible_at_cutoff/ineligible_after_cutoff honestly requires"
+  ],
+  "validator_enforcement": {
+    "contract_pins": "kind/schema_version/issue/governing_design (readiness-design issue/PR/merge-commit/document paths)/season match pinned constants exactly; top-level artifact fields, and every nested object (source_identity, mirror_source, governing_design, status_counts, status_counts_by_family), must match an exact closed field set",
+    "mirror_dereferencing": "mirror_source repo/pinned-commit-exact-match (MIRROR_SOURCE_COMMIT_PIN)/path/kind/schema_version checked, sha256 must equal the recomputed hash of the actual wrapper file at that commit; the dereferenced wrapper's source_lock (including commit), declared forecast_mirror.paths (exact match), the pinned-commit mirror directory listing (via git ls-tree, not a live-worktree readdir), and mirrored_hashes are all independently recomputed and matched",
+    "value_presence_agreement": "availability_status is unavailable iff the real pinned mirror value for (player, field_family) is null, checked directly against the mirror JSON",
+    "population_accounting": "exactly 240 distinct governed (identity, family) keys; every locked identity has all 5 families; no extra identity or family; declared status_counts and status_counts_by_family recomputed and must match, summing to 240/48 respectively",
+    "eligible_ineligible_hard_rejection": "any row claiming eligible_at_cutoff or ineligible_after_cutoff is rejected outright, unconditionally -- see hard_rejection_decision",
+    "row_field_nullability": "available_at, evidence_source, review_decision, and source_snapshot_as_of must be null on every row; notes must be string | null",
+    "artifact_field_nullability": "cutoff_at and cutoff_evidence_source must be null on the artifact"
+  },
+  "evidence_paths_attempted": {
+    "cutoff_section_8": {
+      "status": "not_pinned_and_not_currently_possible",
+      "detail": "no archived, dated NFL draft-schedule evidence was assembled, and no human review of a cutoff candidate occurred. cutoff_at and cutoff_evidence_source are hard-required null in schema 1.0.0 regardless."
+    },
+    "per_row_exact_value_evidence_sections_10_12": {
+      "status": "not_attempted_and_hard_rejected_if_claimed",
+      "detail": "no archived dated snapshot evidence was assembled for any of the 240 pairs. even if it had been, eligible_at_cutoff/ineligible_after_cutoff are hard-rejected outright in schema 1.0.0."
+    },
+    "missingness_vs_timing_section_11": {
+      "status": "17_rows_honestly_unavailable",
+      "detail": "17 (player, field_family) pairs carry a null value in the committed mirror itself -- a missingness fact, independent of any timing question. the remaining 223 pairs have a non-null pinned value but no availability-timing evidence (and no timing status is currently usable regardless), recorded unresolved_no_availability_proof."
+    }
+  },
+  "accounting": {
+    "status_counts": {
+      "eligible_at_cutoff": 0,
+      "ineligible_after_cutoff": 0,
+      "unresolved_no_availability_proof": 223,
+      "unavailable": 17
+    },
+    "status_counts_by_family": {
+      "draft_capital": { "eligible_at_cutoff": 0, "ineligible_after_cutoff": 0, "unresolved_no_availability_proof": 48, "unavailable": 0 },
+      "age_at_entry": { "eligible_at_cutoff": 0, "ineligible_after_cutoff": 0, "unresolved_no_availability_proof": 47, "unavailable": 1 },
+      "athletic_testing": { "eligible_at_cutoff": 0, "ineligible_after_cutoff": 0, "unresolved_no_availability_proof": 32, "unavailable": 16 },
+      "college_production": { "eligible_at_cutoff": 0, "ineligible_after_cutoff": 0, "unresolved_no_availability_proof": 48, "unavailable": 0 },
+      "official_postdraft_outcome": { "eligible_at_cutoff": 0, "ineligible_after_cutoff": 0, "unresolved_no_availability_proof": 48, "unavailable": 0 }
+    },
+    "unavailable_rows_are_exactly": "the (player, field_family) pairs where the committed mirror's own value is null -- 1 player missing age_at_entry, 16 players missing athletic_testing; no other family has any missing value in the locked population"
+  },
+  "confirmations": {
+    "no_guessed_or_defaulted_claim": true,
+    "no_human_review_claimed_or_claimable": "review_decision, available_at, evidence_source, and source_snapshot_as_of are hard-required null on every row; cutoff_at/cutoff_evidence_source are hard-required null on the artifact",
+    "lane_independence_maintained": true,
+    "no_runtime_model_production_downstream_ui_import": true,
+    "upstream_and_mirror_files_unmodified": true,
+    "no_experiment_no_adapter_no_feature_table_no_predictive_evaluation": true
+  },
+  "validation": {
+    "build": "npm run build -- clean (tsc --noEmit)",
+    "tests": "npm test -- full suite passes (1260 tests across the repo), including 59 in tests/rookieTransitionProfileAvailabilityEvidence.test.ts",
+    "test_coverage_summary": [
+      "committed artifact passes validation against the real, pinned-commit-dereferenced mirror",
+      "kind/schema/design pins",
+      "exact 240-row population, every timing/evidence field null, eight-field row contract",
+      "requires_followup decision and full accounting",
+      "missing identity (all five rows for a locked player removed)",
+      "missing single family for an otherwise-present identity",
+      "extra row for an unlocked identity",
+      "duplicate governed key",
+      "invalid field_family / availability_status tokens",
+      "extra or missing row field",
+      "out-of-order rows",
+      "tampered status_counts / status_counts_by_family",
+      "tampered issue reference and governing-design merge commit",
+      "eligible_at_cutoff/ineligible_after_cutoff hard-rejected: for a row with a present real mirror value even with every other field properly null, for both statuses, for official_postdraft_outcome specifically, and confirming ..._complete is never reachable if every row is relabeled eligible",
+      "non-null timing/evidence fields hard-rejected: available_at, evidence_source, review_decision (any row, not only unavailable/unresolved), cutoff_at, cutoff_evidence_source, any non-null source_snapshot_as_of",
+      "value-presence agreement in both directions, with a real-null-value control case",
+      "nested schema closure: extra key on governing_design, mirror_source, source_identity, status_counts (outer and per-family), and a non-string/non-null notes",
+      "top-level schema closure: extra/missing top-level field, unparseable generated_at, generated_at_is_operational_timestamp_only_not_fact_availability not exactly true, with a control case",
+      "mirror-wrapper dereferencing checks (tampered sha256, wrong/substituted-but-well-formed commit, wrong repo, mismatched recomputed hashes, unauthorized extra mirror file via the pinned-commit git ls-tree listing, tampered source_lock including a moved commit, substituted/missing forecast_mirror.paths entries, with a control case)",
+      "malformed locked-population size",
+      "two inertness scans"
+    ],
+    "audit_cli": "npm run audit:rookie-transition-profile-availability-evidence -- valid: true with the accounting above, built by dereferencing the wrapper, mirror files, and mirror directory listing at the exact pinned Forecast commit via git show/git ls-tree"
+  },
+  "decision": "rookie_transition_profile_forecast_source_availability_audit_requires_followup",
+  "decision_rationale": "The governed Lane B artifact, fail-closed validator, tests, and full 240-row accounting are in place and passing. 223 of 240 (player, field_family) pairs are honestly unresolved_no_availability_proof and the remaining 17 are honestly unavailable; no row claims eligible_at_cutoff or ineligible_after_cutoff, both of which are hard-rejected outright in schema 1.0.0 pending a per-field_family structured evidence contract. ..._complete is not reachable for this population until that follow-up design exists and a future schema version lifts the hard-rejection.",
+  "decision_authorizes": [
+    "a separate follow-up under issue #160 to design a per-field_family structured evidence contract (with deterministic recomputation for derived families) and a typed semantic role for availability/cutoff timestamps",
+    "a future schema version lifting the eligible_at_cutoff/ineligible_after_cutoff hard-rejection once that contract exists"
+  ],
+  "decision_does_not_authorize": [
+    "the integrated readiness review",
+    "experiment design or implementation",
+    "feature use",
+    "predictive evaluation",
+    "downstream consumption",
+    "production binding",
+    "UI activation",
+    "model use"
+  ]
+}
