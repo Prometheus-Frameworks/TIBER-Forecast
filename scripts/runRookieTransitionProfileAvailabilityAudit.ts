@@ -12,7 +12,7 @@
 
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { readdirSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -69,6 +69,24 @@ const resolveOwnRepoFileAtPin = (relPath: string): Buffer =>
     maxBuffer: 10 * 1024 * 1024,
   });
 
+/**
+ * Lists a directory's entries at the exact pinned commit via `git ls-tree`, never the live worktree
+ * listing -- `readdirSync` on the current checkout describes whatever files happen to be present when
+ * the CLI runs, not what existed at `MIRROR_SOURCE_COMMIT_PIN`. A later unrelated commit adding a
+ * stray file to this directory must not retroactively fail this immutable, pinned-commit audit, and
+ * removing a file from the current checkout must not be able to conceal one that existed at the cited
+ * commit (owner review on PR #161, finding 3).
+ */
+const resolveOwnRepoDirFilenamesAtPin = (relDir: string): string[] =>
+  execFileSync('git', ['ls-tree', '--name-only', MIRROR_SOURCE_COMMIT_PIN, '--', `${relDir}/`], {
+    cwd: REPO_ROOT,
+    maxBuffer: 10 * 1024 * 1024,
+  })
+    .toString('utf-8')
+    .split('\n')
+    .filter((line) => line.length > 0)
+    .map((line) => path.basename(line));
+
 const wrapperBytes = resolveOwnRepoFileAtPin(MIRROR_PROVENANCE_PATH);
 const wrapper = JSON.parse(wrapperBytes.toString('utf-8')) as MirrorVerificationContext['wrapper'];
 const mirrorJsonBytes = resolveOwnRepoFileAtPin(MIRROR_JSON_PATH);
@@ -103,7 +121,7 @@ const mirrorContext: MirrorVerificationContext = {
     mirror_csv: sha256OfBytes(mirrorCsvBytes),
     mirror_manifest: sha256OfBytes(mirrorManifestBytes),
   },
-  actualMirrorDirFilenames: readdirSync(repoPath(MIRROR_DIR)),
+  actualMirrorDirFilenames: resolveOwnRepoDirFilenamesAtPin(MIRROR_DIR),
   valuePresence,
   mirrorValueLiterals,
 };

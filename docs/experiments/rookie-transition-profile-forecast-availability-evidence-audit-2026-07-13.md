@@ -37,7 +37,7 @@ conditioned on any identity-resolution status.
 | Governed 240-row availability-evidence artifact (`kind: rookie_transition_profile_v0_forecast_availability_evidence`, `schema_version: 1.0.0`) | `data/experiments/rookieTransitionProfile/rookie_transition_profile_v0_forecast_availability_evidence.json` |
 | Pure fail-closed validator (deterministic; no I/O) | `src/rehearsal/rookieTransitionProfileAvailabilityEvidence.ts` |
 | Read-only audit CLI (`npm run audit:rookie-transition-profile-availability-evidence`) | `scripts/runRookieTransitionProfileAvailabilityAudit.ts` |
-| Positive + negative validation tests (76 tests) | `tests/rookieTransitionProfileAvailabilityEvidence.test.ts` |
+| Positive + negative validation tests (92 tests) | `tests/rookieTransitionProfileAvailabilityEvidence.test.ts` |
 | This audit report | `docs/experiments/rookie-transition-profile-forecast-availability-evidence-audit-2026-07-13.md` / `.json` |
 
 Every row carries all eight contract fields (`field_family`, `source_identity`, `availability_status`,
@@ -158,6 +158,62 @@ deeper on the same two themes plus two others the automated pass didn't reach:
   for `available_at`'s archive-bound proof). `retrieved_at`/`reviewed_at` fields across citations and
   review decisions are now required to be parseable dates, not merely non-empty strings.
 
+**Strengthened after a third independent review round by the repo owner, before this PR merged:**
+
+- **The mirror directory listing is now dereferenced at the pinned commit, not the live worktree.**
+  The CLI already used `git show` for the wrapper and the three mirror files, but still populated
+  `actualMirrorDirFilenames` via `readdirSync` against whatever the current checkout happened to
+  contain — an unrelated later commit adding a stray file to the mirror directory would have
+  retroactively failed this supposedly immutable, pinned-commit audit, and removing an unauthorized
+  file from the current checkout could have concealed one that existed at the cited commit. The CLI
+  (and the test fixture, which must mirror it exactly) now derive this listing via
+  `git ls-tree --name-only <MIRROR_SOURCE_COMMIT_PIN> -- <dir>/`, reproducible solely from the
+  artifact's pinned commit.
+- **`source_timezone_or_offset` is now closed to numeric offsets only.** Schema 1.0.0 defines no
+  deterministic, DST-aware conversion for named zones (`ET`, `America/New_York`); accepting them
+  without one would make named-zone evidence silently unusable or, worse, inconsistently interpreted.
+  The field must now match `Z` or `±HH:MM` exactly.
+- **`source_snapshot_as_of` is now hard-rejected as non-null outright**, rather than merely required
+  to parse. A well-formed instant is still an unsourced factual timing claim with no reproducible
+  snapshot-evidence contract behind it in schema 1.0.0 — the same category of gap `available_at`'s
+  archive-binding check exists to prevent, and no such contract exists yet for this field.
+- **Nested schema closure**, matching the row- and top-level exact-field checks already in place:
+  `source_identity`, `mirror_source`, `governing_design`, `cutoff_evidence_source`, row
+  `evidence_source`, and `review_decision` must now each carry exactly their contract fields, no more
+  and no fewer; `status_counts` and `status_counts_by_family` (and each family's nested counts) are
+  similarly closed; `notes` must be `string | null`; and — a genuine gap, not just a hardening — an
+  `unavailable`/`unresolved_no_availability_proof` row must now carry a **null** `review_decision`
+  (previously unchecked, so a row could carry an arbitrary review claim while declaring no
+  availability finding at all).
+- **Temporal chronology, not just individually well-formed dates.** `evidence_source.retrieved_at`
+  must not be earlier than the row's `available_at` (evidence cannot be retrieved before the fact it
+  attests to existed), `review_decision.reviewed_at` must not be earlier than
+  `evidence_source.retrieved_at`, and `cutoff_evidence_source.reviewed_at` must not be earlier than
+  its own `retrieved_at` — review cannot precede the retrieval it reviews.
+
+**Known open gap, acknowledged rather than papered over:** the repo owner's third review round also
+identified two deeper structural gaps this round does *not* close, and this report does not claim
+otherwise:
+
+1. **Row evidence is still whole-document string co-occurrence, not proof of one bound record.** The
+   validator confirms the archive reproduces, contains the claimed `mirrored_value_literal`, and
+   contains the claimed `available_at` — but not that those two facts occur in the *same* source
+   record, for *this* player and field family specifically. A multi-record archive could in principle
+   satisfy both checks from two unrelated rows. Closing this properly requires per-`field_family`
+   structured evidence contracts (and, for derived families like `age_at_entry`, deterministic
+   recomputation from the underlying DOB/formula) that do not exist as a design yet.
+2. **`available_at` and the cutoff's schedule timestamp have no typed semantic role.** The archive
+   binding proves a string match, not that the matched timestamp specifically means "this fact became
+   publicly knowable" as opposed to an event time, retrieval time, or unrelated timestamp elsewhere in
+   the document; the cutoff proof has the analogous gap for "this is the 2026 Day 1/Round 1 start."
+   No real cutoff or per-row evidence has been assembled yet (the committed artifact still has 0
+   eligible/0 ineligible rows), so this gap is not currently exploitable against real data, but it is
+   real, and this report does not claim it is closed. Resolving it — versus hard-blocking
+   `eligible_at_cutoff`/`ineligible_after_cutoff` outright in schema 1.0.0 until a proper evidence
+   contract is designed, mirroring how Lane A ultimately hard-rejected its own unverifiable `3.3`
+   evidence class — is an open design question tracked as follow-up under issue #160, not resolved
+   silently in either direction by this PR.
+
 ## 3. Evidence paths attempted, per the merged design
 
 ### §8 pre-draft cutoff — not pinned
@@ -228,7 +284,7 @@ other family has any missing value in the locked population.
 ## 6. Validation and tests
 
 - `npm run build` — clean (`tsc --noEmit`).
-- `npm test` — full suite passes (1277 tests across the repo), including the 76 tests in
+- `npm test` — full suite passes (1293 tests across the repo), including the 92 tests in
   `tests/rookieTransitionProfileAvailabilityEvidence.test.ts` covering:
   - the committed artifact passing validation against the real, pinned-commit-dereferenced mirror;
     kind/schema/design pins; the exact 240-row population; no claimed human review; the eight-field
@@ -269,8 +325,22 @@ other family has any missing value in the locked population.
     entries**, with a control case proving the real dereferenced wrapper's paths match exactly;
   - **top-level schema closure: an extra undeclared top-level field, a missing required top-level
     field, an unparseable `generated_at`, a `generated_at_is_operational_timestamp_only_not_fact_availability`
-    that isn't exactly `true`, and a non-null `source_snapshot_as_of` that isn't a parseable instant**,
+    that isn't exactly `true`, and any non-null `source_snapshot_as_of` (now hard-rejected outright)**,
     with a control case on the committed artifact;
+  - **nested schema closure: an extra key on `governing_design`, `mirror_source`, `source_identity`,
+    `status_counts`, `status_counts_by_family` (both the outer map and a per-family entry),
+    `cutoff_evidence_source`, row `evidence_source`, and `review_decision`; a `notes` value that is
+    neither null nor a string; and an `unavailable`/`unresolved_no_availability_proof` row carrying a
+    non-null `review_decision`**;
+  - **temporal chronology: `evidence_source.retrieved_at` earlier than `available_at`,
+    `review_decision.reviewed_at` earlier than `evidence_source.retrieved_at`, and
+    `cutoff_evidence_source.reviewed_at` earlier than its own `retrieved_at`**, with a control case
+    proving the real eligible/ineligible fixtures satisfy chronology;
+  - **a named timezone (`America/New_York`) rejected in place of a numeric offset for
+    `source_timezone_or_offset`**;
+  - **the mirror directory listing dereferenced at the pinned commit via `git ls-tree`, not the live
+    worktree** (exercised implicitly by every mirror-wrapper test, all of which now run against the
+    pinned-commit-derived context);
   - a malformed locked-population size; and the two inertness scans.
 - `npm run audit:rookie-transition-profile-availability-evidence` — `valid: true` with the accounting
   in §4, now built by dereferencing the wrapper and mirror files at the exact pinned Forecast commit

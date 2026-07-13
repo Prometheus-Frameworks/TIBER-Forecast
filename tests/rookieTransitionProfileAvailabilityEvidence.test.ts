@@ -6,6 +6,7 @@
  * by model/production/downstream/UI paths).
  */
 
+import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -13,14 +14,7 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
-import {
-  MIRROR_CSV_PATH,
-  MIRROR_DIR,
-  MIRROR_JSON_PATH,
-  MIRROR_MANIFEST_PATH,
-  MIRROR_PROVENANCE_PATH,
-  SOURCE_ROW_COUNT,
-} from '../src/rehearsal/rookieTransitionProfileMirror.js';
+import { MIRROR_DIR, MIRROR_CSV_PATH, MIRROR_JSON_PATH, MIRROR_MANIFEST_PATH, MIRROR_PROVENANCE_PATH, SOURCE_ROW_COUNT } from '../src/rehearsal/rookieTransitionProfileMirror.js';
 import {
   AVAILABILITY_AUDIT_DECISIONS,
   AVAILABILITY_EVIDENCE_KIND,
@@ -28,6 +22,7 @@ import {
   AVAILABILITY_EVIDENCE_ROW_FIELDS,
   AVAILABILITY_EVIDENCE_SCHEMA_VERSION,
   FIELD_FAMILIES,
+  MIRROR_SOURCE_COMMIT_PIN,
   READINESS_DESIGN_MERGE_COMMIT,
   validateRookieTransitionProfileAvailabilityEvidence,
   type ArchivedEvidenceResolver,
@@ -43,15 +38,26 @@ const sha256 = (text: string): string => createHash('sha256').update(text).diges
 const sha256OfBytes = (bytes: Buffer): string => createHash('sha256').update(bytes).digest('hex');
 
 // ---------------------------------------------------------------------------------------------
-// Real committed fixtures -- mirrors exactly what the CLI builds, so tests exercise the same
-// mirror-verification context the real audit runs against.
+// Real committed fixtures -- mirrors exactly what the CLI builds (wrapper/mirror bytes and the
+// mirror-directory listing dereferenced at the exact pinned commit via git, never the current
+// worktree), so tests exercise the same mirror-verification context the real audit runs against.
 // ---------------------------------------------------------------------------------------------
 
-const wrapperBytes = readFileSync(repoPath(MIRROR_PROVENANCE_PATH));
+const resolveOwnRepoFileAtPin = (relPath: string): Buffer =>
+  execFileSync('git', ['show', `${MIRROR_SOURCE_COMMIT_PIN}:${relPath}`], { cwd: REPO_ROOT, maxBuffer: 10 * 1024 * 1024 });
+
+const resolveOwnRepoDirFilenamesAtPin = (relDir: string): string[] =>
+  execFileSync('git', ['ls-tree', '--name-only', MIRROR_SOURCE_COMMIT_PIN, '--', `${relDir}/`], { cwd: REPO_ROOT, maxBuffer: 10 * 1024 * 1024 })
+    .toString('utf-8')
+    .split('\n')
+    .filter((line) => line.length > 0)
+    .map((line) => path.basename(line));
+
+const wrapperBytes = resolveOwnRepoFileAtPin(MIRROR_PROVENANCE_PATH);
 const wrapper = JSON.parse(wrapperBytes.toString('utf-8')) as MirrorVerificationContext['wrapper'];
-const mirrorJsonBytes = readFileSync(repoPath(MIRROR_JSON_PATH));
-const mirrorCsvBytes = readFileSync(repoPath(MIRROR_CSV_PATH));
-const mirrorManifestBytes = readFileSync(repoPath(MIRROR_MANIFEST_PATH));
+const mirrorJsonBytes = resolveOwnRepoFileAtPin(MIRROR_JSON_PATH);
+const mirrorCsvBytes = resolveOwnRepoFileAtPin(MIRROR_CSV_PATH);
+const mirrorManifestBytes = resolveOwnRepoFileAtPin(MIRROR_MANIFEST_PATH);
 const mirrorJson = JSON.parse(mirrorJsonBytes.toString('utf-8')) as {
   rows: Array<{ player_id: string } & Record<FieldFamily, { value: unknown }>>;
 };
@@ -78,7 +84,7 @@ const baseMirrorContext = (): MirrorVerificationContext => ({
     mirror_csv: sha256OfBytes(mirrorCsvBytes),
     mirror_manifest: sha256OfBytes(mirrorManifestBytes),
   },
-  actualMirrorDirFilenames: readdirSync(repoPath(MIRROR_DIR)),
+  actualMirrorDirFilenames: resolveOwnRepoDirFilenamesAtPin(MIRROR_DIR),
   valuePresence: JSON.parse(JSON.stringify(valuePresence)) as MirrorVerificationContext['valuePresence'],
   mirrorValueLiterals: JSON.parse(JSON.stringify(mirrorValueLiterals)) as MirrorVerificationContext['mirrorValueLiterals'],
 });
@@ -488,7 +494,15 @@ describe('cutoff validation (design §8)', () => {
     const artifact = withCutoffSet(clone(), { ...cutoffEvidenceSource(), source_timezone_or_offset: '', published_draft_start_at: '' });
     const result = validate(artifact, archiveResolver);
     expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes('requires source_timezone_or_offset and published_draft_start_at'))).toBe(true);
+    expect(result.errors.some((e) => e.includes('must be a numeric offset'))).toBe(true);
+    expect(result.errors.some((e) => e.includes('requires published_draft_start_at'))).toBe(true);
+  });
+
+  it('rejects a cutoff_evidence_source.source_timezone_or_offset that names a zone rather than a numeric offset (schema 1.0.0 is closed to numeric offsets only)', () => {
+    const artifact = withCutoffSet(clone(), { ...cutoffEvidenceSource(), source_timezone_or_offset: 'America/New_York' });
+    const result = validate(artifact, archiveResolver);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('must be a numeric offset (Z or +HH:MM/-HH:MM)'))).toBe(true);
   });
 
   it('rejects a non-reproducible cutoff_evidence_source citation (hash mismatch fails closed)', () => {
@@ -588,7 +602,7 @@ describe('eligible_at_cutoff / ineligible_after_cutoff rows (design §10/§12: r
     });
     const result = validate(artifact, archiveResolver);
     expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes('requires a structurally complete evidence_source with a non-empty mirrored_value_literal'))).toBe(true);
+    expect(result.errors.some((e) => e.includes('requires a structurally complete evidence_source'))).toBe(true);
   });
 
   it('rejects a row whose evidence_source has an empty mirrored_value_literal', () => {
@@ -868,20 +882,148 @@ describe('top-level artifact schema closure (owner review on PR #161, finding 5)
     expect(result.errors.some((e) => e.includes('generated_at_is_operational_timestamp_only_not_fact_availability must be exactly true'))).toBe(true);
   });
 
-  it('rejects a non-null source_snapshot_as_of that is not a parseable, offset-bearing instant', () => {
+  it('rejects any non-null source_snapshot_as_of -- schema 1.0.0 has no reproducible snapshot-evidence contract to support the claim, even a well-formed instant', () => {
     const artifact = clone();
     withRowMutated(artifact, ROW_AGE, (row) => {
-      row.source_snapshot_as_of = '2026-07-13'; // bare date, not a fully-qualified instant
+      row.source_snapshot_as_of = '2026-07-13T00:00:00-04:00'; // well-formed, still rejected
     });
     const result = validate(artifact);
     expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes('source_snapshot_as_of must be null or a fully-qualified, offset-bearing ISO-8601 instant'))).toBe(true);
+    expect(result.errors.some((e) => e.includes('source_snapshot_as_of must be null in schema 1.0.0'))).toBe(true);
   });
 
   it('control case: the committed artifact passes the top-level schema-closure and generated_at checks', () => {
     const result = validate(committedArtifact);
     expect(result.errors).toEqual([]);
     expect(result.valid).toBe(true);
+  });
+});
+
+describe('nested schema closure (owner review on PR #161, 2nd round finding 4: no nested object may carry an undeclared extra key)', () => {
+  it('rejects a governing_design with an extra undeclared key', () => {
+    const artifact = clone() as unknown as Record<string, unknown>;
+    (artifact.governing_design as Record<string, unknown>).extra_claim = 'not permitted';
+    const result = validate(artifact as unknown as AvailabilityEvidenceArtifact);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('governing_design fields must be exactly'))).toBe(true);
+  });
+
+  it('rejects a mirror_source with an extra undeclared key', () => {
+    const artifact = clone() as unknown as Record<string, unknown>;
+    (artifact.mirror_source as Record<string, unknown>).extra_claim = 'not permitted';
+    const result = validate(artifact as unknown as AvailabilityEvidenceArtifact);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('mirror_source fields must be exactly'))).toBe(true);
+  });
+
+  it('rejects a source_identity with an extra undeclared key', () => {
+    const artifact = clone();
+    (artifact.rows[0].source_identity as unknown as Record<string, unknown>).extra_claim = 'not permitted';
+    const result = validate(artifact);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('source_identity must carry exactly the four contract fields'))).toBe(true);
+  });
+
+  it('rejects a status_counts with an extra undeclared status key', () => {
+    const artifact = clone() as unknown as Record<string, unknown>;
+    (artifact.status_counts as Record<string, unknown>).extra_status = 0;
+    const result = validate(artifact as unknown as AvailabilityEvidenceArtifact);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('status_counts fields must be exactly'))).toBe(true);
+  });
+
+  it('rejects a status_counts_by_family with an extra undeclared family key', () => {
+    const artifact = clone() as unknown as Record<string, unknown>;
+    (artifact.status_counts_by_family as Record<string, unknown>).extra_family = {
+      eligible_at_cutoff: 0,
+      ineligible_after_cutoff: 0,
+      unresolved_no_availability_proof: 0,
+      unavailable: 0,
+    };
+    const result = validate(artifact as unknown as AvailabilityEvidenceArtifact);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('status_counts_by_family fields must be exactly'))).toBe(true);
+  });
+
+  it('rejects a status_counts_by_family entry with an extra undeclared status key', () => {
+    const artifact = clone() as unknown as Record<string, unknown>;
+    ((artifact.status_counts_by_family as Record<string, unknown>).draft_capital as Record<string, unknown>).extra_status = 0;
+    const result = validate(artifact as unknown as AvailabilityEvidenceArtifact);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('status_counts_by_family.draft_capital fields must be exactly'))).toBe(true);
+  });
+
+  it('rejects a row whose notes is neither null nor a string', () => {
+    const artifact = clone();
+    (artifact.rows[0] as unknown as Record<string, unknown>).notes = 12345;
+    const result = validate(artifact);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('notes must be null or a string'))).toBe(true);
+  });
+
+  it('rejects an unresolved/unavailable row carrying a non-null review_decision -- only a human-reviewed eligible/ineligible row may claim one', () => {
+    const artifact = clone();
+    (artifact.rows[ROW_AGE] as unknown as Record<string, unknown>).review_decision = reviewDecision();
+    const result = validate(artifact);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('must carry a null review_decision'))).toBe(true);
+  });
+
+  it('rejects a cutoff_evidence_source with an extra undeclared key', () => {
+    const artifact = withCutoffSet(clone(), { ...cutoffEvidenceSource(), extra_claim: 'not permitted' } as unknown as ReturnType<typeof cutoffEvidenceSource>);
+    const result = validate(artifact, archiveResolver);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('cutoff_evidence_source fields must be exactly'))).toBe(true);
+  });
+
+  it('rejects a row evidence_source with an extra undeclared key', () => {
+    const artifact = withEligibleRow((row) => {
+      (row.evidence_source as unknown as Record<string, unknown>).extra_claim = 'not permitted';
+    });
+    const result = validate(artifact, archiveResolver);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('requires a structurally complete evidence_source'))).toBe(true);
+  });
+
+  it('rejects a review_decision with an extra undeclared key', () => {
+    const artifact = withEligibleRow((row) => {
+      (row.review_decision as unknown as Record<string, unknown>).extra_claim = 'not permitted';
+    });
+    const result = validate(artifact, archiveResolver);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('requires an explicit, attributable human review_decision'))).toBe(true);
+  });
+});
+
+describe('temporal chronology (owner review on PR #161, 2nd round finding 4: retrieval cannot precede the fact, review cannot precede retrieval)', () => {
+  it('rejects a row whose evidence_source.retrieved_at is earlier than the claimed available_at', () => {
+    const artifact = withEligibleRow((row) => {
+      (row.evidence_source as unknown as Record<string, unknown>).retrieved_at = '2020-01-01'; // long before ELIGIBLE_AVAILABLE_AT
+    });
+    const result = validate(artifact, archiveResolver);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('evidence_source.retrieved_at must not be earlier than available_at'))).toBe(true);
+  });
+
+  it('rejects a row whose review_decision.reviewed_at is earlier than evidence_source.retrieved_at', () => {
+    const artifact = withEligibleRow((row) => {
+      row.review_decision = { reviewer: FIXTURE_REVIEWER, reviewed_at: '2020-01-01' }; // before evidence_source.retrieved_at (2026-07-13)
+    });
+    const result = validate(artifact, archiveResolver);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('review_decision.reviewed_at must not be earlier than evidence_source.retrieved_at'))).toBe(true);
+  });
+
+  it('rejects a cutoff_evidence_source whose reviewed_at is earlier than its own retrieved_at', () => {
+    const artifact = withCutoffSet(clone(), { ...cutoffEvidenceSource(), retrieved_at: '2026-07-13', reviewed_at: '2020-01-01' });
+    const result = validate(artifact, archiveResolver);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('cutoff_evidence_source.reviewed_at must not be earlier than retrieved_at'))).toBe(true);
+  });
+
+  it('control case: the real eligible/ineligible fixtures and the committed cutoff satisfy retrieval/review chronology', () => {
+    expect(validate(withEligibleRow(), archiveResolver).valid).toBe(true);
+    expect(validate(withIneligibleRow(), archiveResolver).valid).toBe(true);
   });
 });
 

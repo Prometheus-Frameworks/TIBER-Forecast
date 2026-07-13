@@ -159,6 +159,39 @@ export const AVAILABILITY_EVIDENCE_ROW_FIELDS = [
   'review_decision',
 ] as const;
 
+// ---------------------------------------------------------------------------------------------
+// Exact, closed nested field sets (owner review on PR #161, finding 4) -- no nested object may
+// carry an undeclared extra key any more than a row or the top-level artifact may.
+// ---------------------------------------------------------------------------------------------
+
+export const SOURCE_IDENTITY_FIELDS = ['source_repository', 'source_schema', 'source_player_id', 'source_season'] as const;
+export const MIRROR_SOURCE_FIELDS = ['repo', 'commit', 'wrapper_path', 'kind', 'schema_version', 'sha256'] as const;
+export const GOVERNING_DESIGN_FIELDS = [
+  'readiness_design_issue',
+  'readiness_design_pr',
+  'readiness_design_merge_commit',
+  'design_documents',
+] as const;
+export const EVIDENCE_CITATION_FIELDS = [
+  'repo',
+  'commit',
+  'path',
+  'schema_version',
+  'schema_not_applicable_reason',
+  'sha256',
+  'original_url',
+  'retrieved_at',
+] as const;
+export const CUTOFF_EVIDENCE_SOURCE_FIELDS = [
+  ...EVIDENCE_CITATION_FIELDS,
+  'reviewer',
+  'reviewed_at',
+  'source_timezone_or_offset',
+  'published_draft_start_at',
+] as const;
+export const ROW_EVIDENCE_SOURCE_FIELDS = [...EVIDENCE_CITATION_FIELDS, 'mirrored_value_literal'] as const;
+export const REVIEW_DECISION_FIELDS = ['reviewer', 'reviewed_at'] as const;
+
 export interface AvailabilityStatusCounts {
   eligible_at_cutoff: number;
   ineligible_after_cutoff: number;
@@ -326,6 +359,17 @@ const extractOffsetSuffix = (instant: string): string | null => {
 
 const normalizeOffset = (offset: string): string => (offset === 'Z' ? '+00:00' : offset);
 
+const NUMERIC_OFFSET_PATTERN = /^(Z|[+-]\d{2}:\d{2})$/;
+/** Schema 1.0.0 is closed to numeric offsets only (`Z` or `+HH:MM`/`-HH:MM`) -- a named zone (`ET`, `America/New_York`) has no deterministic, DST-aware conversion contract defined and must fail closed rather than be silently accepted. */
+const isNumericOffset = (value: unknown): value is string => typeof value === 'string' && NUMERIC_OFFSET_PATTERN.test(value);
+
+/** True iff `value`'s own keys are exactly `keys` (no missing, extra, or substituted key). */
+const hasExactKeys = (value: Record<string, unknown>, keys: readonly string[]): boolean => {
+  const actual = Object.keys(value).sort();
+  const expected = [...keys].sort();
+  return actual.length === expected.length && actual.every((k, i) => k === expected[i]);
+};
+
 export const validateRookieTransitionProfileAvailabilityEvidence = (
   candidate: unknown,
   lockedSourcePlayerIds: readonly string[],
@@ -373,6 +417,9 @@ export const validateRookieTransitionProfileAvailabilityEvidence = (
   if (!isPlainObject(governingDesign)) {
     errors.push('governing_design is missing');
   } else {
+    if (!hasExactKeys(governingDesign, GOVERNING_DESIGN_FIELDS)) {
+      errors.push(`governing_design fields must be exactly ${JSON.stringify(GOVERNING_DESIGN_FIELDS)}, found [${Object.keys(governingDesign).join(', ')}]`);
+    }
     if (governingDesign.readiness_design_issue !== READINESS_DESIGN_ISSUE) {
       errors.push(`governing_design.readiness_design_issue must be ${READINESS_DESIGN_ISSUE}`);
     }
@@ -403,6 +450,9 @@ export const validateRookieTransitionProfileAvailabilityEvidence = (
   if (!isPlainObject(mirrorSource)) {
     errors.push('mirror_source is missing');
   } else {
+    if (!hasExactKeys(mirrorSource, MIRROR_SOURCE_FIELDS)) {
+      errors.push(`mirror_source fields must be exactly ${JSON.stringify(MIRROR_SOURCE_FIELDS)}, found [${Object.keys(mirrorSource).join(', ')}]`);
+    }
     if (mirrorSource.repo !== FORECAST_REPO) errors.push(`mirror_source.repo must be ${FORECAST_REPO}`);
     if (mirrorSource.commit !== MIRROR_SOURCE_COMMIT_PIN) {
       errors.push(`mirror_source.commit must be the pinned Forecast commit ${MIRROR_SOURCE_COMMIT_PIN}`);
@@ -480,11 +530,27 @@ export const validateRookieTransitionProfileAvailabilityEvidence = (
       errors.push('cutoff_at is non-null but cutoff_evidence_source is missing or structurally incomplete');
     } else {
       const source = cutoffSource as CutoffEvidenceSource;
+      if (!hasExactKeys(source as unknown as Record<string, unknown>, CUTOFF_EVIDENCE_SOURCE_FIELDS)) {
+        errors.push(`cutoff_evidence_source fields must be exactly ${JSON.stringify(CUTOFF_EVIDENCE_SOURCE_FIELDS)}, found [${Object.keys(source).join(', ')}]`);
+      }
       if (!isNonEmptyString(source.reviewer) || !isParseableDateOrInstant(source.reviewed_at)) {
         errors.push('cutoff_evidence_source requires a named human reviewer and a parseable dated sign-off');
       }
-      if (!isNonEmptyString(source.source_timezone_or_offset) || !isNonEmptyString(source.published_draft_start_at)) {
-        errors.push('cutoff_evidence_source requires source_timezone_or_offset and published_draft_start_at');
+      // Schema 1.0.0 is closed to numeric offsets only -- a named zone (`ET`, `America/New_York`)
+      // has no deterministic, DST-aware conversion contract defined here and must fail closed rather
+      // than be silently accepted (owner review on PR #161, finding 2).
+      if (!isNumericOffset(source.source_timezone_or_offset)) {
+        errors.push('cutoff_evidence_source.source_timezone_or_offset must be a numeric offset (Z or +HH:MM/-HH:MM) -- named timezones are not supported in schema 1.0.0');
+      }
+      if (!isNonEmptyString(source.published_draft_start_at)) {
+        errors.push('cutoff_evidence_source requires published_draft_start_at');
+      }
+      // Retrieval cannot precede the review that depends on it; and the citation retrieval cannot
+      // itself be antedated relative to the human sign-off that reviewed it.
+      if (isParseableDateOrInstant(source.retrieved_at) && isParseableDateOrInstant(source.reviewed_at)) {
+        if (Date.parse(source.reviewed_at) < Date.parse(source.retrieved_at)) {
+          errors.push('cutoff_evidence_source.reviewed_at must not be earlier than retrieved_at (review cannot precede retrieval)');
+        }
       }
       // published_draft_start_at must itself be a parseable offset instant as a hard, independent
       // requirement -- previously this was only implicitly required by the strict-ordering check
@@ -502,14 +568,14 @@ export const validateRookieTransitionProfileAvailabilityEvidence = (
         if (isNonEmptyString(source.published_draft_start_at) && !content.includes(source.published_draft_start_at)) {
           errors.push('cutoff_evidence_source archive does not contain the claimed published_draft_start_at');
         }
-        if (isNonEmptyString(source.source_timezone_or_offset) && !content.includes(source.source_timezone_or_offset)) {
+        if (isNumericOffset(source.source_timezone_or_offset) && !content.includes(source.source_timezone_or_offset)) {
           errors.push('cutoff_evidence_source archive does not state the claimed source_timezone_or_offset');
         }
       }
       // The claimed source_timezone_or_offset must agree with the offset actually embedded in
       // published_draft_start_at -- otherwise the two fields could disagree with each other while each
       // individually looks plausible (owner review on PR #161, finding 3).
-      if (isParseableOffsetInstant(source.published_draft_start_at) && isNonEmptyString(source.source_timezone_or_offset)) {
+      if (isParseableOffsetInstant(source.published_draft_start_at) && isNumericOffset(source.source_timezone_or_offset)) {
         const embeddedOffset = extractOffsetSuffix(source.published_draft_start_at);
         if (embeddedOffset !== normalizeOffset(source.source_timezone_or_offset)) {
           errors.push('cutoff_evidence_source.source_timezone_or_offset does not agree with the offset embedded in published_draft_start_at');
@@ -559,12 +625,13 @@ export const validateRookieTransitionProfileAvailabilityEvidence = (
 
     if (
       !isPlainObject(identity) ||
+      !hasExactKeys(identity, SOURCE_IDENTITY_FIELDS) ||
       identity.source_repository !== SOURCE_REPO ||
       identity.source_schema !== SOURCE_SCHEMA_VERSION ||
       identity.source_season !== SOURCE_SEASON ||
       !isNonEmptyString(identity.source_player_id)
     ) {
-      errors.push(`${rowKey}: source_identity must carry the exact locked (source_repository, source_schema, source_season) and a non-empty source_player_id`);
+      errors.push(`${rowKey}: source_identity must carry exactly the four contract fields with the exact locked (source_repository, source_schema, source_season) and a non-empty source_player_id`);
       return;
     }
     const playerId = identity.source_player_id;
@@ -582,11 +649,17 @@ export const validateRookieTransitionProfileAvailabilityEvidence = (
     statusCounts[status as AvailabilityStatus] += 1;
     statusCountsByFamily[family as FieldFamily][status as AvailabilityStatus] += 1;
 
-    // source_snapshot_as_of is supplementary bookkeeping metadata, not a substitute for available_at's
-    // archive-bound proof -- but when present it must still be a real, parseable instant, not an
-    // arbitrary unchecked string (owner review on PR #161, finding 5).
-    if (row.source_snapshot_as_of !== null && !isParseableOffsetInstant(row.source_snapshot_as_of)) {
-      errors.push(`${rowKey}: source_snapshot_as_of must be null or a fully-qualified, offset-bearing ISO-8601 instant`);
+    // source_snapshot_as_of is hard-rejected as non-null in schema 1.0.0: no reproducible
+    // snapshot-evidence contract exists yet to support a factual timestamp claim here, and allowing
+    // an arbitrary non-null value (even a well-formed instant) would be an unsourced timing claim
+    // parallel to the one available_at's archive-binding check exists to prevent (owner review on
+    // PR #161, finding 4).
+    if (row.source_snapshot_as_of !== null) {
+      errors.push(`${rowKey}: source_snapshot_as_of must be null in schema 1.0.0 -- no reproducible snapshot-evidence contract exists yet to support a non-null claim`);
+    }
+
+    if (row.notes !== null && typeof row.notes !== 'string') {
+      errors.push(`${rowKey}: notes must be null or a string`);
     }
 
     // Value-presence agreement (design §11/§15): `unavailable` iff the pinned mirror value is null.
@@ -607,6 +680,7 @@ export const validateRookieTransitionProfileAvailabilityEvidence = (
     if (status === 'unavailable' || status === 'unresolved_no_availability_proof') {
       if (row.available_at !== null) errors.push(`${rowKey}: ${status} row must carry a null available_at`);
       if (row.evidence_source !== null) errors.push(`${rowKey}: ${status} row must carry a null evidence_source`);
+      if (row.review_decision !== null) errors.push(`${rowKey}: ${status} row must carry a null review_decision -- only a human-reviewed eligible/ineligible row may claim one`);
       return;
     }
 
@@ -622,8 +696,12 @@ export const validateRookieTransitionProfileAvailabilityEvidence = (
       return;
     }
     const evidenceSource = row.evidence_source;
-    if (!isValidCitation(evidenceSource) || !isNonEmptyString((evidenceSource as RowEvidenceSource).mirrored_value_literal)) {
-      errors.push(`${rowKey}: ${status} requires a structurally complete evidence_source with a non-empty mirrored_value_literal`);
+    if (
+      !isValidCitation(evidenceSource) ||
+      !hasExactKeys(evidenceSource as unknown as Record<string, unknown>, ROW_EVIDENCE_SOURCE_FIELDS) ||
+      !isNonEmptyString((evidenceSource as RowEvidenceSource).mirrored_value_literal)
+    ) {
+      errors.push(`${rowKey}: ${status} requires a structurally complete evidence_source (exactly the nine contract fields) with a non-empty mirrored_value_literal`);
       return;
     }
     const content = resolveArchivedEvidence(evidenceSource as RowEvidenceSource);
@@ -656,9 +734,27 @@ export const validateRookieTransitionProfileAvailabilityEvidence = (
       return;
     }
     const reviewDecision = row.review_decision;
-    if (!isPlainObject(reviewDecision) || !isNonEmptyString(reviewDecision.reviewer) || !isParseableDateOrInstant(reviewDecision.reviewed_at)) {
-      errors.push(`${rowKey}: ${status} requires an explicit, attributable human review_decision (non-null reviewer and a parseable reviewed_at)`);
+    if (
+      !isPlainObject(reviewDecision) ||
+      !hasExactKeys(reviewDecision, REVIEW_DECISION_FIELDS) ||
+      !isNonEmptyString(reviewDecision.reviewer) ||
+      !isParseableDateOrInstant(reviewDecision.reviewed_at)
+    ) {
+      errors.push(`${rowKey}: ${status} requires an explicit, attributable human review_decision (exactly reviewer and a parseable reviewed_at)`);
       return;
+    }
+    // Retrieval cannot precede the fact it retrieves evidence of, and review cannot precede the
+    // retrieval it reviews -- a coherent chronology, not merely independently well-formed dates.
+    const evidenceRetrievedAt = (evidenceSource as RowEvidenceSource).retrieved_at;
+    if (isParseableDateOrInstant(evidenceRetrievedAt) && Date.parse(evidenceRetrievedAt) < Date.parse(availableAt)) {
+      errors.push(`${rowKey}: evidence_source.retrieved_at must not be earlier than available_at (cannot retrieve evidence of a fact before it existed)`);
+    }
+    if (
+      isParseableDateOrInstant(evidenceRetrievedAt) &&
+      isParseableDateOrInstant(reviewDecision.reviewed_at) &&
+      Date.parse(reviewDecision.reviewed_at) < Date.parse(evidenceRetrievedAt)
+    ) {
+      errors.push(`${rowKey}: review_decision.reviewed_at must not be earlier than evidence_source.retrieved_at (review cannot precede retrieval)`);
     }
     const availableAtMs = Date.parse(availableAt);
     const cutoffMs = Date.parse(cutoffAt);
@@ -724,6 +820,9 @@ export const validateRookieTransitionProfileAvailabilityEvidence = (
   if (!isPlainObject(declaredOverall)) {
     errors.push('status_counts is missing');
   } else {
+    if (!hasExactKeys(declaredOverall, AVAILABILITY_STATUSES)) {
+      errors.push(`status_counts fields must be exactly ${JSON.stringify(AVAILABILITY_STATUSES)}, found [${Object.keys(declaredOverall).join(', ')}]`);
+    }
     for (const status of AVAILABILITY_STATUSES) {
       if (declaredOverall[status] !== statusCounts[status]) {
         errors.push(`status_counts.${status} declares ${JSON.stringify(declaredOverall[status])} but recomputation finds ${statusCounts[status]}`);
@@ -737,11 +836,17 @@ export const validateRookieTransitionProfileAvailabilityEvidence = (
   if (!isPlainObject(declaredByFamily)) {
     errors.push('status_counts_by_family is missing');
   } else {
+    if (!hasExactKeys(declaredByFamily, FIELD_FAMILIES)) {
+      errors.push(`status_counts_by_family fields must be exactly ${JSON.stringify(FIELD_FAMILIES)}, found [${Object.keys(declaredByFamily).join(', ')}]`);
+    }
     for (const family of FIELD_FAMILIES) {
       const declaredFamily = declaredByFamily[family] as Partial<AvailabilityStatusCounts> | undefined;
       if (!isPlainObject(declaredFamily)) {
         errors.push(`status_counts_by_family.${family} is missing`);
         continue;
+      }
+      if (!hasExactKeys(declaredFamily, AVAILABILITY_STATUSES)) {
+        errors.push(`status_counts_by_family.${family} fields must be exactly ${JSON.stringify(AVAILABILITY_STATUSES)}, found [${Object.keys(declaredFamily).join(', ')}]`);
       }
       for (const status of AVAILABILITY_STATUSES) {
         if (declaredFamily[status] !== statusCountsByFamily[family][status]) {
