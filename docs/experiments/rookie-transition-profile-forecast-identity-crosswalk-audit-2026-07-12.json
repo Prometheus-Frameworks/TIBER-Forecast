@@ -1,0 +1,199 @@
+{
+  "report_id": "rookie-transition-profile-forecast-identity-crosswalk-audit-2026-07-12",
+  "status": "lane_a_implementation_and_audit_only_no_lane_b_no_matrix_no_experiment_no_activation",
+  "issue": "TIBER-Forecast#158",
+  "date": "2026-07-12",
+  "predecessors": ["TIBER-Forecast#155", "TIBER-Forecast#156"],
+  "governing_design": {
+    "documents": [
+      "docs/experiments/rookie-transition-profile-forecast-preexperiment-readiness-design-2026-07-11.md",
+      "docs/experiments/rookie-transition-profile-forecast-preexperiment-readiness-design-2026-07-11.json"
+    ],
+    "pinned_merge_commit": "73834c2a30743c2587b32742c4e5c98320e33dfe"
+  },
+  "locked_identities": {
+    "forecast_mirror_wrapper": {
+      "path": "data/fixtures/tiberRookies/ROOKIE_TRANSITION_PROFILE_V0_MIRROR_PROVENANCE.json",
+      "kind": "rookie_transition_profile_v0_forecast_mirror_provenance",
+      "schema_version": "1.0.0",
+      "sha256": "2639d5acb11e8d77400700e814ad9c50dba9bf0a46f3f80413e4f0d51860aaa6"
+    },
+    "tiber_rookies_source_lock": {
+      "repo": "Prometheus-Frameworks/TIBER-Rookies",
+      "commit": "2ef92faf9a9c91a393f53e9140428451529a1c48",
+      "schema_version": "rookie-transition-profile-v0.2.0",
+      "season": 2026,
+      "row_count": 48,
+      "refreshed_or_reinterpreted": false
+    }
+  },
+  "deliverables": {
+    "crosswalk_artifact": {
+      "path": "data/experiments/rookieTransitionProfile/rookie_transition_profile_v0_forecast_identity_crosswalk.json",
+      "kind": "rookie_transition_profile_v0_forecast_identity_crosswalk",
+      "schema_version": "1.0.0",
+      "rows": 48,
+      "all_fourteen_contract_fields_on_every_row": true,
+      "deterministic_ordering": "(source_season, source_player_id) ascending",
+      "duplicate_prevention_key": "(source_repository, source_schema, source_player_id, source_season)"
+    },
+    "validator_module": "src/rehearsal/rookieTransitionProfileIdentityCrosswalk.ts",
+    "audit_cli": {
+      "path": "scripts/runRookieTransitionProfileIdentityCrosswalkAudit.ts",
+      "npm_script": "audit:rookie-transition-profile-identity-crosswalk",
+      "read_only": true
+    },
+    "tests": "tests/rookieTransitionProfileIdentityCrosswalk.test.ts",
+    "archived_evidence_artifacts": {
+      "required_by_accepted_resolutions": 0,
+      "note": "no resolution was accepted, so no archived evidence artifact is required; the validator verifies archived GSIS-bearing content (with SHA-256 recomputation) for any future resolved row"
+    }
+  },
+  "evidence_paths_attempted": {
+    "3.1_overall_pick_chain": {
+      "status": "blocked_pending_second_leg_evidence",
+      "reverified_at": "2026-07-12",
+      "reverified_against": {
+        "repo": "Prometheus-Frameworks/TIBER-Data",
+        "commit": "d9a5beaacf12e3fbd74becd02db3d2ac39e48905"
+      },
+      "findings": {
+        "player_season_coverage_v0_draft_year_2026_rows": 0,
+        "player_season_coverage_v0_max_populated_draft_year": 2025,
+        "nfl_draft_results_2026_gsis_format_values": 0,
+        "governed_artifact_joining_draft_year_overall_pick_to_gsis_id_exists": false
+      },
+      "validator_behavior": "any 3.1 evidence entry is rejected outright",
+      "udfa_row_note": "te-daequan-wright is additionally structurally inapplicable (no overall_pick)"
+    },
+    "3.3_governed_artifact": {
+      "status": "unavailable",
+      "reverified_artifact": "exports/promoted/identity_crosswalk/tiber_identity_crosswalk_v1.json",
+      "findings": {
+        "supported_providers": ["sleeper"],
+        "record_count": 25,
+        "coverage": "seeded_operator_verified_mappings_only_not_full_player_universe",
+        "contains_tiber_rookies_to_gsis_mapping": false
+      },
+      "forecast_originated_substitute_created": false
+    },
+    "3.2_reviewed_mapping": {
+      "status": "not_completed",
+      "reason": "requires archived GSIS-bearing evidence plus an explicit, attributable named-human sign-off, which has not occurred during this automated implementation",
+      "candidate_gsis_ids_recorded": false,
+      "candidate_note": "deliberately none, so no name/team/position-derived candidate could be mistaken for evidence"
+    }
+  },
+  "accounting": {
+    "status_counts": { "resolved": 0, "unresolved": 48, "conflicting_evidence": 0, "blocked": 0 },
+    "status_counts_sum": 48,
+    "evidence_class_counts": {
+      "3.1_overall_pick_chain": 0,
+      "3.2_reviewed_mapping": 0,
+      "3.3_governed_artifact": 0,
+      "null": 48
+    },
+    "identity_coverage_dependency_counts": {
+      "independent_of_post_draft_outcome": 0,
+      "contingent_on_post_draft_participation": 0,
+      "unproven": 48
+    },
+    "conflicting_evidence_rows": [],
+    "blocked_rows": [],
+    "unresolved_rows": "all 48 locked source identities (enumerated in the markdown report and in the artifact itself)",
+    "unresolved_shared_reason": "3.1 blocked pending second-leg evidence; 3.3 governed artifact does not exist; 3.2 mandatory named-human review has not occurred"
+  },
+  "identity_coverage_dependency_audit": {
+    "per_row_value": "unproven",
+    "per_row_mechanism": null,
+    "rationale": "no gsis_id was resolved, so no discoverability mechanism can honestly be recorded per row",
+    "known_source_context": "the only identified GSIS-bearing governed source (player_season_coverage_v0.json) is built from accrued NFL statistics; any future resolution sourced from it must record contingent_on_post_draft_participation"
+  },
+  "confirmations": {
+    "no_prohibited_matching_method_used": true,
+    "no_runtime_model_production_downstream_ui_import_introduced": true,
+    "tiber_rookies_unmodified": true,
+    "tiber_data_unmodified": true,
+    "four_committed_mirror_files_unmodified": true,
+    "mirror_and_source_locks_preserved_exactly": true,
+    "no_lane_b_work_performed": true,
+    "no_field_declared_temporally_eligible": true,
+    "no_readiness_matrix_populated": true,
+    "no_experiment_opened_or_run": true,
+    "no_adapter_or_feature_table_created": true,
+    "no_predictive_evaluation_performed": true,
+    "no_human_review_claimed": true
+  },
+  "validation": {
+    "build": "npm run build (tsc --noEmit) clean",
+    "tests": "npm test passing, including 65 crosswalk tests (positive, all required negative cases, 3.3_governed_artifact hard-rejected outright including the inverted former control case, 3.2 corroborating-fact literal verification and independence and entry/row sign-off equality, mechanically-verified-but-non-terminal blocked-row disposition, hard-rejected identity_coverage_dependency=independent_of_post_draft_outcome, immutable-commit-SHA enforcement, inertness scans)",
+    "audit_cli": "npm run audit:rookie-transition-profile-identity-crosswalk -> valid: true, verified_blocked_count 0/0"
+  },
+  "post_review_strengthening_2026_07_12_round_1": {
+    "reviewer": "Prometheus-Frameworks (PR owner) + chatgpt-codex-connector[bot]",
+    "changes": [
+      "3.3_governed_artifact evidence now requires the dereferenced archive to contain both the claimed gsis_id and the row's exact source_player_id, plus schema_version agreement where the archive itself declares one",
+      "3.2 corroborating facts now have their archived citations independently resolved and hash-verified, and must be materially distinct (no shared archive hash/location/fact text/original_url)",
+      "blocked rows now require a machine-verifiable disposition (non-null reviewer/reviewed_at, non-empty notes, at least one resolution_evidence entry) so a bare blocked label can never inflate the decision to ..._complete",
+      "the validator now checks the artifact's issue and governing_design fields against the pinned constants, not only source_lock"
+    ],
+    "committed_artifact_unchanged": true,
+    "decision_unchanged": true
+  },
+  "post_review_strengthening_2026_07_12_round_2": {
+    "reviewer": "Prometheus-Frameworks (PR owner)",
+    "changes": [
+      "3.3 evidence now requires exact structured matching: the cited archive is deterministically JSON-parsed (top-level array or a rows array, no substring fallback) and must contain exactly one row whose full four-field governed source key matches this row, with that row's own gsis_id equal to the claim -- zero/multiple/mismatched matches all fail closed, including the specific cross-row string-co-occurrence regression the review required",
+      "the CLI's production archived-evidence resolver now reads the exact pinned commit via 'git show <commit>:<path>' against every locally available sibling repo (TIBER-Data, TIBER-Rookies, TIBER-Teamstate, and Forecast itself), fixing the prior mutual incompatibility where the validator required an external 3.3 citation the CLI resolver could never actually read -- honestly scoped as a same-environment fix, not CI-portable until sibling checkouts are provisioned there too",
+      "3.2 corroborating facts now require a verified expected_literal actually present in the archived content, not merely an archive that exists and hashes correctly",
+      "blocked rows now require a mechanically-verified disqualification_reason (prohibited_method | non_reproducible_or_fabricated_evidence | governed_blocker_citation), each checked against the entry's own content -- a recognized evidence_class token with fabricated reviewer/notes alone (the exact spoof the review demonstrated) is now rejected, tracked via a new verifiedBlockedCount result field and an explicit decision-rule guard"
+    ],
+    "committed_artifact_unchanged": true,
+    "decision_unchanged": true
+  },
+  "post_review_strengthening_2026_07_12_round_3": {
+    "reviewer": "Prometheus-Frameworks (PR owner)",
+    "changes": [
+      "prohibited_method verification now scans only a separate, non-empty attempted_evidence payload for a marker -- never disqualification_reason, disqualification_detail, notes, or reviewer, closing the self-authored-prose loophole where writing the word 'fuzzy' into free text alone verified a block",
+      "non_reproducible_or_fabricated_evidence now requires positive proof: the cited archive must actually reproduce, plus a claimed_value the entry asserts was bound, with verification confirming the reproduced content does NOT contain it -- a bare resolver null (equally consistent with an unknown repo, unfetched commit, path typo, or missing sibling checkout in CI) no longer counts as fabrication proof",
+      "governed_blocker_citation now requires the same exact-key-match discipline as 3.3: the cited archive is deterministically parsed for a rows array, filtered to the row matching this identity's full four-field governed key (zero/multiple matches fail closed), and that row must itself carry non-empty blocker_reason/blocker_detail fields -- an unrelated-but-reproducible file can no longer pass",
+      "identity_coverage_mechanism.citation is now resolved, hash-verified, and exact-key-matched via the same shared parser used by 3.3 and governed_blocker_citation, with the matched row required to itself declare independent_of_post_draft_outcome: true -- previously only citation shape was checked, so a fabricated citation could mark a row independent outright",
+      "isValidCitation now requires an immutable full 40-character lowercase-hex git commit SHA everywhere it is used -- a mutable ref (main, HEAD), a branch/tag name, or an abbreviated SHA now fails citation validation"
+    ],
+    "committed_artifact_unchanged": true,
+    "decision_unchanged": true
+  },
+  "post_review_strengthening_2026_07_12_round_4": {
+    "reviewer": "Prometheus-Frameworks (PR owner)",
+    "changes": [
+      "blocked no longer contributes to a terminal ..._complete decision under any circumstance, however thoroughly its disposition mechanically validates -- round 3's checks (real marker present, citation reproduces, exact governed-key match) still only verify evidence authored inside this same crosswalk PR by the same party making the claim, which is not independent proof; decideIdentityCrosswalkAudit now returns ..._requires_followup whenever blocked > 0, unconditionally, with verifiedBlockedCount retained only as an audit-transparency diagnostic",
+      "identity_coverage_dependency=independent_of_post_draft_outcome is now hard-rejected outright in schema 1.0.0 regardless of citation quality -- round 3's resolve-and-exact-match verification was real progress over shape-checking, but the cited artifact was still a self-declaring JSON row authored in the same PR with no governed kind/schema/authority/acquisition-mechanism contract behind it; every row must stay contingent_on_post_draft_participation or unproven until that contract exists",
+      "a resolved 3.2_reviewed_mapping row's supporting evidence entry must now carry the same reviewer and reviewed_at as the row itself -- previously each pair was checked only for non-emptiness independently, so a row could claim one person's sign-off while its supporting entry named someone else"
+    ],
+    "committed_artifact_unchanged": true,
+    "decision_unchanged": true
+  },
+  "post_review_strengthening_2026_07_12_round_5": {
+    "reviewer": "Prometheus-Frameworks (PR owner)",
+    "changes": [
+      "3.3_governed_artifact is now hard-rejected outright in schema 1.0.0, mirroring the round-4 treatment of independent_of_post_draft_outcome and the existing 3.1 hard-block -- round 3's exact-key-match verification (reproducible immutable citation, non-Forecast repo, deterministic JSON parse, exactly one row matching the full four-field governed key, target and schema_version agreement) proves what a cited file SAYS, not that the file has the GOVERNANCE AUTHORITY design §3.3 requires (a real TIBER-Data-or-other-repository reviewed, promoted crosswalk artifact, never an arbitrary convenient mapping file); unlike blocked and independent_of_post_draft_outcome, a valid 3.3 entry could directly produce a resolved row, making this a genuine completion-path defect, not merely a documented non-terminal state",
+      "the former passing 3.3 control test (a generic synthetic object with only schema_version and rows, attributed to a hypothetical TIBER-Data path) is inverted into a regression proving that even that exact well-formed, reproducible, exact-key-matched, schema-consistent file still cannot resolve a row",
+      "removed the now-orphaned exact-key-match sub-tests and fixtures (zero/multiple matches, target mismatch, cross-row co-occurrence, missing rows array, schema mismatch) whose code paths no longer execute; checkEvidenceEntry's now-unused sourceIdentity parameter was also removed"
+    ],
+    "committed_artifact_unchanged": true,
+    "decision_unchanged": true
+  },
+  "decision": "rookie_transition_profile_forecast_identity_resolution_audit_requires_followup",
+  "decision_rationale": "the governed Lane A artifact, fail-closed validator, tests, and full 48-row accounting are complete and passing, but all 48 identities remain unresolved: §3.2 cannot produce a resolved row without archived GSIS-bearing evidence and an explicit named-human sign-off (which has not occurred), and no governed §3.1/§3.3 evidence exists yet",
+  "decision_authorizes": [],
+  "decision_does_not_authorize": [
+    "lane_b_source_availability_audit",
+    "integrated_readiness_review",
+    "controlled_experiment_design_or_implementation",
+    "feature_use_or_predictive_evaluation",
+    "downstream_consumption",
+    "production_binding",
+    "ui_activation",
+    "model_use"
+  ]
+}
