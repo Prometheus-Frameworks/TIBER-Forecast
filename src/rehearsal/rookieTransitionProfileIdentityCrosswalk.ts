@@ -427,7 +427,6 @@ interface EvidenceCheckOutcome {
 
 const checkEvidenceEntry = (
   entry: Record<string, unknown>,
-  sourceIdentity: SourceIdentityKey,
   rowKey: string,
   entryIndex: number,
   resolveArchivedEvidence: ArchivedEvidenceResolver,
@@ -464,78 +463,25 @@ const checkEvidenceEntry = (
   }
 
   if (evidenceClass === '3.3_governed_artifact') {
-    const citation = entry.governed_artifact_citation;
-    if (!isValidCitation(citation) || !isNonEmptyString(citation.schema_version)) {
-      errors.push(`${where}: 3.3 entry lacks a complete governed_artifact_citation (repo/commit/path/schema_version/sha256)`);
-      return { structurallyComplete: false, resolvesTo };
-    }
-    if ((citation as ArchivedCitation).repo === 'Prometheus-Frameworks/TIBER-Forecast') {
-      errors.push(
-        `${where}: 3.3 governed artifact is attributed to TIBER-Forecast itself -- Forecast must only consume, ` +
-          'never originate, a canonical-identity artifact (design §3.3)',
-      );
-      return { structurallyComplete: false, resolvesTo };
-    }
-    const archivedArtifactContent = resolveArchivedEvidence(citation as ArchivedCitation);
-    if (archivedArtifactContent === null) {
-      errors.push(`${where}: 3.3 governed_artifact_citation is not reproducible from its citation (design §3.3/§12 fail-closed)`);
-      return { structurallyComplete: false, resolvesTo };
-    }
-    // Containing both strings somewhere in the document is not proof of a mapping -- a multi-row
-    // artifact could contain the source identity in one row and the gsis_id in an unrelated one.
-    // The archive must be parsed deterministically and checked for exactly one row that maps the
-    // FULL four-field governed source key to the claimed gsis_id. If it cannot be parsed
-    // deterministically, 3.3 stays unusable for this citation -- there is no substring fallback.
-    const parseResult = parseGovernedRowsMatchingKey(archivedArtifactContent, sourceIdentity);
-    if (parseResult.kind === 'unparseable') {
-      errors.push(
-        `${where}: cited governed artifact could not be deterministically parsed as JSON -- 3.3 remains unusable ` +
-          'for this citation (no substring-search fallback, design §3.3)',
-      );
-      return { structurallyComplete: false, resolvesTo };
-    }
-    if (parseResult.kind === 'no_rows_array') {
-      errors.push(
-        `${where}: cited governed artifact does not expose a deterministic rows array (a top-level array, or a ` +
-          '"rows" array) -- 3.3 remains unusable for this citation',
-      );
-      return { structurallyComplete: false, resolvesTo };
-    }
-    const { matches, parsed: parsedArtifact } = parseResult;
-    if (matches.length === 0) {
-      errors.push(
-        `${where}: cited governed artifact contains no row mapping the exact governed source key ` +
-          '(source_repository/source_schema/source_player_id/source_season) -- zero matches fails closed',
-      );
-      return { structurallyComplete: false, resolvesTo };
-    }
-    if (matches.length > 1) {
-      errors.push(
-        `${where}: cited governed artifact contains ${matches.length} rows mapping the exact governed source key ` +
-          '-- multiple matches fails closed (ambiguous)',
-      );
-      return { structurallyComplete: false, resolvesTo };
-    }
-    if (matches[0].gsis_id !== resolvesTo) {
-      errors.push(
-        `${where}: cited governed artifact maps this exact source identity to ${JSON.stringify(matches[0].gsis_id)}, ` +
-          `not the claimed ${resolvesTo} -- target mismatch fails closed`,
-      );
-      return { structurallyComplete: false, resolvesTo };
-    }
-    // Where the archived content is itself JSON declaring a schema/spec version, it must agree with
-    // the citation's own declared schema_version -- never accepted merely because both are present.
-    if (isPlainObject(parsedArtifact)) {
-      const declaredVersion = parsedArtifact.schema_version ?? parsedArtifact.spec_version;
-      if (typeof declaredVersion === 'string' && declaredVersion !== (citation as ArchivedCitation).schema_version) {
-        errors.push(
-          `${where}: cited governed artifact declares schema_version/spec_version ${JSON.stringify(declaredVersion)}, ` +
-            `citation claims ${JSON.stringify((citation as ArchivedCitation).schema_version)}`,
-        );
-        return { structurallyComplete: false, resolvesTo };
-      }
-    }
-    return { structurallyComplete: true, resolvesTo };
+    // Exact-key matching (still checkable, see below) proves what a cited file SAYS -- it cannot
+    // prove the file has the GOVERNANCE AUTHORITY to say it. Design §3.3 requires TIBER-Data (or
+    // another governed repository) to have actually published its OWN reviewed, promoted
+    // TIBER-Rookies-to-gsis_id crosswalk artifact; nothing in this repository can verify that an
+    // arbitrary external JSON file carries that reviewed/promoted status, a required artifact
+    // `kind`, or real governing-authority provenance, rather than being any convenient mapping file
+    // someone placed at a plausible-looking path. Re-verified for #158/#159 (2026-07-13): no such
+    // governed artifact exists today -- TIBER-Data's only promoted crosswalk
+    // (`tiber_identity_crosswalk_v1.json`) is Sleeper-provider-only and carries no TIBER-Rookies
+    // mapping. Until a future PR pins the real artifact's governing repository, kind, schema,
+    // promotion/review provenance, and path/manifest, 3.3 remains unusable outright -- mirroring how
+    // §3.1 stays hard-blocked pending its own missing precondition.
+    errors.push(
+      `${where}: 3.3_governed_artifact is unavailable_pending_governed_artifact_contract (design §3.3) -- ` +
+        'no real governed TIBER-Data (or other repository) artifact meeting §3.3\'s reviewed/promoted requirements ' +
+        'exists today, and this validator cannot accept an arbitrary external JSON file as governed merely because ' +
+        'it exact-key-matches; this class may not be used',
+    );
+    return { structurallyComplete: false, resolvesTo };
   }
 
   // 3.2_reviewed_mapping
@@ -965,7 +911,7 @@ export const validateRookieTransitionProfileIdentityCrosswalk = (
         if (!verified) blockedEntriesAllVerified = false;
         return { structurallyComplete: false, resolvesTo: null };
       }
-      return checkEvidenceEntry(entry, sourceIdentity, rowKey, entryIndex, resolveArchivedEvidence, errors);
+      return checkEvidenceEntry(entry, rowKey, entryIndex, resolveArchivedEvidence, errors);
     });
 
     // Conflicting candidates produce conflicting_evidence -- never a silent pick (§6). A blocked

@@ -126,7 +126,7 @@
   },
   "validation": {
     "build": "npm run build (tsc --noEmit) clean",
-    "tests": "npm test passing, including 73 crosswalk tests (positive, all required negative cases, 3.3 exact-key mapping verification, 3.2 corroborating-fact literal verification and independence and entry/row sign-off equality, mechanically-verified-but-non-terminal blocked-row disposition, hard-rejected identity_coverage_dependency=independent_of_post_draft_outcome, immutable-commit-SHA enforcement, inertness scans)",
+    "tests": "npm test passing, including 65 crosswalk tests (positive, all required negative cases, 3.3_governed_artifact hard-rejected outright including the inverted former control case, 3.2 corroborating-fact literal verification and independence and entry/row sign-off equality, mechanically-verified-but-non-terminal blocked-row disposition, hard-rejected identity_coverage_dependency=independent_of_post_draft_outcome, immutable-commit-SHA enforcement, inertness scans)",
     "audit_cli": "npm run audit:rookie-transition-profile-identity-crosswalk -> valid: true, verified_blocked_count 0/0"
   },
   "post_review_strengthening_2026_07_12_round_1": {
@@ -169,6 +169,16 @@
       "blocked no longer contributes to a terminal ..._complete decision under any circumstance, however thoroughly its disposition mechanically validates -- round 3's checks (real marker present, citation reproduces, exact governed-key match) still only verify evidence authored inside this same crosswalk PR by the same party making the claim, which is not independent proof; decideIdentityCrosswalkAudit now returns ..._requires_followup whenever blocked > 0, unconditionally, with verifiedBlockedCount retained only as an audit-transparency diagnostic",
       "identity_coverage_dependency=independent_of_post_draft_outcome is now hard-rejected outright in schema 1.0.0 regardless of citation quality -- round 3's resolve-and-exact-match verification was real progress over shape-checking, but the cited artifact was still a self-declaring JSON row authored in the same PR with no governed kind/schema/authority/acquisition-mechanism contract behind it; every row must stay contingent_on_post_draft_participation or unproven until that contract exists",
       "a resolved 3.2_reviewed_mapping row's supporting evidence entry must now carry the same reviewer and reviewed_at as the row itself -- previously each pair was checked only for non-emptiness independently, so a row could claim one person's sign-off while its supporting entry named someone else"
+    ],
+    "committed_artifact_unchanged": true,
+    "decision_unchanged": true
+  },
+  "post_review_strengthening_2026_07_12_round_5": {
+    "reviewer": "Prometheus-Frameworks (PR owner)",
+    "changes": [
+      "3.3_governed_artifact is now hard-rejected outright in schema 1.0.0, mirroring the round-4 treatment of independent_of_post_draft_outcome and the existing 3.1 hard-block -- round 3's exact-key-match verification (reproducible immutable citation, non-Forecast repo, deterministic JSON parse, exactly one row matching the full four-field governed key, target and schema_version agreement) proves what a cited file SAYS, not that the file has the GOVERNANCE AUTHORITY design §3.3 requires (a real TIBER-Data-or-other-repository reviewed, promoted crosswalk artifact, never an arbitrary convenient mapping file); unlike blocked and independent_of_post_draft_outcome, a valid 3.3 entry could directly produce a resolved row, making this a genuine completion-path defect, not merely a documented non-terminal state",
+      "the former passing 3.3 control test (a generic synthetic object with only schema_version and rows, attributed to a hypothetical TIBER-Data path) is inverted into a regression proving that even that exact well-formed, reproducible, exact-key-matched, schema-consistent file still cannot resolve a row",
+      "removed the now-orphaned exact-key-match sub-tests and fixtures (zero/multiple matches, target mismatch, cross-row co-occurrence, missing rows array, schema mismatch) whose code paths no longer execute; checkEvidenceEntry's now-unused sourceIdentity parameter was also removed"
     ],
     "committed_artifact_unchanged": true,
     "decision_unchanged": true

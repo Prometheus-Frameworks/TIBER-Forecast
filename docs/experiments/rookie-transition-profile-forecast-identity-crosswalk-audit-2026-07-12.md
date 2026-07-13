@@ -28,7 +28,7 @@ against the upstream promotion).
 | Governed 48-row identity-crosswalk artifact (`kind: rookie_transition_profile_v0_forecast_identity_crosswalk`, `schema_version: 1.0.0`) | `data/experiments/rookieTransitionProfile/rookie_transition_profile_v0_forecast_identity_crosswalk.json` |
 | Pure fail-closed validator (deterministic; no I/O) | `src/rehearsal/rookieTransitionProfileIdentityCrosswalk.ts` |
 | Read-only audit CLI (`npm run audit:rookie-transition-profile-identity-crosswalk`) | `scripts/runRookieTransitionProfileIdentityCrosswalkAudit.ts` |
-| Positive + negative validation tests (73 tests) | `tests/rookieTransitionProfileIdentityCrosswalk.test.ts` |
+| Positive + negative validation tests (65 tests) | `tests/rookieTransitionProfileIdentityCrosswalk.test.ts` |
 | This audit report | `docs/experiments/rookie-transition-profile-forecast-identity-crosswalk-audit-2026-07-12.md` / `.json` |
 
 Every row carries all fourteen contract fields (`source_repository`, `source_schema`,
@@ -165,6 +165,27 @@ terminal-state rules themselves rather than adding more structure to self-author
   supporting entry named someone else entirely. The validator now requires exact equality between
   the two, ensuring the single mandatory attributable sign-off is unambiguous.
 
+**Strengthened after independent review, round 5 (2026-07-12), before this PR merged:** the same
+self-certification argument round 4 applied to `blocked` and `independent_of_post_draft_outcome`
+applies to `3.3_governed_artifact` too — and unlike those two, a valid 3.3 entry could directly
+produce a `resolved` row, making it a genuine completion-path defect rather than a documented,
+never-terminal state. Round 3's exact-key-match verification (reproducible, immutable citation;
+non-Forecast repo; deterministic JSON parse; exactly one row matching the full four-field governed
+key; target and schema_version agreement) proves what a cited file **says** — it cannot prove the
+file has the **governance authority** to say it. Design §3.3 requires TIBER-Data (or another
+governed repository) to have actually published its own reviewed, promoted crosswalk artifact;
+nothing in this validator can verify that an arbitrary external JSON file carries that reviewed/
+promoted status, a required artifact `kind`, or real governing-authority provenance, rather than
+being any convenient mapping file placed at a plausible-looking path. The prior positive test proved
+this gap directly: it supplied a generic synthetic object containing only `schema_version` and
+`rows`, and the validator accepted it as "governed." `3.3_governed_artifact` is now hard-rejected
+outright in schema 1.0.0 — every attempted entry fails with
+`unavailable_pending_governed_artifact_contract`, mirroring §3.1's existing hard-block — and the
+former passing control test is inverted into a regression proving that even a well-formed,
+reproducible, exact-key-matched, schema-consistent generic file still cannot resolve a row. A future
+PR may enable 3.3 only after pinning a real artifact's governing repository, kind, schema,
+promotion/review provenance, and path/manifest — none of which exist today.
+
 ## 3. Evidence paths attempted, per the merged design
 
 ### §3.1 corroborated overall-pick chain — still `blocked_pending_second_leg_evidence`
@@ -185,7 +206,7 @@ this PR does not manufacture it (modifying TIBER-Data is out of scope and prohib
 validator rejects any 3.1 evidence entry outright. For the one `udfa_signed` row
 (`te-daequan-wright`), §3.1 is additionally structurally inapplicable (no `overall_pick` exists).
 
-### §3.3 existing governed alias/identity artifact — unavailable
+### §3.3 existing governed alias/identity artifact — unavailable, and now hard-rejected in schema 1.0.0
 
 Re-verified at the same TIBER-Data commit: the only promoted identity crosswalk,
 `exports/promoted/identity_crosswalk/tiber_identity_crosswalk_v1.json`, is a **Sleeper-provider
@@ -193,6 +214,11 @@ crosswalk only** (`supported_providers: ["sleeper"]`, 25 seeded records, coverag
 `seeded_operator_verified_mappings_only_not_full_player_universe`, `tiber_player_id` values in the
 `tiber-data-player-2025-*` format). It carries no TIBER-Rookies-slug-to-`gsis_id` mapping for any of
 the 48 locked identities. Forecast did not construct a substitute and attribute it elsewhere.
+
+Beyond that factual unavailability, the validator itself now hard-rejects `3.3_governed_artifact`
+outright (round 5, §2 above) — exact-key matching a cited file can never substitute for proof that
+the file actually carries TIBER-Data's (or another repository's) real reviewed/promoted governance
+authority, so this class remains unusable even if a plausible-looking external file existed.
 
 ### §3.2 explicit reviewed mapping — not completed; the mandatory human-review checkpoint has not occurred
 
@@ -282,18 +308,19 @@ not a defect.
 ## 7. Validation and tests
 
 - `npm run build` — clean (`tsc --noEmit`).
-- `npm test` — full suite passes, including the 73 tests in `tests/rookieTransitionProfileIdentityCrosswalk.test.ts`
+- `npm test` — full suite passes, including the 65 tests in `tests/rookieTransitionProfileIdentityCrosswalk.test.ts`
   covering: the committed artifact passing validation; missing locked row; extra row; duplicate
   governed key; invalid status token; invalid evidence-class token; resolved row without GSIS-bearing
   evidence; claimed GSIS ID absent from archived content; non-reproducible archive (hash mismatch);
   fewer than two corroborating facts; missing human sign-off; independent evidence resolving to a
   different GSIS ID; unbacked independent-evidence claim; unsupported 3.1 usage; prohibited-method
-  contamination; self-attributed 3.3 artifact; unsupported independence claim; tampered status counts;
-  out-of-order rows; tampered source lock; tampered issue/governing-design pins; a passing 3.2 control
-  case; a passing, exact-key-matched 3.3 control case; 3.3 evidence with a non-reproducible citation,
-  an unparseable archive, a missing rows array, zero/multiple/mismatched key matches, the specific
-  cross-row string-co-occurrence regression, and a schema_version disagreement; a corroborating fact
-  missing `expected_literal`, one whose archive doesn't actually contain it, and facts sharing an
+  contamination; self-attributed 3.3 artifact (now rejected for the unconditional hard-block reason);
+  unsupported independence claim; tampered status counts; out-of-order rows; tampered source lock;
+  tampered issue/governing-design pins; a passing 3.2 control case; `3.3_governed_artifact` rejected
+  outright even when the cited archive is well-formed, reproducible, exact-key-matched, and
+  schema-consistent (the inverted former control case), and rejected the same way when the citation
+  cannot reproduce at all; a corroborating fact missing `expected_literal`, one whose archive doesn't
+  actually contain it, and facts sharing an
   archive hash/location/text/URL (not independent); a well-formed blocked row verified via each of the
   three disqualification reasons (`prohibited_method`, `non_reproducible_or_fabricated_evidence`,
   `governed_blocker_citation`); a bare blocked row with no disposition/notes/evidence; the exact

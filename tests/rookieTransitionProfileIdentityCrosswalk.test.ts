@@ -75,42 +75,12 @@ const governedArtifactRow = (overrides: Partial<{ source_player_id: string; gsis
   ...overrides,
 });
 
+// A well-formed governed-artifact JSON: reproducible, deterministically parseable, exactly one row
+// matching the full four-field governed source key, schema-consistent. #159 review round 5: 3.3 is
+// hard-rejected regardless, so this fixture now exists only to prove that even a file this
+// well-shaped still cannot resolve a row -- see the "3.3_governed_artifact" describe block below.
 const GOVERNED_ARTIFACT_CONTENT = JSON.stringify({
   schema_version: GOVERNED_ARTIFACT_SCHEMA_VERSION,
-  rows: [governedArtifactRow()],
-});
-// Reproducible JSON with a `rows` array -- but no row's full governed key matches this source
-// identity at all (zero matches), so the mapping cannot be proven for THIS player.
-const GOVERNED_ARTIFACT_CONTENT_ZERO_MATCHES = JSON.stringify({
-  schema_version: GOVERNED_ARTIFACT_SCHEMA_VERSION,
-  rows: [governedArtifactRow({ source_player_id: 'someone-else-entirely' })],
-});
-// Two rows both matching the same full governed key -- ambiguous, ought never be picked arbitrarily.
-const GOVERNED_ARTIFACT_CONTENT_MULTIPLE_MATCHES = JSON.stringify({
-  schema_version: GOVERNED_ARTIFACT_SCHEMA_VERSION,
-  rows: [governedArtifactRow(), governedArtifactRow()],
-});
-// Matches the full governed key exactly once -- but that row's own gsis_id disagrees with the claim.
-const GOVERNED_ARTIFACT_CONTENT_TARGET_MISMATCH = JSON.stringify({
-  schema_version: GOVERNED_ARTIFACT_SCHEMA_VERSION,
-  rows: [governedArtifactRow({ gsis_id: GSIS_B })],
-});
-// The exact cross-row co-occurrence scenario a naive substring check would wrongly accept: one row
-// names the right player with the WRONG id, a different row carries the RIGHT id for someone else.
-const GOVERNED_ARTIFACT_CONTENT_CROSS_ROW_COOCCURRENCE = JSON.stringify({
-  schema_version: GOVERNED_ARTIFACT_SCHEMA_VERSION,
-  rows: [governedArtifactRow({ gsis_id: GSIS_B }), governedArtifactRow({ source_player_id: 'someone-else-entirely', gsis_id: GSIS_A })],
-});
-// Valid JSON, but no top-level array and no "rows" array -- not deterministically parseable per the
-// contract this validator enforces (wrong/unsupported key name).
-const GOVERNED_ARTIFACT_CONTENT_NO_ROWS_KEY = JSON.stringify({
-  schema_version: GOVERNED_ARTIFACT_SCHEMA_VERSION,
-  mappings: [governedArtifactRow()],
-});
-// Reproducible and correctly bound -- but the archived bytes declare a different schema_version
-// than the citation claims.
-const GOVERNED_ARTIFACT_CONTENT_SCHEMA_MISMATCH = JSON.stringify({
-  schema_version: '2.0.0',
   rows: [governedArtifactRow()],
 });
 
@@ -127,12 +97,6 @@ const archiveResolver: ArchivedEvidenceResolver = (cited) => {
     FACT_ARCHIVE_CONTENT_JERSEY,
     FACT_ARCHIVE_CONTENT_TEAM,
     GOVERNED_ARTIFACT_CONTENT,
-    GOVERNED_ARTIFACT_CONTENT_ZERO_MATCHES,
-    GOVERNED_ARTIFACT_CONTENT_MULTIPLE_MATCHES,
-    GOVERNED_ARTIFACT_CONTENT_TARGET_MISMATCH,
-    GOVERNED_ARTIFACT_CONTENT_CROSS_ROW_COOCCURRENCE,
-    GOVERNED_ARTIFACT_CONTENT_NO_ROWS_KEY,
-    GOVERNED_ARTIFACT_CONTENT_SCHEMA_MISMATCH,
     GOVERNED_BLOCKER_CONTENT,
     COVERAGE_MECHANISM_CONTENT_INDEPENDENT,
   ]) {
@@ -492,7 +456,7 @@ describe('fail-closed validator negative cases (#158 required test list)', () =>
     expect(result.errors.some((e) => e.includes('prohibited method marker'))).toBe(true);
   });
 
-  it('rejects a locally invented GSIS ID on a self-attributed 3.3 governed artifact', () => {
+  it('rejects a self-attributed 3.3 governed artifact -- the class is hard-rejected regardless of repo', () => {
     const artifact = withResolvedFirstRow((row) => {
       row.resolution_evidence_class = '3.3_governed_artifact';
       row.resolution_evidence = [
@@ -505,29 +469,7 @@ describe('fail-closed validator negative cases (#158 required test list)', () =>
     });
     const result = validate(artifact, archiveResolver);
     expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes('never originate'))).toBe(true);
-  });
-
-  it('rejects 3.3 evidence whose citation cannot be reproduced from its archive', () => {
-    const artifact = withResolvedFirstRow((row) => {
-      row.resolution_evidence_class = '3.3_governed_artifact';
-      row.resolution_evidence = [
-        {
-          evidence_class: '3.3_governed_artifact',
-          resolves_to_forecast_canonical_player_id: GSIS_A,
-          governed_artifact_citation: {
-            repo: 'Prometheus-Frameworks/TIBER-Data',
-            commit: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
-            path: 'exports/promoted/identity_crosswalk/fabricated.json',
-            schema_version: '1.0.0',
-            sha256: sha256('bytes nobody archived'),
-          },
-        },
-      ];
-    });
-    const result = validate(artifact, archiveResolver);
-    expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes('governed_artifact_citation is not reproducible'))).toBe(true);
+    expect(result.errors.some((e) => e.includes('unavailable_pending_governed_artifact_contract'))).toBe(true);
   });
 
   it('rejects independent_of_post_draft_outcome outright -- no governed coverage-proof contract exists in schema 1.0.0', () => {
@@ -588,7 +530,7 @@ describe('fail-closed validator negative cases (#158 required test list)', () =>
   });
 });
 
-describe('3.3_governed_artifact verification (#159 review: exact governed-key mapping, not substring co-occurrence)', () => {
+describe('3.3_governed_artifact (#159 review round 5: hard-rejected -- exact-key matching proves what a file says, not that it has governance authority)', () => {
   const make3_3Evidence = (contentSha256: string, resolvesTo: string = GSIS_A): GovernedArtifactEvidence => ({
     evidence_class: '3.3_governed_artifact',
     resolves_to_forecast_canonical_player_id: resolvesTo,
@@ -601,99 +543,29 @@ describe('3.3_governed_artifact verification (#159 review: exact governed-key ma
     },
   });
 
-  it('accepts a structurally complete, archive-verified, exact-key-matched 3.3 resolution (control case)', () => {
+  it('rejects 3.3 evidence outright even when the cited archive is well-formed, reproducible, exact-key-matched, and schema-consistent (the review-required inversion of the prior control case)', () => {
+    // GOVERNED_ARTIFACT_CONTENT would have satisfied every structural check a prior round added
+    // (reproducible, deterministically parseable, exactly one row matching the full four-field
+    // governed key, target agreement, schema_version agreement) -- and still cannot resolve a row,
+    // because none of that proves the file is TIBER-Data's own reviewed, promoted governed artifact
+    // rather than an arbitrary convenient mapping file placed at a plausible-looking path.
     const artifact = withResolvedFirstRow((row) => {
       row.resolution_evidence_class = '3.3_governed_artifact';
       row.resolution_evidence = [make3_3Evidence(sha256(GOVERNED_ARTIFACT_CONTENT))];
     });
     const result = validate(artifact, archiveResolver);
-    expect(result.errors).toEqual([]);
-    expect(result.valid).toBe(true);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('unavailable_pending_governed_artifact_contract'))).toBe(true);
   });
 
-  it('rejects 3.3 evidence whose citation cannot be reproduced from its archive', () => {
+  it('rejects 3.3 evidence the same way even when the citation cannot reproduce at all', () => {
     const artifact = withResolvedFirstRow((row) => {
       row.resolution_evidence_class = '3.3_governed_artifact';
       row.resolution_evidence = [make3_3Evidence(sha256('bytes nobody archived'))];
     });
     const result = validate(artifact, archiveResolver);
     expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes('governed_artifact_citation is not reproducible'))).toBe(true);
-  });
-
-  it('rejects 3.3 evidence whose cited archive cannot be deterministically parsed as JSON (no substring-search fallback)', () => {
-    const artifact = withResolvedFirstRow((row) => {
-      row.resolution_evidence_class = '3.3_governed_artifact';
-      // FACT_ARCHIVE_CONTENT_JERSEY is plain text, not JSON, even though it literally contains
-      // neither GSIS_A nor a rows array -- the point is the parse failure itself, not content.
-      row.resolution_evidence = [make3_3Evidence(sha256(FACT_ARCHIVE_CONTENT_JERSEY))];
-    });
-    const result = validate(artifact, archiveResolver);
-    expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes('could not be deterministically parsed as JSON'))).toBe(true);
-  });
-
-  it('rejects 3.3 evidence whose cited archive has no deterministic rows array', () => {
-    const artifact = withResolvedFirstRow((row) => {
-      row.resolution_evidence_class = '3.3_governed_artifact';
-      row.resolution_evidence = [make3_3Evidence(sha256(GOVERNED_ARTIFACT_CONTENT_NO_ROWS_KEY))];
-    });
-    const result = validate(artifact, archiveResolver);
-    expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes('does not expose a deterministic rows array'))).toBe(true);
-  });
-
-  it('rejects 3.3 evidence whose cited archive has zero rows matching the full governed source key', () => {
-    const artifact = withResolvedFirstRow((row) => {
-      row.resolution_evidence_class = '3.3_governed_artifact';
-      row.resolution_evidence = [make3_3Evidence(sha256(GOVERNED_ARTIFACT_CONTENT_ZERO_MATCHES))];
-    });
-    const result = validate(artifact, archiveResolver);
-    expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes('zero matches fails closed'))).toBe(true);
-  });
-
-  it('rejects 3.3 evidence whose cited archive has multiple rows matching the full governed source key (ambiguous)', () => {
-    const artifact = withResolvedFirstRow((row) => {
-      row.resolution_evidence_class = '3.3_governed_artifact';
-      row.resolution_evidence = [make3_3Evidence(sha256(GOVERNED_ARTIFACT_CONTENT_MULTIPLE_MATCHES))];
-    });
-    const result = validate(artifact, archiveResolver);
-    expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes('multiple matches fails closed'))).toBe(true);
-  });
-
-  it('rejects 3.3 evidence whose single matching row maps this source identity to a different gsis_id (target mismatch)', () => {
-    const artifact = withResolvedFirstRow((row) => {
-      row.resolution_evidence_class = '3.3_governed_artifact';
-      row.resolution_evidence = [make3_3Evidence(sha256(GOVERNED_ARTIFACT_CONTENT_TARGET_MISMATCH))];
-    });
-    const result = validate(artifact, archiveResolver);
-    expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes('target mismatch fails closed'))).toBe(true);
-  });
-
-  it('rejects 3.3 evidence via cross-row string co-occurrence -- one row names the player, a DIFFERENT row carries the claimed id', () => {
-    // The exact regression the review required: a naive substring scan over the whole document
-    // would have wrongly accepted this (both strings appear somewhere in the file). The exact-key
-    // match must instead find the ONE row for this player and see it maps to a different gsis_id.
-    const artifact = withResolvedFirstRow((row) => {
-      row.resolution_evidence_class = '3.3_governed_artifact';
-      row.resolution_evidence = [make3_3Evidence(sha256(GOVERNED_ARTIFACT_CONTENT_CROSS_ROW_COOCCURRENCE))];
-    });
-    const result = validate(artifact, archiveResolver);
-    expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes('target mismatch fails closed'))).toBe(true);
-  });
-
-  it("rejects 3.3 evidence whose cited schema_version disagrees with the archived content's own declared schema_version", () => {
-    const artifact = withResolvedFirstRow((row) => {
-      row.resolution_evidence_class = '3.3_governed_artifact';
-      row.resolution_evidence = [make3_3Evidence(sha256(GOVERNED_ARTIFACT_CONTENT_SCHEMA_MISMATCH))];
-    });
-    const result = validate(artifact, archiveResolver);
-    expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes('declares schema_version/spec_version'))).toBe(true);
+    expect(result.errors.some((e) => e.includes('unavailable_pending_governed_artifact_contract'))).toBe(true);
   });
 });
 
