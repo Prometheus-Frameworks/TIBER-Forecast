@@ -135,12 +135,23 @@ const NO_SEASON_PUBLISHED_DRAFT_START_AT = '2099-04-23T20:00:00-04:00';
 const CUTOFF_ARCHIVE_CONTENT_NO_SEASON = `official NFL league announcement: draft begins ${NO_SEASON_PUBLISHED_DRAFT_START_AT}`;
 const CUTOFF_ARCHIVE_CONTENT_NO_START = 'official NFL league announcement: season 2026 draft schedule to be determined';
 
-const ELIGIBLE_ARCHIVE_CONTENT = `archived snapshot dated 2026-04-15: ${FIRST_PLAYER} draft_capital mirrored value = ${REAL_DRAFT_CAPITAL_LITERAL}`;
-const INELIGIBLE_ARCHIVE_CONTENT = `archived snapshot dated 2026-04-22: ${FIRST_PLAYER} draft_capital mirrored value = ${REAL_DRAFT_CAPITAL_LITERAL}`;
-const OUTCOME_ARCHIVE_CONTENT = `archived snapshot dated 2026-04-15: ${FIRST_PLAYER} official_postdraft_outcome mirrored value = ${REAL_OUTCOME_LITERAL}`;
+const ELIGIBLE_ARCHIVE_CONTENT = `archived snapshot dated ${ELIGIBLE_AVAILABLE_AT}: ${FIRST_PLAYER} draft_capital mirrored value = ${REAL_DRAFT_CAPITAL_LITERAL}`;
+const INELIGIBLE_ARCHIVE_CONTENT = `archived snapshot dated ${INELIGIBLE_AVAILABLE_AT}: ${FIRST_PLAYER} draft_capital mirrored value = ${REAL_DRAFT_CAPITAL_LITERAL}`;
+const OUTCOME_ARCHIVE_CONTENT = `archived snapshot dated ${ELIGIBLE_AVAILABLE_AT}: ${FIRST_PLAYER} official_postdraft_outcome mirrored value = ${REAL_OUTCOME_LITERAL}`;
+// Deliberately lacks any dated snapshot timestamp -- proves the archive-binding check itself (a
+// content string containing the value but never stating a date at all must still fail closed).
+const ELIGIBLE_ARCHIVE_CONTENT_NO_DATE = `undated note: ${FIRST_PLAYER} draft_capital mirrored value = ${REAL_DRAFT_CAPITAL_LITERAL}`;
+// States only a bare date (no time-of-day/offset) -- proves available_at may never be a fabricated
+// "midnight in a chosen timezone" derived from a source that only ever stated a date.
+const ELIGIBLE_ARCHIVE_CONTENT_DATE_ONLY = `dated 2026-04-15 (no exact time stated): ${FIRST_PLAYER} draft_capital mirrored value = ${REAL_DRAFT_CAPITAL_LITERAL}`;
+// The SAME archive/value as the real eligible control case, but a different (still pre-cutoff)
+// available_at the archive never actually states -- the exact regression the owner review requested:
+// same archive, different self-declared timestamp on the same side of the cutoff, must still fail.
+const ELIGIBLE_AVAILABLE_AT_ALTERNATE_SAME_SIDE = '2026-04-16T00:00:00-04:00';
+const INELIGIBLE_AVAILABLE_AT_ALTERNATE_SAME_SIDE = '2026-04-23T00:00:00-04:00';
 
 const FABRICATED_LITERAL = '{"big_board_rank":1,"draft_capital_proxy_0_100":99}';
-const FABRICATED_ARCHIVE_CONTENT = `self-authored note: ${FIRST_PLAYER} draft_capital mirrored value = ${FABRICATED_LITERAL}`;
+const FABRICATED_ARCHIVE_CONTENT = `self-authored note dated ${ELIGIBLE_AVAILABLE_AT}: ${FIRST_PLAYER} draft_capital mirrored value = ${FABRICATED_LITERAL}`;
 
 // Deliberately fictional reviewer: these fixtures exercise validator structure only and must never
 // read as a claim that any real person signed off on a row (issue #160 human-review checkpoint).
@@ -180,6 +191,8 @@ const archiveResolver: ArchivedEvidenceResolver = (cited) => {
     ELIGIBLE_ARCHIVE_CONTENT,
     INELIGIBLE_ARCHIVE_CONTENT,
     OUTCOME_ARCHIVE_CONTENT,
+    ELIGIBLE_ARCHIVE_CONTENT_NO_DATE,
+    ELIGIBLE_ARCHIVE_CONTENT_DATE_ONLY,
     FABRICATED_ARCHIVE_CONTENT,
   ]) {
     if (cited.sha256 === sha256(content)) return content;
@@ -468,7 +481,7 @@ describe('cutoff validation (design §8)', () => {
     const artifact = withCutoffSet(clone(), { ...cutoffEvidenceSource(), reviewer: '', reviewed_at: '' });
     const result = validate(artifact, archiveResolver);
     expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes('requires a named human reviewer and dated sign-off'))).toBe(true);
+    expect(result.errors.some((e) => e.includes('requires a named human reviewer and a parseable dated sign-off'))).toBe(true);
   });
 
   it('rejects a cutoff_evidence_source missing source_timezone_or_offset/published_draft_start_at', () => {
@@ -483,6 +496,20 @@ describe('cutoff validation (design §8)', () => {
     const result = validate(artifact, archiveResolver);
     expect(result.valid).toBe(false);
     expect(result.errors.some((e) => e.includes('cutoff_evidence_source is not reproducible'))).toBe(true);
+  });
+
+  it('rejects a cutoff_evidence_source whose published_draft_start_at is not a parseable offset-bearing instant, even though non-empty (previously this silently skipped the ordering check entirely rather than failing closed)', () => {
+    const artifact = withCutoffSet(clone(), { ...cutoffEvidenceSource(), published_draft_start_at: 'not-a-timestamp' });
+    const result = validate(artifact, archiveResolver);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('published_draft_start_at must be a fully-qualified, offset-bearing ISO-8601 instant'))).toBe(true);
+  });
+
+  it('rejects a cutoff_evidence_source whose source_timezone_or_offset disagrees with the offset actually embedded in published_draft_start_at', () => {
+    const artifact = withCutoffSet(clone(), { ...cutoffEvidenceSource(), source_timezone_or_offset: '+00:00' }); // PUBLISHED_DRAFT_START_AT embeds -04:00
+    const result = validate(artifact, archiveResolver);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('does not agree with the offset embedded in published_draft_start_at'))).toBe(true);
   });
 
   it('rejects a cutoff archive that does not actually state the locked season', () => {
@@ -591,6 +618,57 @@ describe('eligible_at_cutoff / ineligible_after_cutoff rows (design §10/§12: r
     expect(result.errors.some((e) => e.includes('does not actually contain the claimed mirrored_value_literal'))).toBe(true);
   });
 
+  it('rejects a row whose archived evidence contains the claimed value but never states the claimed available_at date at all (archive-binding gap closed)', () => {
+    const artifact = withEligibleRow((row) => {
+      (row.evidence_source as unknown as Record<string, unknown>).sha256 = sha256(ELIGIBLE_ARCHIVE_CONTENT_NO_DATE);
+      (row.evidence_source as unknown as Record<string, unknown>).path = 'data/experiments/rookieTransitionProfile/evidence/undated.txt';
+    });
+    const result = validate(artifact, archiveResolver);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('does not actually contain the claimed available_at'))).toBe(true);
+  });
+
+  it('rejects a self-declared available_at the archive never actually states, even while citing content that genuinely proves the value (timestamp-substitution via an unbound available_at)', () => {
+    const artifact = withEligibleRow((row) => {
+      // The archive proves the VALUE, dated to the real eligible snapshot -- but the row claims an
+      // earlier, more favorable available_at the archive never actually states.
+      row.available_at = '2020-01-01T00:00:00-04:00';
+    });
+    const result = validate(artifact, archiveResolver);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('does not actually contain the claimed available_at'))).toBe(true);
+  });
+
+  it('rejects a self-declared available_at that differs from the archive-stated one but still lands on the SAME side of the cutoff as the genuine eligible snapshot (owner-requested regression)', () => {
+    const artifact = withEligibleRow((row) => {
+      row.available_at = ELIGIBLE_AVAILABLE_AT_ALTERNATE_SAME_SIDE; // still < cutoff_at, same claimed status
+    });
+    const result = validate(artifact, archiveResolver);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('does not actually contain the claimed available_at'))).toBe(true);
+  });
+
+  it('rejects a self-declared available_at that differs from the archive-stated one but still lands on the SAME side of the cutoff as the genuine ineligible snapshot (owner-requested regression)', () => {
+    const artifact = withIneligibleRow((row) => {
+      row.available_at = INELIGIBLE_AVAILABLE_AT_ALTERNATE_SAME_SIDE; // still >= cutoff_at, same claimed status
+    });
+    const result = validate(artifact, archiveResolver);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('does not actually contain the claimed available_at'))).toBe(true);
+  });
+
+  it('rejects an available_at claimed as an exact instant when the archive only ever states a bare date, never silently treating it as midnight in some chosen timezone', () => {
+    const artifact = withEligibleRow((row) => {
+      (row.evidence_source as unknown as Record<string, unknown>).sha256 = sha256(ELIGIBLE_ARCHIVE_CONTENT_DATE_ONLY);
+      (row.evidence_source as unknown as Record<string, unknown>).path = 'data/experiments/rookieTransitionProfile/evidence/date_only.txt';
+      // A real author might be tempted to derive midnight in the cutoff's timezone from the bare date.
+      row.available_at = '2026-04-15T00:00:00-04:00';
+    });
+    const result = validate(artifact, archiveResolver);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('does not actually contain the claimed available_at'))).toBe(true);
+  });
+
   it('rejects a mirrored_value_literal that does not match the REAL pinned mirror value, even though the archive faithfully contains it (self-certification gap closed)', () => {
     const artifact = withEligibleRow((row) => {
       (row.evidence_source as unknown as Record<string, unknown>).mirrored_value_literal = FABRICATED_LITERAL;
@@ -683,7 +761,15 @@ describe('mirror wrapper dereferencing (design §9: never trust a wrapper self-r
     artifact.mirror_source.commit = 'main';
     const result = validate(artifact);
     expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes('mirror_source.commit must be a full 40-character lowercase hex git commit SHA'))).toBe(true);
+    expect(result.errors.some((e) => e.includes('mirror_source.commit must be the pinned Forecast commit'))).toBe(true);
+  });
+
+  it('rejects a mirror_source.commit that is a well-formed but different 40-hex SHA than the pinned commit (a different commit cannot silently pass just by looking like a SHA)', () => {
+    const artifact = clone();
+    artifact.mirror_source.commit = 'ffffffffffffffffffffffffffffffffffffffff';
+    const result = validate(artifact);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('mirror_source.commit must be the pinned Forecast commit'))).toBe(true);
   });
 
   it('rejects a mirror_source.repo that does not match the pinned Forecast repo', () => {
@@ -716,6 +802,86 @@ describe('mirror wrapper dereferencing (design §9: never trust a wrapper self-r
     const result = validate(committedArtifact, neverResolve, lockedSourcePlayerIds, context);
     expect(result.valid).toBe(false);
     expect(result.errors.some((e) => e.includes("dereferenced wrapper's source_lock does not match"))).toBe(true);
+  });
+
+  it('rejects a dereferenced wrapper whose source_lock.commit has moved off the pinned upstream commit even while repo/schema/season/row_count and mirror hashes still agree', () => {
+    const context = baseMirrorContext();
+    context.wrapper.source_lock.commit = 'ffffffffffffffffffffffffffffffffffffffff';
+    const result = validate(committedArtifact, neverResolve, lockedSourcePlayerIds, context);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes("dereferenced wrapper's source_lock does not match"))).toBe(true);
+  });
+
+  it('rejects a dereferenced wrapper whose forecast_mirror.paths substitutes a different path while the live directory still contains the expected filenames', () => {
+    const context = baseMirrorContext();
+    context.wrapper.forecast_mirror.paths.mirror_json = 'data/fixtures/tiberRookies/some_other_file.json';
+    const result = validate(committedArtifact, neverResolve, lockedSourcePlayerIds, context);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes("wrapper's declared forecast_mirror.paths do not match the four authorized local paths"))).toBe(true);
+  });
+
+  it('rejects a dereferenced wrapper whose forecast_mirror.paths is missing a required key', () => {
+    const context = baseMirrorContext();
+    delete (context.wrapper.forecast_mirror.paths as Record<string, string>).mirror_csv;
+    const result = validate(committedArtifact, neverResolve, lockedSourcePlayerIds, context);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes("wrapper's declared forecast_mirror.paths do not match the four authorized local paths"))).toBe(true);
+  });
+
+  it('control case: the real dereferenced wrapper (built exactly as the CLI builds it) declares forecast_mirror.paths matching the four authorized paths exactly', () => {
+    const result = validate(committedArtifact);
+    expect(result.errors).toEqual([]);
+    expect(result.valid).toBe(true);
+  });
+});
+
+describe('top-level artifact schema closure (owner review on PR #161, finding 5)', () => {
+  it('rejects an artifact with an extra, undeclared top-level field', () => {
+    const artifact = clone() as unknown as Record<string, unknown>;
+    artifact.undeclared_extra_claim = 'not permitted';
+    const result = validate(artifact as unknown as AvailabilityEvidenceArtifact);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('top-level fields must be exactly the governed contract fields'))).toBe(true);
+  });
+
+  it('rejects an artifact missing a required top-level field', () => {
+    const artifact = clone() as unknown as Record<string, unknown>;
+    delete artifact.generated_at_is_operational_timestamp_only_not_fact_availability;
+    const result = validate(artifact as unknown as AvailabilityEvidenceArtifact);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('top-level fields must be exactly the governed contract fields'))).toBe(true);
+  });
+
+  it('rejects a generated_at that is not a parseable, offset-bearing instant', () => {
+    const artifact = clone();
+    (artifact as unknown as Record<string, unknown>).generated_at = '2026-07-13';
+    const result = validate(artifact);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('generated_at must be a fully-qualified, offset-bearing ISO-8601 instant'))).toBe(true);
+  });
+
+  it('rejects a generated_at_is_operational_timestamp_only_not_fact_availability that is not exactly true', () => {
+    const artifact = clone();
+    (artifact as unknown as Record<string, unknown>).generated_at_is_operational_timestamp_only_not_fact_availability = false;
+    const result = validate(artifact);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('generated_at_is_operational_timestamp_only_not_fact_availability must be exactly true'))).toBe(true);
+  });
+
+  it('rejects a non-null source_snapshot_as_of that is not a parseable, offset-bearing instant', () => {
+    const artifact = clone();
+    withRowMutated(artifact, ROW_AGE, (row) => {
+      row.source_snapshot_as_of = '2026-07-13'; // bare date, not a fully-qualified instant
+    });
+    const result = validate(artifact);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('source_snapshot_as_of must be null or a fully-qualified, offset-bearing ISO-8601 instant'))).toBe(true);
+  });
+
+  it('control case: the committed artifact passes the top-level schema-closure and generated_at checks', () => {
+    const result = validate(committedArtifact);
+    expect(result.errors).toEqual([]);
+    expect(result.valid).toBe(true);
   });
 });
 

@@ -20,6 +20,7 @@ import { MIRROR_DIR, MIRROR_CSV_PATH, MIRROR_JSON_PATH, MIRROR_MANIFEST_PATH, MI
 import {
   AVAILABILITY_EVIDENCE_PATH,
   FIELD_FAMILIES,
+  MIRROR_SOURCE_COMMIT_PIN,
   validateRookieTransitionProfileAvailabilityEvidence,
   type AvailabilityEvidenceArtifact,
   type EvidenceCitation,
@@ -56,11 +57,23 @@ const resolveArchivedEvidence = (citation: EvidenceCitation): string | null => {
 
 // ---- Build the real mirror-verification context (file I/O lives here; the validator stays pure) ----
 
-const wrapperBytes = readFileSync(repoPath(MIRROR_PROVENANCE_PATH));
+/**
+ * Dereferences a Forecast-repo path at the exact pinned `MIRROR_SOURCE_COMMIT_PIN`, never the current
+ * worktree state. Reading straight off disk would prove nothing about which commit the bytes actually
+ * came from -- an artifact could claim any 40-hex `mirror_source.commit` and still validate against
+ * whatever happens to be checked out locally (owner review on PR #161, finding 4C).
+ */
+const resolveOwnRepoFileAtPin = (relPath: string): Buffer =>
+  execFileSync('git', ['show', `${MIRROR_SOURCE_COMMIT_PIN}:${relPath}`], {
+    cwd: REPO_ROOT,
+    maxBuffer: 10 * 1024 * 1024,
+  });
+
+const wrapperBytes = resolveOwnRepoFileAtPin(MIRROR_PROVENANCE_PATH);
 const wrapper = JSON.parse(wrapperBytes.toString('utf-8')) as MirrorVerificationContext['wrapper'];
-const mirrorJsonBytes = readFileSync(repoPath(MIRROR_JSON_PATH));
-const mirrorCsvBytes = readFileSync(repoPath(MIRROR_CSV_PATH));
-const mirrorManifestBytes = readFileSync(repoPath(MIRROR_MANIFEST_PATH));
+const mirrorJsonBytes = resolveOwnRepoFileAtPin(MIRROR_JSON_PATH);
+const mirrorCsvBytes = resolveOwnRepoFileAtPin(MIRROR_CSV_PATH);
+const mirrorManifestBytes = resolveOwnRepoFileAtPin(MIRROR_MANIFEST_PATH);
 const mirrorJson = JSON.parse(mirrorJsonBytes.toString('utf-8')) as {
   rows: Array<{ player_id: string } & Record<FieldFamily, { value: unknown }>>;
 };

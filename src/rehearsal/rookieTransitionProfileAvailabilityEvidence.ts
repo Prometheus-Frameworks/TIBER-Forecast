@@ -26,7 +26,11 @@
 
 import {
   AUTHORIZED_MIRROR_FILENAMES,
+  MIRROR_CSV_PATH,
+  MIRROR_JSON_PATH,
+  MIRROR_MANIFEST_PATH,
   MIRROR_PROVENANCE_PATH,
+  SOURCE_COMMIT,
   SOURCE_REPO,
   SOURCE_ROW_COUNT,
   SOURCE_SCHEMA_VERSION,
@@ -50,6 +54,15 @@ export const AVAILABILITY_EVIDENCE_PATH =
   'data/experiments/rookieTransitionProfile/rookie_transition_profile_v0_forecast_availability_evidence.json' as const;
 
 export const FORECAST_REPO = 'Prometheus-Frameworks/TIBER-Forecast' as const;
+
+/**
+ * The exact Forecast commit this artifact's `mirror_source` must cite (the commit that merged Lane A,
+ * #159). Pinned so `mirror_source.commit` cannot be silently swapped for any other 40-hex value while
+ * the CLI still validates against whatever bytes happen to sit in the current worktree (owner review
+ * on PR #161, finding 4C) -- the CLI dereferences the wrapper/mirror files at exactly this commit via
+ * `git show`, rather than trusting the working tree to actually be at this commit.
+ */
+export const MIRROR_SOURCE_COMMIT_PIN = '53731cbfa4701aa9861ead4b2fb73c2c29afe89b' as const;
 
 // ---------------------------------------------------------------------------------------------
 // Closed enums (design §8, §11) -- any other token fails closed
@@ -171,6 +184,7 @@ export interface AvailabilityEvidenceArtifact {
     design_documents: string[];
   };
   generated_at: string;
+  generated_at_is_operational_timestamp_only_not_fact_availability: true;
   season: number;
   cutoff_at: string | null;
   cutoff_evidence_source: CutoffEvidenceSource | null;
@@ -179,6 +193,23 @@ export interface AvailabilityEvidenceArtifact {
   status_counts_by_family: Record<FieldFamily, AvailabilityStatusCounts>;
   rows: AvailabilityEvidenceRow[];
 }
+
+/** The exact, closed set of top-level artifact fields (owner review on PR #161, finding 5) -- no undeclared claim may be added silently. */
+export const AVAILABILITY_EVIDENCE_TOP_LEVEL_FIELDS = [
+  'kind',
+  'schema_version',
+  'issue',
+  'governing_design',
+  'generated_at',
+  'generated_at_is_operational_timestamp_only_not_fact_availability',
+  'season',
+  'cutoff_at',
+  'cutoff_evidence_source',
+  'mirror_source',
+  'status_counts',
+  'status_counts_by_family',
+  'rows',
+] as const;
 
 // ---------------------------------------------------------------------------------------------
 // Audit decision (issue #160's required decision enum -- exactly one is emitted)
@@ -265,7 +296,7 @@ const isValidCitation = (value: unknown): value is EvidenceCitation => {
   if (!isNonEmptyString(value.repo) || !isNonEmptyString(value.path)) return false;
   if (typeof value.commit !== 'string' || !GIT_COMMIT_SHA_PATTERN.test(value.commit)) return false;
   if (typeof value.sha256 !== 'string' || !SHA256_PATTERN.test(value.sha256)) return false;
-  if (!isNonEmptyString(value.original_url) || !isNonEmptyString(value.retrieved_at)) return false;
+  if (!isNonEmptyString(value.original_url) || !isParseableDateOrInstant(value.retrieved_at)) return false;
   const hasSchema = isNonEmptyString(value.schema_version);
   const hasReason = isNonEmptyString(value.schema_not_applicable_reason);
   if (value.schema_version === null) {
@@ -281,6 +312,19 @@ const isParseableOffsetInstant = (value: unknown): value is string => {
   if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/.test(value)) return false;
   return !Number.isNaN(Date.parse(value));
 };
+
+/** Looser than isParseableOffsetInstant: accepts audit-trail bookkeeping dates like reviewed_at/retrieved_at, which may be a bare date, not necessarily a fully-qualified instant. */
+const isParseableDateOrInstant = (value: unknown): value is string =>
+  typeof value === 'string' && value.trim().length > 0 && !Number.isNaN(Date.parse(value));
+
+/** Extracts and normalizes the trailing offset (`Z` or `+HH:MM`/`-HH:MM`) of an offset-bearing instant string, or null if absent. `Z` normalizes to `+00:00`. */
+const extractOffsetSuffix = (instant: string): string | null => {
+  const match = /(Z|[+-]\d{2}:\d{2})$/.exec(instant);
+  if (!match) return null;
+  return match[1] === 'Z' ? '+00:00' : match[1];
+};
+
+const normalizeOffset = (offset: string): string => (offset === 'Z' ? '+00:00' : offset);
 
 export const validateRookieTransitionProfileAvailabilityEvidence = (
   candidate: unknown,
@@ -312,6 +356,12 @@ export const validateRookieTransitionProfileAvailabilityEvidence = (
   }
   const artifact = candidate as Partial<AvailabilityEvidenceArtifact> & Record<string, unknown>;
 
+  const actualTopFields = Object.keys(artifact).sort();
+  const expectedTopFields = [...AVAILABILITY_EVIDENCE_TOP_LEVEL_FIELDS].sort();
+  if (actualTopFields.length !== expectedTopFields.length || !actualTopFields.every((f, i) => f === expectedTopFields[i])) {
+    errors.push(`artifact top-level fields must be exactly the governed contract fields, found [${actualTopFields.join(', ')}]`);
+  }
+
   if (artifact.kind !== AVAILABILITY_EVIDENCE_KIND) errors.push(`kind must be ${AVAILABILITY_EVIDENCE_KIND}, found ${JSON.stringify(artifact.kind)}`);
   if (artifact.schema_version !== AVAILABILITY_EVIDENCE_SCHEMA_VERSION) {
     errors.push(`schema_version must be ${AVAILABILITY_EVIDENCE_SCHEMA_VERSION}, found ${JSON.stringify(artifact.schema_version)}`);
@@ -339,6 +389,13 @@ export const validateRookieTransitionProfileAvailabilityEvidence = (
     }
   }
 
+  if (!isParseableOffsetInstant(artifact.generated_at)) {
+    errors.push('generated_at must be a fully-qualified, offset-bearing ISO-8601 instant');
+  }
+  if (artifact.generated_at_is_operational_timestamp_only_not_fact_availability !== true) {
+    errors.push('generated_at_is_operational_timestamp_only_not_fact_availability must be exactly true');
+  }
+
   if (artifact.season !== SOURCE_SEASON) errors.push(`season must be ${SOURCE_SEASON}, found ${JSON.stringify(artifact.season)}`);
 
   // ---- mirror_source: dereference the real wrapper, recompute hashes, never trust self-report ----
@@ -347,8 +404,8 @@ export const validateRookieTransitionProfileAvailabilityEvidence = (
     errors.push('mirror_source is missing');
   } else {
     if (mirrorSource.repo !== FORECAST_REPO) errors.push(`mirror_source.repo must be ${FORECAST_REPO}`);
-    if (typeof mirrorSource.commit !== 'string' || !GIT_COMMIT_SHA_PATTERN.test(mirrorSource.commit)) {
-      errors.push('mirror_source.commit must be a full 40-character lowercase hex git commit SHA');
+    if (mirrorSource.commit !== MIRROR_SOURCE_COMMIT_PIN) {
+      errors.push(`mirror_source.commit must be the pinned Forecast commit ${MIRROR_SOURCE_COMMIT_PIN}`);
     }
     if (mirrorSource.wrapper_path !== MIRROR_PROVENANCE_PATH) errors.push(`mirror_source.wrapper_path must be ${MIRROR_PROVENANCE_PATH}`);
     if (mirrorSource.kind !== WRAPPER_KIND) errors.push(`mirror_source.kind must be ${WRAPPER_KIND}`);
@@ -365,11 +422,12 @@ export const validateRookieTransitionProfileAvailabilityEvidence = (
     const lock = wrapper.source_lock;
     if (
       lock.repo !== SOURCE_REPO ||
+      lock.commit !== SOURCE_COMMIT ||
       lock.schema_version !== SOURCE_SCHEMA_VERSION ||
       lock.season !== SOURCE_SEASON ||
       lock.row_count !== SOURCE_ROW_COUNT
     ) {
-      errors.push("dereferenced wrapper's source_lock does not match the locked starting point (repo/schema_version/season/row_count)");
+      errors.push("dereferenced wrapper's source_lock does not match the locked starting point (repo/commit/schema_version/season/row_count)");
     }
     const actualFilenames = [...mirrorContext.actualMirrorDirFilenames].sort();
     const expectedFilenames = [...AUTHORIZED_MIRROR_FILENAMES].sort();
@@ -386,6 +444,27 @@ export const validateRookieTransitionProfileAvailabilityEvidence = (
     ) {
       errors.push("the wrapper's declared mirrored_hashes do not match the recomputed hashes of the actual committed mirror files");
     }
+
+    // The wrapper must declare exactly the four authorized local paths -- a substituted or missing
+    // path entry must not be able to pass just because the live directory happens to contain the
+    // expected filenames (owner review on PR #161, finding 4B).
+    const declaredPaths = wrapper.forecast_mirror?.paths;
+    const expectedPaths: Record<string, string> = {
+      mirror_json: MIRROR_JSON_PATH,
+      mirror_csv: MIRROR_CSV_PATH,
+      mirror_manifest: MIRROR_MANIFEST_PATH,
+      wrapper: MIRROR_PROVENANCE_PATH,
+    };
+    const declaredPathKeys = declaredPaths ? Object.keys(declaredPaths).sort() : [];
+    const expectedPathKeys = Object.keys(expectedPaths).sort();
+    const pathsMatch =
+      !!declaredPaths &&
+      declaredPathKeys.length === expectedPathKeys.length &&
+      declaredPathKeys.every((k, i) => k === expectedPathKeys[i]) &&
+      Object.entries(expectedPaths).every(([k, v]) => declaredPaths[k] === v);
+    if (!pathsMatch) {
+      errors.push("the wrapper's declared forecast_mirror.paths do not match the four authorized local paths exactly (no missing, extra, or substituted keys)");
+    }
   }
 
   // ---- Cutoff (design §8) -------------------------------------------------------------------------
@@ -401,11 +480,19 @@ export const validateRookieTransitionProfileAvailabilityEvidence = (
       errors.push('cutoff_at is non-null but cutoff_evidence_source is missing or structurally incomplete');
     } else {
       const source = cutoffSource as CutoffEvidenceSource;
-      if (!isNonEmptyString(source.reviewer) || !isNonEmptyString(source.reviewed_at)) {
-        errors.push('cutoff_evidence_source requires a named human reviewer and dated sign-off');
+      if (!isNonEmptyString(source.reviewer) || !isParseableDateOrInstant(source.reviewed_at)) {
+        errors.push('cutoff_evidence_source requires a named human reviewer and a parseable dated sign-off');
       }
       if (!isNonEmptyString(source.source_timezone_or_offset) || !isNonEmptyString(source.published_draft_start_at)) {
         errors.push('cutoff_evidence_source requires source_timezone_or_offset and published_draft_start_at');
+      }
+      // published_draft_start_at must itself be a parseable offset instant as a hard, independent
+      // requirement -- previously this was only implicitly required by the strict-ordering check
+      // below, which simply skipped itself (no error at all) when the value failed to parse, letting
+      // an unparseable string like "not-a-timestamp" bypass the cutoff-vs-draft-start comparison
+      // entirely (owner review on PR #161, finding 3).
+      if (isNonEmptyString(source.published_draft_start_at) && !isParseableOffsetInstant(source.published_draft_start_at)) {
+        errors.push('cutoff_evidence_source.published_draft_start_at must be a fully-qualified, offset-bearing ISO-8601 instant');
       }
       const content = resolveArchivedEvidence(source);
       if (content === null) {
@@ -415,10 +502,21 @@ export const validateRookieTransitionProfileAvailabilityEvidence = (
         if (isNonEmptyString(source.published_draft_start_at) && !content.includes(source.published_draft_start_at)) {
           errors.push('cutoff_evidence_source archive does not contain the claimed published_draft_start_at');
         }
+        if (isNonEmptyString(source.source_timezone_or_offset) && !content.includes(source.source_timezone_or_offset)) {
+          errors.push('cutoff_evidence_source archive does not state the claimed source_timezone_or_offset');
+        }
+      }
+      // The claimed source_timezone_or_offset must agree with the offset actually embedded in
+      // published_draft_start_at -- otherwise the two fields could disagree with each other while each
+      // individually looks plausible (owner review on PR #161, finding 3).
+      if (isParseableOffsetInstant(source.published_draft_start_at) && isNonEmptyString(source.source_timezone_or_offset)) {
+        const embeddedOffset = extractOffsetSuffix(source.published_draft_start_at);
+        if (embeddedOffset !== normalizeOffset(source.source_timezone_or_offset)) {
+          errors.push('cutoff_evidence_source.source_timezone_or_offset does not agree with the offset embedded in published_draft_start_at');
+        }
       }
       if (
         isParseableOffsetInstant(cutoffAt) &&
-        isNonEmptyString(source.published_draft_start_at) &&
         isParseableOffsetInstant(source.published_draft_start_at) &&
         !(Date.parse(cutoffAt) < Date.parse(source.published_draft_start_at))
       ) {
@@ -484,6 +582,13 @@ export const validateRookieTransitionProfileAvailabilityEvidence = (
     statusCounts[status as AvailabilityStatus] += 1;
     statusCountsByFamily[family as FieldFamily][status as AvailabilityStatus] += 1;
 
+    // source_snapshot_as_of is supplementary bookkeeping metadata, not a substitute for available_at's
+    // archive-bound proof -- but when present it must still be a real, parseable instant, not an
+    // arbitrary unchecked string (owner review on PR #161, finding 5).
+    if (row.source_snapshot_as_of !== null && !isParseableOffsetInstant(row.source_snapshot_as_of)) {
+      errors.push(`${rowKey}: source_snapshot_as_of must be null or a fully-qualified, offset-bearing ISO-8601 instant`);
+    }
+
     // Value-presence agreement (design §11/§15): `unavailable` iff the pinned mirror value is null.
     const presence = mirrorContext.valuePresence[playerId]?.[family as FieldFamily];
     if (presence === undefined) {
@@ -530,6 +635,14 @@ export const validateRookieTransitionProfileAvailabilityEvidence = (
       errors.push(`${rowKey}: archived evidence does not actually contain the claimed mirrored_value_literal`);
       return;
     }
+    // Bind the claimed available_at to the archive too -- checking the archive for the value alone
+    // would let a row cite content that proves the value existed SOMEWHERE while self-declaring an
+    // arbitrary available_at date the archive never actually states, certifying a timing claim the
+    // evidence never supports.
+    if (!content.includes(availableAt)) {
+      errors.push(`${rowKey}: archived evidence does not actually contain the claimed available_at -- a dated snapshot must state the date it was taken, not just the value`);
+      return;
+    }
     // Cross-check against the REAL pinned mirror value, not just the self-archived evidence -- a row
     // must not be able to claim eligibility for a self-declared literal unrelated to what the mirror
     // actually carries, verified only against an archive the same author also controls.
@@ -543,8 +656,8 @@ export const validateRookieTransitionProfileAvailabilityEvidence = (
       return;
     }
     const reviewDecision = row.review_decision;
-    if (!isPlainObject(reviewDecision) || !isNonEmptyString(reviewDecision.reviewer) || !isNonEmptyString(reviewDecision.reviewed_at)) {
-      errors.push(`${rowKey}: ${status} requires an explicit, attributable human review_decision (non-null reviewer and reviewed_at)`);
+    if (!isPlainObject(reviewDecision) || !isNonEmptyString(reviewDecision.reviewer) || !isParseableDateOrInstant(reviewDecision.reviewed_at)) {
+      errors.push(`${rowKey}: ${status} requires an explicit, attributable human review_decision (non-null reviewer and a parseable reviewed_at)`);
       return;
     }
     const availableAtMs = Date.parse(availableAt);
