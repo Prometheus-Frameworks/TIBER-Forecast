@@ -28,7 +28,7 @@ against the upstream promotion).
 | Governed 48-row identity-crosswalk artifact (`kind: rookie_transition_profile_v0_forecast_identity_crosswalk`, `schema_version: 1.0.0`) | `data/experiments/rookieTransitionProfile/rookie_transition_profile_v0_forecast_identity_crosswalk.json` |
 | Pure fail-closed validator (deterministic; no I/O) | `src/rehearsal/rookieTransitionProfileIdentityCrosswalk.ts` |
 | Read-only audit CLI (`npm run audit:rookie-transition-profile-identity-crosswalk`) | `scripts/runRookieTransitionProfileIdentityCrosswalkAudit.ts` |
-| Positive + negative validation tests (72 tests) | `tests/rookieTransitionProfileIdentityCrosswalk.test.ts` |
+| Positive + negative validation tests (73 tests) | `tests/rookieTransitionProfileIdentityCrosswalk.test.ts` |
 | This audit report | `docs/experiments/rookie-transition-profile-forecast-identity-crosswalk-audit-2026-07-12.md` / `.json` |
 
 Every row carries all fourteen contract fields (`source_repository`, `source_schema`,
@@ -135,6 +135,35 @@ other load-bearing citations were checked for shape only, never resolved:
   (`main`, `HEAD`), a branch/tag name, or an abbreviated SHA now fails citation validation outright —
   the merged design's "exact repo/commit/path/hash" discipline can no longer be satisfied by a moving
   target that happens to match today.
+
+**Strengthened after independent review, round 4 (2026-07-12), before this PR merged:** round 3's
+mechanical checks (a real marker present, a citation that reproduces, an exact governed-key match)
+still all consumed evidence authored inside this same crosswalk PR by the same party making the
+claim — mechanical structure is not the same thing as independent proof. This round changes the
+terminal-state rules themselves rather than adding more structure to self-authored evidence:
+
+- **`blocked` no longer contributes to a terminal `..._complete` decision, however thoroughly its
+  disposition validates.** `checkDisqualifiedEvidenceEntry`'s mechanical checks remain (they still
+  reject many known-bad spoofs — a bare recognized-class label, a marker in the wrong field, an
+  unreproduced-but-claimed-fabricated citation, an unrelated reproducible file), but none of them
+  amount to independently verified proof, since the artifacts backing every check are also authored
+  in this PR. `decideIdentityCrosswalkAudit` now returns `..._requires_followup` whenever
+  `statusCounts.blocked > 0`, unconditionally — `verifiedBlockedCount` remains in the result object
+  as an audit-transparency diagnostic (how many blocked rows have a well-formed disposition) but no
+  longer gates the decision.
+- **`identity_coverage_dependency: independent_of_post_draft_outcome` is now hard-rejected outright
+  in schema 1.0.0**, regardless of how well-formed, reproducible, or exact-key-matched its cited
+  `identity_coverage_mechanism` is. Round 3's resolve-and-match verification was a real improvement
+  over shape-checking alone, but the cited artifact was still just a self-declaring JSON row authored
+  in the same PR — no governed contract exists yet requiring a `kind`, schema version, governing
+  authority, or acquisition mechanism that an independent party actually controls. Every row must
+  stay `contingent_on_post_draft_participation` or `unproven` until that contract exists, mirroring
+  how §3.1 stays hard-blocked pending its own missing precondition.
+- **A resolved `3.2_reviewed_mapping` row's supporting evidence entry must carry the SAME
+  reviewer/reviewed_at as the row itself.** The two pairs were previously checked only for
+  non-emptiness independently, so a row could claim one person's row-level sign-off while its
+  supporting entry named someone else entirely. The validator now requires exact equality between
+  the two, ensuring the single mandatory attributable sign-off is unambiguous.
 
 ## 3. Evidence paths attempted, per the merged design
 
@@ -253,7 +282,7 @@ not a defect.
 ## 7. Validation and tests
 
 - `npm run build` — clean (`tsc --noEmit`).
-- `npm test` — full suite passes, including the 72 tests in `tests/rookieTransitionProfileIdentityCrosswalk.test.ts`
+- `npm test` — full suite passes, including the 73 tests in `tests/rookieTransitionProfileIdentityCrosswalk.test.ts`
   covering: the committed artifact passing validation; missing locked row; extra row; duplicate
   governed key; invalid status token; invalid evidence-class token; resolved row without GSIS-bearing
   evidence; claimed GSIS ID absent from archived content; non-reproducible archive (hash mismatch);
@@ -274,13 +303,16 @@ not a defect.
   the marker appears only in `disqualification_detail` (both rejected, including the all-48 variant);
   a `non_reproducible_or_fabricated_evidence` claim missing `claimed_value`, one whose citation cannot
   reproduce at all (proving only unresolved availability, never fabrication), and one whose citation
-  reproduces and actually contains the claimed value (all three rejected); an `identity_coverage_mechanism`
-  citation that is fabricated/unreproducible, one with zero matching rows, and one whose matched row
-  does not itself record independence (all rejected, plus a passing exact-match control case); a
-  mutable ref (`main`), `HEAD`, and an abbreviated SHA all rejected as citation commits, with a full
-  40-hex SHA accepted; a blocked row missing only its human disposition; a prohibited-method marker
-  inside a properly-disposed blocked row correctly *not* tripping the resolved-row rejection; and the
-  two inertness scans.
+  reproduces and actually contains the claimed value (all three rejected); `independent_of_post_draft_outcome`
+  hard-rejected outright even with a well-formed, reproducible, exact-key-matched citation, and even
+  with a fabricated one (same outcome either way), with the committed baseline's all-`unproven` state
+  confirmed as the only valid one; a resolved 3.2 row whose entry-level reviewer, and separately
+  reviewed_at, differs from the row-level sign-off (both rejected); a mutable ref (`main`), `HEAD`,
+  and an abbreviated SHA all rejected as citation commits, with a full 40-hex SHA accepted; a
+  well-formed, fully-verified blocked row confirmed to still emit `..._requires_followup`, never
+  `..._complete`; a blocked row missing only its human disposition; a prohibited-method marker inside
+  a properly-disposed blocked row correctly *not* tripping the resolved-row rejection; and the two
+  inertness scans.
 - `npm run audit:rookie-transition-profile-identity-crosswalk` — `valid: true` with the accounting
   in §4.
 

@@ -135,7 +135,6 @@ const archiveResolver: ArchivedEvidenceResolver = (cited) => {
     GOVERNED_ARTIFACT_CONTENT_SCHEMA_MISMATCH,
     GOVERNED_BLOCKER_CONTENT,
     COVERAGE_MECHANISM_CONTENT_INDEPENDENT,
-    COVERAGE_MECHANISM_CONTENT_NOT_INDEPENDENT,
   ]) {
     if (cited.sha256 === sha256(content)) return content;
   }
@@ -202,13 +201,11 @@ const GOVERNED_BLOCKER_CONTENT = JSON.stringify({
   ],
 });
 
-// identity_coverage_mechanism.citation fixtures (design §16): a real governed record for THIS row's
-// exact source key that itself states whether coverage is independent of post-draft participation.
+// identity_coverage_mechanism.citation fixture: a well-formed, reproducible, exact-key-matched
+// governed record -- used to prove even a citation this well-shaped is still hard-rejected (#159
+// review round 4: the value is unusable in schema 1.0.0 regardless of citation quality).
 const COVERAGE_MECHANISM_CONTENT_INDEPENDENT = JSON.stringify({
   rows: [{ ...governedArtifactRow(), independent_of_post_draft_outcome: true }],
-});
-const COVERAGE_MECHANISM_CONTENT_NOT_INDEPENDENT = JSON.stringify({
-  rows: [{ ...governedArtifactRow(), independent_of_post_draft_outcome: false }],
 });
 
 const disqualifiedEvidence = (overrides: Partial<DisqualifiedEvidenceEntry> = {}): DisqualifiedEvidenceEntry => ({
@@ -417,6 +414,24 @@ describe('fail-closed validator negative cases (#158 required test list)', () =>
     expect(result.errors.some((e) => e.includes('attributable human sign-off'))).toBe(true);
   });
 
+  it('rejects a resolved 3.2 row whose entry-level reviewer differs from the row-level reviewer', () => {
+    const artifact = withResolvedFirstRow((row) => {
+      (row.resolution_evidence[0] as ReviewedMappingEvidence).reviewer = 'A Completely Different Reviewer';
+    });
+    const result = validate(artifact, archiveResolver);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes("entry's reviewer/reviewed_at must equal the row-level"))).toBe(true);
+  });
+
+  it('rejects a resolved 3.2 row whose entry-level reviewed_at differs from the row-level reviewed_at', () => {
+    const artifact = withResolvedFirstRow((row) => {
+      (row.resolution_evidence[0] as ReviewedMappingEvidence).reviewed_at = '2020-01-01';
+    });
+    const result = validate(artifact, archiveResolver);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes("entry's reviewer/reviewed_at must equal the row-level"))).toBe(true);
+  });
+
   it('rejects independent evidence resolving to a different GSIS ID', () => {
     const artifact = withResolvedFirstRow((row) => {
       row.independent_resolution_evidence_class = '3.2_reviewed_mapping';
@@ -515,12 +530,12 @@ describe('fail-closed validator negative cases (#158 required test list)', () =>
     expect(result.errors.some((e) => e.includes('governed_artifact_citation is not reproducible'))).toBe(true);
   });
 
-  it('rejects an unsupported independence claim (no citable mechanism)', () => {
+  it('rejects independent_of_post_draft_outcome outright -- no governed coverage-proof contract exists in schema 1.0.0', () => {
     const artifact = clone();
     artifact.rows[0].identity_coverage_dependency = 'independent_of_post_draft_outcome';
     const result = validate(artifact);
     expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes('requires a non-null identity_coverage_mechanism'))).toBe(true);
+    expect(result.errors.some((e) => e.includes('is not usable in schema 1.0.0'))).toBe(true);
   });
 
   it('rejects status counts that do not sum to 48 / disagree with the rows', () => {
@@ -739,12 +754,16 @@ describe('3.2 corroborating-fact verification (#159 review: verify claimed facts
 });
 
 describe('blocked-row disposition (#159 review: a recognized evidence_class token alone must not manufacture a verified block)', () => {
-  it('accepts a well-formed blocked row whose prohibited_method disqualification is mechanically verified', () => {
+  it('accepts a well-formed blocked row whose prohibited_method disqualification is mechanically verified, but never emits ..._complete (#159 review round 4: blocked is never terminal)', () => {
     const result = validate(withBlockedFirstRow(), archiveResolver);
     expect(result.errors).toEqual([]);
     expect(result.valid).toBe(true);
     expect(result.statusCounts.blocked).toBe(1);
     expect(result.verifiedBlockedCount).toBe(1);
+    // Every claim and its "proof" were authored inside this same crosswalk PR by the same party --
+    // mechanical verification rejects known-bad spoofs, but is not independent authority. A valid,
+    // fully-verified blocked disposition therefore still only ever reaches requires_followup.
+    expect(result.decision).toBe('rookie_transition_profile_forecast_identity_resolution_audit_requires_followup');
   });
 
   it('accepts a well-formed blocked row disqualified via non_reproducible_or_fabricated_evidence (archive reproduces but contradicts the claim)', () => {
@@ -955,7 +974,13 @@ describe('blocked-row disposition (#159 review: a recognized evidence_class toke
   });
 });
 
-describe('identity_coverage_mechanism verification (#159 review: resolve and exact-match the cited proof, never accept an unverified citation)', () => {
+describe('identity_coverage_dependency=independent_of_post_draft_outcome (#159 review round 4: hard-rejected, not self-certifiable)', () => {
+  // Round 3 tried to verify this claim by resolving and exact-key-matching a cited artifact. The
+  // review correctly identified that the cited artifact is still authored inside this same
+  // crosswalk PR by the same party making the claim -- a self-declaring JSON row is not independent
+  // proof, however precisely it is parsed and matched. Until a real governed coverage-proof contract
+  // (required kind/schema/governing authority/acquisition mechanism) exists, this value is simply
+  // unusable, mirroring how §3.1 stays hard-blocked pending its own missing precondition.
   const withIndependenceClaim = (citationContent: string): IdentityCrosswalkArtifact => {
     const artifact = clone();
     artifact.rows[0].identity_coverage_dependency = 'independent_of_post_draft_outcome';
@@ -966,30 +991,24 @@ describe('identity_coverage_mechanism verification (#159 review: resolve and exa
     return artifact;
   };
 
-  it('accepts a reproducible, exact-key-matched citation whose row itself records independence (control case)', () => {
+  it('rejects independent_of_post_draft_outcome even with a well-formed, reproducible, exact-key-matched citation', () => {
     const result = validate(withIndependenceClaim(COVERAGE_MECHANISM_CONTENT_INDEPENDENT), archiveResolver);
-    expect(result.errors).toEqual([]);
-    expect(result.valid).toBe(true);
-    expect(result.identityCoverageDependencyCounts.independent_of_post_draft_outcome).toBe(1);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('is not usable in schema 1.0.0'))).toBe(true);
   });
 
-  it('rejects a fabricated/unreproducible identity_coverage_mechanism citation even when the description claims independence', () => {
+  it('rejects independent_of_post_draft_outcome even with a fabricated/unreproducible citation (same outcome either way)', () => {
     const artifact = withIndependenceClaim('bytes nobody archived for a coverage-independence claim');
     const result = validate(artifact, archiveResolver);
     expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes('identity_coverage_mechanism.citation is not reproducible'))).toBe(true);
+    expect(result.errors.some((e) => e.includes('is not usable in schema 1.0.0'))).toBe(true);
   });
 
-  it('rejects a reproducible citation with no row matching this exact governed source key', () => {
-    const result = validate(withIndependenceClaim(GOVERNED_ARTIFACT_CONTENT_ZERO_MATCHES), archiveResolver);
-    expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes('identity_coverage_mechanism.citation has no row matching'))).toBe(true);
-  });
-
-  it('rejects a reproducible, exact-key-matched citation whose row does not itself record independence', () => {
-    const result = validate(withIndependenceClaim(COVERAGE_MECHANISM_CONTENT_NOT_INDEPENDENT), archiveResolver);
-    expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes('does not itself record'))).toBe(true);
+  it('never counts toward identityCoverageDependencyCounts.independent_of_post_draft_outcome for a valid artifact', () => {
+    // The committed baseline (all 48 rows unproven) is the only valid state schema 1.0.0 permits.
+    const result = validate(committedArtifact);
+    expect(result.valid).toBe(true);
+    expect(result.identityCoverageDependencyCounts.independent_of_post_draft_outcome).toBe(0);
   });
 });
 

@@ -126,7 +126,7 @@
   },
   "validation": {
     "build": "npm run build (tsc --noEmit) clean",
-    "tests": "npm test passing, including 72 crosswalk tests (positive, all required negative cases, 3.3 exact-key mapping verification, 3.2 corroborating-fact literal verification and independence, mechanically-verified blocked-row disposition with all three reasons individually spoof-tested, identity_coverage_mechanism exact-match verification, immutable-commit-SHA enforcement, inertness scans)",
+    "tests": "npm test passing, including 73 crosswalk tests (positive, all required negative cases, 3.3 exact-key mapping verification, 3.2 corroborating-fact literal verification and independence and entry/row sign-off equality, mechanically-verified-but-non-terminal blocked-row disposition, hard-rejected identity_coverage_dependency=independent_of_post_draft_outcome, immutable-commit-SHA enforcement, inertness scans)",
     "audit_cli": "npm run audit:rookie-transition-profile-identity-crosswalk -> valid: true, verified_blocked_count 0/0"
   },
   "post_review_strengthening_2026_07_12_round_1": {
@@ -159,6 +159,16 @@
       "governed_blocker_citation now requires the same exact-key-match discipline as 3.3: the cited archive is deterministically parsed for a rows array, filtered to the row matching this identity's full four-field governed key (zero/multiple matches fail closed), and that row must itself carry non-empty blocker_reason/blocker_detail fields -- an unrelated-but-reproducible file can no longer pass",
       "identity_coverage_mechanism.citation is now resolved, hash-verified, and exact-key-matched via the same shared parser used by 3.3 and governed_blocker_citation, with the matched row required to itself declare independent_of_post_draft_outcome: true -- previously only citation shape was checked, so a fabricated citation could mark a row independent outright",
       "isValidCitation now requires an immutable full 40-character lowercase-hex git commit SHA everywhere it is used -- a mutable ref (main, HEAD), a branch/tag name, or an abbreviated SHA now fails citation validation"
+    ],
+    "committed_artifact_unchanged": true,
+    "decision_unchanged": true
+  },
+  "post_review_strengthening_2026_07_12_round_4": {
+    "reviewer": "Prometheus-Frameworks (PR owner)",
+    "changes": [
+      "blocked no longer contributes to a terminal ..._complete decision under any circumstance, however thoroughly its disposition mechanically validates -- round 3's checks (real marker present, citation reproduces, exact governed-key match) still only verify evidence authored inside this same crosswalk PR by the same party making the claim, which is not independent proof; decideIdentityCrosswalkAudit now returns ..._requires_followup whenever blocked > 0, unconditionally, with verifiedBlockedCount retained only as an audit-transparency diagnostic",
+      "identity_coverage_dependency=independent_of_post_draft_outcome is now hard-rejected outright in schema 1.0.0 regardless of citation quality -- round 3's resolve-and-exact-match verification was real progress over shape-checking, but the cited artifact was still a self-declaring JSON row authored in the same PR with no governed kind/schema/authority/acquisition-mechanism contract behind it; every row must stay contingent_on_post_draft_participation or unproven until that contract exists",
+      "a resolved 3.2_reviewed_mapping row's supporting evidence entry must now carry the same reviewer and reviewed_at as the row itself -- previously each pair was checked only for non-emptiness independently, so a row could claim one person's sign-off while its supporting entry named someone else"
     ],
     "committed_artifact_unchanged": true,
     "decision_unchanged": true

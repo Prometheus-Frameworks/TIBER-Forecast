@@ -295,29 +295,32 @@ export type IdentityCrosswalkAuditDecision = (typeof IDENTITY_CROSSWALK_AUDIT_DE
  * Deterministic decision rule:
  * - `blocked`: the artifact fails any fail-closed validation check -- no decision beyond "fix the
  *   artifact" is available.
- * - `requires_followup`: the artifact is valid but at least one row remains `unresolved` -- per
- *   design §5, `unresolved` means "no permitted evidence class has yet been attempted or completed",
- *   i.e. the question this lane exists to answer ("is there reproducible governed evidence
- *   establishing one exact gsis_id?") is not yet definitively answered for that row (most commonly
- *   because §3.2's mandatory named-human review has not yet occurred).
- * - `complete`: the artifact is valid and no row remains `unresolved`. Per issue #158, `complete`
- *   does NOT mean all 48 identities are resolved -- `conflicting_evidence` and `blocked` are
- *   definitive, honest audit outcomes -- and it never authorizes the integrated readiness review,
- *   experiment design, or any model/production/downstream/UI use.
+ * - `requires_followup`: the artifact is valid but at least one row remains `unresolved`, OR at
+ *   least one row is `blocked`. `unresolved` means (design §5) "no permitted evidence class has yet
+ *   been attempted or completed" -- the question this lane exists to answer is not yet definitively
+ *   answered for that row. A `blocked` row is deliberately treated the same way here: this module's
+ *   `checkDisqualifiedEvidenceEntry` mechanically checks structural claims (a marker string is
+ *   present, a citation reproduces, a governed-key match exists), but every one of those claims and
+ *   the artifacts backing them are authored inside this same crosswalk PR, by the same party making
+ *   the claim -- there is no independent authority verifying them. That mechanical checking is
+ *   still valuable (it rejects many known-bad spoofs) but it does not amount to independently
+ *   verified proof, so `blocked` NEVER contributes to a terminal `..._complete` decision, however
+ *   thoroughly its disposition validates -- only a row-level requires_followup, pending whatever
+ *   independent review a real blocked disposition would need before the artifact could honestly be
+ *   called complete.
+ * - `complete`: the artifact is valid, no row remains `unresolved`, and no row is `blocked`. Per
+ *   issue #158, `complete` does NOT mean all 48 identities are resolved -- `conflicting_evidence` is
+ *   still a definitive, honest audit outcome that does not block `complete` -- and `complete` never
+ *   authorizes the integrated readiness review, experiment design, or any model/production/
+ *   downstream/UI use.
  */
 export const decideIdentityCrosswalkAudit = (
   valid: boolean,
   statusCounts: IdentityCrosswalkStatusCounts,
-  verifiedBlockedCount: number,
 ): IdentityCrosswalkAuditDecision => {
   if (!valid) return 'rookie_transition_profile_forecast_identity_resolution_audit_blocked';
   if (statusCounts.unresolved > 0) return 'rookie_transition_profile_forecast_identity_resolution_audit_requires_followup';
-  // Defense-in-depth, restating explicitly what row-level validation already enforces: `blocked`
-  // may only contribute to a `..._complete` decision when EVERY blocked row has a machine-verified
-  // disposition, never a bare recognized-class label (design §5).
-  if (statusCounts.blocked > 0 && verifiedBlockedCount !== statusCounts.blocked) {
-    return 'rookie_transition_profile_forecast_identity_resolution_audit_requires_followup';
-  }
+  if (statusCounts.blocked > 0) return 'rookie_transition_profile_forecast_identity_resolution_audit_requires_followup';
   return 'rookie_transition_profile_forecast_identity_resolution_audit_complete';
 };
 
@@ -789,7 +792,7 @@ export const validateRookieTransitionProfileIdentityCrosswalk = (
     evidenceClassCounts,
     identityCoverageDependencyCounts,
     verifiedBlockedCount,
-    decision: decideIdentityCrosswalkAudit(false, statusCounts, verifiedBlockedCount),
+    decision: decideIdentityCrosswalkAudit(false, statusCounts),
   });
 
   if (!isPlainObject(candidate)) {
@@ -922,45 +925,21 @@ export const validateRookieTransitionProfileIdentityCrosswalk = (
     }
     identityCoverageDependencyCounts[dependency as IdentityCoverageDependency] += 1;
 
-    // §16: an independence claim requires a non-null, citable mechanism that proves it -- never a
-    // bare assertion, an evidence-class label, or an unverified citation. The cited artifact must
-    // actually reproduce AND exact-match this row's full governed source key with a row that itself
-    // records independence -- a fabricated or unrelated-but-reproducible citation must not pass.
+    // §16: an independence claim is load-bearing for the later population gate (it would let a row
+    // skip full 48/48 resolution), so it must rest on real, independently-governed proof -- not a
+    // citation whose only "verification" is that this same crosswalk PR also authored the artifact
+    // being cited. No such governed coverage-proof contract (required kind/schema/governing
+    // authority/acquisition mechanism) exists yet, so `independent_of_post_draft_outcome` is hard
+    // rejected in schema 1.0.0, exactly like §3.1 remains hard-blocked pending its own missing
+    // precondition: every row must stay `contingent_on_post_draft_participation` or `unproven` until
+    // a future PR defines and implements that governed contract.
     if (dependency === 'independent_of_post_draft_outcome') {
-      const mechanism = row.identity_coverage_mechanism;
-      if (!isPlainObject(mechanism) || !isNonEmptyString(mechanism.description) || !isValidCitation(mechanism.citation)) {
-        errors.push(
-          `${rowKey}: identity_coverage_dependency=independent_of_post_draft_outcome requires a non-null ` +
-            'identity_coverage_mechanism with a citable proof (description + repo/commit/path/sha256 citation)',
-        );
-      } else {
-        const mechanismContent = resolveArchivedEvidence(mechanism.citation as ArchivedCitation);
-        if (mechanismContent === null) {
-          errors.push(
-            `${rowKey}: identity_coverage_mechanism.citation is not reproducible from its citation (design §12/§16 fail-closed) -- ` +
-              'a fabricated or unfetchable citation can never prove independence',
-          );
-        } else {
-          const parseResult = parseGovernedRowsMatchingKey(mechanismContent, sourceIdentity);
-          if (parseResult.kind === 'unparseable') {
-            errors.push(`${rowKey}: identity_coverage_mechanism.citation could not be deterministically parsed as JSON`);
-          } else if (parseResult.kind === 'no_rows_array') {
-            errors.push(`${rowKey}: identity_coverage_mechanism.citation does not expose a deterministic rows array`);
-          } else if (parseResult.matches.length === 0) {
-            errors.push(`${rowKey}: identity_coverage_mechanism.citation has no row matching this exact governed source key -- zero matches fails closed`);
-          } else if (parseResult.matches.length > 1) {
-            errors.push(
-              `${rowKey}: identity_coverage_mechanism.citation has ${parseResult.matches.length} rows matching this exact governed ` +
-                'source key -- multiple matches fails closed (ambiguous)',
-            );
-          } else if (parseResult.matches[0].independent_of_post_draft_outcome !== true) {
-            errors.push(
-              `${rowKey}: identity_coverage_mechanism.citation's matched row does not itself record ` +
-                'independent_of_post_draft_outcome=true -- the cited artifact does not actually prove independence for this identity',
-            );
-          }
-        }
-      }
+      errors.push(
+        `${rowKey}: identity_coverage_dependency=independent_of_post_draft_outcome is not usable in schema 1.0.0 -- ` +
+          'no governed coverage-mechanism-proof contract exists yet (no required kind/schema/governing-authority/' +
+          'acquisition-mechanism), so a citation authored within this same crosswalk PR can never establish it; ' +
+          'use contingent_on_post_draft_participation or unproven',
+      );
     }
 
     // Evidence entries.
@@ -1024,6 +1003,22 @@ export const validateRookieTransitionProfileIdentityCrosswalk = (
             `${rowKey}: resolved row has no structurally complete ${evidenceClass} evidence entry resolving to ` +
               `${JSON.stringify(canonicalId)} -- a gsis_id may never be invented locally (design §1/§7)`,
           );
+        } else if (evidenceClass === '3.2_reviewed_mapping') {
+          // §3.2 requires its OWN entry-level reviewer/reviewed_at (the human who actually reviewed
+          // the GSIS-bearing evidence and corroborating facts). The row-level reviewer/reviewed_at
+          // below is a separate sign-off field -- without requiring them to agree, a row could claim
+          // one person's row-level sign-off while its supporting 3.2 entry names someone else
+          // entirely, with neither pair contradicting the other's own isolated check.
+          const mismatched = matching.some((entry) => {
+            const e = entry as unknown as Record<string, unknown>;
+            return e.reviewer !== row.reviewer || e.reviewed_at !== row.reviewed_at;
+          });
+          if (mismatched) {
+            errors.push(
+              `${rowKey}: the 3.2_reviewed_mapping entry's reviewer/reviewed_at must equal the row-level ` +
+                'reviewer/reviewed_at -- a resolved row may not claim a sign-off from a different person/date than its own supporting evidence',
+            );
+          }
         }
       }
       if (!isNonEmptyString(row.reviewer) || !isNonEmptyString(row.reviewed_at)) {
@@ -1148,6 +1143,6 @@ export const validateRookieTransitionProfileIdentityCrosswalk = (
     evidenceClassCounts,
     identityCoverageDependencyCounts,
     verifiedBlockedCount,
-    decision: decideIdentityCrosswalkAudit(valid, statusCounts, verifiedBlockedCount),
+    decision: decideIdentityCrosswalkAudit(valid, statusCounts),
   };
 };
