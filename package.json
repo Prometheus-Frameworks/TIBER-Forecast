@@ -35,6 +35,7 @@
     "replay:player-history-contract-v0": "tsx scripts/runPlayerHistoryContractV0Replay.ts",
     "refresh:rookie-transition-profile-mirror": "tsx scripts/refreshRookieTransitionProfileMirror.ts",
     "audit:rookie-transition-profile-identity-crosswalk": "tsx scripts/runRookieTransitionProfileIdentityCrosswalkAudit.ts",
+    "audit:rookie-transition-profile-availability-evidence": "tsx scripts/runRookieTransitionProfileAvailabilityAudit.ts",
     "rerun:run2-comparison-full-coverage": "tsx scripts/runRun2ComparisonRerun.ts",
     "backtest:seasonal-ppr": "tsx scripts/runSeasonalPprBacktest.ts",
     "forecast:seasonal-ppr": "tsx scripts/runSeasonalPprBacktest.ts",

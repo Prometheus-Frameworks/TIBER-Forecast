@@ -1,0 +1,179 @@
+{
+  "report_id": "rookie-transition-profile-forecast-availability-evidence-audit-2026-07-13",
+  "status": "lane_b_implementation_and_audit_only_no_integrated_readiness_review_no_experiment_no_activation",
+  "issue": "TIBER-Forecast#160",
+  "date": "2026-07-13",
+  "predecessors": ["TIBER-Forecast#155", "TIBER-Forecast#156", "TIBER-Forecast#158", "TIBER-Forecast#159"],
+  "independent_of": {
+    "lane_a_identity_crosswalk_issue": "TIBER-Forecast#158",
+    "lane_a_identity_crosswalk_pr": "TIBER-Forecast#159",
+    "note": "This module never imports or reads the identity-crosswalk module or artifact, and no availability status is conditioned on identity-resolution status."
+  },
+  "governing_design": {
+    "documents": [
+      "docs/experiments/rookie-transition-profile-forecast-preexperiment-readiness-design-2026-07-11.md",
+      "docs/experiments/rookie-transition-profile-forecast-preexperiment-readiness-design-2026-07-11.json"
+    ],
+    "pinned_merge_commit": "73834c2a30743c2587b32742c4e5c98320e33dfe"
+  },
+  "locked_identities": {
+    "forecast_mirror_wrapper": {
+      "path": "data/fixtures/tiberRookies/ROOKIE_TRANSITION_PROFILE_V0_MIRROR_PROVENANCE.json",
+      "kind": "rookie_transition_profile_v0_forecast_mirror_provenance",
+      "schema_version": "1.0.0"
+    },
+    "mirror_source_commit_pinned_in_artifact": {
+      "repo": "Prometheus-Frameworks/TIBER-Forecast",
+      "commit": "53731cbfa4701aa9861ead4b2fb73c2c29afe89b",
+      "note": "the commit that merged PR #159 (Lane A)"
+    },
+    "tiber_rookies_source_lock_dereferenced_through_wrapper": {
+      "repo": "Prometheus-Frameworks/TIBER-Rookies",
+      "schema_version": "rookie-transition-profile-v0.2.0",
+      "season": 2026,
+      "row_count": 48,
+      "refreshed_or_reinterpreted": false
+    }
+  },
+  "deliverables": {
+    "availability_evidence_artifact": {
+      "path": "data/experiments/rookieTransitionProfile/rookie_transition_profile_v0_forecast_availability_evidence.json",
+      "kind": "rookie_transition_profile_v0_forecast_availability_evidence",
+      "schema_version": "1.0.0",
+      "row_count": 240,
+      "row_fields": [
+        "field_family",
+        "source_identity",
+        "availability_status",
+        "available_at",
+        "source_snapshot_as_of",
+        "evidence_source",
+        "notes",
+        "review_decision"
+      ]
+    },
+    "validator_module": "src/rehearsal/rookieTransitionProfileAvailabilityEvidence.ts",
+    "audit_cli": "scripts/runRookieTransitionProfileAvailabilityAudit.ts",
+    "npm_script": "audit:rookie-transition-profile-availability-evidence",
+    "test_file": "tests/rookieTransitionProfileAvailabilityEvidence.test.ts",
+    "test_count": 58
+  },
+  "validator_enforcement": {
+    "contract_pins": "kind/schema_version/issue/governing_design (readiness-design issue/PR/merge-commit/document paths)/season match pinned constants exactly",
+    "mirror_dereferencing": "mirror_source repo/commit-format/path/kind/schema_version checked, sha256 must equal the recomputed hash of the actual committed wrapper file (never the wrapper's self-report); the dereferenced wrapper's source_lock, authorized mirror filenames, and mirrored_hashes are all independently recomputed and matched",
+    "cutoff_validation": "cutoff_at/cutoff_evidence_source null together or both present; non-null requires named reviewer/reviewed_at, source_timezone_or_offset, published_draft_start_at; citation must reproduce (hash-verified); archive must state the season and contain the claimed published_draft_start_at; cutoff_at must be strictly earlier than that draft start",
+    "value_presence_agreement": "availability_status is unavailable iff the real pinned mirror value for (player, field_family) is null, checked directly against the mirror JSON",
+    "official_postdraft_outcome_restriction": "may never be eligible_at_cutoff -- definitionally post-draft information",
+    "unavailable_or_unresolved_row_shape": "must carry null available_at and null evidence_source",
+    "eligible_or_ineligible_row_requirements": [
+      "validly pinned cutoff_at",
+      "parseable, offset-bearing available_at",
+      "structurally complete evidence_source with non-empty mirrored_value_literal",
+      "citation reproduces (hash-verified)",
+      "reproduced archive actually contains the claimed literal",
+      "claimed literal equals the REAL pinned mirror value for (player, field_family), recomputed directly from the committed mirror JSON",
+      "non-null review_decision with named reviewer/reviewed_at",
+      "available_at correctly ordered against cutoff_at for the claimed status"
+    ],
+    "population_accounting": "exactly 240 distinct governed (identity, family) keys; every locked identity has all 5 families; no extra identity or family; declared status_counts and status_counts_by_family recomputed and must match, summing to 240/48 respectively"
+  },
+  "self_certification_hardening": {
+    "when": "during implementation, before this PR was reviewed",
+    "gap_identified": "mirrored_value_literal was validated only against the row's own cited archive, never against the real pinned mirror value -- the same self-certification shape Lane A's independent review took five rounds to close",
+    "fix": "MirrorVerificationContext gained mirrorValueLiterals, recomputed by the CLI directly from the committed mirror JSON (never trusted from the artifact or its cited archive); every eligible/ineligible row's mirrored_value_literal must now equal this real value exactly",
+    "proactive": true,
+    "note": "identified and closed by the implementing agent before any independent review occurred, applying the lesson already learned on Lane A rather than waiting for a review round to find it"
+  },
+  "evidence_paths_attempted": {
+    "cutoff_section_8": {
+      "status": "not_pinned",
+      "detail": "no archived, dated NFL draft-schedule evidence was assembled, and no human review of a cutoff candidate occurred during this implementation. cutoff_at and cutoff_evidence_source remain null."
+    },
+    "per_row_exact_value_evidence_sections_10_12": {
+      "status": "not_attempted",
+      "detail": "with no pinned cutoff, no row can honestly claim eligible_at_cutoff or ineligible_after_cutoff (both require a validly pinned cutoff_at as a hard precondition). no archived dated snapshot evidence was assembled for any of the 240 pairs."
+    },
+    "missingness_vs_timing_section_11": {
+      "status": "17_rows_honestly_unavailable",
+      "detail": "17 (player, field_family) pairs carry a null value in the committed mirror itself -- a missingness fact, independent of any timing question. the remaining 223 pairs have a non-null pinned value but no availability-timing evidence, recorded unresolved_no_availability_proof."
+    }
+  },
+  "accounting": {
+    "status_counts": {
+      "eligible_at_cutoff": 0,
+      "ineligible_after_cutoff": 0,
+      "unresolved_no_availability_proof": 223,
+      "unavailable": 17
+    },
+    "status_counts_by_family": {
+      "draft_capital": { "eligible_at_cutoff": 0, "ineligible_after_cutoff": 0, "unresolved_no_availability_proof": 48, "unavailable": 0 },
+      "age_at_entry": { "eligible_at_cutoff": 0, "ineligible_after_cutoff": 0, "unresolved_no_availability_proof": 47, "unavailable": 1 },
+      "athletic_testing": { "eligible_at_cutoff": 0, "ineligible_after_cutoff": 0, "unresolved_no_availability_proof": 32, "unavailable": 16 },
+      "college_production": { "eligible_at_cutoff": 0, "ineligible_after_cutoff": 0, "unresolved_no_availability_proof": 48, "unavailable": 0 },
+      "official_postdraft_outcome": { "eligible_at_cutoff": 0, "ineligible_after_cutoff": 0, "unresolved_no_availability_proof": 48, "unavailable": 0 }
+    },
+    "unavailable_rows_are_exactly": "the (player, field_family) pairs where the committed mirror's own value is null -- 1 player missing age_at_entry, 16 players missing athletic_testing; no other family has any missing value in the locked population"
+  },
+  "confirmations": {
+    "no_guessed_or_defaulted_claim": true,
+    "no_human_review_claimed": "review_decision is null on every row; cutoff_at/cutoff_evidence_source are null; no reviewer name or review date appears anywhere in the committed artifact",
+    "lane_independence_maintained": true,
+    "no_runtime_model_production_downstream_ui_import": true,
+    "upstream_and_mirror_files_unmodified": true,
+    "no_experiment_no_adapter_no_feature_table_no_predictive_evaluation": true
+  },
+  "validation": {
+    "build": "npm run build -- clean (tsc --noEmit)",
+    "tests": "npm test -- full suite passes (1259 tests across the repo), including 58 in tests/rookieTransitionProfileAvailabilityEvidence.test.ts",
+    "test_coverage_summary": [
+      "committed artifact passes validation against the real mirror",
+      "kind/schema/design pins",
+      "exact 240-row population, no claimed human review, eight-field row contract",
+      "requires_followup decision and full accounting",
+      "missing identity (all five rows for a locked player removed)",
+      "missing single family for an otherwise-present identity",
+      "extra row for an unlocked identity",
+      "duplicate governed key",
+      "invalid field_family / availability_status tokens",
+      "extra or missing row field",
+      "out-of-order rows",
+      "tampered status_counts / status_counts_by_family",
+      "tampered issue reference and governing-design merge commit",
+      "value-presence agreement in both directions, with a real-null-value control case",
+      "official_postdraft_outcome rejected as eligible_at_cutoff even with otherwise-complete evidence",
+      "full cutoff-validation matrix including a clean control case",
+      "real-mirror-matched eligible_at_cutoff and ineligible_after_cutoff control cases",
+      "eligible claim with no cutoff pinned",
+      "unparseable available_at",
+      "missing evidence_source",
+      "empty mirrored_value_literal",
+      "non-reproducible row citation",
+      "archive that doesn't actually contain the claimed literal",
+      "self-certification-gap regression: mirrored_value_literal the archive faithfully contains but that does not match the real pinned mirror value",
+      "missing or incomplete review_decision",
+      "unavailable/unresolved rows carrying a non-null available_at or evidence_source",
+      "timestamp-substitution rejections for both eligible_at_cutoff and ineligible_after_cutoff",
+      "a valid eligible row still only reaching requires_followup while other rows remain unresolved",
+      "mirror-wrapper dereferencing checks (tampered sha256, non-hex commit, wrong repo, mismatched recomputed hashes, unauthorized extra mirror file, tampered source_lock)",
+      "malformed locked-population size",
+      "two inertness scans"
+    ],
+    "audit_cli": "npm run audit:rookie-transition-profile-availability-evidence -- valid: true with the accounting above"
+  },
+  "decision": "rookie_transition_profile_forecast_source_availability_audit_requires_followup",
+  "decision_rationale": "The governed Lane B artifact, fail-closed validator, tests, and full 240-row accounting are in place and passing, but 223 of 240 (player, field_family) pairs remain unresolved_no_availability_proof: no pre-draft cutoff has been pinned (requires archived NFL draft-schedule evidence and an explicit, attributable human review, which has not occurred), and no archived exact-value snapshot evidence has been assembled for any pair.",
+  "decision_authorizes": [
+    "a separate follow-up to pin a real, reviewed pre-draft cutoff",
+    "a separate follow-up to assemble archived, dated snapshot evidence per (player, field_family) pair, each with the required human review"
+  ],
+  "decision_does_not_authorize": [
+    "the integrated readiness review",
+    "experiment design or implementation",
+    "feature use",
+    "predictive evaluation",
+    "downstream consumption",
+    "production binding",
+    "UI activation",
+    "model use"
+  ]
+}
