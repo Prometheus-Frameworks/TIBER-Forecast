@@ -516,6 +516,9 @@ cohort_or_population_mismatch
 derivation_contract_mismatch
 archive_or_record_hash_mismatch
 other_explicit_reason                          # requires a non-null `notes` explanation
+pending_human_review                           # mechanically complete; no reviewer has rendered a decision yet (§15.4)
+human_review_rejected                          # a reviewer explicitly rejected mechanically complete evidence (§15.4)
+human_review_needs_followup                    # a reviewer marked mechanically complete evidence needs_followup (§15.4)
 ```
 
 `null` whenever `evidence_package_ids` is empty (nothing attempted) or the row is `unavailable`
@@ -657,20 +660,62 @@ a public-release date.
 
 Machine validation occurs first. A terminal `eligible_at_cutoff`/`ineligible_after_cutoff` decision
 additionally requires one attributable human sign-off covering: the selected record, the subject
-binding, the value reconstruction, the availability-time semantic role, and the computed status. One
-canonical row-level review object (not duplicated across the row and each evidence package, unless a
-package's own citation-level `retrieved_at` genuinely needs to be distinguished from the row-level
-reviewer's sign-off date — which it does, so `retrieved_at` stays on the citation and `reviewed_at`
-stays on the row-level review object only).
+binding, the value reconstruction, the availability-time semantic role, and the computed status.
+Reviewing this one object is defined to attest to all five dimensions together — schema `2.0.0` does
+not support a partial/scoped review that covers only some of them.
 
-```text
-enum: accepted | rejected | needs_followup
+### 15.1 Canonical `review_decision` object (fixed after review: the original draft named this
+object but never specified its fields)
+
+```json
+{
+  "outcome": "accepted",
+  "reviewer": "Jane Reviewer",
+  "reviewed_at": "2026-07-13T18:00:00-04:00"
+}
 ```
 
-Required chronology: `reviewed_at >= retrieved_at` (review cannot precede retrieval — carried forward
-from schema `1.0.0`'s already-proven chronology discipline). Review approval alone can never overcome
-failed machine validation — a human cannot mark a row `accepted` if the mechanical record-binding,
-subject-binding, or timestamp checks failed.
+| Field | Type | Requirement |
+| --- | --- | --- |
+| `outcome` | closed enum `accepted \| rejected \| needs_followup` | required, non-null whenever the object itself is present |
+| `reviewer` | string | required, non-empty, an attributable named human identity — never a bot/system account, never blank |
+| `reviewed_at` | string | required, a parseable date or offset-bearing instant |
+
+Exactly these three fields — no undeclared extra key, matching the exact-field-closure discipline
+already used everywhere else in this contract. `retrieved_at` stays on each evidence-package citation
+(§7.1) and is never duplicated onto `review_decision` — the two dates answer different questions
+(when was this specific archive retrieved, versus when did a human sign off on the row as a whole).
+
+### 15.2 Nullability by status (fixed after review: this was previously unstated)
+
+| `availability_status` | `evidence_package_ids` | `review_decision` |
+| --- | --- | --- |
+| `unavailable` | must be empty | must be `null` — nothing was ever attempted or reviewable |
+| `unresolved_no_availability_proof` | empty | must be `null` — nothing attempted, nothing to review |
+| `unresolved_no_availability_proof` | non-empty | **may** be `null` (mechanically incomplete, or mechanically complete but not yet reviewed) or non-null with `outcome: "rejected"` or `outcome: "needs_followup"`. `outcome: "accepted"` is never valid here — an accepted review of mechanically complete evidence must produce `eligible_at_cutoff`/`ineligible_after_cutoff` instead; a row that is simultaneously `unresolved_no_availability_proof` and carries an `accepted` review is itself invalid and fails closed. |
+| `eligible_at_cutoff` / `ineligible_after_cutoff` | must be non-empty | must be non-null with `outcome: "accepted"` |
+
+### 15.3 Chronology across multiple evidence packages (fixed after review: the original draft said
+only `reviewed_at >= retrieved_at` without stating which `retrieved_at` when a row cites more than
+one package)
+
+```text
+reviewed_at >= max(retrieved_at across every evidence package in this row's evidence_package_ids)
+```
+
+Review cannot precede the retrieval of any package it is attesting to — carried forward from schema
+`1.0.0`'s already-proven chronology discipline, generalized to the multi-package case. Review
+approval alone can never overcome failed machine validation — a human cannot mark a row `accepted`
+if the mechanical record-binding, subject-binding, or timestamp checks failed; the row stays
+`unresolved_no_availability_proof` regardless of what a reviewer asserts.
+
+### 15.4 `blocking_reason` values for human-review outcomes
+
+§12.1's closed `blocking_reason` enum includes three values specific to this stage —
+`pending_human_review`, `human_review_rejected`, `human_review_needs_followup` — recorded when
+`evidence_package_ids` is non-empty and mechanical validation passed, but the row is still
+`unresolved_no_availability_proof` because of the human-review stage specifically (no reviewer has
+acted yet, or a reviewer explicitly declined to accept).
 
 ## 16. Migration rules from schema `1.0.0`
 

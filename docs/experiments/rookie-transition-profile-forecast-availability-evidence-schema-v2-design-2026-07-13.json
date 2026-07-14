@@ -210,7 +210,10 @@
         "cohort_or_population_mismatch",
         "derivation_contract_mismatch",
         "archive_or_record_hash_mismatch",
-        "other_explicit_reason (requires a non-null notes explanation)"
+        "other_explicit_reason (requires a non-null notes explanation)",
+        "pending_human_review",
+        "human_review_rejected",
+        "human_review_needs_followup"
       ],
       "null_when": "evidence_package_ids is empty (nothing attempted), or the row is unavailable, or the row is eligible_at_cutoff/ineligible_after_cutoff (nothing blocked it)"
     },
@@ -259,11 +262,23 @@
     }
   },
   "human_review_contract": {
-    "canonical_object": "one row-level review object, not duplicated across the row and each evidence package",
-    "enum": ["accepted", "rejected", "needs_followup"],
-    "required_chronology": "reviewed_at >= retrieved_at",
+    "canonical_object": "one row-level review_decision object, not duplicated across the row and each evidence package",
+    "review_decision_fields_fixed_after_review": {
+      "note": "the original draft named this object but never specified its fields; exactly these three, no undeclared extra key",
+      "outcome": "closed enum accepted | rejected | needs_followup; required, non-null whenever the object is present",
+      "reviewer": "string; required, non-empty, an attributable named human identity, never a bot/system account",
+      "reviewed_at": "string; required, a parseable date or offset-bearing instant"
+    },
+    "nullability_by_status": {
+      "unavailable": "review_decision must be null",
+      "unresolved_no_availability_proof_with_empty_evidence_package_ids": "review_decision must be null",
+      "unresolved_no_availability_proof_with_non_empty_evidence_package_ids": "review_decision may be null (not yet reviewed, or mechanically incomplete), or non-null with outcome rejected or needs_followup; outcome accepted is never valid here -- an accepted review of mechanically complete evidence must instead produce eligible_at_cutoff/ineligible_after_cutoff, so the combination (unresolved + accepted) is itself invalid and fails closed",
+      "eligible_at_cutoff_or_ineligible_after_cutoff": "review_decision must be non-null with outcome exactly accepted"
+    },
+    "required_chronology": "reviewed_at >= max(retrieved_at across every evidence package referenced by this row's evidence_package_ids) -- fixed after review: the original draft said only 'reviewed_at >= retrieved_at' without specifying which retrieved_at when a row cites multiple packages",
     "review_cannot_override_machine_validation": true,
-    "required_fields_covered_by_review": ["selected record", "subject binding", "value reconstruction", "availability-time semantic role", "computed status"]
+    "required_fields_covered_by_review": ["selected record", "subject binding", "value reconstruction", "availability-time semantic role", "computed status"],
+    "new_blocking_reason_values_for_review_outcomes": ["pending_human_review", "human_review_rejected", "human_review_needs_followup"]
   },
   "migration_from_v1": {
     "v1_immutable": true,
