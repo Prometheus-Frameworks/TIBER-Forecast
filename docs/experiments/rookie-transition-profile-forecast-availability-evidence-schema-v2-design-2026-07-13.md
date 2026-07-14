@@ -98,12 +98,12 @@ pinned inputs for deterministic recomputation of derived values.
 | Actual upstream source file | `exports/promoted/rookie-alpha/{season}_rookie_alpha_predraft_v0.json`'s `scores` block only — **not** one of the six files nominally read by `compute_rookie_transition_profile.py`; the real raw combine data (`data/raw/{season}_combine_results.json`) is two pipeline hops upstream and never read directly by the transition-profile generator. |
 | Source-record grain/key | Rookie Alpha's `players[]`, one row per `player_id`, matching the 48-player modeled population exactly |
 | `source_player_id` present in source record? | Yes — directly, as `player_id` (this is the outer loop's own key, so no separate lookup needed for this family) |
-| Derivation code path (formula owner) | `scripts/compute_rookie_alpha.py` — **outside the six files `compute_rookie_transition_profile.py` reads**, so its exact formula is pinned by citation to that script's own commit, not reproduced from this design's inventory pass alone (see §7 on derivation-contract citation style). Per `docs/athletic-score-normalization-audit.md:7-11`, `athletic_score_0_100` is a within-class z-score: `50 + 16.6667·z`, clamped `[0,100]`, computed against the same season's `data/raw/{season}_combine_results.json` cohort. |
-| Rounding/normalization | **Cohort-relative, not absolute.** Same-season combine-cohort z-score; the audit doc documents that class means are mechanically pinned near 50 across all years and that scores are **not commensurable across draft classes** ("a 60 in 2023 is a different distributional position than a 60 in 2026"). |
-| Cohort/context dependency | The entire same-season `data/raw/{season}_combine_results.json` population is a required input to reproduce any single player's score — this is the one family where `confidence`/`confidence_band` is genuinely per-row (copied from Rookie Alpha's own `athletic_confidence`), not a fixed constant. |
+| Derivation code path (formula owner) | **Fully recovered in this design pass** (previously understated as a single global z-score — the real logic is two-stage and position-gated). `scripts/compute_rookie_alpha.py` — outside the six files `compute_rookie_transition_profile.py` reads, so pinned by citation to that script's own commit (see §7.3), with the full logic recorded here since it is now completely verified: (1) `compute_ras_scores()` (lines 504-638) builds the raw RAS composite as a weighted average of per-metric `z_to_score(z) = clamp(0,100, 50 + 16.6667·z)` across up to five components — forty (weight 0.30, inverted), vertical (0.20), broad (0.20), three_cone (0.15, inverted), size (mean of height/weight z-scores, 0.15) — computed against the same-season, same-position `data/raw/{season}_combine_results.json` cohort; at least one explosive/agility metric (vertical/broad/three_cone) is required, else the partial composite routes to a fallback instead of the primary RAS score. (2) `resolve_athletic_input()` (lines 834-897), dispatching to position-specific `resolve_wr_athletic_input()` (696-752) or `resolve_rb_athletic_input()` (755-831) for WR/RB, applies a closed priority order selecting RAS, a `round(0.55·RAS + 0.45·SPORQ, 4)` blend (gated by RAS metric count and, for RB, a ≥20-point SPORQ-over-RAS divergence threshold), SPORQ alone, `RAS_PARTIAL`, or `COMBINE_FALLBACK` — each branch carrying its own fixed confidence constant (`_ras_confidence()`, lines 682-693, plus per-branch literals in the resolve functions) — before falling to `NEUTRAL_DEFAULT` (excluded from the mirror, per the row above). SPORQ is a same-row percentile read from `prospect_context.json`'s `exceptional_metrics` array (`_extract_sporq()`, lines 661-674) — a second, independent evidentiary source whenever a SPORQ-involving branch is selected. |
+| Rounding/normalization | **Cohort-relative, not absolute**, at the RAS-composite stage (same-season, same-position combine cohort); the audit doc documents that class means are mechanically pinned near 50 across all years and that scores are **not commensurable across draft classes**. The final mirrored value may additionally be a fixed-weight blend with a SPORQ percentile (a differently-scaled, non-cohort-relative input) — see derivation row above. |
+| Cohort/context dependency | The entire same-season, same-position `data/raw/{season}_combine_results.json` population is a required input to reproduce the RAS composite. When a SPORQ-involving branch is selected (`SPORQ`, `RAS_SPORQ_BLEND`), the player's `prospect_context.json` `exceptional_metrics` SPORQ percentile is a second, independently-sourced required input with its own availability time — not part of the combine cohort at all. `confidence`/`confidence_band` is genuinely per-row (copied from Rookie Alpha's own `athletic_confidence`, itself one of the fixed per-branch constants above), not a single fixed constant for the family. **Empirically verified** against `exports/promoted/rookie-alpha/2026_rookie_alpha_predraft_v0.json`: Makai Lemon carries `athletic_source: RAS_PARTIAL`, `athletic_confidence: 0.70` (exact match to the RAS_PARTIAL branch literal); eight TE/WR rows at 3/4/5 RAS metrics carry confidence exactly `0.85`/`0.95`/`1.0` per `_ras_confidence()`. **Data-availability note** (not a formula gap): no `RAS_SPORQ_BLEND` or `SPORQ` row exists anywhere in the current 48-player cohort — those branches are real, pinnable code paths with zero real occurrences to date, the same kind of caveat noted for `college_production`'s `slot_contested_target_rate` (§3.4). |
 | Current timestamp fields | `provenance.last_verified_at` = generator run date, always. |
 | Which timestamps are operational only | All of them — see §3.6. |
-| Missing evidence for historical availability | The actual archived combine testing-event record(s) for this player (with a genuine public-release date, e.g. an NFL Combine results page), plus the complete pinned same-season combine-cohort population snapshot the z-score was computed against, plus the pinned z-score/clamp formula from `compute_rookie_alpha.py` at a specific commit. |
+| Missing evidence for historical availability | The actual archived combine testing-event record(s) for this player (with a genuine public-release date, e.g. an NFL Combine results page), the complete pinned same-season, same-position combine-cohort population snapshot, the pinned RAS composite and resolution-priority derivation contract (both now fully recovered, §7.3), and — only when a SPORQ-involving branch applies — a separately archived SPORQ-percentile source record with its own public-release date. |
 
 ### 3.4 `college_production`
 
@@ -114,12 +114,12 @@ pinned inputs for deterministic recomputation of derived values.
 | Actual upstream source file(s) — layered | The mirrored number ultimately comes from a multi-stage `compute_rookie_alpha.py` pipeline: a raw same-season, same-position CFBD z-score (`scripts/compute_production_scores.py`) blended `0.60/0.40` with a separate "age-adjusted" score, then further adjusted by WR "translation penalties" (screen-yard-share, deep-yard-share, slot-contested-rate; up to −8.0 combined) or an RB missed-tackle-forced/YAC-consistency penalty (−2.5 to −5). The files `compute_rookie_transition_profile.py` itself reads (`{season}_college_production.json`) supply only the label text, not the final number. |
 | Source-record grain/key | `data/processed/{season}_college_production.json`: one row per `player_id`, 48 rows, matching the modeled population exactly. |
 | `source_player_id` present in source record? | Yes, directly, in this file. **However**, a fuzzy name+school join with an explicit alias table (`PLAYER_NAME_ALIASES`, e.g. `"nick singleton": ["nicholas singleton"]`) is used one hop further upstream, inside `compute_production_scores.py`, to originally match CFBD's raw stats to a player — by the time `player_id` exists in the file this design inventoried, that join is already resolved, but the fuzzy step exists earlier in the real pipeline. |
-| Derivation code path (formula owner) | `scripts/compute_rookie_alpha.py:900-1166` and `scripts/compute_production_scores.py:294-333` (population construction, per-position eligibility floors e.g. `RB ≥ 50 carries`, per-metric z-scoring, position-weighted composite, e.g. RB: `0.45·YPC_z + 0.35·TD-rate_z + 0.20·receiving-yards_z`, then `z_to_score(z) = clamp(0,100, round(50+15z,1))`), followed by the age-adjusted blend and WR/RB penalty adjustments named above. |
-| Rounding/normalization | Population/cohort-relative (same-season, same-position, eligibility-floor-filtered CFBD population) at the raw-score stage; the final mirrored number is additionally blended with an age-adjusted score and adjusted by position-specific penalties. |
-| Cohort/context dependency | The full same-season, same-position, eligibility-filtered population snapshot is required to reproduce the raw z-score stage. **A cross-family dependency was found and is flagged as an open design question, not resolved in this pass**: the "age-adjusted" component of the blend appears to depend on the player's age, which is exactly the `age_at_entry` family's own value — meaning `college_production`'s computed value may depend on `age_at_entry`'s row within the same artifact. The exact age-adjustment formula was not fully recovered in this inventory pass (**UNCERTAIN** — needs dedicated follow-up before implementation). |
+| Derivation code path (formula owner) | **Fully recovered in this design pass** (dedicated follow-up research resolved the two items previously left open). Raw stage: `scripts/compute_production_scores.py` — `build_population()` (211-291, per-position eligibility floors `POSITION_LIMITS`: QB ≥100 attempts, RB ≥50 carries, WR ≥20 receptions, TE ≥10 receptions), `population_metric_stats()`/`z_score()` (294-308, same-season/same-position mean+population-stdev), `composite_z()` (315-333, position-weighted: QB `0.30·completion_pct_z + 0.35·YPA_z + 0.25·TD-rate_z − 0.10·INT-rate_z`; RB `0.45·YPC_z + 0.35·TD-rate_z + 0.20·receiving-yds_z`; WR/TE `0.40·YPR_z + 0.35·total-yards_z + 0.25·TD-rate_z`), `z_to_score()` (311-312, `clamp(0,100, round(50+15z,1))`). Blend stage: `scripts/compute_rookie_alpha.py`, `blend_production_rows()` (904-945): `round(0.60·age_adjusted_production + 0.40·existing_production, 4)`. Penalty stage: same file, `apply_context_production_adjustments()` (989-1170): WR translation penalties at 1059-1113 (screen-yard-share `>0.50`→−5.0 else `>0.40`→−3.0; deep-yard-share `<0.18`→−4.0 else `<0.245`→−2.0; slot-contested-rate `>0.40`→−3.0 else `>0.30`→−1.5; summed then capped at 8.0); RB penalties at 1116-1167 (MTF `career_mtf_per_touch <0.18`→−5.0 else `<0.20`→−2.5; YAC `yac_plus_catch_2nd_best_season <40.0`→−4.0 else `<48.0`→−2.0; applied independently and sequentially, **uncapped**, unlike the WR combination rule). |
+| Rounding/normalization | Population/cohort-relative (same-season, same-position, eligibility-floor-filtered CFBD population) at the raw-score stage; the raw score is then blended 0.60/0.40 with a separately-sourced age-adjusted score (see next row) and adjusted by position-specific penalties, each `clamp(0,100)`-ed after every step. |
+| Cohort/context dependency | The full same-season, same-position, eligibility-filtered population snapshot is required to reproduce the raw z-score stage. **The cross-family dependency flagged in the prior pass is now resolved: `college_production` does NOT depend on `age_at_entry`.** The blend's `age_adjusted_production` input is computed entirely in a separate upstream file, `scripts/compute_age_adjusted_production.py` (`compute()`, 313-427; `age_multiplier()`, 145-157: `max(0.85, 1.0 + 0.5·(21 − effective_breakout_age))`; `weighted_volume()`, 263-293: `0.70·best_season_volume + 0.30·most_recent_season_volume`), consumed only via the pre-computed artifact `data/processed/{season}_age_adjusted_production.json`. The age input, `effective_breakout_age`, is a **materially different fact** than `age_at_entry`: it is `breakout_age` (from `data/processed/{season}_prospect_context.json`, itself computed by `scripts/compute_breakout_age.py::compute_breakout_for_player()`, 264-363, using the player's **breakout season**, not the draft-entry season) plus school-competition and teammate adjustments (`school_boa_adjustment()`, 127-139: +0.5 non-P4 FBS, +1.0 non-FBS; −0.5 WR Rounds-1-3 teammate flag). Both `age_at_entry` and `effective_breakout_age` share the same underlying `age_from_dob()` arithmetic but are invoked with different `season` arguments and are never the same computed value — `college_production`'s `computed_available_at` must include `effective_breakout_age`'s own upstream availability, not `age_at_entry`'s (see §13). **Empirically verified** against real committed data (Mike Washington Jr., Makai Lemon) — the blend and both penalty formulas reproduce the promoted export's `production_0_100` to the exact decimal. **Data-availability note** (not a formula gap): `slot_contested_target_rate` has never appeared in any committed `prospect_context.json` across 2022-2026 — the penalty branch is real and pinnable but has never fired on real data. |
 | Current timestamp fields | `provenance.last_verified_at` = generator run date, always; `provenance.notes` is `null`. |
 | Which timestamps are operational only | All of them — see §3.6. |
-| Missing evidence for historical availability | The archived raw per-player CFBD season-stat record(s), the archived same-season/same-position population snapshot, the pinned raw z-score formula, the (currently under-specified) age-adjustment formula and its own required inputs, and the pinned WR/RB penalty formulas — all by citation to a specific `compute_rookie_alpha.py`/`compute_production_scores.py` commit. |
+| Missing evidence for historical availability | The archived raw per-player CFBD season-stat record(s), the archived same-season/same-position population snapshot, the pinned raw z-score formula, the archived per-player-season volume record(s) (`wr_route_profiles/`/`qb_play_profiles/`/`rb_play_profiles/`) and breakout-season DOB record underlying `effective_breakout_age`, the pinned age-multiplier/weighted-volume/school-adjustment formulas, and the pinned WR/RB penalty formulas (all now fully recovered, §7.3) — all by citation to a specific `compute_rookie_alpha.py`/`compute_production_scores.py`/`compute_age_adjusted_production.py`/`compute_breakout_age.py` commit. |
 
 ### 3.5 `athletic_testing` cohort file / `college_production` note on route-level data
 
@@ -348,18 +348,37 @@ recovered and verified in this inventory pass — the literal formula inlined fo
   **Open item for the implementation issue**: the two highest-rank bands (`101-150`, `151+`) are not
   documented in `docs/export-contract.md` alongside the rest of the table; this should be resolved
   (either documented there or explicitly superseded by this design's own pin) before implementation.
-- **`athletic_testing`** and **`college_production`**: **not fully pinnable from this design pass.**
-  The exact formulas live in `scripts/compute_rookie_alpha.py`/`scripts/compute_production_scores.py`
-  (within-class z-score `50 + 16.6667·z` for athletic testing; a same-season/same-position CFBD
-  z-score composite, blended `0.60/0.40` with an "age-adjusted" score, then WR/RB penalty-adjusted,
-  for college production) — this inventory recovered the shape and approximate parameters but not
-  every exact coefficient (notably the age-adjustment formula itself, and the precise WR translation-
-  penalty formulas beyond their documented ranges). **This design deliberately does not transcribe
-  approximate formulas into a governance document that would drift from the real code.** Instead, the
-  derivation-contract citation for these two families must point at the exact pinned commit,
-  path, and function name in `TIBER-Rookies`, hash-verified at implementation time — full formula
-  recovery (including resolving the cross-family `age_at_entry` dependency noted in §3.4) is
-  explicitly deferred to the v2 *implementation* issue, not resolved here.
+- **`athletic_testing`**: **fully recovered and pinnable now** (upgraded from "not fully pinnable" by
+  dedicated follow-up research in this design pass, including a direct re-read of
+  `scripts/compute_rookie_alpha.py` and empirical cross-checks against real promoted-export rows).
+  A two-stage, position-gated resolution, not a single global z-score: (1) `compute_ras_scores()`
+  (lines 504-638) builds a raw RAS composite — weighted average of per-metric
+  `z_to_score(z) = clamp(0,100, 50 + 16.6667·z)` across forty (0.30, inverted), vertical (0.20),
+  broad (0.20), three_cone (0.15, inverted), and size (mean height/weight z-score, 0.15), requiring
+  at least one explosive/agility metric; (2) `resolve_athletic_input()` (834-897), dispatching to
+  `resolve_wr_athletic_input()` (696-752) or `resolve_rb_athletic_input()` (755-831) for WR/RB,
+  selects RAS, a `round(0.55·RAS + 0.45·SPORQ, 4)` blend (RB-gated by a ≥20-point SPORQ-over-RAS
+  divergence), SPORQ alone, `RAS_PARTIAL`, or `COMBINE_FALLBACK`, each with its own fixed confidence
+  constant (`_ras_confidence()`, 682-693, plus per-branch literals), before `NEUTRAL_DEFAULT`
+  (excluded from the mirror). Full detail in §3.3. Cited to `scripts/compute_rookie_alpha.py` at a
+  pinned commit.
+- **`college_production`**: **fully recovered and pinnable now** (upgraded from "not fully pinnable"
+  by dedicated follow-up research, including empirical re-derivation matching real promoted-export
+  rows for two real players to the exact decimal). Raw stage: `scripts/compute_production_scores.py`
+  — same-season/same-position CFBD population (`build_population()`, 211-291, eligibility floors
+  `POSITION_LIMITS`), per-metric z-scoring, position-weighted composite (`composite_z()`, 315-333,
+  e.g. RB `0.45·YPC_z + 0.35·TD-rate_z + 0.20·receiving-yards_z`), `z_to_score(z) = clamp(0,100,
+  round(50+15z,1))`. Blend stage: `scripts/compute_rookie_alpha.py::blend_production_rows()`
+  (904-945): `round(0.60·age_adjusted_production + 0.40·existing_production, 4)`. Penalty stage:
+  `apply_context_production_adjustments()` (989-1170) — WR translation penalties (screen/deep/slot
+  thresholds, summed and capped at 8.0) and RB penalties (MTF, YAC-consistency, applied
+  independently and uncapped), both fully specified in §3.4. **The previously-open cross-family
+  dependency question is resolved: `college_production` does not depend on `age_at_entry`.** Its
+  age-adjustment input, `effective_breakout_age`, is a separately-computed fact (breakout season, not
+  draft-entry season, plus school/teammate adjustments) from `scripts/compute_age_adjusted_production.py`
+  and `scripts/compute_breakout_age.py` — see §3.4 for the full formula chain and citation. Cited to
+  `scripts/compute_rookie_alpha.py`/`scripts/compute_production_scores.py`/
+  `scripts/compute_age_adjusted_production.py`/`scripts/compute_breakout_age.py` at a pinned commit.
 
 ## 8. Mirror-wrapper dereferencing (unchanged in kind from schema `1.0.0`)
 
@@ -537,11 +556,14 @@ A row may not choose one favorable component while ignoring a later required dep
 actually used to reproduce the exact mirrored value must be included in the maximum. Concretely, per
 family (§14): `draft_capital` = max(big-board snapshot, band-table derivation contract);
 `age_at_entry` = max(DOB record, reference-date contract, age-formula contract); `athletic_testing` =
-max(combine testing record, same-season cohort-population snapshot, z-score formula contract);
-`college_production` = max(raw stat record(s), population snapshot, raw-formula contract,
-age-adjustment inputs — **including, per the open cross-family dependency in §3.4/§7.3, the
-`age_at_entry` row's own `computed_available_at` if the age-adjustment formula is confirmed to
-depend on it**, blend-weight contract, applicable penalty-formula contract);
+max(combine testing record, same-season/same-position cohort-population snapshot, RAS-composite
+derivation contract, resolution-priority derivation contract, and — only when a SPORQ-involving
+branch is selected — the separately-archived SPORQ-percentile source record); `college_production` =
+max(raw stat record(s), population/cohort snapshot, raw-formula contract, the archived per-player-
+season volume record(s) underlying `effective_breakout_age`, the breakout-season DOB record and
+school/teammate-adjustment inputs feeding `effective_breakout_age` (**resolved: this is a genuinely
+separate fact from `age_at_entry`, per §3.4/§7.3 — `age_at_entry`'s own `computed_available_at` is
+never a required input here**), blend-weight contract, applicable penalty-formula contract);
 `official_postdraft_outcome` = the single bound outcome record's public-release time (no derivation
 contract, since this family is a fact carry-through, not a computed score).
 
@@ -592,41 +614,62 @@ Family availability = `max(DOB record, reference-date contract, age-formula cont
 ### 14.3 `athletic_testing`
 
 Requires: the exact player-specific testing record and all raw measurements needed to reproduce the
-mirrored composite (measurement names, units, unit normalization, the event/source record, a
-`source_record_published_at` assertion), plus — since the score is cohort-relative (§3.3) — the
-complete same-season combine-cohort population snapshot required to reproduce the z-score, plus the
-pinned z-score/clamp derivation contract (§7.3, citation-only pending full recovery). A testing-event
-date alone (with no measurement values, or no cohort snapshot) is not availability proof. Family
-availability = `max(testing record, cohort-population snapshot, derivation-contract availability)`.
+mirrored RAS composite (measurement names, units, unit normalization, the event/source record, a
+`source_record_published_at` assertion), plus — since the RAS composite is cohort-relative (§3.3) —
+the complete same-season, same-position combine-cohort population snapshot, plus the pinned
+RAS-composite and resolution-priority derivation contracts (§7.3, **now fully recovered**). Because
+resolution is position-gated and branches (RAS / RAS_SPORQ_BLEND / SPORQ / RAS_PARTIAL /
+COMBINE_FALLBACK — §3.3), the evidence contract must additionally record **which branch applies** and
+supply that branch's specific required inputs: a SPORQ-involving branch requires a separately archived
+SPORQ-percentile source record (from `prospect_context.json`'s `exceptional_metrics`) with its own
+`source_record_published_at`, distinct from the combine record. A `NEUTRAL_DEFAULT` outcome carries no
+evidence contract at all — it mirrors to `unavailable`, not a scored value (§3.3). A testing-event date
+alone (with no measurement values, or no cohort snapshot) is not availability proof. Family
+availability = `max(testing record, cohort-population snapshot, RAS-composite and resolution-priority
+derivation-contract availability, and — only when selected — the SPORQ-record availability)`.
 
 - *Hypothetical valid package*: a `json_array_exact_match` locator over an archived, official combine
   results export, naming the exact measurements (40-yard time, vertical, etc.) for the bound player,
-  plus a second evidence package for the archived same-season full combine-cohort snapshot.
+  plus a second evidence package for the archived same-season, same-position full combine-cohort
+  snapshot, with the row recording `athletic_source: RAS` (no SPORQ package needed for this branch).
 - *Hypothetical invalid (cross-record) example*: a package citing this player's real combine
   measurements, but reusing a *different* season's cohort-population snapshot to justify the z-score
   — fails closed, since the population used to compute the score must be the same season's.
+- *Hypothetical invalid (missing-branch-input) example*: a row recording `athletic_source:
+  RAS_SPORQ_BLEND` with an archived combine record and cohort snapshot but no archived SPORQ-percentile
+  source record — fails closed, since the blend branch's second required input was never supplied.
 
 ### 14.4 `college_production`
 
 Requires: the exact player-specific raw stat record(s) (season, stat window, games/sample definition,
 position-specific inputs), a `source_record_published_at` assertion for each required source record,
 the pinned raw z-score formula and eligibility-floor contract, the pinned same-season/same-position
-population/cohort snapshot, and — per the open cross-family dependency (§3.4/§7.3) — the pinned
-age-adjustment and applicable WR/RB penalty derivation contracts, once their exact formulas are fully
-recovered in the implementation issue. A final `production_score_0_100` literal alone is
-insufficient. If the score depends on a full population distribution, the entire pinned population
-snapshot is part of the evidence contract, not an assumed constant. Family availability =
-`max(all required raw records, population/cohort snapshot, all required derivation-contract
+population/cohort snapshot, and — **now that the cross-family dependency question is resolved
+(§3.4/§7.3: `college_production` depends on `effective_breakout_age`, a genuinely separate fact from
+`age_at_entry`, never on `age_at_entry`'s own row)** — the archived per-player-season volume record(s)
+(`wr_route_profiles/`/`qb_play_profiles/`/`rb_play_profiles/`, newly identified in this pass as
+required upstream evidence beyond the original six files), the breakout-season DOB record and
+school/teammate-adjustment inputs underlying `effective_breakout_age`, and the pinned age-multiplier/
+weighted-volume/blend-weight and applicable WR/RB penalty derivation contracts (all fully recovered,
+§7.3). A final `production_score_0_100` literal alone is insufficient. If the score depends on a full
+population distribution, the entire pinned population snapshot is part of the evidence contract, not
+an assumed constant. Family availability = `max(all required raw records, population/cohort snapshot,
+the volume and breakout-age records feeding `effective_breakout_age`, all required derivation-contract
 availabilities)`.
 
 - *Hypothetical valid package*: a `json_array_exact_match` locator over an archived, official CFBD
   season-stats export for the bound player, plus a separate evidence package for the archived
-  same-season/same-position eligible population snapshot, plus citations to the pinned raw-formula
-  and blend/penalty derivation contracts.
-  package.
+  same-season/same-position eligible population snapshot, plus a separate evidence package for the
+  archived per-player-season volume record(s) and breakout-season DOB record underlying
+  `effective_breakout_age`, plus citations to the pinned raw-formula, age-adjustment, and
+  blend/penalty derivation contracts.
 - *Hypothetical invalid (cross-record) example*: correct raw per-player stats, but a population
   snapshot drawn from a different position group (e.g. using the WR population to z-score an RB) —
   fails closed on cohort mismatch.
+- *Hypothetical invalid (wrong-age-fact) example*: a package that substitutes the row's own
+  `age_at_entry` evidence for the required `effective_breakout_age` evidence — fails closed, since
+  they are different facts computed via different paths (§3.4) and one is never a substitute for the
+  other.
 
 ### 14.5 `official_postdraft_outcome`
 
@@ -809,13 +852,20 @@ close Issue #160
 may_open_rookie_transition_profile_forecast_availability_evidence_v2_implementation_issue
 ```
 
-**Rationale:** the required source-and-derivation inventory is complete for three of five families
-(`draft_capital`, `age_at_entry` fully pinnable now; `official_postdraft_outcome` fully understood
-structurally, evidence-source-only gap remaining) and partially complete for two
-(`athletic_testing`, `college_production` — real cohort-relative shape confirmed, exact formula
-coefficients and one cross-family dependency explicitly deferred to the implementation issue rather
-than guessed here). Every family has a proposed record-bound, subject-bound, semantically-typed
-evidence contract; the cutoff contract, common archive/locator/subject-binding/availability-time
+**Rationale:** the required source-and-derivation inventory is now complete for all five families.
+`draft_capital` and `age_at_entry` were fully pinnable from the outset. `official_postdraft_outcome`
+is fully understood structurally, with an evidence-source-only gap remaining (an archived record vs.
+free-text `source_name`, not a formula gap). `athletic_testing` and `college_production` — flagged in
+an earlier review as under-specified (exact formula coefficients and a possible cross-family
+dependency deferred) — were resolved by dedicated follow-up research in this same design pass:
+`athletic_testing`'s real two-stage, position-gated resolution (RAS composite, SPORQ blend/priority
+logic) is now fully recovered and empirically verified against real promoted-export rows;
+`college_production`'s age-adjustment and WR/RB penalty formulas are now fully recovered and
+empirically verified against real committed data for two players; and the cross-family dependency
+question is resolved as **no dependency exists** — `college_production` depends on a separately-
+computed `effective_breakout_age`, never on `age_at_entry`'s own row. Every family now has a fully
+pinnable derivation contract (§7.3) and a proposed record-bound, subject-bound, semantically-typed
+evidence contract (§14); the cutoff contract, common archive/locator/subject-binding/availability-time
 contracts, status-computation rules, human-review contract, migration rules, and negative-test matrix
 are all specified. This decision authorizes only a separate implementation issue for schema `2.0.0`
 and its validator — it does not authorize evidence population, Lane B completion, the integrated
@@ -825,15 +875,17 @@ close issue #160.
 ## 21. Acceptance criteria
 
 - [x] The source inventory reflects the real implementation (verified against actual TIBER-Rookies
-      code and data at commit `2ef92fa`), not assumptions — uncertainties (draft-capital band
-      documentation gap, DOB sourcing heterogeneity, athletic/production exact-formula recovery, the
-      age↔production cross-family dependency) are recorded explicitly, not smoothed over.
+      code and data at commit `2ef92fa`, with `athletic_testing`'s and `college_production`'s formulas
+      additionally empirically cross-checked against real promoted-export rows), not assumptions —
+      the athletic/production exact-formula recovery and age↔production cross-family dependency
+      questions were fully resolved during this pass; the draft-capital band documentation gap and
+      DOB-sourcing heterogeneity (§3.2) remain genuinely open and are recorded explicitly, not
+      smoothed over — neither was in scope for this pass's follow-up research.
 - [x] Every accepted timing claim design is record-bound and semantically typed (§7.2, §10).
-- [x] Every family has its own exact evidence and derivation contract (§14), citation-pinned rather
-      than transcribed where the exact formula was not fully recovered (§7.3).
-- [x] All derived mirror values are designed to be reproducible from pinned inputs (§13), with the
-      two families whose exact formulas remain incompletely recovered explicitly flagged rather than
-      falsely presented as fully specified.
+- [x] Every family has its own exact, fully-recovered evidence and derivation contract (§14), pinned
+      by citation to the exact function(s) and line ranges (§7.3).
+- [x] All derived mirror values are designed to be reproducible from pinned inputs (§13); all five
+      families' derivation formulas are now fully recovered, not merely shaped/approximated.
 - [x] `available_at` and `availability_status` are validator-computed, never self-declared (§10.3, §12).
 - [x] The cutoff is derived from one exact Day 1/Round 1 schedule record (§11), sourced externally
       since no such data exists in either repo (§3.9).
