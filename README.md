@@ -1,5 +1,7 @@
 # Tiber Fantasy Scoring Engine
 
+> **[TIBER Now — what works, what we’re building, and what’s still conceptual](https://github.com/Prometheus-Frameworks/TIBER-Fantasy/blob/main/docs/TIBER_NOW.md)**
+
 ## Mission
 This repository is now a **scoring-first kernel** for in-season fantasy football decisions. The core output is practical player-level scoring with deterministic, typed interfaces built around:
 - xFPG / expected fantasy points
