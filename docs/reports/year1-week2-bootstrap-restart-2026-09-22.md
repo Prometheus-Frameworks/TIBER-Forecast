@@ -2,6 +2,8 @@
 
 Status: **preservation / restart documentation only**. This document does not admit data, select a denominator, run Forecast, or promote the offline implementation.
 
+Visual operator companion spec: [`docs/forecast-tracker-gptsite-spec.md`](../forecast-tracker-gptsite-spec.md)
+
 ## 1. Accepted offline implementation
 
 The Year-1 Week-2 offline bootstrap implementation is complete within its independently reviewed implementation scope.
