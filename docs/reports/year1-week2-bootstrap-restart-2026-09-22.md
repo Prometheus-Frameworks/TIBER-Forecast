@@ -10,6 +10,7 @@ The Year-1 Week-2 offline bootstrap implementation is complete within its indepe
 
 - Repository base: `e295e3de745b676df571348cb8541fb5e35e3a02`
 - Accepted eight-file snapshot: `dd884ce6b72801451984d9f99a7e9062e1b706d50c32252b7b227b3de6cae0d4`
+- Immutable recovery archive: [`forecast-bootstrap-r1a-recovery.zip`](https://github.com/Prometheus-Frameworks/TIBER-Forecast/blob/481edb647c0d5b5b18b6a8551475613066da4371/docs/reports/evidence/year1-week2-bootstrap-2026-09-22/forecast-bootstrap-r1a-recovery.zip), archive SHA-256 `a52c08aa3537001f340e705f6636bed1c29d97e6dd8a8f0ada95adc7690e1325`. Its `final/` tree contains the eight implementation/test files under their repository-relative paths, the accepted specification and project configuration; `frozen-manifest.json` lists per-file SHA-256 values and `FILES.sha256` verifies archive members. `base-to-final.patch` targets the pinned repository base. The eight-file snapshot value above is a sorted path-to-SHA-256 map digest, not a Git commit or archive digest.
 - Accepted frozen manifest: `4917f380f1d25d02437fe7e5c2d03ab8b5b9461bcb5df8da91758cbb241e3ed5`
 - Accepted specification: `7247d91ce06761fcdcf62d78f6910369fdedd3c4d7a4d76dfd0e2f427e135844`
 - TypeScript: `tsc --noEmit` exit 0
@@ -56,9 +57,11 @@ Current disposition:
 
 Frozen decision evidence:
 
-- Readiness report: `023536554ad5d81185123b7f8032cc0b830ce84f92c637f4dad8dcc86ff9c55a`
-- Decision JSON: `9a9f50934f13ec433083357edc320afc893196623e236f5164a3cda0b34cfe99`
-- Input/evidence manifest: `141df5d8b2c81a70c184eb819600cc8f86e4ef06ad9d65dab167e62b8b3682e4`
+- [Readiness report](https://github.com/Prometheus-Frameworks/TIBER-Forecast/blob/481edb647c0d5b5b18b6a8551475613066da4371/docs/reports/evidence/year1-week2-bootstrap-2026-09-22/target-2025-denominator-reconstruction-readiness.md): SHA-256 `023536554ad5d81185123b7f8032cc0b830ce84f92c637f4dad8dcc86ff9c55a`
+- [Decision JSON](https://github.com/Prometheus-Frameworks/TIBER-Forecast/blob/481edb647c0d5b5b18b6a8551475613066da4371/docs/reports/evidence/year1-week2-bootstrap-2026-09-22/decision.json): SHA-256 `9a9f50934f13ec433083357edc320afc893196623e236f5164a3cda0b34cfe99`
+- [Input/evidence manifest](https://github.com/Prometheus-Frameworks/TIBER-Forecast/blob/481edb647c0d5b5b18b6a8551475613066da4371/docs/reports/evidence/year1-week2-bootstrap-2026-09-22/input-evidence-manifest.json): SHA-256 `141df5d8b2c81a70c184eb819600cc8f86e4ef06ad9d65dab167e62b8b3682e4`
+
+All four links above target the evidence-preservation commit `481edb647c0d5b5b18b6a8551475613066da4371`, not a moving branch. These retained bytes are retrieval evidence only; their placement in Forecast grants no source admission, model-run authority, denominator selection or new consumer use.
 
 The blocking identity exposed a historical source-state change:
 
