@@ -1,0 +1,132 @@
+{
+  "accepted_fact": {
+    "id": "00-0034854",
+    "june_committed_reg_games": 10,
+    "june_committed_weekly_weeks": 10,
+    "later_reg_games": 11,
+    "later_weekly_games": 11,
+    "later_weekly_weeks": 11
+  },
+  "accepted_implementation_snapshot_sha256": "dd884ce6b72801451984d9f99a7e9062e1b706d50c32252b7b227b3de6cae0d4",
+  "authority": {
+    "admission": false,
+    "feasibility_reopened": false,
+    "preparation": false,
+    "review_dispatched": false,
+    "scoring": false
+  },
+  "blocking_requirement": "Specification6.2 and6.3(3)-(4): known post-cutoff corrections excluded; unresolved dependency on later information blocks affected input. Later retention alone is not such proof, but known state-change uncertainty cannot be cleared solely by the reconstruction label.",
+  "created_at": "2026-09-22T10:56:39.617995+00:00",
+  "cross_season_exposure": "No new statistical processing. Existing2024Week2 raw exposure solely target2025 prior evidence; no longer globally unseen; no target2024 label/evaluation authority.",
+  "decision_scope": "evidence-contract assessment only; no independent review of this decision",
+  "denominator_selected": null,
+  "disposition": "TARGET2025_DENOMINATOR_RECONSTRUCTION_NOT_READY",
+  "external_inquiries": "NFL completion and nflverse roster inquiries remain operator-reported pending.",
+  "feasibility_evidence_status": "author-validated; independent feasibility review blocked/not dispatched; distinct from accepted clean source-state review",
+  "frozen_feasibility_counts": {
+    "anonymous": 18,
+    "distinct_nonblank_ids": 1996,
+    "observed_games": 272,
+    "offensive_explicit_zero": 976,
+    "offensive_identities": 589,
+    "offensive_incomplete": 0,
+    "offensive_records": 5864,
+    "player_observations": 18130,
+    "schedule_missing": 0,
+    "schedule_unexpected": 0,
+    "season_component_comparisons_matched": 4704,
+    "season_count_differences": 1,
+    "season_count_matches": 587,
+    "season_only": 3,
+    "team_comparisons_matched": 5440,
+    "team_rows": 544,
+    "weekly_only": 4,
+    "weekly_season_intersection": 585
+  },
+  "governing_specification_sha256": "7247d91ce06761fcdcf62d78f6910369fdedd3c4d7a4d76dfd0e2f427e135844",
+  "matrix": [
+    {
+      "disposition": "SATISFIED_FOR_DENOMINATOR_RECONSTRUCTION",
+      "evidence_and_reason": "Independent identity-specific review establishes 11 distinct games/weeks for 00-0034854; full-source enumerability is author-validated in the frozen feasibility report. This row addresses structural enumeration only.",
+      "requirement": "Exact source-record membership"
+    },
+    {
+      "disposition": "SATISFIED_FOR_DENOMINATOR_RECONSTRUCTION",
+      "evidence_and_reason": "Specification section 4 includes complete explicit-zero records. Frozen report records 976 offensive explicit-zero records and no incomplete offensive vectors. Never remove a zero row merely to reproduce 10.",
+      "requirement": "Explicit-zero treatment"
+    },
+    {
+      "disposition": "BLOCKING",
+      "evidence_and_reason": "Known 10/10 versus later 11/11 state change is accepted. Evidence does not distinguish eligible retrospective recovery from a correction/dependency on information arising only after the target-2025 cutoff. Sections 6.2 and 6.3(3)-(4) prevent treating disclosure alone as sufficient.",
+      "requirement": "Revised-source status"
+    },
+    {
+      "disposition": "SATISFIED_WITH_RECORDED_LIMITATION",
+      "evidence_and_reason": "Original June responses/cache and original publication clocks remain unavailable. Missing clocks alone are allowed for qualified reconstruction; no verified_asof claim.",
+      "requirement": "Historical publication clocks"
+    },
+    {
+      "disposition": "SATISFIED_WITH_RECORDED_LIMITATION",
+      "evidence_and_reason": "Exact later bytes, receipts, code and review hashes are bound; historical state is committed artifact/code evidence. Original June raw execution/version binding and common producer-input identity remain unknown.",
+      "requirement": "Source provenance"
+    },
+    {
+      "disposition": "SATISFIED_WITH_RECORDED_LIMITATION",
+      "evidence_and_reason": "Frozen author audit reports zero incomplete offensive components; no new component processing and no independent full-season feasibility review has occurred.",
+      "requirement": "Component completeness"
+    },
+    {
+      "disposition": "SATISFIED_WITH_RECORDED_LIMITATION",
+      "evidence_and_reason": "Author audit: 5440 team and 4704 season-component matches, 587/1 count comparison. Earlier count10 is preserved as earlier-state evidence; comparisons are same-provider consistency only.",
+      "requirement": "Season/team reconciliation"
+    },
+    {
+      "disposition": "SATISFIED_WITH_RECORDED_LIMITATION",
+      "evidence_and_reason": "Frozen report has272 observed/retained scheduled games,0missing/0unexpected; independent narrow review verifies target identity membership. No completion inference.",
+      "requirement": "Schedule membership"
+    },
+    {
+      "disposition": "SEPARATE_DOWNSTREAM_GATE",
+      "evidence_and_reason": "Required for qualified production facts/full input acceptance; not supplied by statistical or schedule agreement. Separate completion branch remains pending.",
+      "requirement": "Completion/finality"
+    },
+    {
+      "disposition": "SEPARATE_DOWNSTREAM_GATE",
+      "evidence_and_reason": "Weekly source-position selection is evidence context only; cutoff-effective team/position and the four source-position discrepancies remain unresolved.",
+      "requirement": "Position/cutoff context"
+    },
+    {
+      "disposition": "SEPARATE_DOWNSTREAM_GATE",
+      "evidence_and_reason": "Exact source IDs are not accepted canonical IDs; no identity resolution performed.",
+      "requirement": "Canonical mapping"
+    },
+    {
+      "disposition": "SEPARATE_DOWNSTREAM_GATE",
+      "evidence_and_reason": "No cutoff population follows from589 prior identities, source presence, overlap or union; unavailable cases must remain representable.",
+      "requirement": "Population"
+    },
+    {
+      "disposition": "BLOCKING",
+      "evidence_and_reason": "retrospective_reconstruction_for_method_selection requires all section6.3 conditions. It cannot yet be assigned to this affected denominator as qualified evidence; unresolved temporal/revision dependency remains.",
+      "requirement": "Reconstruction class"
+    },
+    {
+      "disposition": "SEPARATE_DOWNSTREAM_GATE",
+      "evidence_and_reason": "This decision authorizes no source admission or study run. Separate historical-study use/qualification/admission is required under section7.2(9).",
+      "requirement": "Historical-purpose authority"
+    },
+    {
+      "disposition": "SATISFIED_WITH_RECORDED_LIMITATION",
+      "evidence_and_reason": "2024Week2 raw processing was authorized solely for target2025 prior evidence. Section6.2 expressly does not exclude completed prior-season games; no new outcome analysis. Future harness must enforce staged label separation.",
+      "requirement": "Label isolation"
+    },
+    {
+      "disposition": "NOT_APPLICABLE",
+      "evidence_and_reason": "This decision is target2025 retrospective evidence only; historical class cannot satisfy live verified_asof requirements.",
+      "requirement": "Live2026 eligibility"
+    }
+  ],
+  "next_operation": "Prepare one bounded source-revision provenance clarification request, tied to the exact retained weekly/REG asset hashes and 00-0034854, asking for evidence that distinguishes recovery of pre-cutoff recorded membership from a post-cutoff correction or later-information dependency. Do not send it or acquire records under this decision.",
+  "old_artifact_role": "Historical comparison/provenance evidence, not automatic authority over later enumerated source membership; retained as an explicit state-change limitation. This role does not itself qualify the later membership.",
+  "structural_membership": "All11 reviewed weekly records meet reported source-row scope/position/identity/completeness selection. No unique historical omitted record identified; do not invent an eleventh-game locator. Temporal eligibility not established."
+}
