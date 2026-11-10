@@ -1,0 +1,461 @@
+{
+ "arms": [
+  {
+   "any_week_blend_rows": {
+    "C0_macro_mae": 5.341897338150264,
+    "K_WR_mae": 4.5081199594726025,
+    "K_macro_mae": 4.803676836149456,
+    "K_macro_rmse": 6.521385149922549,
+    "WR_n": 1795,
+    "n": 4357
+   },
+   "arm": "denominator_10",
+   "hodge_prior_2025_target": 2.6100000000000003,
+   "hodge_rows": [
+    {
+     "forecast": 1.8747887323943666,
+     "games_so_far": 1,
+     "origin_week": 5,
+     "outcome": 0.0,
+     "row_class": "blend_prior_and_current",
+     "target_week": 6
+    },
+    {
+     "forecast": 1.462747252747253,
+     "games_so_far": 2,
+     "origin_week": 6,
+     "outcome": 0.0,
+     "row_class": "blend_prior_and_current",
+     "target_week": 7
+    },
+    {
+     "forecast": 1.1991891891891893,
+     "games_so_far": 3,
+     "origin_week": 7,
+     "outcome": 6.1,
+     "row_class": "blend_prior_and_current",
+     "target_week": 8
+    },
+    {
+     "forecast": 1.9474045801526718,
+     "games_so_far": 4,
+     "origin_week": 8,
+     "outcome": 0.0,
+     "row_class": "blend_prior_and_current",
+     "target_week": 9
+    },
+    {
+     "forecast": 1.6894701986754967,
+     "games_so_far": 5,
+     "origin_week": 9,
+     "outcome": 0.0,
+     "row_class": "blend_prior_and_current",
+     "target_week": 10
+    },
+    {
+     "forecast": 1.4918713450292398,
+     "games_so_far": 6,
+     "origin_week": 10,
+     "outcome": 0.0,
+     "row_class": "blend_prior_and_current",
+     "target_week": 11
+    },
+    {
+     "forecast": 1.3356544502617802,
+     "games_so_far": 7,
+     "origin_week": 14,
+     "outcome": 0.0,
+     "row_class": "blend_prior_and_current",
+     "target_week": 15
+    }
+   ],
+   "served_forecast_available_rows": 5586,
+   "target_rows": 5682,
+   "week2_diagnostic_origin1": {
+    "C0_macro_mae": 5.1212292811934015,
+    "C2_macro_mae": 5.021648211570908,
+    "hodge_in_cohort": false,
+    "n": 255
+   }
+  },
+  {
+   "any_week_blend_rows": {
+    "C0_macro_mae": 5.341732106446035,
+    "K_WR_mae": 4.5078408351934245,
+    "K_macro_mae": 4.803607055079661,
+    "K_macro_rmse": 6.521375111189935,
+    "WR_n": 1795,
+    "n": 4357
+   },
+   "arm": "denominator_11_as_in_current_file",
+   "hodge_prior_2025_target": 2.372727272727273,
+   "hodge_rows": [
+    {
+     "forecast": 1.7043533930857877,
+     "games_so_far": 1,
+     "origin_week": 5,
+     "outcome": 0.0,
+     "row_class": "blend_prior_and_current",
+     "target_week": 6
+    },
+    {
+     "forecast": 1.3297702297702299,
+     "games_so_far": 2,
+     "origin_week": 6,
+     "outcome": 0.0,
+     "row_class": "blend_prior_and_current",
+     "target_week": 7
+    },
+    {
+     "forecast": 1.0901719901719902,
+     "games_so_far": 3,
+     "origin_week": 7,
+     "outcome": 6.1,
+     "row_class": "blend_prior_and_current",
+     "target_week": 8
+    },
+    {
+     "forecast": 1.8550312283136712,
+     "games_so_far": 4,
+     "origin_week": 8,
+     "outcome": 0.0,
+     "row_class": "blend_prior_and_current",
+     "target_week": 9
+    },
+    {
+     "forecast": 1.6093317278747743,
+     "games_so_far": 5,
+     "origin_week": 9,
+     "outcome": 0.0,
+     "row_class": "blend_prior_and_current",
+     "target_week": 10
+    },
+    {
+     "forecast": 1.4211057947900054,
+     "games_so_far": 6,
+     "origin_week": 10,
+     "outcome": 0.0,
+     "row_class": "blend_prior_and_current",
+     "target_week": 11
+    },
+    {
+     "forecast": 1.2722989052831986,
+     "games_so_far": 7,
+     "origin_week": 14,
+     "outcome": 0.0,
+     "row_class": "blend_prior_and_current",
+     "target_week": 15
+    }
+   ],
+   "served_forecast_available_rows": 5586,
+   "target_rows": 5682,
+   "week2_diagnostic_origin1": {
+    "C0_macro_mae": 5.1212292811934015,
+    "C2_macro_mae": 5.021648211570908,
+    "hodge_in_cohort": false,
+    "n": 255
+   }
+  },
+  {
+   "any_week_blend_rows": {
+    "C0_macro_mae": 5.344077741774473,
+    "K_WR_mae": 4.5175461856170305,
+    "K_macro_mae": 4.8060333926855625,
+    "K_macro_rmse": 6.523939466656421,
+    "WR_n": 1788,
+    "n": 4350
+   },
+   "arm": "prior_unavailable_row_retained",
+   "hodge_prior_2025_target": null,
+   "hodge_rows": [
+    {
+     "forecast": 0.0,
+     "games_so_far": 1,
+     "origin_week": 5,
+     "outcome": 0.0,
+     "row_class": "fallback_current_average_no_prior",
+     "target_week": 6
+    },
+    {
+     "forecast": 0.0,
+     "games_so_far": 2,
+     "origin_week": 6,
+     "outcome": 0.0,
+     "row_class": "fallback_current_average_no_prior",
+     "target_week": 7
+    },
+    {
+     "forecast": 0.0,
+     "games_so_far": 3,
+     "origin_week": 7,
+     "outcome": 6.1,
+     "row_class": "fallback_current_average_no_prior",
+     "target_week": 8
+    },
+    {
+     "forecast": 1.525,
+     "games_so_far": 4,
+     "origin_week": 8,
+     "outcome": 0.0,
+     "row_class": "fallback_current_average_no_prior",
+     "target_week": 9
+    },
+    {
+     "forecast": 1.22,
+     "games_so_far": 5,
+     "origin_week": 9,
+     "outcome": 0.0,
+     "row_class": "fallback_current_average_no_prior",
+     "target_week": 10
+    },
+    {
+     "forecast": 1.0166666666666666,
+     "games_so_far": 6,
+     "origin_week": 10,
+     "outcome": 0.0,
+     "row_class": "fallback_current_average_no_prior",
+     "target_week": 11
+    },
+    {
+     "forecast": 0.8714285714285713,
+     "games_so_far": 7,
+     "origin_week": 14,
+     "outcome": 0.0,
+     "row_class": "fallback_current_average_no_prior",
+     "target_week": 15
+    }
+   ],
+   "served_forecast_available_rows": 5586,
+   "target_rows": 5682,
+   "week2_diagnostic_origin1": {
+    "C0_macro_mae": 5.1212292811934015,
+    "C2_macro_mae": 5.021648211570908,
+    "hodge_in_cohort": false,
+    "n": 255
+   }
+  }
+ ],
+ "bound_if_he_were_in_the_week2_cohort": {
+  "WR_rows_origin1_2025": 110,
+  "assumption": "he is added to the WR cohort of the Week 2 diagnostic at its present size",
+  "caveat": "under the protocol's frozen roster population the cohort is larger and differently composed; this bound is illustrative, not a governed result",
+  "max_change_in_his_abs_error": 0.2372727272727273,
+  "max_change_in_macro_mae": 0.0005343980343980345
+ },
+ "current_file_rows_2024_REG": [
+  {
+   "all_numeric_columns_zero_or_null": false,
+   "game_id": "2024_01_PIT_ATL",
+   "in_legacy_file": false,
+   "nonzero_columns": {
+    "def_tackles_solo": 1,
+    "penalties": 1,
+    "penalty_yards": 5
+   },
+   "profile_points": 0.0,
+   "week": 1
+  },
+  {
+   "all_numeric_columns_zero_or_null": false,
+   "game_id": "2024_02_ATL_PHI",
+   "in_legacy_file": false,
+   "nonzero_columns": {
+    "def_tackles_solo": 1
+   },
+   "profile_points": 0.0,
+   "week": 2
+  },
+  {
+   "all_numeric_columns_zero_or_null": false,
+   "game_id": "2024_03_KC_ATL",
+   "in_legacy_file": false,
+   "nonzero_columns": {
+    "def_tackle_assists": 1
+   },
+   "profile_points": 0.0,
+   "week": 3
+  },
+  {
+   "all_numeric_columns_zero_or_null": false,
+   "game_id": "2024_04_NO_ATL",
+   "in_legacy_file": true,
+   "nonzero_columns": {
+    "def_tackles_with_assist": 1,
+    "fumble_recovery_opp": 1,
+    "fumble_recovery_tds": 1
+   },
+   "profile_points": 0.0,
+   "week": 4
+  },
+  {
+   "all_numeric_columns_zero_or_null": false,
+   "game_id": "2024_05_TB_ATL",
+   "in_legacy_file": true,
+   "nonzero_columns": {
+    "air_yards_share": 0.0496613995485327,
+    "def_tackle_assists": 1,
+    "fantasy_points": 12.7,
+    "fantasy_points_ppr": 14.7,
+    "penalties": 1,
+    "penalty_yards": 10,
+    "racr": 3.04545454545455,
+    "receiving_10": 2,
+    "receiving_16": 2,
+    "receiving_20": 2,
+    "receiving_40": 1,
+    "receiving_air_yards": 22,
+    "receiving_epa": 6.28517366573215,
+    "receiving_first_downs": 2,
+    "receiving_tds": 1,
+    "receiving_yards": 67,
+    "receiving_yards_after_catch": 45,
+    "receptions": 2,
+    "target_share": 0.037037037037037,
+    "targets": 2,
+    "wopr": 0.0903185352395285
+   },
+   "profile_points": 14.7,
+   "week": 5
+  },
+  {
+   "all_numeric_columns_zero_or_null": false,
+   "game_id": "2024_08_ATL_TB",
+   "in_legacy_file": false,
+   "nonzero_columns": {
+    "def_tackle_assists": 1,
+    "def_tackles_for_loss": 1,
+    "def_tackles_for_loss_yards": 2,
+    "def_tackles_solo": 1
+   },
+   "profile_points": 0.0,
+   "week": 8
+  },
+  {
+   "all_numeric_columns_zero_or_null": false,
+   "game_id": "2024_09_DAL_ATL",
+   "in_legacy_file": true,
+   "nonzero_columns": {
+    "fantasy_points": 0.9,
+    "fantasy_points_ppr": 1.9,
+    "receiving_epa": -1.94204675103538,
+    "receiving_yards": 9,
+    "receiving_yards_after_catch": 9,
+    "receptions": 1,
+    "target_share": 0.0833333333333333,
+    "targets": 2,
+    "wopr": 0.125
+   },
+   "profile_points": 1.9,
+   "week": 9
+  },
+  {
+   "all_numeric_columns_zero_or_null": false,
+   "game_id": "2024_11_ATL_DEN",
+   "in_legacy_file": true,
+   "nonzero_columns": {
+    "air_yards_share": 0.012987012987013,
+    "fantasy_points": 2.2,
+    "fantasy_points_ppr": 4.2,
+    "racr": 7.33333333333333,
+    "receiving_10": 1,
+    "receiving_16": 1,
+    "receiving_air_yards": 3,
+    "receiving_epa": 3.94005418044981,
+    "receiving_first_downs": 2,
+    "receiving_yards": 22,
+    "receiving_yards_after_catch": 19,
+    "receptions": 2,
+    "target_share": 0.0689655172413793,
+    "targets": 2,
+    "wopr": 0.112539184952978
+   },
+   "profile_points": 4.2,
+   "week": 11
+  },
+  {
+   "all_numeric_columns_zero_or_null": false,
+   "game_id": "2024_15_ATL_LV",
+   "in_legacy_file": false,
+   "nonzero_columns": {
+    "def_punt_blocks": 1
+   },
+   "profile_points": 0.0,
+   "week": 15
+  },
+  {
+   "all_numeric_columns_zero_or_null": false,
+   "game_id": "2024_17_ATL_WAS",
+   "in_legacy_file": true,
+   "nonzero_columns": {
+    "air_yards_share": 0.178489702517162,
+    "fantasy_points": 0.9,
+    "fantasy_points_ppr": 1.9,
+    "racr": 0.115384615384615,
+    "receiving_air_yards": 78,
+    "receiving_epa": -1.09772692609113,
+    "receiving_first_downs": 1,
+    "receiving_yards": 9,
+    "receiving_yards_after_catch": 12,
+    "receptions": 1,
+    "target_share": 0.114285714285714,
+    "targets": 4,
+    "wopr": 0.296371363190585
+   },
+   "profile_points": 1.9,
+   "week": 17
+  },
+  {
+   "all_numeric_columns_zero_or_null": false,
+   "game_id": "2024_18_CAR_ATL",
+   "in_legacy_file": true,
+   "nonzero_columns": {
+    "air_yards_share": 0.053864168618267,
+    "fantasy_points": 2.4,
+    "fantasy_points_ppr": 3.4,
+    "racr": 1.04347826086957,
+    "receiving_10": 1,
+    "receiving_16": 1,
+    "receiving_20": 1,
+    "receiving_air_yards": 23,
+    "receiving_epa": 1.07139633223414,
+    "receiving_first_downs": 1,
+    "receiving_yards": 24,
+    "receiving_yards_after_catch": 4,
+    "receptions": 1,
+    "target_share": 0.0540540540540541,
+    "targets": 2,
+    "wopr": 0.118785999113868
+   },
+   "profile_points": 3.4000000000000004,
+   "week": 18
+  }
+ ],
+ "gsis_id": "00-0034854",
+ "legacy_file_weeks_2024_REG": [
+  4,
+  5,
+  9,
+  11,
+  17,
+  18
+ ],
+ "name": "KhaDarel Hodge",
+ "position_in_2024_file": "WR",
+ "prior_if_10": 2.6100000000000003,
+ "prior_if_11": 2.372727272727273,
+ "profile_total_points_2024_REG": 26.1,
+ "provider_fantasy_points_ppr_total": 26.099999999999994,
+ "r1_default_equals_arm_11": true,
+ "r1_default_used": "the current-format file as retrieved, i.e. 11 rows. That was a data default, not a denominator selection; this PR selects neither 10 nor 11.",
+ "sensitivity_population": "appeared-in-target-game rows, target season 2025, origin weeks 1-17, current-format files (see coverage)",
+ "team_2024": [
+  "ATL"
+ ],
+ "three_different_counts": {
+  "current_release_asset_retrieved_2026_11_10": 11,
+  "frozen_june_tiber_artifact": "10 (per the preserved readiness report; not re-observed here)",
+  "frozen_later_retained_evidence": "11 (per the preserved readiness report)",
+  "legacy_release_asset_retrieved_2026_11_10": 6,
+  "note": "The 6-vs-11 comparison is between two provider file formats on one day. It does not show what the June artifact contained or which game changed, and it does not answer the revision-provenance question."
+ }
+}

@@ -1,0 +1,18 @@
+name/pos/team: KhaDarel Hodge WR ['ATL']
+new-format REG rows: 11 weeks [1, 2, 3, 4, 5, 8, 9, 11, 15, 17, 18]
+legacy-format REG rows: 6 weeks [4, 5, 9, 11, 17, 18]
+ week team opponent_team  targets  receptions  receiving_yards  receiving_tds  carries  rushing_yards  fantasy_points_ppr  penalties  def_tackles_solo  def_tackles_with_assist  punt_returns  kickoff_returns  fumble_recovery_own  fumbles_total
+    1  ATL           PIT        0           0                0              0        0              0                 0.0          1                 1                        0             0                0                    0              0
+    2  ATL           PHI        0           0                0              0        0              0                 0.0          0                 1                        0             0                0                    0              0
+    3  ATL            KC        0           0                0              0        0              0                 0.0          0                 0                        0             0                0                    0              0
+    4  ATL            NO        0           0                0              0        0              0                 0.0          0                 0                        1             0                0                    0              0
+    5  ATL            TB        2           2               67              1        0              0                14.7          1                 0                        0             0                0                    0              0
+    8  ATL            TB        0           0                0              0        0              0                 0.0          0                 1                        0             0                0                    0              0
+    9  ATL           DAL        2           1                9              0        0              0                 1.9          0                 0                        0             0                0                    0              0
+   11  ATL           DEN        2           2               22              0        0              0                 4.2          0                 0                        0             0                0                    0              0
+   15  ATL            LV        0           0                0              0        0              0                 0.0          0                 0                        0             0                0                    0              0
+   17  ATL           WAS        4           1                9              0        0              0                 1.9          0                 0                        0             0                0                    0              0
+   18  ATL           CAR        2           1               24              0        0              0                 3.4          0                 0                        0             0                0                    0              0
+weeks only in new format: [1, 2, 3, 8, 15]
+2024 QB/RB/WR/TE players: new-format 589 legacy 559 | players whose game count differs: 218 | new>old: 217
+total PPR 26.1 -> per game /10 = 2.61  /11 = 2.373

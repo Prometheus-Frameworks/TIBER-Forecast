@@ -1,0 +1,281 @@
+{
+ "experiment": "any-week-shadow-2026-11-10",
+ "status": "SHADOW CANDIDATE - no source admission, no denominator selection, no consumer admission",
+ "repository_base_commit": "d1589866ac585a463da7ac9c46f295f413816bd8",
+ "environment": {
+  "python": "3.13.18",
+  "pandas": "3.0.5",
+  "numpy": "2.5.3",
+  "platform": "linux (Claude session workspace)"
+ },
+ "source": {
+  "provider": "nflverse",
+  "repository": "https://github.com/nflverse/nflverse-data",
+  "license_file_observed": "LICENSE.md begins \"Attribution 4.0 International\" (CC BY 4.0), read 2026-11-10; licence terms not otherwise reviewed",
+  "admission": "none - retained as experiment evidence only"
+ },
+ "inputs": [
+  {
+   "retained_as": "inputs/games.csv.gz",
+   "local_name_used_by_scripts": "games.csv",
+   "source_url": "https://github.com/nflverse/nflverse-data/releases/download/schedules/games.csv",
+   "release_tag": "schedules",
+   "retrieved_at_utc_file_mtime": "2026-11-10T15:58:07Z",
+   "raw_bytes": 2188990,
+   "raw_sha256": "1d90e60f71253f217ab698236616d367bf93cddfddac545c29b1fcb33cf87d65",
+   "gz_sha256": "9c111ba319fda5d380fb032fbb187e0d33b10f3fd0223aa21b4a3c866d87ec77",
+   "provider_headers_observed_later": {
+    "observed_at_utc": "2026-11-10T16:17:54Z",
+    "content-length": "2188990",
+    "etag": "\"0x8DF3F460DA264FF\"",
+    "last-modified": "Tue, 10 Nov 2026 16:17:01 GMT",
+    "size_matches_retained_bytes": true,
+    "note": "HEAD request only, made after the run; no bytes re-downloaded. A matching size is consistent with, but does not prove, that the retained bytes are this asset version.",
+    "earlier_observation": {
+     "observed_at_utc": "2026-11-10T16:17:22Z or shortly after",
+     "last-modified": "Tue, 10 Nov 2026 15:36:28 GMT",
+     "etag": "\"0x8DF3F40635BE448\"",
+     "note": "The provider republished this asset (same size) around 16:17Z, after retrieval. The retained bytes were retrieved at 15:58:07Z, so the 15:36:28 version is the plausible match; unproven."
+    }
+   }
+  },
+  {
+   "retained_as": "inputs/legacy_player_stats_2024.csv.gz",
+   "local_name_used_by_scripts": "legacy_player_stats_2024.csv",
+   "source_url": "https://github.com/nflverse/nflverse-data/releases/download/player_stats/player_stats_2024.csv",
+   "release_tag": "player_stats",
+   "retrieved_at_utc_file_mtime": "2026-11-10T15:57:29Z",
+   "raw_bytes": 1674023,
+   "raw_sha256": "4f1598c9a6ba396a52e256762a0d9148abd22cdf856f26fc8825fa1d1dc49631",
+   "gz_sha256": "5cd4bae89ae11bc3a6e854fd463745cf621662e9e4cc3e9fb751e81907ad2030",
+   "provider_headers_observed_later": {
+    "observed_at_utc": "2026-11-10T16:17:54Z",
+    "content-length": "1674023",
+    "etag": "\"0x8DD8CBBEFAAD51D\"",
+    "last-modified": "Tue, 06 May 2025 16:34:56 GMT",
+    "size_matches_retained_bytes": true,
+    "note": "HEAD request only, made after the run; no bytes re-downloaded. A matching size is consistent with, but does not prove, that the retained bytes are this asset version."
+   }
+  },
+  {
+   "retained_as": "inputs/stats_player_week_2021.csv.gz",
+   "local_name_used_by_scripts": "stats_player_week_2021.csv",
+   "source_url": "https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_week_2021.csv",
+   "release_tag": "stats_player",
+   "retrieved_at_utc_file_mtime": "2026-11-10T15:57:25Z",
+   "raw_bytes": 8477784,
+   "raw_sha256": "41915fb49238902ad1f129ebf0405b11a1e710454ae0fe8f7b3e4f9145875f48",
+   "gz_sha256": "45d23799902ebd514798a850efaff07bfc962793faedd03e473dd3c1bcf47aea",
+   "provider_headers_observed_later": {
+    "observed_at_utc": "2026-11-10T16:17:55Z",
+    "content-length": "8477784",
+    "etag": "\"0x8DEF95AA28D1034\"",
+    "last-modified": "Thu, 13 Aug 2026 16:48:00 GMT",
+    "size_matches_retained_bytes": true,
+    "note": "HEAD request only, made after the run; no bytes re-downloaded. A matching size is consistent with, but does not prove, that the retained bytes are this asset version."
+   }
+  },
+  {
+   "retained_as": "inputs/stats_player_week_2022.csv.gz",
+   "local_name_used_by_scripts": "stats_player_week_2022.csv",
+   "source_url": "https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_week_2022.csv",
+   "release_tag": "stats_player",
+   "retrieved_at_utc_file_mtime": "2026-11-10T15:57:26Z",
+   "raw_bytes": 8408729,
+   "raw_sha256": "ad426c3fe5bf1cc30c3f137fdfe96d054e19d400879ee4413129da49fa7b54be",
+   "gz_sha256": "168883f88f759f03fb0f36681114fd7b0315152dd8efbf271253e91e704b1e26",
+   "provider_headers_observed_later": {
+    "observed_at_utc": "2026-11-10T16:17:55Z",
+    "content-length": "8408729",
+    "etag": "\"0x8DEF95AAA9FC20B\"",
+    "last-modified": "Thu, 13 Aug 2026 16:48:13 GMT",
+    "size_matches_retained_bytes": true,
+    "note": "HEAD request only, made after the run; no bytes re-downloaded. A matching size is consistent with, but does not prove, that the retained bytes are this asset version."
+   }
+  },
+  {
+   "retained_as": "inputs/stats_player_week_2023.csv.gz",
+   "local_name_used_by_scripts": "stats_player_week_2023.csv",
+   "source_url": "https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_week_2023.csv",
+   "release_tag": "stats_player",
+   "retrieved_at_utc_file_mtime": "2026-11-10T15:57:27Z",
+   "raw_bytes": 8332874,
+   "raw_sha256": "f19cb71a5de0dce7fd09376026237c9ee9d5a93fe13815a2ea3ec2d37204cb17",
+   "gz_sha256": "6f9a86f3dae4dba54fd812c9f9a85b39a07fe239ad181bf49197f0b5603995fd",
+   "provider_headers_observed_later": {
+    "observed_at_utc": "2026-11-10T16:17:55Z",
+    "content-length": "8332874",
+    "etag": "\"0x8DEF95AB85FE52E\"",
+    "last-modified": "Thu, 13 Aug 2026 16:48:36 GMT",
+    "size_matches_retained_bytes": true,
+    "note": "HEAD request only, made after the run; no bytes re-downloaded. A matching size is consistent with, but does not prove, that the retained bytes are this asset version."
+   }
+  },
+  {
+   "retained_as": "inputs/stats_player_week_2024.csv.gz",
+   "local_name_used_by_scripts": "stats_player_week_2024.csv",
+   "source_url": "https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_week_2024.csv",
+   "release_tag": "stats_player",
+   "retrieved_at_utc_file_mtime": "2026-11-10T15:57:28Z",
+   "raw_bytes": 8470040,
+   "raw_sha256": "3ddc45a84f759aa348ce465ae001752c530575455717657cdfe1f8abfcdb4759",
+   "gz_sha256": "0fef2ff64ef6e8b9f8e1b3fb0f71869e07cadef7ad9d14c836be9ee7e3ae6088",
+   "provider_headers_observed_later": {
+    "observed_at_utc": "2026-11-10T16:17:55Z",
+    "content-length": "8470040",
+    "etag": "\"0x8DEF95ACCB97E00\"",
+    "last-modified": "Thu, 13 Aug 2026 16:49:11 GMT",
+    "size_matches_retained_bytes": true,
+    "note": "HEAD request only, made after the run; no bytes re-downloaded. A matching size is consistent with, but does not prove, that the retained bytes are this asset version."
+   }
+  },
+  {
+   "retained_as": "inputs/stats_player_week_2025.csv.gz",
+   "local_name_used_by_scripts": "stats_player_week_2025.csv",
+   "source_url": "https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_week_2025.csv",
+   "release_tag": "stats_player",
+   "retrieved_at_utc_file_mtime": "2026-11-10T15:57:28Z",
+   "raw_bytes": 8656387,
+   "raw_sha256": "e5e0615b3d96a3eaebfaee91e55afb4a4e7fe0caf057454177bcd7d6ad4bcfc2",
+   "gz_sha256": "a433823c12dfe4a0f67031c586c212e7ef71eb0a2ba2ee8b7b9189aefc23b669",
+   "provider_headers_observed_later": {
+    "observed_at_utc": "2026-11-10T16:17:56Z",
+    "content-length": "8656387",
+    "etag": "\"0x8DEF95B1AFD7169\"",
+    "last-modified": "Thu, 13 Aug 2026 16:51:22 GMT",
+    "size_matches_retained_bytes": true,
+    "note": "HEAD request only, made after the run; no bytes re-downloaded. A matching size is consistent with, but does not prove, that the retained bytes are this asset version."
+   }
+  },
+  {
+   "retained_as": "inputs/stats_player_week_2026.csv.gz",
+   "local_name_used_by_scripts": "stats_player_week_2026.csv",
+   "source_url": "https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_week_2026.csv",
+   "release_tag": "stats_player",
+   "retrieved_at_utc_file_mtime": "2026-11-10T15:57:29Z",
+   "raw_bytes": 4210589,
+   "raw_sha256": "edac7bfc5969a8ec553d8b0e3d9e479e924b8492fd048139f83c6e9e306887e6",
+   "gz_sha256": "09b6e4464e85e7820cb8ab2be67e1e8df5cb2bc15e2f9fefcf71254d2fe0896a",
+   "provider_headers_observed_later": {
+    "observed_at_utc": "2026-11-10T16:17:56Z",
+    "content-length": "4210589",
+    "etag": "\"0x8DF3F325D63179E\"",
+    "last-modified": "Tue, 10 Nov 2026 13:56:05 GMT",
+    "size_matches_retained_bytes": true,
+    "note": "HEAD request only, made after the run; no bytes re-downloaded. A matching size is consistent with, but does not prove, that the retained bytes are this asset version."
+   }
+  }
+ ],
+ "original_run": {
+  "r0": {
+   "what": "first execution of shadow.py",
+   "ran_at_utc": "unknown; between 2026-11-10T15:58:07Z (last input retrieved) and 2026-11-10T15:59:18Z (script edited)",
+   "outputs": "overwritten by r1 before being preserved",
+   "reconstruction": [
+    {
+     "path": "original/r0-reconstructed/shadow_r0.py",
+     "sha256": "1c43829b0a2bfd2a54d1cb08c75d54cca2be2ce1f8e0844d385b0c7bf3e9d4e2",
+     "bytes": 7427,
+     "note": "r1 script with the two r0->r1 edits reversed, from the session record"
+    },
+    {
+     "path": "original/r0-reconstructed/shadow_results.json",
+     "sha256": "9c05018e2f8dc88cfea32bd7de772473c9fac1afb76034aa6e7460cde2284a53",
+     "bytes": 10979,
+     "generated_at_utc": "2026-11-10T16:14:25Z"
+    },
+    {
+     "path": "original/r0-reconstructed/shadow_week10_forecast.csv",
+     "sha256": "1f584facc2591a6ba831abeef2bc8deab141be260a19222675ff86a0d71ddb78",
+     "bytes": 40346,
+     "generated_at_utc": "2026-11-10T16:14:25Z"
+    }
+   ]
+  },
+  "r1": {
+   "what": "second execution, after the no-prior fallback edit; these are the delivered results and the delivered Week 10 file",
+   "files": [
+    {
+     "path": "original/as-run-r1/shadow.py",
+     "sha256": "306d14578e81d3b602ed7d2c86a1a3b9a9a1280448b3ceca07016ec2a4b1852c",
+     "bytes": 7921,
+     "mtime_utc": "2026-11-10T15:59:18Z"
+    },
+    {
+     "path": "original/as-run-r1/shadow_results.json",
+     "sha256": "3096e2d5b7873a638f381488725d9d47f422e9e91305ec71c0a495ff77e97254",
+     "bytes": 10979,
+     "generated_at_utc": "2026-11-10T15:59:21Z"
+    },
+    {
+     "path": "original/as-run-r1/shadow_week10_forecast.csv",
+     "sha256": "b815e1be4e296c4ed1e1317687ff21e1c615297a54caae4749fc7bee7ab6b874",
+     "bytes": 41305,
+     "generated_at_utc": "2026-11-10T15:59:21Z"
+    },
+    {
+     "path": "original/as-run-r1/blocker.py",
+     "sha256": "e917d40127a906eae5f126a51e04d07e4be55f702dccce521f441d9b21744966",
+     "bytes": 1733,
+     "mtime_utc": "2026-11-10T15:57:40Z",
+     "note": "ran before shadow.py; original stdout was not saved"
+    },
+    {
+     "path": "original/as-run-r1/blocker_stdout.txt",
+     "sha256": "b079974de6c38f96cb2dd8df8dca2fdbfd3d817c37693d45192d543aa5301e87",
+     "bytes": 3280,
+     "note": "regenerated 2026-11-10T16:14Z from retained inputs"
+    },
+    {
+     "path": "original/as-run-r1/stdout_reproduction.txt",
+     "sha256": "8be4fd9afd4fb48d7f9e4705fa3eb11191a8d20b62f1d672676b602d3397f087",
+     "bytes": 5954,
+     "note": "stdout of the 2026-11-10T16:14Z byte-identical reproduction"
+    }
+   ]
+  },
+  "configuration": "none outside the scripts; all parameters are literals in shadow.py"
+ },
+ "reproduction": {
+  "r1_rerun_at_utc": "2026-11-10T16:14Z",
+  "r1_outputs_byte_identical": true,
+  "command": "bash docs/reports/evidence/any-week-shadow-2026-11-10/reproduce.sh"
+ },
+ "inspection": {
+  "script": {
+   "path": "inspection/inspect_shadow.py",
+   "sha256": "b6f6d59c315b0462d9c4181611145318036953c8cb02c6f63c60441b6f20df15",
+   "bytes": 29808
+  },
+  "generated_at_utc": "2026-11-10T16:16Z",
+  "outputs_sha256_file": "inspection/OUTPUTS.sha256",
+  "refit": false,
+  "corrections_to_r1_numbers": "none"
+ },
+ "week10_freeze": {
+  "target": "2026 REG Week 10",
+  "first_kickoff_et": "2026-11-12 20:15 (WAS @ NYG) per the retained schedule file",
+  "evidence_through": "2026 REG Week 9 (15 games, incl. BUF @ MIN on 2026-11-09)",
+  "input_cutoff_utc": "2026-11-10T15:58:07Z (last input retrieved)",
+  "delivered_version": "r1",
+  "delivered_generated_at_utc": "2026-11-10T15:59:21Z",
+  "delivered_sha256": "b815e1be4e296c4ed1e1317687ff21e1c615297a54caae4749fc7bee7ab6b874",
+  "preserved_in_repository_at_utc": "2026-11-10T16:13Z (copied into the evidence folder)",
+  "earlier_version": "r0 (not delivered, original bytes lost, reconstruction retained); differs on the 100 missing-prior rows only",
+  "corrected_version": "none - no correction was made to the delivered file",
+  "rows": {
+   "blend_prior_plus_2026": 384,
+   "current_season_average_only_no_prior": 100,
+   "bye_no_forecast": 75,
+   "total": 559
+  },
+  "limitations": [
+   "Shadow candidate; no consumer admission.",
+   "No injury or availability modelling.",
+   "Production-history population: only players with a 2026 REG row through Week 9; players with a 2025 prior but no 2026 game have no row; no roster source.",
+   "Current-season-average fallback for the 100 players without a 2025 prior; that fallback was chosen after seeing historical results.",
+   "Generic scoring tiber-generic-full-ppr-v1: receptions + 0.1*rec yds + 6*rec TD + 0.1*rush yds + 6*rush TD + 0.04*pass yds + 4*pass TD - 2*INT; no fumbles, two-point conversions or bonuses.",
+   "Team and opponent come from each player's most recent 2026 row and the retained schedule; trades or releases after that row are not reflected."
+  ]
+ }
+}
