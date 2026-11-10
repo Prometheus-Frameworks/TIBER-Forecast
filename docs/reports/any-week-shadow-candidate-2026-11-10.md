@@ -45,7 +45,7 @@ Not changed in this PR: objective, search range, weighting, cohorts, fallback ru
 
 ## 3. Inputs
 
-Provider: nflverse (`nflverse-data` release assets; its `LICENSE.md` begins "Attribution 4.0 International"). Retained gzipped under `inputs/` with raw and gzip SHA-256 in `inputs/RAW.sha256`, `inputs/GZ.sha256` and `manifest.json`. No admission is implied by their presence here.
+Provider: nflverse (`nflverse-data` release assets, CC BY 4.0). Attribution, source links and the pinned provider licence record are in `inputs/ATTRIBUTION.md` and `inputs/provider-licence/`. Retained gzipped under `inputs/` with raw and gzip SHA-256 in `inputs/RAW.sha256`, `inputs/GZ.sha256` and `manifest.json`. No admission is implied by their presence here.
 
 | Retained file | Source asset | Retrieved (UTC) | Raw bytes | Raw SHA-256 | Provider Last-Modified seen afterwards |
 |---|---|---|---:|---|---|
@@ -82,7 +82,7 @@ The provider's own `fantasy_points_ppr` was never used for modelling. It differs
 
 ## 6. Population and coverage
 
-**Every result below is on players who appeared in the target game.** The accepted protocol instead freezes a roster population at the cutoff and keeps later nonparticipants. No roster source was used here, no historical roster membership was reconstructed, and no missing row was scored as a zero. Players who were rostered but did not play are simply absent, which makes these errors smaller and coverage higher than a roster-population study would show.
+**Every result below is on players who appeared in the target game.** The accepted protocol instead freezes a roster population at the cutoff and keeps later nonparticipants. No roster source was used here, no historical roster membership was reconstructed, and no missing row was scored as a zero. Players who were rostered but did not play are simply absent. These results are conditional on target-week row presence. Their error and coverage are not directly comparable with a frozen roster-population evaluation; the direction and size of the difference have not been measured.
 
 | Season | Blend rows: n / MAE | Prior-only rows (no current games): n / MAE | Missing-prior fallback rows: n / MAE | Unavailable rows | Target rows (denominator) | Forecast available |
 |---|---:|---:|---:|---:|---:|---:|
@@ -150,7 +150,7 @@ Per-player rows: `inspection/predictions_and_outcomes.csv.gz` (24,818 rows: ever
 
 ### Paired comparisons on identical members
 
-Negative means the blend has lower error. Intervals are a player-cluster bootstrap within position (2,000 resamples, fixed seed). They were computed after the results had been seen and are descriptive.
+Negative means the blend has lower error. Intervals are a player-cluster bootstrap within position (2,000 resamples, fixed seed). They were computed after the results had been seen and are descriptive only. Resampling players does not preserve the dependence between different players who share a game, so the intervals should not be read as calibrated uncertainty.
 
 All blend rows:
 
@@ -174,8 +174,8 @@ Relevant blend rows:
 
 What these show, on this population:
 
-- The blend has lower error than prior-only in every season. The gap is about half a point in 2024 and 2025 and smaller in 2026 so far; on relevant 2026 rows the interval includes zero.
-- Against the current-season average alone, the blend's advantage in 2024 and 2025 is small and its interval includes zero on all blend rows. It is clear in 2026 so far, where only early-season origins exist.
+- The blend's observed error is lower than prior-only in every season. The observed gap is about half a point in 2024 and 2025 and smaller in 2026 so far; on relevant 2026 rows the descriptive interval includes zero.
+- Against the current-season average alone, the blend's advantage in 2024 and 2025 is small and its interval includes zero on all blend rows. The observed gap is larger in 2026 so far, where only early-season origins exist.
 - 2026, TE: the blend's MAE is higher than prior-only (4.023 vs 3.965 on all blend rows). This is preserved, not tuned.
 
 ## 8. Week 2 diagnostic (separate from the candidate)
@@ -286,12 +286,32 @@ Because it was frozen before kickoff, this file is the only genuinely prospectiv
 ## 14. Reproduction
 
 ```bash
-python3 -m pip install -r docs/reports/evidence/any-week-shadow-2026-11-10/requirements.txt   # pandas 3.0.5, numpy 2.5.3; Python 3.13
+python3 -m pip install -r docs/reports/evidence/any-week-shadow-2026-11-10/requirements.txt   # pandas 3.0.5, numpy 2.5.3
 bash docs/reports/evidence/any-week-shadow-2026-11-10/reproduce.sh
+bash docs/reports/evidence/any-week-shadow-2026-11-10/verification/verify_negative.sh          # optional: proves the checks fail when they should
 ```
 
-The script verifies input hashes, re-runs r1 and r0 and compares their outputs byte for byte with the retained files, then re-runs the inspection addendum and checks its outputs against `inspection/OUTPUTS.sha256`. It needs no network and writes only to a temp directory. Byte identity was observed with the versions above; other pandas/numpy versions may format floats differently.
+`reproduce.sh` needs no network and writes only to a temp directory. Every required check is fatal: a mismatch prints `FAIL:`, exits non-zero, stops later stages and never prints the final `OK`. The checks are:
+
+1. **Inputs**: retained gzip containers match `inputs/GZ.sha256`; the decompressed source bytes match `inputs/RAW.sha256`.
+2. **r1**: results JSON, Week 10 CSV and `blocker.py` stdout regenerate byte for byte.
+3. **r0 reconstruction**: results JSON and Week 10 CSV regenerate byte for byte against the retained regeneration.
+4. **Inspection addendum**, as three separate things:
+   - *Retained artifact integrity*: all ten retained files match `inspection/OUTPUTS.sha256`, including the retained gzip, whose decompressed CSV must also match `inspection/PREDICTIONS_CSV.sha256` (`fb530fcb…4a78e6`).
+   - *Reproduction of contents*: the nine uncompressed outputs regenerate byte for byte, and the decompressed regenerated predictions CSV is byte-identical to the decompressed retained one. No normalisation, reordering or rounding is applied.
+   - *Compressed-byte identity*: reported, not required. Gzip bytes depend on the Python/zlib build.
+
+Observed so far:
+
+| Environment | Required checks | Regenerated gzip bytes |
+|---|---|---|
+| Python 3.13.18, pandas 3.0.5, numpy 2.5.3 (authoring) | all pass | identical to retained |
+| Python 3.12.14, pandas 3.0.5, numpy 2.5.3 (Codex independent review of `c62967f`) | contents reproduced | **differ** from retained; decompressed CSV identical |
+
+So the predictions file is a byte-identical reproduction of its **CSV contents**, not of its gzip container, outside the authoring environment. Other pandas/numpy versions may also format floats differently; that would fail the content checks rather than pass silently.
+
+The first version of `reproduce.sh` (head `c62967f`) could print a checksum failure and still end with `OK` and exit 0, because `cmp … && echo` and `(…) && echo` suppress `set -e`. Codex found this. It is fixed, and `verification/verify_negative.sh` now alters isolated copies of the evidence folder in 19 ways (expected forecast, results and blocker outputs; hash lists; failing scripts; retained inspection files; CSV contents changed inside a valid gzip) and requires a non-zero exit with no final `OK` each time, plus two positive controls. Its recorded output is `verification/negative_tests_2026-11-10.log`. The preserved originals are not touched by those tests.
 
 ## 15. One bounded recommended next step
 
-After Week 10 completes (final game 2026-11-16), authorise **one** scoring pass of the frozen Week 10 file, unchanged, against that week's outcomes: same profile, the three forecasts already in the file, pooled and macro MAE/RMSE per position, with the rule written down before the outcomes exist. That is the first evidence for this candidate that cannot have been shaped by hindsight. It needs no decision on Hodge, no new source class beyond the next weekly file, and no change to anything frozen.
+After Week 10 completes (final game 2026-11-16), authorise **one** scoring pass of the frozen Week 10 file, unchanged, against that week's outcomes: same profile, the three forecasts already in the file, pooled and macro MAE/RMSE per position, with the rule written down before the outcomes exist. That is the first evidence for this candidate that cannot have been shaped by hindsight. It needs no decision on Hodge, no new source class beyond the next weekly file, and no change to anything frozen. The rules for that pass are fixed in [`any-week-shadow-week10-scoring-protocol-2026-11-10.md`](any-week-shadow-week10-scoring-protocol-2026-11-10.md); running it still needs its own authorisation.

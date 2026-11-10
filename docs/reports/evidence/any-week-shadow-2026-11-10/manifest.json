@@ -11,7 +11,7 @@
  "source": {
   "provider": "nflverse",
   "repository": "https://github.com/nflverse/nflverse-data",
-  "license_file_observed": "LICENSE.md begins \"Attribution 4.0 International\" (CC BY 4.0), read 2026-11-10; licence terms not otherwise reviewed",
+  "license_file_observed": "see amendments.a1.provider_licence_record (supersedes the earlier free-text note)",
   "admission": "none - retained as experiment evidence only"
  },
  "inputs": [
@@ -277,5 +277,54 @@
    "Generic scoring tiber-generic-full-ppr-v1: receptions + 0.1*rec yds + 6*rec TD + 0.1*rush yds + 6*rush TD + 0.04*pass yds + 4*pass TD - 2*INT; no fumbles, two-point conversions or bonuses.",
    "Team and opponent come from each player's most recent 2026 row and the retained schedule; trades or releases after that row are not reflected."
   ]
+ },
+ "amendments": {
+  "a1": {
+   "date": "2026-11-10",
+   "reason": "Codex independent review of head c62967f5ada994042304eb77b4f149faf24bcaa0",
+   "unchanged": [
+    "inputs/*.csv.gz",
+    "inputs/RAW.sha256",
+    "inputs/GZ.sha256",
+    "original/as-run-r1/*",
+    "original/r0-reconstructed/*",
+    "inspection/inspect_shadow.py",
+    "all ten inspection outputs",
+    "inspection/OUTPUTS.sha256",
+    "Hodge proposal"
+   ],
+   "provider_licence_record": {
+    "provider_commit": "d691265da60e82f7ba22fd08baef823e51c582cc",
+    "read_at_utc": "2026-11-10T16:53Z",
+    "files": [
+     {
+      "path": "inputs/provider-licence/LICENSE.md",
+      "source": "https://raw.githubusercontent.com/nflverse/nflverse-data/d691265da60e82f7ba22fd08baef823e51c582cc/LICENSE.md",
+      "sha256": "2a82ac9bbc3e3ee066908381e8d373896db5a6025d083fbd59692fe9ccfb9111"
+     },
+     {
+      "path": "inputs/provider-licence/README.md",
+      "source": "https://raw.githubusercontent.com/nflverse/nflverse-data/d691265da60e82f7ba22fd08baef823e51c582cc/README.md",
+      "sha256": "a343c9cb9dbf2cef3e98cc51bab6568e8425f35f46a3d1f64c06da5169e3984c"
+     }
+    ],
+    "licence": "CC BY 4.0",
+    "licence_url": "https://creativecommons.org/licenses/by/4.0/",
+    "notice": "inputs/ATTRIBUTION.md"
+   },
+   "predictions_csv": {
+    "retained_gzip_sha256": "83c5bab57ac93505c7085f1f29aaec23fbf6789237f4fb1e8d9b2522f38db2b8",
+    "decompressed_csv_sha256": "fb530fcbec96017625f453d23a00261b18f6ca2a302b59395964d9668e4a78e6",
+    "recorded_in": "inspection/PREDICTIONS_CSV.sha256",
+    "equivalence": "required: retained gzip matches OUTPUTS.sha256; decompressed retained and regenerated CSVs are byte-identical. reported only: whether regenerated gzip bytes match",
+    "observed": {
+     "python 3.13.18 (authoring)": "gzip bytes identical",
+     "python 3.12.14 (Codex review)": "CSV contents identical, gzip bytes differ"
+    }
+   },
+   "reproduce_sh": "rewritten so every required check is fatal; see verification/verify_negative.sh and verification/negative_tests_2026-11-10.log",
+   "reproduction_claims_corrected": "earlier wording \"byte-identical inspection outputs\" is narrowed to: nine uncompressed outputs byte-identical; predictions CSV contents byte-identical; gzip container bytes environment-dependent",
+   "week10_protocol": "docs/reports/any-week-shadow-week10-scoring-protocol-2026-11-10.md"
+  }
  }
 }
