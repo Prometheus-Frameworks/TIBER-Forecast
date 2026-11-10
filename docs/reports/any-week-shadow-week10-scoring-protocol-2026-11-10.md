@@ -80,23 +80,35 @@ The primary scoring uses the **first snapshot retrieved at or after 2026-11-18T1
 
 This is a practical finality rule, not official completion evidence. The report must say so.
 
-### 3.4 Postponed, moved or cancelled games
+### 3.4 Per-game finality, and postponed, moved or cancelled games
 
-If a listed game has no final score or no rows in the qualifying snapshot, the snapshot still qualifies for the other games once 2026-11-25T12:00:00Z has passed; players whose frozen `team` is in the affected game are **unresolved** with reason `game_not_final_at_snapshot`. A game played later is not scored in the primary results. It may appear only in a labelled revision (3.6).
+Finality is decided **per outcome row, by that row's own `game_id`**. The frozen forecast `team` and `wk10_opp` are context only and never decide finality or status.
+
+An outcome row's game **passes finality** in the scoring snapshot only if all of these hold:
+
+1. the row's `game_id` is one of the 14 Week 10 games listed in section 3.3 (a missing `game_id`, or any other game, does not pass);
+2. the retained schedule file from the same retrieval shows a final score for that game; and
+3. the outcome file contains at least one REG Week 10 row for that `game_id`.
+
+These are the same per-game conditions as section 3.3, applied to the single game the row belongs to. A complete statistics row from a game that has not satisfied them stays unresolved.
+
+If a listed game has no final score or no rows in the snapshot, the snapshot still qualifies for the other games once 2026-11-25T12:00:00Z has passed. Rows belonging to the affected game then fail finality under the rule above. A game played later is not scored in the primary results. It may appear only in a labelled revision (3.6).
 
 ### 3.5 Resolution of each issued forecast
 
-All 484 issued forecasts stay in the evaluation ledger with exactly one status:
+All 484 issued forecasts stay in the evaluation ledger with exactly one status. **Apply the rules in this order; the first rule that matches determines the status.**
 
-| Status | Condition | Outcome |
-|---|---|---|
-| `resolved` | An outcome row exists and all eight components are non-null | Profile points from that row. A row whose components are all zero is a resolved outcome of 0.00. |
-| `unresolved_no_target_week_row` | No outcome row | none |
-| `unresolved_incomplete_components` | A row exists but a scoring component is null | none |
-| `unresolved_game_not_final_at_snapshot` | Section 3.4 | none |
+| Order | Condition | Status | Outcome |
+|---:|---|---|---|
+| 1 | No matching target-week outcome row exists (section 3.2) | `unresolved_no_target_week_row` | none |
+| 2 | An outcome row exists, but its own game does not satisfy the finality conditions of section 3.4 | `unresolved_game_not_final_at_snapshot` | none |
+| 3 | The game passes finality, but a scoring component is null | `unresolved_incomplete_components` | none |
+| 4 | The game passes finality and all eight scoring components are present | `resolved` | Profile points from that row |
 
-- **No DNP zeros.** An absent row is never turned into a zero, whatever the reason for absence.
-- The only evidence this protocol accepts as establishing zero production is an explicit outcome row with all-zero components. No other evidence class is defined here, so an absent row stays unresolved in every table produced under this protocol.
+- **An absent row stays unresolved.** It is never turned into a zero, whatever the reason for absence and whatever the state of the game the frozen `team` was expected to play. No DNP zeros.
+- **An explicit all-zero row can resolve to 0.00 only after its own game passes finality** (rule 4). Before that it is `unresolved_game_not_final_at_snapshot` (rule 2).
+- That explicit row is the only evidence this protocol accepts as establishing zero production. No other evidence class is defined here.
+- A player whose outcome row belongs to a different listed game than his frozen `team` implied (for example after a trade) is resolved or not by that row's game alone; his forecast, cohort and position do not change (section 1).
 - Unresolved rows are counted and listed by status and position. They are not errors of zero and they are not excluded from the denominators in section 5.
 
 ### 3.6 Corrections and revisions
@@ -155,3 +167,9 @@ Shares are never recomputed against a smaller, outcome-defined denominator witho
 - Current-season-average fallback for missing priors, a rule chosen after seeing historical results.
 - Generic scoring as defined in 3.1; not any league's scoring.
 - Outcomes come from one public provider snapshot, not from admitted, completion-evidenced sources.
+
+## 8. Amendment record
+
+| Amendment | Sections | Change | When |
+|---|---|---|---|
+| A1 | 3.4, 3.5 | Finality is decided by each outcome row's own `game_id`, not by the frozen forecast team; status precedence made explicit (absent row → game not final → incomplete components → resolved). An all-zero row resolves only after its game passes finality. Dates, cohort membership, coverage denominators, scoring profile, stored forecasts and revision policy are unchanged. | Written 2026-11-10 (Toronto), before any Week 10 game. The publication time is GitHub's record of the push that carries this amendment. |

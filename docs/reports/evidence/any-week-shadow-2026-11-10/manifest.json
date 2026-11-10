@@ -322,9 +322,42 @@
      "python 3.12.14 (Codex review)": "CSV contents identical, gzip bytes differ"
     }
    },
-   "reproduce_sh": "rewritten so every required check is fatal; see verification/verify_negative.sh and verification/negative_tests_2026-11-10.log",
+   "reproduce_sh": "rewritten so every required check is fatal; see verification/verify_negative.sh and verification/negative_tests_2026-11-10.txt",
    "reproduction_claims_corrected": "earlier wording \"byte-identical inspection outputs\" is narrowed to: nine uncompressed outputs byte-identical; predictions CSV contents byte-identical; gzip container bytes environment-dependent",
    "week10_protocol": "docs/reports/any-week-shadow-week10-scoring-protocol-2026-11-10.md"
+  },
+  "a2": {
+   "date": "2026-11-10",
+   "reason": "Codex independent review of head 7c132c7236c885bd44a8daf7fc98bd0c047b5453",
+   "negative_test_receipt": {
+    "path": "verification/negative_tests_2026-11-10.txt",
+    "sha256": "837adfdba07f88f4a1e1d696690e87dab9fb1ea37e834c979846addb34c6be82",
+    "provenance": "original output of the single run, not a re-run and not reconstructed",
+    "command": "bash docs/reports/evidence/any-week-shadow-2026-11-10/verification/verify_negative.sh",
+    "run_started_at_utc": "2026-11-10T16:55:31Z",
+    "output_file_last_written_utc": "2026-11-10T16:58:02Z",
+    "tested_revision": "working tree before commit; reproduce.sh, verify_negative.sh and all evidence files were committed unchanged as 7c132c7236c885bd44a8daf7fc98bd0c047b5453",
+    "environment": "Python 3.13.18, pandas 3.0.5, numpy 2.5.3, linux (authoring workspace)",
+    "edits_to_original_output": "temp-directory names replaced with <temp>; one header line added. SHA-256 of the unedited output: b230b1a7b6408aa0844b8ecc98d542bf6bb489c1681818bcf76f98c75465f3d2 (not committed)",
+    "records": {
+     "expected_failures_detected": 19,
+     "positive_controls_passed": 2,
+     "preserved_evidence_folder_unchanged": true
+    },
+    "why_missing_before": "head 7c132c7 named the file *.log; the repository .gitignore excludes *.log, so it was never committed"
+   },
+   "week10_protocol": "sections 3.4 and 3.5 amended: finality by each outcome row's own game_id; explicit status precedence. See the protocol's section 8.",
+   "unchanged": [
+    "model",
+    "forecasts",
+    "results",
+    "input snapshots",
+    "r0 reconstruction",
+    "inspection outputs",
+    "Hodge proposal",
+    "reproduce.sh",
+    "verify_negative.sh"
+   ]
   }
  }
 }

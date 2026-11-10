@@ -14,7 +14,7 @@ Report: [`../../any-week-shadow-candidate-2026-11-10.md`](../../any-week-shadow-
 | `inspection/PREDICTIONS_CSV.sha256` | SHA-256 of the CSV inside the retained predictions gzip |
 | `inputs/ATTRIBUTION.md`, `inputs/provider-licence/` | nflverse attribution, CC BY 4.0 links, pinned provider licence record |
 | `reproduce.sh` | One command to verify everything above; every required check is fatal |
-| `verification/verify_negative.sh`, `verification/negative_tests_2026-11-10.log` | Negative tests on isolated altered copies, and their recorded output |
+| `verification/verify_negative.sh`, `verification/negative_tests_2026-11-10.txt` | Negative tests on isolated altered copies, and their recorded output |
 | `requirements.txt` | Python package versions used |
 
 ```bash
