@@ -1,0 +1,116 @@
+{
+ "any_week_blend": {
+  "final2025": {
+   "blend_rows": {
+    "arithmetic_conditions_met_on_this_population": true,
+    "at_least_20_rows_every_position": true,
+    "macro_mae_strictly_lower": true,
+    "macro_rmse_not_higher": true,
+    "min_rows_per_position": 492,
+    "positions_with_higher_mae_than_prior_only": []
+   },
+   "blend_rows_relevant_ge8": {
+    "arithmetic_conditions_met_on_this_population": true,
+    "at_least_20_rows_every_position": true,
+    "macro_mae_strictly_lower": true,
+    "macro_rmse_not_higher": true,
+    "min_rows_per_position": 379,
+    "positions_with_higher_mae_than_prior_only": []
+   }
+  },
+  "live2026_targets_wk2to9": {
+   "blend_rows": {
+    "arithmetic_conditions_met_on_this_population": false,
+    "at_least_20_rows_every_position": true,
+    "macro_mae_strictly_lower": true,
+    "macro_rmse_not_higher": true,
+    "min_rows_per_position": 235,
+    "positions_with_higher_mae_than_prior_only": [
+     "TE"
+    ]
+   },
+   "blend_rows_relevant_ge8": {
+    "arithmetic_conditions_met_on_this_population": false,
+    "at_least_20_rows_every_position": true,
+    "macro_mae_strictly_lower": true,
+    "macro_rmse_not_higher": true,
+    "min_rows_per_position": 217,
+    "positions_with_higher_mae_than_prior_only": [
+     "TE"
+    ]
+   }
+  },
+  "val2024": {
+   "blend_rows": {
+    "arithmetic_conditions_met_on_this_population": true,
+    "at_least_20_rows_every_position": true,
+    "macro_mae_strictly_lower": true,
+    "macro_rmse_not_higher": true,
+    "min_rows_per_position": 497,
+    "positions_with_higher_mae_than_prior_only": []
+   },
+   "blend_rows_relevant_ge8": {
+    "arithmetic_conditions_met_on_this_population": true,
+    "at_least_20_rows_every_position": true,
+    "macro_mae_strictly_lower": true,
+    "macro_rmse_not_higher": true,
+    "min_rows_per_position": 296,
+    "positions_with_higher_mae_than_prior_only": []
+   }
+  }
+ },
+ "conditions_not_assessed_or_not_comparable": {
+  "completion_finality_identity_mapping_cutoff_position": "NOT ASSESSED",
+  "frozen_cutoff_roster_population_with_nonparticipants": "NOT MET - no roster source was used; nonparticipants are absent, not scored as zero",
+  "label_resolution_at_least_95pct": "NOT COMPARABLE - this population is defined by having a target-week row, so resolution is 100% by construction; the protocol measures it against a frozen cutoff-time roster population that was not built here",
+  "labels_sealed_before_fit_and_staged_opening": "NOT MET - one script read every season at once; 2024-2026 outcomes were visible throughout",
+  "point_in_time_evidence_class": "NOT MET - a single later snapshot (unqualified retrospective_reconstruction at best)",
+  "source_admission_and_historical_purpose_authority": "NOT MET - public nflverse release assets retrieved 2026-11-10; no admission"
+ },
+ "governed_disposition": "bootstrap_study_inconclusive (evidence/population requirements not met). The arithmetic below is descriptive shadow evidence and selects nothing: not the blend, not C2, and not prior-only.",
+ "rule": "spec section 8: lower macro MAE, no higher macro RMSE and no position MAE worse than prior-only in BOTH 2024 and 2025, plus evidence and sample-sufficiency requirements",
+ "training_rows_per_position": {
+  "train2022": {
+   "QB": 488,
+   "RB": 1099,
+   "TE": 896,
+   "WR": 1774
+  },
+  "train2023": {
+   "QB": 487,
+   "RB": 1104,
+   "TE": 889,
+   "WR": 1764
+  }
+ },
+ "week2_C2": {
+  "final2025": {
+   "arithmetic_conditions_met_on_this_population": false,
+   "at_least_20_rows_every_position": true,
+   "macro_mae_strictly_lower": true,
+   "macro_rmse_not_higher": true,
+   "min_rows_per_position": 29,
+   "positions_with_higher_mae_than_prior_only": [
+    "QB"
+   ]
+  },
+  "live2026_targets_wk2to9": {
+   "arithmetic_conditions_met_on_this_population": false,
+   "at_least_20_rows_every_position": true,
+   "macro_mae_strictly_lower": true,
+   "macro_rmse_not_higher": true,
+   "min_rows_per_position": 32,
+   "positions_with_higher_mae_than_prior_only": [
+    "TE"
+   ]
+  },
+  "val2024": {
+   "arithmetic_conditions_met_on_this_population": true,
+   "at_least_20_rows_every_position": true,
+   "macro_mae_strictly_lower": true,
+   "macro_rmse_not_higher": true,
+   "min_rows_per_position": 30,
+   "positions_with_higher_mae_than_prior_only": []
+  }
+ }
+}

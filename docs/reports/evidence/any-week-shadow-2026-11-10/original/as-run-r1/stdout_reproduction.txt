@@ -1,0 +1,63 @@
+2024 accepted C2 (origin wk1): {'macro_mae_lower': True, 'macro_rmse_not_higher': True, 'positions_worse_than_C0': [], 'passes': True}
+2024 K all weeks primary: {'macro_mae_lower': True, 'macro_rmse_not_higher': True, 'positions_worse_than_C0': [], 'passes': True} | relevant: {'macro_mae_lower': True, 'macro_rmse_not_higher': True, 'positions_worse_than_C0': [], 'passes': True}
+2025 accepted C2 (origin wk1): {'macro_mae_lower': True, 'macro_rmse_not_higher': True, 'positions_worse_than_C0': ['QB'], 'passes': False}
+2025 K all weeks primary: {'macro_mae_lower': True, 'macro_rmse_not_higher': True, 'positions_worse_than_C0': [], 'passes': True} | relevant: {'macro_mae_lower': True, 'macro_rmse_not_higher': True, 'positions_worse_than_C0': [], 'passes': True}
+2026 accepted C2 (origin wk1): {'macro_mae_lower': True, 'macro_rmse_not_higher': True, 'positions_worse_than_C0': ['TE'], 'passes': False}
+2026 K all weeks primary: {'macro_mae_lower': True, 'macro_rmse_not_higher': True, 'positions_worse_than_C0': ['TE'], 'passes': False} | relevant: {'macro_mae_lower': True, 'macro_rmse_not_higher': True, 'positions_worse_than_C0': ['TE'], 'passes': False}
+teams on bye wk10: ['CHI', 'DEN', 'PHI', 'TB']
+QB
+player_display_name team wk10_opp  forecast  prior_ppg_2025  ppg_2026_thru_wk9  games_2026
+         Josh Allen  BUF     @NYJ     24.59           23.04              25.08           8
+         Joe Burrow  CIN      PIT     23.13           16.81              25.14           8
+        Brock Purdy   SF     @DAL     20.86           19.93              21.16           8
+         Drake Maye   NE     @DET     20.28           20.82              20.13           9
+        C.J. Stroud  HOU     @CLE     19.34           14.90              20.76           8
+        Jordan Love   GB      MIN     19.31           15.68              20.34           9
+    Trevor Lawrence  JAX     @TEN     19.01           20.13              18.65           8
+         Jared Goff  DET       NE     18.52           18.06              18.67           8
+    Patrick Mahomes   KC     @ATL     18.51           20.12              18.00           8
+     Jayden Daniels  WAS     @NYG     18.42           16.61              19.19           6
+       Dak Prescott  DAL       SF     18.37           18.34              18.38           9
+       Tyler Shough   NO      CAR     17.89           14.54              18.95           8
+RB
+player_display_name team wk10_opp  forecast  prior_ppg_2025  ppg_2026_thru_wk9  games_2026
+       Jahmyr Gibbs  DET       NE     25.45           21.70              26.65           8
+Christian McCaffrey   SF     @DAL     21.91           24.51              21.09           8
+ Kenneth Walker III   KC     @ATL     21.34           11.29              24.55           8
+     Bijan Robinson  ATL       KC     20.45           22.05              20.00           9
+         James Cook  BUF     @NYJ     18.83           18.13              19.05           8
+    Jonathan Taylor  IND      MIA     18.70           21.31              17.96           9
+     Kyren Williams   LA     @ARI     17.59           15.72              18.12           9
+   Javonte Williams  DAL       SF     17.22           15.42              17.73           9
+      Jaylen Warren  PIT     @CIN     16.82           13.57              17.85           8
+      Derrick Henry  BAL      LAC     16.03           16.79              15.81           9
+      Chuba Hubbard  CAR      @NO     15.95            8.49              18.33           8
+        Josh Jacobs   GB      MIN     15.28           16.07              14.60           3
+WR
+player_display_name team wk10_opp  forecast  prior_ppg_2025  ppg_2026_thru_wk9  games_2026
+ Jaxon Smith-Njigba  SEA      @LV     24.79           21.29              25.78           9
+         Puka Nacua   LA     @ARI     24.68           23.56              25.09           7
+        CeeDee Lamb  DAL       SF     20.88           15.45              22.42           9
+      Ja'Marr Chase  CIN      PIT     19.91           19.73              19.96           8
+  Amon-Ra St. Brown  DET       NE     19.55           19.06              19.70           8
+        Tee Higgins  CIN      PIT     18.52           13.97              19.98           8
+   Christian Watson   GB      MIN     18.41           13.24              19.88           9
+        Chris Olave   NO      CAR     17.45           16.75              17.68           8
+      Davante Adams   LA     @ARI     16.68           15.92              17.00           6
+       Malik Nabers  NYG      WAS     15.75           14.28              16.23           8
+    Omar Cooper Jr.  NYJ      BUF     15.65             NaN              15.65           4
+        Zay Flowers  BAL      LAC     15.63           14.66              15.94           8
+TE
+player_display_name team wk10_opp  forecast  prior_ppg_2025  ppg_2026_thru_wk9  games_2026
+       Brock Bowers   LV      SEA     19.58           14.52              21.43           7
+       Trey McBride  ARI       LA     18.20           18.58              18.09           9
+      George Kittle   SF     @DAL     14.57           14.68              14.54           8
+      Isaiah Likely  NYG      WAS     13.30            5.31              15.85           8
+       Travis Kelce   KC     @ATL     12.13           11.25              12.41           8
+  Harold Fannin Jr.  CLE      HOU     11.80           11.78              11.81           9
+       Tyler Warren  IND      MIA     11.77           11.09              12.01           7
+        Sam LaPorta  DET       NE     11.70           11.88              11.64           8
+       Tucker Kraft   GB      MIN     11.06           14.65              10.04           9
+     Dalton Kincaid  BUF     @NYJ     10.59           10.51              10.61           8
+      Juwan Johnson   NO      CAR     10.28           10.82              10.11           8
+       Mike Gesicki  CIN      PIT      9.97            5.89              11.46           7

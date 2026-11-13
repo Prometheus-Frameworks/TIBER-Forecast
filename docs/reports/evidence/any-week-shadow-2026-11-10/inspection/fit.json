@@ -1,0 +1,84 @@
+{
+ "alpha_by_origin_week_diagnostic": {
+  "1": 0.20432844824735769,
+  "10": 0.9114999212015774,
+  "11": 0.7901942039284326,
+  "12": 0.8744487038818182,
+  "13": 0.6309102387762734,
+  "14": 0.9924254195679567,
+  "15": 0.5519686091845917,
+  "16": 0.8002476534272404,
+  "17": 0.5720955490178643,
+  "2": 0.4954861445278401,
+  "3": 0.36239486595939213,
+  "4": 0.47995405724272816,
+  "5": 0.5110612628998293,
+  "6": 0.5772445506739783,
+  "7": 0.6171019219132458,
+  "8": 0.6767990730095583,
+  "9": 0.8392474580727536
+ },
+ "alpha_rule": "per origin week N: clip(sum a*d*(Y-P) / sum a*d^2, 0, 1), d = S-P, a = 1/n_p within that origin week's 2022-2023 rows",
+ "candidate": "any-week games-weighted blend (shadow)",
+ "fallback_history": "r0 shrank no-prior rows toward a training-season position mean ((k2*m_p + n*S)/(k2+n), k2 = 1.375); r1 replaced that with plain S AFTER seeing it score worse on 2024, 2025 and 2026 rows. That choice is therefore not out-of-sample.",
+ "fallbacks": {
+  "neither": "unavailable",
+  "no_prior_but_current_games": "forecast = S (plain current-season average)",
+  "prior_but_no_current_games": "forecast = P"
+ },
+ "formula": "forecast = (k*P + n*S)/(k+n); P = prior-season points per recorded game; S = current-season points per recorded game through the origin week; n = current-season recorded games",
+ "k": 2.5500000000000003,
+ "objective": "sum_i a_i*(Y_i - forecast_i)^2 with a_i = 1/n_p, n_p = number of training rows at the player's position (pooled over both seasons and all origin weeks)",
+ "relevant_cohort": "blend rows with max(P, S) >= 8 points per game; both quantities are known at the cutoff",
+ "search": {
+  "grid": "numpy.linspace(0.25, 30, 1191)",
+  "max": 30.0,
+  "method": "exhaustive grid, argmin",
+  "min": 0.25,
+  "objective_at_k": 163.8684065043954,
+  "objective_at_neighbours": {
+   "2.5": 163.87031596940204,
+   "2.525": 163.86902964506996,
+   "2.55": 163.8684065043954,
+   "2.575": 163.8684294897491,
+   "2.6": 163.86908205217196
+  },
+  "step": 0.025000000000000022
+ },
+ "training_origin_weeks": [
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8,
+  9,
+  10,
+  11,
+  12,
+  13,
+  14,
+  15,
+  16,
+  17
+ ],
+ "training_row_rule": "row in the target-week file, prior available (>=1 prior-season row) and >=1 current-season row through the origin week",
+ "training_rows": 8501,
+ "training_rows_by_position": {
+  "QB": 975,
+  "RB": 2203,
+  "TE": 1785,
+  "WR": 3538
+ },
+ "training_rows_by_season": {
+  "2022": 4257,
+  "2023": 4244
+ },
+ "training_seasons": [
+  2022,
+  2023
+ ],
+ "zero_and_missing": "a row with all-zero scoring components is a recorded game worth 0; a missing row is not a game and is never converted to zero; null component cells inside an existing row are treated as 0 (count in scoring.json)"
+}

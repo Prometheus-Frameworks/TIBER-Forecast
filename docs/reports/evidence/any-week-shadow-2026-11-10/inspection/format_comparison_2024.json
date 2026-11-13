@@ -1,0 +1,24 @@
+{
+ "cause": "INFERENCE, not established: the legacy and current assets apply different row-inclusion rules. No provider statement or changelog was retrieved.",
+ "current_more_than_legacy": 217,
+ "empirical_game_definition": {
+  "current_format": "a player-week row exists when the provider file lists the player for that game; in this file that includes rows whose offensive and scoring columns are all zero (observed: defensive tackles, penalties, returns, or no non-zero stat column at all)",
+  "legacy_format": "observed to omit most such zero-offense rows; the exact inclusion rule was not established from provider documentation here",
+  "r1_recorded_game": "one row in the current-format file for that player, season and REG week (explicit-zero rows count; absent rows are never treated as zero)"
+ },
+ "legacy_more_than_current": 1,
+ "player_week_rows_current": 5864,
+ "player_week_rows_legacy": 5227,
+ "players_current_format": 589,
+ "players_in_union": 590,
+ "players_legacy_format": 559,
+ "players_only_in_current_format": 31,
+ "players_only_in_legacy_format": 1,
+ "players_with_different_week_count": 218,
+ "rows_only_in_current": 642,
+ "rows_only_in_current_with_some_offensive_stat": 21,
+ "rows_only_in_current_with_zero_attempts_carries_targets_and_scoring_components": 621,
+ "rows_only_in_legacy": 5,
+ "this_is_not": "the frozen June 10/10 vs later 11/11 discrepancy. The June TIBER artifact and its producing source bytes were not available to this run.",
+ "what_is_compared": "two nflverse release assets retrieved 2026-11-10: legacy player_stats/player_stats_2024.csv vs current stats_player/stats_player_week_2024.csv; REG season, positions QB/RB/WR/TE by each file's own position column"
+}
